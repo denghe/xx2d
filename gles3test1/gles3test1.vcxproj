@@ -123,6 +123,7 @@
     <ClInclude Include="..\xxlib\xx_string.h" />
     <ClInclude Include="..\xxlib\xx_string.hpp" />
     <ClInclude Include="gltest1.hpp" />
+    <ClInclude Include="gltest2.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

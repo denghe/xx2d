@@ -10,6 +10,7 @@
 #include "xx.h"
 
 #include "gltest1.hpp"
+#include "gltest2.hpp"
 
 
 GLFWwindow* wnd = nullptr;
@@ -53,10 +54,11 @@ int main()
 	if (!gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress)) return -3;
 	glfwSwapInterval(1);
 
-	GLTest1 gltest1;
+	GLTest1 gltest;
+	//GLTest2 gltest;
 	while (!glfwWindowShouldClose(wnd))
 	{
-		gltest1.Update(width, height);
+		gltest.Update(width, height, (float)glfwGetTime());
 
 		glfwSwapBuffers(wnd);
 		glfwPollEvents();
