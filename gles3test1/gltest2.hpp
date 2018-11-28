@@ -84,10 +84,32 @@ struct GLShaderManager
 		return shader;
 	}
 
+	// load shader helpers
+
 	template<size_t len>
 	inline GLuint LoadShader(GLenum const& type, char const(&src)[len])
 	{
 		return LoadShader(type, src, len);
+	}
+
+	template<size_t len>
+	inline GLuint LoadVertexShader(char const(&src)[len])
+	{
+		return LoadShader(GL_VERTEX_SHADER, src, len);
+	}
+	inline GLuint LoadVertexShader(const GLchar* const& src, GLint const& len)
+	{
+		return LoadShader(GL_VERTEX_SHADER, src, len);
+	}
+
+	template<size_t len>
+	inline GLuint LoadFragmentShader(char const(&src)[len])
+	{
+		return LoadShader(GL_FRAGMENT_SHADER, src, len);
+	}
+	inline GLuint LoadFragmentShader(const GLchar* const& src, GLint const& len)
+	{
+		return LoadShader(GL_FRAGMENT_SHADER, src, len);
 	}
 
 	// 用 vs fs 链接出 program
@@ -95,8 +117,18 @@ struct GLShaderManager
 	inline GLuint LinkProgram(GLuint vs, GLuint fs)
 	{
 		// 确保 vs, fs 已存在
-		assert(shaders.find(vs) != shaders.cend());
-		assert(shaders.find(fs) != shaders.cend());
+		if (shaders.find(vs) != shaders.cend())
+		{
+			lastErrorMessage = "LoadProgram error. can't find vs = ";
+			lastErrorMessage.append(std::to_string(vs));
+			return 0;
+		}
+		if (shaders.find(fs) != shaders.cend())
+		{
+			lastErrorMessage = "LoadProgram error. can't find fs = ";
+			lastErrorMessage.append(std::to_string(fs));
+			return 0;
+		}
 
 		// 创建一个程序对象. 返回 0 表示失败
 		var program = glCreateProgram();
@@ -213,6 +245,7 @@ void main()
 		program = sm.LinkProgram(vs, fs);
 		assert(program);
 
+		// 设置清屏颜色
 		glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 	}
 
