@@ -1,81 +1,219 @@
 ﻿#pragma once
 
+// https://www.khronos.org/registry/OpenGL-Refpages/es3.0/
+
+// 确保这些值为 0 以使 if 部分简写判断成立
+#if GL_NO_ERROR != 0 && GL_FALSE != 0
+#error
+#endif
+
+// 将 GL 错误转为枚举方便使用
+enum class GLErrors : GLenum
+{
+	NoError = GL_NO_ERROR,
+	InvalidEnum = GL_INVALID_ENUM,
+	InvalidValue = GL_INVALID_VALUE,
+	InvalidOperation = GL_INVALID_OPERATION,
+	InvalidFrameBufferOperation = GL_INVALID_FRAMEBUFFER_OPERATION,
+	OutOfMemory = GL_OUT_OF_MEMORY
+};
+
+#include <unordered_set>
+
+struct GLShaderManager
+{
+	// 存储最后一次发生的错误的文本信息
+	std::string lastErrorMessage;
+
+	// 存储已经创建成功的 shader 资源id
+	std::unordered_set<GLuint> shaders;
+
+	// 存储已经创建成功的 program 资源id
+	std::unordered_set<GLuint> programs;
+
+	// 加载指定类型 shader
+	// 返回 0 表示失败, 错误信息在 lastErrorMessage
+	inline GLuint LoadShader(GLenum const& type, const GLchar* const& src, GLint const& len)
+	{
+		// 先判断下这个, 如果先申请在判断到错误, 还要 glDeleteShader 太麻烦.
+		if (!src)
+		{
+			lastErrorMessage = "LoadShader error. arg: shaderSrc can't be nullptr";
+			return 0;
+		}
+
+		// 申请 shader 上下文. 返回 0 表示失败, type 只能是 GL_VERTEX_SHADER or GL_FRAGMENT_SHADER.
+		var shader = glCreateShader(type);
+		if (!shader)
+		{
+			lastErrorMessage = "LoadShader error. arg: type's value must be GL_VERTEX_SHADER or GL_FRAGMENT_SHADER";
+			return 0;
+		}
+
+		// args: target shader, array nums, char* array, len array
+		// 意思是可以支持由多个代码片段组合出来的字串, 避免拷贝它们
+		glShaderSource(shader, 1, &src, len ? &len : nullptr);
+
+		// 编译. 状态查询要用 glGetShaderiv
+		glCompileShader(shader);
+
+		// 通用容器变量
+		GLint v = 0;
+
+		// 查询是否编译成功
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &v);			// GL_TRUE, GL_FALSE
+
+		// 失败
+		if (!v)
+		{
+			// 查询日志信息文本长度
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &v);		// log message's len
+			if (v)
+			{
+				// 分配空间并复制
+				lastErrorMessage.resize(v);
+				glGetShaderInfoLog(shader, v, nullptr, lastErrorMessage.data());
+			}
+			// 删掉 shader 上下文
+			glDeleteShader(shader);
+			return 0;
+		}
+
+		// 成功. 放入容器并返回 id
+		shaders.emplace(shader);
+		return shader;
+	}
+
+	template<size_t len>
+	inline GLuint LoadShader(GLenum const& type, char const(&src)[len])
+	{
+		return LoadShader(type, src, len);
+	}
+
+	// 用 vs fs 链接出 program
+	// 返回 0 表示失败, 错误信息在 lastErrorMessage
+	inline GLuint LinkProgram(GLuint vs, GLuint fs)
+	{
+		// 确保 vs, fs 已存在
+		assert(shaders.find(vs) != shaders.cend());
+		assert(shaders.find(fs) != shaders.cend());
+
+		// 创建一个程序对象. 返回 0 表示失败
+		var program = glCreateProgram();
+		if (!program)
+		{
+			lastErrorMessage = "LoadProgram error. glCreateProgram fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+		xx::ScopeGuard sgProg([&] { glDeleteProgram(program); });
+
+		// 向 program 附加 vs
+		glAttachShader(program, vs);
+		if (var e = glGetError())
+		{
+			lastErrorMessage = "LoadProgram error. glAttachShader vs fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+
+		// 向 program 附加 ps
+		glAttachShader(program, fs);
+		if (var e = glGetError())
+		{
+			lastErrorMessage = "LoadProgram error. glAttachShader fs fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+
+		// 链接. 状态查询要用 glGetShaderiv
+		glLinkProgram(program);
+
+		// 通用容器变量
+		GLint v = 0;
+
+		// 查询链接是否成功
+		glGetProgramiv(program, GL_LINK_STATUS, &v);			// GL_TRUE, GL_FALSE
+
+		// 失败
+		if (!v)
+		{
+			// 查询日志信息文本长度
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &v);	// log message's len
+			if (v)
+			{
+				// 分配空间并复制
+				lastErrorMessage.resize(v);
+				glGetProgramInfoLog(program, v, nullptr, lastErrorMessage.data());
+			}
+
+			glDeleteProgram(program);
+			return 0;
+		}
+
+		// 成功. 放入容器. 撤销对 program 的自动回收函数 并返回 id
+		programs.emplace(program);
+		sgProg.Cancel();
+		return program;
+	}
+
+	~GLShaderManager()
+	{
+		for (var p : programs)
+		{
+			glDeleteProgram(p);
+		}
+		for (var s : programs)
+		{
+			glDeleteShader(s);
+		}
+	}
+};
+
 struct GLTest2
 {
-	inline static const char* vertex_shader_text = R"--(
+	inline static var vsSrc = R"--(
 #version 300 es
-uniform mat4 uMvp;
-attribute vec2 aPosition;
-attribute vec3 aColor;
-out vec3 oColor;
+layout(location = 0) in vec4 vPosition;
 void main()
 {
-    oColor = aColor;
-    gl_Position = uMvp * vec4(aPosition, 0.0, 1.0);
+   gl_Position = vPosition;
 }
 )--";
 
-	inline static const char* fragment_shader_text = R"--(
+	inline static var fsSrc = R"--(
 #version 300 es
 precision mediump float;
-in vec3 iColor;
-out vec3 oColor;
+out vec4 fragColor;
 void main()
 {
-    oColor = vec4(iColor, 1.0);
+   fragColor = vec4 ( 1.0, 0.0, 0.0, 1.0 );
 }
 )--";
 
-
-	GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-	GLint mvp_location, vpos_location, vcol_location;
-
-	struct Verticle
+	inline static GLfloat verts[] =
 	{
-		float x, y;
-		float r, g, b;
+		0.0f,   0.5f,  0.0f,
+		-0.5f, -0.5f,  0.0f,
+		0.5f,  -0.5f,  0.0f
 	};
-	Verticle vertices[3] =
-	{
-		{ -0.6f, -0.4f, 1.f, 0.f, 0.f },
-		{  0.6f, -0.4f, 0.f, 1.f, 0.f },
-		{   0.f,  0.6f, 0.f, 0.f, 1.f }
-	};
+
+	// shader 管理器
+	GLShaderManager sm;
+
+	// 存放编译后的编号以便 Update 中使用
+	GLuint program = 0;
 
 	GLTest2()
 	{
-		// todo: ES 3.0
+		var vs = sm.LoadShader(GL_VERTEX_SHADER, vsSrc);
+		assert(vs);
+		var fs = sm.LoadShader(GL_FRAGMENT_SHADER, fsSrc);
+		assert(fs);
+		program = sm.LinkProgram(vs, fs);
+		assert(program);
 
-		glGenBuffers(1, &vertex_buffer);	// malloc
-		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);	// set data type: vertexs
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);	// memcpy + hint: 1 write, N read
-
-		// load & compile vs
-		vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-		glCompileShader(vertex_shader);
-
-		// load & compile fs
-		fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-		glCompileShader(fragment_shader);
-
-		// combine & link
-		program = glCreateProgram();
-		glAttachShader(program, vertex_shader);
-		glAttachShader(program, fragment_shader);
-		glLinkProgram(program);
-
-		// locate properties
-		mvp_location = glGetUniformLocation(program, "MVP");
-		vpos_location = glGetAttribLocation(program, "vPos");
-		vcol_location = glGetAttribLocation(program, "vCol");
-
-		glEnableVertexAttribArray(vpos_location);	// enable property
-		glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0);	// set data's len & offset
-
-		glEnableVertexAttribArray(vcol_location);
-		glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 2));
+		glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 	}
 
 	inline void Update(int const& width, int const& height, float time) noexcept
@@ -83,16 +221,11 @@ void main()
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// todo: 矩阵相关函数换用 gameplay3d 的
-		mat4x4 m, p, mvp;
-		var ratio = width / (float)height;
-		mat4x4_identity(m);
-		mat4x4_rotate_Z(m, m, time);
-		mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-		mat4x4_mul(mvp, p, m);
-
 		glUseProgram(program);
-		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*)mvp);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, verts);
+		glEnableVertexAttribArray(0);
+
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 };

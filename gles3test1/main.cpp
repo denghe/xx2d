@@ -54,8 +54,8 @@ int main()
 	if (!gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress)) return -3;
 	glfwSwapInterval(1);
 
-	GLTest1 gltest;
-	//GLTest2 gltest;
+	//GLTest1 gltest;
+	GLTest2 gltest;
 	while (!glfwWindowShouldClose(wnd))
 	{
 		gltest.Update(width, height, (float)glfwGetTime());
