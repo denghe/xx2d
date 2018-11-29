@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+// gl es 3.0 test
+
 // https://www.khronos.org/registry/OpenGL-Refpages/es3.0/
 
 // 确保这些值为 0 以使 if 部分简写判断成立
@@ -117,13 +119,13 @@ struct GLShaderManager
 	inline GLuint LinkProgram(GLuint vs, GLuint fs)
 	{
 		// 确保 vs, fs 已存在
-		if (shaders.find(vs) != shaders.cend())
+		if (shaders.find(vs) == shaders.cend())
 		{
 			lastErrorMessage = "LoadProgram error. can't find vs = ";
 			lastErrorMessage.append(std::to_string(vs));
 			return 0;
 		}
-		if (shaders.find(fs) != shaders.cend())
+		if (shaders.find(fs) == shaders.cend())
 		{
 			lastErrorMessage = "LoadProgram error. can't find fs = ";
 			lastErrorMessage.append(std::to_string(fs));
@@ -233,6 +235,9 @@ void main()
 	// shader 管理器
 	GLShaderManager sm;
 
+	// 存储最后一次发生的错误的文本信息
+	std::string lastErrorMessage;
+
 	// 存放编译后的编号以便 Update 中使用
 	GLuint program = 0;
 
@@ -251,14 +256,59 @@ void main()
 
 	inline void Update(int const& width, int const& height, float time) noexcept
 	{
+		// 防止 glViewport 出错
+		assert(width >= 0 && height >= 0);
+
+		// 设置 gl 在窗口中的显示区域(  x + w/2, y + h/2  是 0, 0 点, 上下左右最大坐标值为 1 )
 		glViewport(0, 0, width, height);
+
+		// 使用 glClearColor 设的值来清屏
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		// 传0 是未定义行为
+		assert(program);
+
+		// 指定 program 到当前上下文
 		glUseProgram(program);
+		if (var e = glGetError())
+		{
+			lastErrorMessage.append("glUseProgram glGetError() = ");
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return;
+		}
 
+		// todo: 根据变量名来得到属性下标, 取代下面用到的 0
+
+		// 改上下文中的 program 的 通用顶点属性数
+		// 参数表: GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride,	const GLvoid * pointer
+		// index: 0, 与 shader 代码里的 layout(location = 0) 相对应
+		// size: 3, 与 verts 数组相对应. 虽然 in vec4 vPosition 长度是 4, 但是这样可以填充 vPosition 的前 3 个属性: x, y, z
+		// type: GL_FLOAT, 表明 verts 数组 的成员的数据类型为 float
+		// normalized: GL_FALSE, specifies whether fixed-point data values should be normalized (GL_TRUE) or converted directly as fixed-point values (GL_FALSE) when they are accessed. This parameter is ignored if type is GL_FIXED.
+		// stride: 0, 数据跨距为 0, 与 verts 数组里全是顶点数据的情况相符. 
+		// pointer: verts, 告之数据指针
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, verts);
-		glEnableVertexAttribArray(0);
+		if (var e = glGetError())
+		{
+			lastErrorMessage.append("glVertexAttribPointer glGetError() = ");
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return;
+		}
 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		// 启用顶点属性数组
+		glEnableVertexAttribArray(0);
+		if (var e = glGetError())
+		{
+			lastErrorMessage.append("glEnableVertexAttribArray glGetError() = ");
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return;
+		}
+
+		// 使用数组数据绘制图形. 
+		// 参数表: GLenum mode, GLint first, GLsizei count
+		// mode: GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES
+		// first: 指定数组中的数据的起始下标. 实际数据偏移量为 first * ((顶点数据个数 + 跨距个数) * sizeof(数据类型))
+		// count: 指定要绘制多少个顶点
+		glDrawArrays(GL_LINE_LOOP, 0, 3);
 	}
 };

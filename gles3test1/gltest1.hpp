@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+// gl es 2.0 test
 struct GLTest1
 {
 	inline static const char* vertex_shader_text = R"--(
@@ -40,8 +41,6 @@ void main()
 
 	GLTest1()
 	{
-		// todo: ES 3.0
-
 		glGenBuffers(1, &vertex_buffer);	// malloc
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);	// set data type: vertexs
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);	// memcpy + hint: 1 write, N read
