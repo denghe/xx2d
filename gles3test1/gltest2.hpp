@@ -191,6 +191,8 @@ struct GLShaderManager
 		return program;
 	}
 
+	// todo: glDetachShader 用于拆开一个 program. 可以替换 vs fs 再次链接
+
 	~GLShaderManager()
 	{
 		for (var p : programs)
