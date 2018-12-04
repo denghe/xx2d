@@ -122,8 +122,10 @@
     <ClInclude Include="..\xxlib\xx_sqlite.h" />
     <ClInclude Include="..\xxlib\xx_string.h" />
     <ClInclude Include="..\xxlib\xx_string.hpp" />
+    <ClInclude Include="glshadermanager.hpp" />
     <ClInclude Include="gltest1.hpp" />
     <ClInclude Include="gltest2.hpp" />
+    <ClInclude Include="gltest3.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

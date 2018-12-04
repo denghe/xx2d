@@ -9,8 +9,9 @@
 #define var decltype(auto)
 #include "xx.h"
 
-#include "gltest1.hpp"
-#include "gltest2.hpp"
+//#include "gltest1.hpp"
+//#include "gltest2.hpp"
+#include "gltest3.hpp"
 
 
 GLFWwindow* wnd = nullptr;
@@ -55,7 +56,8 @@ int main()
 	glfwSwapInterval(1);
 
 	//GLTest1 gltest;
-	GLTest2 gltest;
+	//GLTest2 gltest;
+	GLTest3 gltest;
 	while (!glfwWindowShouldClose(wnd))
 	{
 		gltest.Update(width, height, (float)glfwGetTime());

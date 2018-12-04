@@ -102,5 +102,7 @@
     </ClInclude>
     <ClInclude Include="gltest1.hpp" />
     <ClInclude Include="gltest2.hpp" />
+    <ClInclude Include="gltest3.hpp" />
+    <ClInclude Include="glshadermanager.hpp" />
   </ItemGroup>
 </Project>
