@@ -20,7 +20,7 @@ enum class GLErrors : GLenum
 
 #include <unordered_set>
 
-struct GLShaderManager
+struct GLManager
 {
 	// 存储最后一次发生的错误的文本信息
 	std::string lastErrorMessage;
@@ -30,6 +30,14 @@ struct GLShaderManager
 
 	// 存储已经创建成功的 program 资源id
 	std::unordered_set<GLuint> programs;
+
+	// 存储已经创建成功的 vertex buffer object 资源id
+	std::unordered_set<GLuint> vbos;
+
+
+	/****************************************************************************************************/
+	// shader
+	/****************************************************************************************************/
 
 	// 加载指定类型 shader
 	// 返回 0 表示失败, 错误信息在 lastErrorMessage
@@ -112,6 +120,11 @@ struct GLShaderManager
 		return LoadShader(GL_FRAGMENT_SHADER, src, len);
 	}
 
+
+	/****************************************************************************************************/
+	// program
+	/****************************************************************************************************/
+
 	// 用 vs fs 链接出 program
 	// 返回 0 表示失败, 错误信息在 lastErrorMessage
 	inline GLuint LinkProgram(GLuint vs, GLuint fs)
@@ -191,7 +204,47 @@ struct GLShaderManager
 
 	// todo: glDetachShader 用于拆开一个 program. 可以替换 vs fs 再次链接
 
-	~GLShaderManager()
+
+	/****************************************************************************************************/
+	// vertex buffer object
+	/****************************************************************************************************/
+
+	// target: GL_ARRAY_BUFFER, GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, or GL_UNIFORM_BUFFER. 
+	// usage:  GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY. 
+	inline GLuint LoadVBO(GLenum const& target, void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW)
+	{
+		GLuint vbo = 0;
+		glGenBuffers(1, &vbo);
+		if (!vbo)
+		{
+			lastErrorMessage = "LoadVBO error. glGenBuffers fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+		xx::ScopeGuard sgVbo([&] { glDeleteVertexArrays(1, &vbo); });
+
+		glBindBuffer(target, vbo);
+		if (var e = glGetError())
+		{
+			lastErrorMessage = "LoadVBO error. glBindBuffer fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+		glBufferData(target, len, data, usage);
+		if (var e = glGetError())
+		{
+			lastErrorMessage = "LoadVBO error. glBufferData fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+
+		vbos.emplace(vbo);
+		sgVbo.Cancel();
+		return vbo;
+	}
+
+
+	~GLManager()
 	{
 		for (var p : programs)
 		{
@@ -200,6 +253,10 @@ struct GLShaderManager
 		for (var s : programs)
 		{
 			glDeleteShader(s);
+		}
+		for (var o : vbos)
+		{
+			glDeleteVertexArrays(1, &o);
 		}
 	}
 };
