@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "glshadermanager.hpp"
+#include "glmanager.hpp"
 
 typedef struct
 {
@@ -329,7 +329,7 @@ void main()
 }
 )--";
 
-	GLShaderManager sm;
+	GLManager sm;
 	std::string lastErrorMessage;
 	GLuint program = 0;
 	// VBOs
