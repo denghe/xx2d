@@ -11,7 +11,8 @@
 
 //#include "gltest1.hpp"
 //#include "gltest2.hpp"
-#include "gltest3.hpp"
+//#include "gltest3.hpp"
+#include "gltest4.hpp"
 
 
 GLFWwindow* wnd = nullptr;
@@ -57,7 +58,8 @@ int main()
 
 	//GLTest1 gltest;
 	//GLTest2 gltest;
-	GLTest3 gltest;
+	//GLTest3 gltest;
+	GLTest4 gltest;
 	while (!glfwWindowShouldClose(wnd))
 	{
 		gltest.Update(width, height, (float)glfwGetTime());

@@ -126,6 +126,7 @@
     <ClInclude Include="gltest1.hpp" />
     <ClInclude Include="gltest2.hpp" />
     <ClInclude Include="gltest3.hpp" />
+    <ClInclude Include="gltest4.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
