@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "glshadermanager.hpp"
+#include "glmanager.hpp"
 
 struct GLTest2
 {
@@ -39,7 +39,7 @@ void main()
 	};
 
 	// shader 管理器
-	GLShaderManager sm;
+	GLManager gm;
 
 	// 存储最后一次发生的错误的文本信息
 	std::string lastErrorMessage;
@@ -49,11 +49,11 @@ void main()
 
 	GLTest2()
 	{
-		var vs = sm.LoadShader(GL_VERTEX_SHADER, vsSrc);
+		var vs = gm.LoadShader(GL_VERTEX_SHADER, vsSrc);
 		assert(vs);
-		var fs = sm.LoadShader(GL_FRAGMENT_SHADER, fsSrc);
+		var fs = gm.LoadShader(GL_FRAGMENT_SHADER, fsSrc);
 		assert(fs);
-		program = sm.LinkProgram(vs, fs);
+		program = gm.LinkProgram(vs, fs);
 		assert(program);
 
 		// 设置清屏颜色

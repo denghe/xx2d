@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "glshadermanager.hpp"
+#include "glmanager.hpp"
 
 #pragma pack(push, 1)
 struct Vec3f
@@ -56,29 +56,18 @@ void main()
 		0, 1, 2
 	};
 
-	GLShaderManager sm;
+	GLManager gm;
 	std::string lastErrorMessage;
 	GLuint program = 0;
-	std::array<GLuint, 2> vboIds;
-
-	void InitVBOs()
-	{
-		glGenBuffers(2, vboIds.data());						// batch malloc
-
-		glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);			// set data type: vertex array
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices.data(), GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);	// set data type: vertex index array
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices.data(), GL_STATIC_DRAW);
-	}
+	GLuint vertsId = 0, idxsId = 0;
 
 	void DrawPrimitiveWithVBOs()
 	{
 		GLuint offset = 0;
 
-		assert(vboIds[0] && vboIds[1]);
-		glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
+		assert(vertsId && idxsId);
+		glBindBuffer(GL_ARRAY_BUFFER, vertsId);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idxsId);
 
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
@@ -97,14 +86,16 @@ void main()
 
 	GLTest3()
 	{
-		var vs = sm.LoadShader(GL_VERTEX_SHADER, vsSrc);
+		var vs = gm.LoadShader(GL_VERTEX_SHADER, vsSrc);
 		assert(vs);
-		var fs = sm.LoadShader(GL_FRAGMENT_SHADER, fsSrc);
+		var fs = gm.LoadShader(GL_FRAGMENT_SHADER, fsSrc);
 		assert(fs);
-		program = sm.LinkProgram(vs, fs);
+		program = gm.LinkProgram(vs, fs);
 		assert(program);
-
-		InitVBOs();
+		vertsId = gm.LoadVBO(GL_ARRAY_BUFFER, vertices.data(), sizeof(vertices));
+		assert(vertsId);
+		idxsId = gm.LoadVBO(GL_ELEMENT_ARRAY_BUFFER, indices.data(), sizeof(indices));
+		assert(idxsId);
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	}
