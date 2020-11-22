@@ -151,7 +151,7 @@ struct GLManager
 			lastErrorMessage.append(std::to_string(glGetError()));
 			return 0;
 		}
-		xx::ScopeGuard sgProg([&] { glDeleteProgram(program); });
+		auto sgProg = xx::MakeScopeGuard([&] { glDeleteProgram(program); });
 
 		// 向 program 附加 vs
 		glAttachShader(program, vs);
@@ -221,7 +221,7 @@ struct GLManager
 			lastErrorMessage.append(std::to_string(glGetError()));
 			return 0;
 		}
-		xx::ScopeGuard sgVbo([&] { glDeleteVertexArrays(1, &vbo); });
+		auto sgVbo = xx::MakeScopeGuard([&] { glDeleteVertexArrays(1, &vbo); });
 
 		glBindBuffer(target, vbo);
 		if (var e = glGetError())
