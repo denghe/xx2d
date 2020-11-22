@@ -1,8 +1,12 @@
-﻿#include "xx_ptr.h"
-#include "glfw/glfw3.h"
-#include "glad/glad.h"
+﻿#include "AppDelegate.h"
 
 int main() {
-
-	return 0;
+	gAppDelegate.Emplace();
+	int r = gAppDelegate->Run(1280, 720, false);
+	if (r) {
+		std::cout << gAppDelegate->lastErrorNumber << std::endl;
+		std::cout << gAppDelegate->lastErrorMessage << std::endl;
+	}
+	gAppDelegate.Reset();
+	return r;
 }

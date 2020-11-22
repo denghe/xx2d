@@ -2,11 +2,16 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="..\glad\glad.c" />
+    <ClCompile Include="AppDelegate.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">
       <UniqueIdentifier>{e722cbb7-e937-4351-993f-01d0343c0234}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{1c5b57cf-38f7-444e-b9e2-05b45edee3f4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -27,6 +32,15 @@
     </ClInclude>
     <ClInclude Include="..\xxlib\xx_chrono.h">
       <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="AppDelegate.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="PlatformMacros.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="Structs.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

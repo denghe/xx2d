@@ -19,6 +19,7 @@
 #include <array>
 #include <sstream>
 #include <iostream>
+#include <filesystem>
 
 #ifndef NDEBUG
 #define XX_NOINLINE
