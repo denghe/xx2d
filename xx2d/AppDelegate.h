@@ -8,43 +8,11 @@
 #include "Structs.h"
 #include <stack>
 
-/**Enum the preallocated vertex attribute. */
-enum
-{
-	/**Index 0 will be used as Position.*/
-	VERTEX_ATTRIB_POSITION,
-	/**Index 1 will be used as Color.*/
-	VERTEX_ATTRIB_COLOR,
-	/**Index 2 will be used as Tex coord unit 0.*/
-	VERTEX_ATTRIB_TEX_COORD,
-	/**Index 3 will be used as Tex coord unit 1.*/
-	VERTEX_ATTRIB_TEX_COORD1,
-	/**Index 4 will be used as Tex coord unit 2.*/
-	VERTEX_ATTRIB_TEX_COORD2,
-	/**Index 5 will be used as Tex coord unit 3.*/
-	VERTEX_ATTRIB_TEX_COORD3,
-	/**Index 6 will be used as Normal.*/
-	VERTEX_ATTRIB_NORMAL,
-	/**Index 7 will be used as Blend weight for hardware skin.*/
-	VERTEX_ATTRIB_BLEND_WEIGHT,
-	/**Index 8 will be used as Blend index.*/
-	VERTEX_ATTRIB_BLEND_INDEX,
-	/**Index 9 will be used as tangent.*/
-	VERTEX_ATTRIB_TANGENT,
-	/**Index 10 will be used as Binormal.*/
-	VERTEX_ATTRIB_BINORMAL,
-	VERTEX_ATTRIB_MAX,
-
-	// backward compatibility
-	VERTEX_ATTRIB_TEX_COORDS = VERTEX_ATTRIB_TEX_COORD,
-};
-
 struct AppDelegate {
-	AppDelegate();
 	AppDelegate(AppDelegate const&) = delete;
 	AppDelegate& operator=(AppDelegate const&) = delete;
-	virtual ~AppDelegate();
-	virtual int Init();
+	AppDelegate();
+	~AppDelegate();
 	int Run(int const& width, int const& height, bool const& fullScreen);
 
 	void onGLFWError(int errorID, const char* errorDesc);
@@ -59,15 +27,15 @@ struct AppDelegate {
 	void onGLFWWindowIconifyCallback(int iconified);
 	void onGLFWWindowFocusCallback(int focused);
 
-	GLFWmonitor* monitor = nullptr;
-	GLFWwindow* window = nullptr;
-
 	int lastErrorNumber = 0;
 	std::string lastErrorMessage;
 
 	int width = 0, height = 0;
 	bool fullScreen = false;
+	double beginTime = 0;
+	double lastTime = 0;
 	double delta = 0;
+	uint64_t numFrames = 0;
 	std::filesystem::path resRootPath;
 
 	static const int VBO_SIZE = 65536;
@@ -83,6 +51,12 @@ struct AppDelegate {
 	std::stack<Mat4> _modelViewMatrixStack;
 	std::vector< std::stack<Mat4> > _projectionMatrixStackList;
 	std::stack<Mat4> _textureMatrixStack;
+
+	int64_t _drawnBatches;
+	int64_t _drawnVertices;
+
+	GLFWmonitor* _monitor = nullptr;
+	GLFWwindow* _window = nullptr;
 };
 
 inline xx::Shared<AppDelegate> gAppDelegate;

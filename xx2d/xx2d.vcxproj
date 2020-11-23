@@ -94,6 +94,7 @@
   <ItemGroup>
     <ClCompile Include="AppDelegate.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Structs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\xxlib\xx_chrono.h" />
