@@ -10,6 +10,7 @@ struct Env {
 
 	int width = 1280;
 	int height = 720;
+	int vsync = 1;	// 0: 0ff
 	bool fullScreen = false;
 	std::string title = "gles3test2 fps: ";
 	std::filesystem::path rootPath;
@@ -93,7 +94,7 @@ struct Env {
 
 		glfwMakeContextCurrent(wnd);
 		glfwGetWindowSize(wnd, &width, &height);
-		//glfwSwapInterval(1);
+		glfwSwapInterval(vsync);
 
 		// 回调转到成员函数
 		glfwSetMouseButtonCallback(wnd, [](auto w, auto b, auto a, auto m) { instance->onMouseButtonCallback(b, a, m); });
@@ -334,23 +335,24 @@ struct Vec3fColor4f
 	Color4f color4f;
 };
 
-struct ShaderKiller {
+struct ShaderBase {
 	static void Release(GLuint const& n) {
 		glDeleteShader(n);
 	}
 };
-struct ProgramKiller {
+struct ProgramBase {
 	static void Release(GLuint const& n) {
 		glDeleteProgram(n);
 	}
 };
-struct BufferKiller {
+struct BufferBase {
 	static void Release(GLuint const& n) {
 		glDeleteBuffers(1, &n);
 	}
+	GLsizei len = 0;
 };
-template<typename ResKiller>
-struct ResHolder {
+template<typename ResBase>
+struct ResHolder : ResBase {
 	GLuint n = 0;
 	XX_FORCEINLINE operator GLuint const&() const { return n; }
 
@@ -370,7 +372,7 @@ struct ResHolder {
 	}
 	XX_FORCEINLINE void Reset() {
 		if (n) {
-			ResKiller::Release(n);
+			this->ResBase::Release(n);
 		}
 	}
 	~ResHolder() {
@@ -378,9 +380,9 @@ struct ResHolder {
 	}
 };
 
-using Shader = ResHolder<ShaderKiller>;
-using Program = ResHolder<ProgramKiller>;
-using Buffer = ResHolder<BufferKiller>;
+using Shader = ResHolder<ShaderBase>;
+using Program = ResHolder<ProgramBase>;
+using Buffer = ResHolder<BufferBase>;
 
 struct Game : Env<Game> {
 
@@ -396,7 +398,7 @@ struct Game : Env<Game> {
 
 	Shader vs, fs;
 	Program ps;
-	Buffer verts, idxs;
+	Buffer vb, ib;
 
 	inline int GLInit() {
 		vs = LoadVertexShader({ R"--(
@@ -427,17 +429,39 @@ void main()
 		ps = LinkProgram(vs, fs);
 		if (!ps) return __LINE__;
 
-		verts = LoadVertices(vertices.data(), sizeof(vertices));
-		if (!verts) return __LINE__;
+		vb = LoadVertices(vertices.data(), sizeof(vertices));
+		if (!vb) return __LINE__;
 
-		idxs = LoadIndexes(indices.data(), sizeof(indices));
-		if (!idxs) return __LINE__;
+		ib = LoadIndexes(indices.data(), sizeof(indices));
+		if (!ib) return __LINE__;
+		ib.len = sizeof(indices);
 
 		glDisable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
 		glClearColor(0, 0, 0, 1);
 
 		return 0;
+	}
+
+	void Draw(Buffer const& vb, Buffer const& ib) {
+		glUseProgram(ps);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vb);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+
+		glVertexAttribPointer(0, sizeof(Vec3f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (GLvoid*)offsetof(Vec3fColor4f, vec3f));
+		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (GLvoid*)offsetof(Vec3fColor4f, color4f));
+
+		glDrawElements(GL_TRIANGLES, ib.len, GL_UNSIGNED_SHORT, 0);
+
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 	XX_FORCEINLINE void Update() {
@@ -449,24 +473,7 @@ void main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		//glDepthMask(false);
 
-		glUseProgram(ps);
-
-		glBindBuffer(GL_ARRAY_BUFFER, verts);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idxs);
-
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-
-		glVertexAttribPointer(0, sizeof(Vec3f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (GLvoid*)offsetof(Vec3fColor4f, vec3f));
-		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (GLvoid*)offsetof(Vec3fColor4f, color4f));
-
-		glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_SHORT, 0);
-
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		Draw(vb, ib);
 	}
 };
 
