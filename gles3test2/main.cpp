@@ -3,6 +3,7 @@
 #include "glew/glew.h"
 #include "glfw/glfw3.h"
 
+
 template<typename T>
 struct Env {
 	inline static Env* instance = nullptr;
@@ -333,6 +334,54 @@ struct Vec3fColor4f
 	Color4f color4f;
 };
 
+struct ShaderKiller {
+	static void Release(GLuint const& n) {
+		glDeleteShader(n);
+	}
+};
+struct ProgramKiller {
+	static void Release(GLuint const& n) {
+		glDeleteProgram(n);
+	}
+};
+struct BufferKiller {
+	static void Release(GLuint const& n) {
+		glDeleteBuffers(1, &n);
+	}
+};
+template<typename ResKiller>
+struct ResHolder {
+	GLuint n = 0;
+	XX_FORCEINLINE operator GLuint const&() const { return n; }
+
+	ResHolder() = default;
+	ResHolder(ResHolder const&) = delete;
+	ResHolder& operator=(ResHolder const&) = delete;
+
+	ResHolder(ResHolder&& o) : n(o.n) {
+		o.n = 0;
+	}
+	ResHolder& operator=(ResHolder&& o) {
+		std::swap(n, o.n);
+	}
+	XX_FORCEINLINE void operator=(GLuint const& n) {
+		Reset();
+		this->n = n;
+	}
+	XX_FORCEINLINE void Reset() {
+		if (n) {
+			ResKiller::Release(n);
+		}
+	}
+	~ResHolder() {
+		Reset();
+	}
+};
+
+using Shader = ResHolder<ShaderKiller>;
+using Program = ResHolder<ProgramKiller>;
+using Buffer = ResHolder<BufferKiller>;
+
 struct Game : Env<Game> {
 
 	inline static const std::array<Vec3fColor4f, 3> vertices = {
@@ -345,15 +394,11 @@ struct Game : Env<Game> {
 		0, 1, 2
 	};
 
-	// todo: 针对下面这些野 id 的类封装. 通过析构函数来回收资源, 自动 glDeleteShader glDeleteProgram glDeleteBuffers
-	GLuint vs = 0, fs = 0, ps = 0;
-	GLuint verts = 0, idxs = 0;
+	Shader vs, fs;
+	Program ps;
+	Buffer verts, idxs;
 
 	inline int GLInit() {
-		glDisable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-		glClearColor(0, 0, 0, 1);
-
 		vs = LoadVertexShader({ R"--(
 #version 300 es
 layout(location = 0) in vec4 aPosition;
@@ -388,6 +433,10 @@ void main()
 		idxs = LoadIndexes(indices.data(), sizeof(indices));
 		if (!idxs) return __LINE__;
 
+		glDisable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
+		glClearColor(0, 0, 0, 1);
+
 		return 0;
 	}
 
@@ -408,8 +457,8 @@ void main()
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 
-		glVertexAttribPointer(0, sizeof(Vec3f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), 0);
-		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (void*)sizeof(Vec3f));
+		glVertexAttribPointer(0, sizeof(Vec3f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (GLvoid*)offsetof(Vec3fColor4f, vec3f));
+		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (GLvoid*)offsetof(Vec3fColor4f, color4f));
 
 		glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_SHORT, 0);
 
