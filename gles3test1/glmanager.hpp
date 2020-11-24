@@ -191,8 +191,6 @@ struct GLManager
 				lastErrorMessage.resize(v);
 				glGetProgramInfoLog(program, v, nullptr, lastErrorMessage.data());
 			}
-
-			glDeleteProgram(program);
 			return 0;
 		}
 

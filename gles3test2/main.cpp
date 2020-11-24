@@ -3,9 +3,10 @@
 #include "glew/glew.h"
 #include "glfw/glfw3.h"
 
-struct Env;
-inline static Env* gEnv = nullptr;
+template<typename T>
 struct Env {
+	inline static Env* instance = nullptr;
+
 	int width = 1280;
 	int height = 720;
 	bool fullScreen = false;
@@ -24,6 +25,7 @@ struct Env {
 	double lastTime = 0;
 	float delta = 0;
 	uint64_t numFrames = 0;
+	double fpsTimer = 0;
 
 	inline void onGLFWError(int num, const char* msg) {
 		lastErrorNumber = num;
@@ -54,17 +56,17 @@ struct Env {
 	inline void onWindowFocusCallback(int focused) {}
 
 	Env() {
-		gEnv = this;
+		instance = this;
 	}
-	~Env() {
-		gEnv = nullptr;
+	virtual ~Env() {
+		instance = nullptr;
 	}
 
 	inline int Run() {
 		/************************************************************************************************/
 		// 初始化窗口容器
 
-		glfwSetErrorCallback([](auto n, auto m) { gEnv->onGLFWError(n, m); });
+		glfwSetErrorCallback([](auto n, auto m) { instance->onGLFWError(n, m); });
 		if (glfwInit() == GLFW_FALSE) return __LINE__;
 		auto sg = xx::MakeScopeGuard([] {
 			glfwTerminate();
@@ -90,19 +92,19 @@ struct Env {
 
 		glfwMakeContextCurrent(wnd);
 		glfwGetWindowSize(wnd, &width, &height);
-		glfwSwapInterval(1);
+		//glfwSwapInterval(1);
 
 		// 回调转到成员函数
-		glfwSetMouseButtonCallback(wnd, [](auto w, auto b, auto a, auto m) { gEnv->onMouseButtonCallback(b, a, m); });
-		glfwSetCursorPosCallback(wnd, [](auto w, auto x, auto y) { gEnv->onCursorPosCallback(x, y); });
-		glfwSetScrollCallback(wnd, [](auto w, auto x, auto y) { gEnv->onScrollCallback(x, y); });
-		glfwSetCharCallback(wnd, [](auto w, auto c) { gEnv->onCharCallback(c); });
-		glfwSetKeyCallback(wnd, [](auto w, auto k, auto s, auto a, auto m) { gEnv->onKeyCallback(k, s, a, m); });
-		glfwSetWindowPosCallback(wnd, [](auto w, auto x, auto y) { gEnv->onWindowPosCallback(x, y); });
-		glfwSetFramebufferSizeCallback(wnd, [](auto w_, auto w, auto h) { gEnv->onFramebufferSizeCallback(w, h); });
-		glfwSetWindowSizeCallback(wnd, [](auto w_, auto w, auto h) { gEnv->onWindowSizeCallback(w, h); });
-		glfwSetWindowIconifyCallback(wnd, [](auto w, auto i) { gEnv->onWindowIconifyCallback(i); });
-		glfwSetWindowFocusCallback(wnd, [](auto w, auto f) { gEnv->onWindowFocusCallback(f); });
+		glfwSetMouseButtonCallback(wnd, [](auto w, auto b, auto a, auto m) { instance->onMouseButtonCallback(b, a, m); });
+		glfwSetCursorPosCallback(wnd, [](auto w, auto x, auto y) { instance->onCursorPosCallback(x, y); });
+		glfwSetScrollCallback(wnd, [](auto w, auto x, auto y) { instance->onScrollCallback(x, y); });
+		glfwSetCharCallback(wnd, [](auto w, auto c) { instance->onCharCallback(c); });
+		glfwSetKeyCallback(wnd, [](auto w, auto k, auto s, auto a, auto m) { instance->onKeyCallback(k, s, a, m); });
+		glfwSetWindowPosCallback(wnd, [](auto w, auto x, auto y) { instance->onWindowPosCallback(x, y); });
+		glfwSetFramebufferSizeCallback(wnd, [](auto w_, auto w, auto h) { instance->onFramebufferSizeCallback(w, h); });
+		glfwSetWindowSizeCallback(wnd, [](auto w_, auto w, auto h) { instance->onWindowSizeCallback(w, h); });
+		glfwSetWindowIconifyCallback(wnd, [](auto w, auto i) { instance->onWindowIconifyCallback(i); });
+		glfwSetWindowFocusCallback(wnd, [](auto w, auto f) { instance->onWindowFocusCallback(f); });
 
 		/************************************************************************************************/
 		// 初始化 opengl
@@ -119,22 +121,20 @@ struct Env {
 			return lastErrorNumber;
 		}
 
-		GLInit();
+		if (int r = ((T*)this)->GLInit()) return r;
 
 		/************************************************************************************************/
 		// 开始帧循环
 
 		beginTime = lastTime = xx::NowSteadyEpochSeconds();
-		BeginLoop();
+		fpsTimer = lastTime + 0.5;
 
 		while (!glfwWindowShouldClose(wnd)) {
 			++numFrames;
 			glfwPollEvents();
 
-			GLClear();
-
 			delta = (float)xx::NowSteadyEpochSeconds(lastTime);
-			Update();
+			((T*)this)->Update();
 
 			glfwSwapBuffers(wnd);
 		}
@@ -143,24 +143,6 @@ struct Env {
 	}
 
 
-
-
-	inline void GLInit() {
-		// todo
-	}
-
-	inline void BeginLoop() {
-		fpsTimer = lastTime + 0.5;
-	}
-
-	inline void GLClear() {
-		glDepthMask(true);
-		glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDepthMask(false);
-	}
-
-	double fpsTimer = 0;
 	inline void DrawFps() {
 		if (lastTime > fpsTimer) {
 			fpsTimer = lastTime + 0.5;
@@ -168,16 +150,280 @@ struct Env {
 		}
 	}
 
-	inline void Update() {
-		DrawFps();
 
-		// todo
+	std::vector<GLchar const*> codes;
+	std::vector<GLint> codeLens;
+
+	// 加载 shader 代码段. 返回 0 代表出错
+	inline GLuint LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
+		// 前置检查
+		if (!codes_.size() || !(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER)) {
+			lastErrorNumber = __LINE__;
+			lastErrorMessage = "LoadShader if (!codes.size() || !(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER))";
+			return 0;
+		}
+
+		// 申请 shader 上下文. 返回 0 表示失败, 参数：GL_VERTEX_SHADER 或 GL_FRAGMENT_SHADER
+		auto&& shader = glCreateShader(type);
+		if (!shader) {
+			lastErrorNumber = __LINE__;
+			lastErrorMessage = "LoadShader error. glGetError() = " + std::to_string(glGetError());
+			return 0;
+		}
+		auto&& sg = xx::MakeScopeGuard([&] {
+			glDeleteShader(shader);
+			});
+
+		// 填充 codes & codeLens
+		codes.resize(codes_.size());
+		codeLens.resize(codes_.size());
+		auto ss = codes_.begin();
+		for (size_t i = 0; i < codes.size(); ++i) {
+			codes[i] = (GLchar const*)ss[i].data();
+			codeLens[i] = (GLint)ss[i].size();
+		}
+
+		// 参数：目标 shader, 代码段数, 段数组, 段长度数组
+		glShaderSource(shader, (GLsizei)codes_.size(), codes.data(), codeLens.data());
+
+		// 编译
+		glCompileShader(shader);
+
+		// 状态容器
+		GLint r = GL_FALSE;
+
+		// 查询是否编译成功
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &r);
+
+		// 失败
+		if (!r) {
+			// 查询日志信息文本长度
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &r);
+			if (r) {
+				lastErrorNumber = __LINE__;
+				// 复制错误文本
+				lastErrorMessage.resize(r);
+				glGetShaderInfoLog(shader, r, nullptr, lastErrorMessage.data());
+			}
+			return 0;
+		}
+
+		sg.Cancel();
+		return shader;
+	}
+
+	inline GLuint LoadVertexShader(std::initializer_list<std::string_view>&& codes_) {
+		return LoadShader(GL_VERTEX_SHADER, std::move(codes_));
+	}
+	inline GLuint LoadFragmentShader(std::initializer_list<std::string_view>&& codes_) {
+		return LoadShader(GL_FRAGMENT_SHADER, std::move(codes_));
+	}
+
+	// 用 vs fs 链接出 program. 返回 0 表示失败
+	inline GLuint LinkProgram(GLuint const& vs, GLuint const& fs) {
+		// 创建一个 program. 返回 0 表示失败
+		auto program = glCreateProgram();
+		if (!program) {
+			lastErrorNumber = __LINE__;
+			lastErrorMessage = "LoadProgram error. glCreateProgram fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+		auto sg = xx::MakeScopeGuard([&] { glDeleteProgram(program); });
+
+		// 向 program 附加 vs
+		glAttachShader(program, vs);
+		if (auto e = glGetError()) {
+			lastErrorNumber = __LINE__;
+			lastErrorMessage = "LoadProgram error. glAttachShader vs fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+
+		// 向 program 附加 ps
+		glAttachShader(program, fs);
+		if (auto e = glGetError()) {
+			lastErrorNumber = __LINE__;
+			lastErrorMessage = "LoadProgram error. glAttachShader fs fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+
+		// 链接
+		glLinkProgram(program);
+
+		// 状态容器
+		GLint r = GL_FALSE;
+
+		// 查询链接是否成功
+		glGetProgramiv(program, GL_LINK_STATUS, &r);
+
+		// 失败
+		if (!r) {
+			// 查询日志信息文本长度
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &r);
+			if (r) {
+				// 复制错误文本
+				lastErrorMessage.resize(r);
+				glGetProgramInfoLog(program, r, nullptr, lastErrorMessage.data());
+			}
+			return 0;
+		}
+
+		sg.Cancel();
+		return program;
+	}
+
+	// target: GL_ARRAY_BUFFER, GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, or GL_UNIFORM_BUFFER. 
+	// usage:  GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY. 
+	inline GLuint LoadBuffer(GLenum const& target, void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		GLuint vbo = 0;
+		// 申请
+		glGenBuffers(1, &vbo);
+		if (!vbo) {
+			lastErrorNumber = __LINE__;
+			lastErrorMessage = "LoadVBO error. glGenBuffers fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+		auto sgVbo = xx::MakeScopeGuard([&] { glDeleteVertexArrays(1, &vbo); });
+
+		// 类型绑定
+		glBindBuffer(target, vbo);
+		if (auto e = glGetError()) {
+			lastErrorNumber = __LINE__;
+			lastErrorMessage = "LoadVBO error. glBindBuffer fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+
+		// 数据填充
+		glBufferData(target, len, data, usage);
+		if (auto e = glGetError()) {
+			lastErrorNumber = __LINE__;
+			lastErrorMessage = "LoadVBO error. glBufferData fail, glGetError() = ";
+			lastErrorMessage.append(std::to_string(glGetError()));
+			return 0;
+		}
+
+		sgVbo.Cancel();
+		return vbo;
+	}
+
+	inline GLuint LoadVertices(void const* const& data, GLsizeiptr const& len) {
+		return LoadBuffer(GL_ARRAY_BUFFER, data, len);
+	}
+	inline GLuint LoadIndexes(void const* const& data, GLsizeiptr const& len) {
+		return LoadBuffer(GL_ELEMENT_ARRAY_BUFFER, data, len);
+	}
+};
+
+
+struct Vec3f
+{
+	GLfloat x, y, z;
+};
+struct Color4f
+{
+	GLfloat r, g, b, a;
+};
+struct Vec3fColor4f
+{
+	Vec3f vec3f;
+	Color4f color4f;
+};
+
+struct Game : Env<Game> {
+
+	inline static const std::array<Vec3fColor4f, 3> vertices = {
+		Vec3fColor4f{{-0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v0 c0
+		Vec3fColor4f{{-1.0f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v1 c1
+		Vec3fColor4f{{ 0.0f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+	};
+
+	inline static const std::array<GLushort, 3> indices = {
+		0, 1, 2
+	};
+
+	// todo: 针对下面这些野 id 的类封装. 通过析构函数来回收资源, 自动 glDeleteShader glDeleteProgram glDeleteBuffers
+	GLuint vs = 0, fs = 0, ps = 0;
+	GLuint verts = 0, idxs = 0;
+
+	inline int GLInit() {
+		glDisable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
+		glClearColor(0, 0, 0, 1);
+
+		vs = LoadVertexShader({ R"--(
+#version 300 es
+layout(location = 0) in vec4 aPosition;
+layout(location = 1) in vec4 aColor;
+out vec4 vColor;
+void main()
+{
+   vColor = aColor;
+   gl_Position = aPosition;
+}
+)--" });
+		if (!vs) return __LINE__;
+
+		fs = LoadFragmentShader({ R"--(
+#version 300 es
+precision mediump float;
+in vec4 vColor;
+out vec4 oFragColor;
+void main()
+{
+   oFragColor = vColor;
+}
+)--" });
+		if (!fs) return __LINE__;
+
+		ps = LinkProgram(vs, fs);
+		if (!ps) return __LINE__;
+
+		verts = LoadVertices(vertices.data(), sizeof(vertices));
+		if (!verts) return __LINE__;
+
+		idxs = LoadIndexes(indices.data(), sizeof(indices));
+		if (!idxs) return __LINE__;
+
+		return 0;
+	}
+
+	XX_FORCEINLINE void Update() {
+		DrawFps();
+		glViewport(0, 0, width, height);
+
+		//glDepthMask(true);
+		//glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//glDepthMask(false);
+
+		glUseProgram(ps);
+
+		glBindBuffer(GL_ARRAY_BUFFER, verts);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idxs);
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+
+		glVertexAttribPointer(0, sizeof(Vec3f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), 0);
+		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (void*)sizeof(Vec3f));
+
+		glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_SHORT, 0);
+
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 };
 
 int main() {
-	Env e;
-	if (int r = e.Run()) {
-		std::cout << "e.Run() = " << e.lastErrorNumber << ", " << e.lastErrorMessage << std::endl;
+	Game g;
+	if (int r = g.Run()) {
+		std::cout << "g.Run() r = " << r << ", lastErrorNumber = " << g.lastErrorNumber << ", lastErrorMessage = " << g.lastErrorMessage << std::endl;
 	}
 }
