@@ -124,19 +124,16 @@ struct Env {
 		/************************************************************************************************/
 		// 开始帧循环
 
-		lastTime = xx::NowSteadyEpochSeconds();
-		beginTime = lastTime - 0.0000000000000001;
+		beginTime = lastTime = xx::NowSteadyEpochSeconds();
+		BeginLoop();
+
 		while (!glfwWindowShouldClose(wnd)) {
-			delta = (float)xx::NowSteadyEpochSeconds(lastTime);
 			++numFrames;
-			glfwSetWindowTitle(wnd, (title + std::to_string((double)numFrames / (lastTime - beginTime))).c_str());
 			glfwPollEvents();
 
-			glDepthMask(true);
-			glClearColor(0, 0, 0, 1);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glDepthMask(false);
+			GLClear();
 
+			delta = (float)xx::NowSteadyEpochSeconds(lastTime);
 			Update();
 
 			glfwSwapBuffers(wnd);
@@ -146,10 +143,34 @@ struct Env {
 	}
 
 
+
+
 	inline void GLInit() {
 		// todo
 	}
+
+	inline void BeginLoop() {
+		fpsTimer = lastTime + 0.5;
+	}
+
+	inline void GLClear() {
+		glDepthMask(true);
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDepthMask(false);
+	}
+
+	double fpsTimer = 0;
+	inline void DrawFps() {
+		if (lastTime > fpsTimer) {
+			fpsTimer = lastTime + 0.5;
+			glfwSetWindowTitle(wnd, (title + std::to_string((double)numFrames / (lastTime - beginTime))).c_str());
+		}
+	}
+
 	inline void Update() {
+		DrawFps();
+
 		// todo
 	}
 };
