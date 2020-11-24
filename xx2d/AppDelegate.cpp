@@ -118,6 +118,8 @@ int AppDelegate::Run(int const& width_, int const& height_, bool const& fullScre
 
 
 		// todo: draw? render?
+
+		glfwSwapBuffers(_window);
 	}
 	//...
 	return 0;
