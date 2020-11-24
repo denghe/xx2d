@@ -25,7 +25,8 @@ struct Env {
 	float h = 0;
 	double beginTime = 0;
 	double lastTime = 0;
-	float delta = 0;
+	float totalElapsedSeconds = 0;
+	float elapsedSeconds = 0;
 	uint64_t numFrames = 0;
 	double fpsTimer = 0;
 
@@ -93,8 +94,10 @@ struct Env {
 			});
 
 		glfwMakeContextCurrent(wnd);
-		glfwGetWindowSize(wnd, &width, &height);
 		glfwSwapInterval(vsync);
+		glfwGetWindowSize(wnd, &width, &height);
+		w = (float)width;
+		h = (float)height;
 
 		// 回调转到成员函数
 		glfwSetMouseButtonCallback(wnd, [](auto w, auto b, auto a, auto m) { instance->onMouseButtonCallback(b, a, m); });
@@ -135,7 +138,8 @@ struct Env {
 			++numFrames;
 			glfwPollEvents();
 
-			delta = (float)xx::NowSteadyEpochSeconds(lastTime);
+			elapsedSeconds = (float)xx::NowSteadyEpochSeconds(lastTime);
+			totalElapsedSeconds = (float)(lastTime - beginTime);
 			((T*)this)->Update();
 
 			glfwSwapBuffers(wnd);
@@ -321,17 +325,14 @@ struct Env {
 };
 
 
-struct Vec3f
-{
-	GLfloat x, y, z;
+struct Vec4f {
+	GLfloat x, y, z, w;
 };
-struct Color4f
-{
+struct Color4f {
 	GLfloat r, g, b, a;
 };
-struct Vec3fColor4f
-{
-	Vec3f vec3f;
+struct Vec4fColor4f {
+	Vec4f vec4f;
 	Color4f color4f;
 };
 
@@ -354,7 +355,7 @@ struct BufferBase {
 template<typename ResBase>
 struct ResHolder : ResBase {
 	GLuint n = 0;
-	XX_FORCEINLINE operator GLuint const&() const { return n; }
+	XX_FORCEINLINE operator GLuint const& () const { return n; }
 
 	ResHolder() = default;
 	ResHolder(ResHolder const&) = delete;
@@ -384,17 +385,126 @@ using Shader = ResHolder<ShaderBase>;
 using Program = ResHolder<ProgramBase>;
 using Buffer = ResHolder<BufferBase>;
 
+
+struct Mat4 {
+	float m[16]{};
+	float const& operator[](int const& idx) const { return m[idx]; }
+	float& operator[](int const& idx) { return m[idx]; }
+
+	Mat4() = default;
+	Mat4(std::initializer_list<float> fs) {
+		for (auto i = 0; i < fs.size(); ++i) {
+			m[i] = *(fs.begin() + i);
+		}
+	}
+
+	inline static Mat4 Multiply(const Mat4& m1, const Mat4& m2) {
+		Mat4 r;
+		r[0] = m1[0] * m2[0] + m1[4] * m2[1] + m1[8] * m2[2] + m1[12] * m2[3];
+		r[1] = m1[1] * m2[0] + m1[5] * m2[1] + m1[9] * m2[2] + m1[13] * m2[3];
+		r[2] = m1[2] * m2[0] + m1[6] * m2[1] + m1[10] * m2[2] + m1[14] * m2[3];
+		r[3] = m1[3] * m2[0] + m1[7] * m2[1] + m1[11] * m2[2] + m1[15] * m2[3];
+
+		r[4] = m1[0] * m2[4] + m1[4] * m2[5] + m1[8] * m2[6] + m1[12] * m2[7];
+		r[5] = m1[1] * m2[4] + m1[5] * m2[5] + m1[9] * m2[6] + m1[13] * m2[7];
+		r[6] = m1[2] * m2[4] + m1[6] * m2[5] + m1[10] * m2[6] + m1[14] * m2[7];
+		r[7] = m1[3] * m2[4] + m1[7] * m2[5] + m1[11] * m2[6] + m1[15] * m2[7];
+
+		r[8] = m1[0] * m2[8] + m1[4] * m2[9] + m1[8] * m2[10] + m1[12] * m2[11];
+		r[9] = m1[1] * m2[8] + m1[5] * m2[9] + m1[9] * m2[10] + m1[13] * m2[11];
+		r[10] = m1[2] * m2[8] + m1[6] * m2[9] + m1[10] * m2[10] + m1[14] * m2[11];
+		r[11] = m1[3] * m2[8] + m1[7] * m2[9] + m1[11] * m2[10] + m1[15] * m2[11];
+
+		r[12] = m1[0] * m2[12] + m1[4] * m2[13] + m1[8] * m2[14] + m1[12] * m2[15];
+		r[13] = m1[1] * m2[12] + m1[5] * m2[13] + m1[9] * m2[14] + m1[13] * m2[15];
+		r[14] = m1[2] * m2[12] + m1[6] * m2[13] + m1[10] * m2[14] + m1[14] * m2[15];
+		r[15] = m1[3] * m2[12] + m1[7] * m2[13] + m1[11] * m2[14] + m1[15] * m2[15];
+		return r;
+	}
+
+	inline void OrthographicOffCenter(float const& left, float const& right, float const& bottom, float const& top, float const& zNearPlane, float const& zFarPlane) {
+		assert(right != left);
+		assert(top != bottom);
+		assert(zFarPlane != zNearPlane);
+
+		memset(m, 0, sizeof(m));
+		m[0] = 2 / (right - left);
+		m[5] = 2 / (top - bottom);
+		m[10] = 2 / (zNearPlane - zFarPlane);
+
+		m[12] = (left + right) / (left - right);
+		m[13] = (top + bottom) / (bottom - top);
+		m[14] = (zNearPlane + zFarPlane) / (zNearPlane - zFarPlane);
+		m[15] = 1;
+	}
+
+	void RotationZ(float const& a);
+	void Scale(float const& xScale, float const& yScale, float const& zScale);
+	void Translation(float const& xTranslation, float const& yTranslation, float const& zTranslation);
+};
+
+inline static const Mat4 Mat4_IDENTITY = {
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f };
+
+inline static const Mat4 Mat4_ZERO = {
+		0, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0, 0 };
+
+inline void Mat4::RotationZ(float const& a) {
+	memcpy(m, Mat4_IDENTITY.m, sizeof(m));
+
+	float c = std::cos(a);
+	float s = std::sin(a);
+
+	m[0] = c;
+	m[1] = s;
+	m[4] = -s;
+	m[5] = c;
+}
+
+void Mat4::Scale(float const& xScale, float const& yScale, float const& zScale) {
+	memcpy(m, Mat4_IDENTITY.m, sizeof(m));
+
+	m[0] = xScale;
+	m[5] = yScale;
+	m[10] = zScale;
+}
+
+void Mat4::Translation(float const& xTranslation, float const& yTranslation, float const& zTranslation) {
+	memcpy(m, Mat4_IDENTITY.m, sizeof(m));
+
+	m[12] = xTranslation;
+	m[13] = yTranslation;
+	m[14] = zTranslation;
+}
+
 struct Game : Env<Game> {
 
-	inline static const std::array<Vec3fColor4f, 3> vertices = {
-		Vec3fColor4f{{-0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v0 c0
-		Vec3fColor4f{{-1.0f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v1 c1
-		Vec3fColor4f{{ 0.0f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+	std::array<Vec4fColor4f, 3> vertices = {
+		Vec4fColor4f{{ 0.0f,  360.f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v0 c0
+		Vec4fColor4f{{ 640.f,  0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v1 c1
+		Vec4fColor4f{{-640.f,  0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
 	};
+	//std::array<Vec4fColor4f, 3> vertices = {
+	//	Vec4fColor4f{{ 360.f,     0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v0 c0
+	//	Vec4fColor4f{{   0.f,   640.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v1 c1
+	//	Vec4fColor4f{{   0.f,  -640.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+	//};
 
-	inline static const std::array<GLushort, 3> indices = {
+	std::array<GLushort, 3> indices = {
 		0, 1, 2
 	};
+
+	Mat4 mat;
+	GLint imat = 0;
+	Mat4 mat1;
+	Mat4 mat2;
+	Mat4 mat3;
 
 	Shader vs, fs;
 	Program ps;
@@ -403,13 +513,13 @@ struct Game : Env<Game> {
 	inline int GLInit() {
 		vs = LoadVertexShader({ R"--(
 #version 300 es
-layout(location = 0) in vec4 aPosition;
-layout(location = 1) in vec4 aColor;
+layout(location = 0) in vec4 iPosition;
+layout(location = 1) in vec4 iColor;
+uniform mat4 uMatrix;
 out vec4 vColor;
-void main()
-{
-   vColor = aColor;
-   gl_Position = aPosition;
+void main() {
+   vColor = iColor;
+   gl_Position = uMatrix * iPosition;//iPosition; //
 }
 )--" });
 		if (!vs) return __LINE__;
@@ -418,10 +528,9 @@ void main()
 #version 300 es
 precision mediump float;
 in vec4 vColor;
-out vec4 oFragColor;
-void main()
-{
-   oFragColor = vColor;
+out vec4 oColor;
+void main() {
+   oColor = vColor;
 }
 )--" });
 		if (!fs) return __LINE__;
@@ -439,6 +548,20 @@ void main()
 		glDisable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
 		glClearColor(0, 0, 0, 1);
+		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
+		float hw = w / 2.0f;
+		float hh = h / 2.0f;
+		//mat.OrthographicOffCenter(-hw, hw, -hh, hh, 1024, -1024);
+		mat.OrthographicOffCenter(-hh, hh, -hh, hh, 1024, -1024);
+		imat = glGetUniformLocation(ps, "uMatrix");
+
+		// 已知问题: 旋转起来似乎缩放比例不对
+		mat1.Scale(1, 1, 1);
+		mat2.Translation(0, 0, 0);
+		mat3.RotationZ(0.01);
+		mat1 = Mat4::Multiply(mat1, mat2);
+		mat1 = Mat4::Multiply(mat1, mat3);
 
 		return 0;
 	}
@@ -446,14 +569,17 @@ void main()
 	void Draw(Buffer const& vb, Buffer const& ib) {
 		glUseProgram(ps);
 
+		mat = Mat4::Multiply(mat, mat1);
+		glUniformMatrix4fv(imat, 1, GL_TRUE, mat.m);
+
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 
-		glVertexAttribPointer(0, sizeof(Vec3f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (GLvoid*)offsetof(Vec3fColor4f, vec3f));
-		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec3fColor4f), (GLvoid*)offsetof(Vec3fColor4f, color4f));
+		glVertexAttribPointer(0, sizeof(Vec4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec4fColor4f), (GLvoid*)offsetof(Vec4fColor4f, vec4f));
+		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec4fColor4f), (GLvoid*)offsetof(Vec4fColor4f, color4f));
 
 		glDrawElements(GL_TRIANGLES, ib.len, GL_UNSIGNED_SHORT, 0);
 
