@@ -27,7 +27,6 @@
     <ClInclude Include="..\xxlib\xx_chrono.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="camera.hh" />
-    <ClInclude Include="vmath.hh" />
+    <ClInclude Include="esMatrix.h" />
   </ItemGroup>
 </Project>

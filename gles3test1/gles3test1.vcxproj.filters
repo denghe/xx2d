@@ -33,5 +33,7 @@
     <ClInclude Include="..\xxlib\xx_chrono.h">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="esMatrix.h" />
+    <ClInclude Include="gltest5.hpp" />
   </ItemGroup>
 </Project>

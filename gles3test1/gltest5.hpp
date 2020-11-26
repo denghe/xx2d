@@ -150,12 +150,12 @@ inline int esGenCube(float scale, GLfloat** vertices, GLfloat** normals,
 #define random rand
 #endif
 
-#define NUM_INSTANCES   100
+#define NUM_INSTANCES   1
 #define POSITION_LOC    0
 #define COLOR_LOC       1
 #define MVP_LOC         2
 
-struct GLTest4
+struct GLTest5
 {
 	inline static var vsSrc = R"--(
 #version 300 es
@@ -195,7 +195,7 @@ void main()
 	GLfloat   angle[NUM_INSTANCES];
 
 
-	GLTest4()
+	GLTest5()
 	{
 		var vs = sm.LoadShader(GL_VERTEX_SHADER, vsSrc);
 		assert(vs);

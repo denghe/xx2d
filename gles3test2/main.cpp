@@ -2,8 +2,6 @@
 #include "xx_chrono.h"
 #include "glew/glew.h"
 #include "glfw/glfw3.h"
-#include "camera.hh"
-
 
 template<typename T>
 struct Env {
@@ -140,13 +138,14 @@ struct Env {
 
 		while (!glfwWindowShouldClose(wnd)) {
 			++numFrames;
-			glfwPollEvents();
-
 			delta = (float)xx::NowSteadyEpochSeconds(lastTime);
 			elapsedSeconds = (float)(lastTime - beginTime);
+
 			((T*)this)->Update();
 
 			glfwSwapBuffers(wnd);
+
+			glfwPollEvents();
 		}
 
 		return 0;
@@ -389,22 +388,58 @@ using Shader = ResHolder<ShaderBase>;
 using Program = ResHolder<ProgramBase>;
 using Buffer = ResHolder<BufferBase>;
 
+#include "esMatrix.h"
+
+
+
+
 
 struct Node {
 	// 局部坐标
-	inline static const std::array<Vec4fColor4f, 3> vertices = {
-		Vec4fColor4f{{ 0.0f,    300, 2.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v0 c0
-		Vec4fColor4f{{ 150,    0.0f, 2.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v1 c1
-		Vec4fColor4f{{-150.f,  0.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+	inline static const std::array<Vec4fColor4f, 24> vertices = {
+		Vec4fColor4f{{-0.5f, -0.5f, -0.5f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v0 c0
+		Vec4fColor4f{{-0.5f, -0.5f,  0.5f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v1 c1
+		Vec4fColor4f{{0.5f, -0.5f,  0.5f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f, -0.5f, -0.5f, 1.0f},  {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f,  0.5f, -0.5f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f,  0.5f,  0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f,  0.5f,  0.5f, 1.0f},  {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f,  0.5f, -0.5f, 1.0f},  {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f, -0.5f, -0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f,  0.5f, -0.5f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f,  0.5f, -0.5f, 1.0f},  {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f, -0.5f, -0.5f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f, -0.5f, 0.5f, 1.0f},  {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f,  0.5f, 0.5f, 1.0f},  {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f,  0.5f, 0.5f, 1.0f},   {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f, -0.5f, 0.5f, 1.0f},   {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f, -0.5f, -0.5f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f, -0.5f,  0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f,  0.5f,  0.5f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{-0.5f,  0.5f, -0.5f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f, -0.5f, -0.5f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f, -0.5f,  0.5f, 1.0f},  {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f,  0.5f,  0.5f, 1.0f},  {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
+		Vec4fColor4f{{0.5f,  0.5f, -0.5f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
 	};
 
-	inline static const std::array<GLushort, 3> indices = {
-		0, 1, 2
+	inline static const std::array<GLushort, 12*3> indices = {
+		   0, 2, 1,
+		   0, 3, 2,
+		   4, 5, 6,
+		   4, 6, 7,
+		   8, 9, 10,
+		   8, 10, 11,
+		   12, 15, 14,
+		   12, 14, 13,
+		   16, 17, 18,
+		   16, 18, 19,
+		   20, 23, 22,
+		   20, 22, 21
 	};
 
 	Buffer vb, ib;
 
-	bool dirty = false;
 	float x = 0;
 	float y = 0;
 	float z = 0;
@@ -413,7 +448,7 @@ struct Node {
 	float sz = 1.0f;
 	float a = 0;
 
-	vmath::mat4f modelMatrix;
+	ESMatrix modelMatrix;
 
 	Node();
 	void Update();
@@ -424,9 +459,8 @@ struct Game : Env<Game> {
 
 	Shader vs, fs;
 	Program ps;
-	vmath::mat4f projectionMatrix;
+	//ESMatrix projectionMatrix;
 
-	Camera c;
 	xx::Shared<Node> n;
 
 	inline int GLInit() {
@@ -434,14 +468,10 @@ struct Game : Env<Game> {
 #version 300 es
 layout(location = 0) in vec4 iPosition;
 layout(location = 1) in vec4 iColor;
-//uniform mat4 u_projectionMatrix;
-//uniform mat4 u_viewMatrix;
-//uniform mat4 u_modelMatrix;
 uniform mat4 u_mvpMatrix;
 out vec4 vColor;
 void main() {
 	vColor = iColor;
-	//gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * iPosition;
 	gl_Position = u_mvpMatrix * iPosition;
 }
 )--" });
@@ -462,19 +492,20 @@ void main() {
 		if (!ps) return __LINE__;
 
 
-		glDisable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
+		//glDisable(GL_BLEND);
+		//glDisable(GL_DEPTH_TEST);
 		glClearColor(0, 0, 0, 1);
-		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+		//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 
 		// todo: call from window resize event
 		glViewport((width - height) / 2, 0, height, height);
 
-		float aspect = (float)width / height;
-		projectionMatrix = vmath::mat4f::projection(45.0f, aspect, 1.f, 1000.f);
+		//auto aspect = (GLfloat)width / height;
+		//esMatrixLoadIdentity(&projectionMatrix);
+		//esPerspective(&projectionMatrix, 60.0f, aspect, 1.0f, 20.0f);
+		////esOrtho(&projectionMatrix, -aspect, aspect, -1, 1, -10, 10);
 
-		//c.Emplace();
 		n.Emplace();
 
 		return 0;
@@ -483,9 +514,20 @@ void main() {
 	void Draw(/*Camera& c, */Node& n) {
 		glUseProgram(ps);
 
-		auto& view = c.getMatrix();
-		auto mvp = projectionMatrix * view * n.modelMatrix;
-		glUniformMatrix4fv(0, 1, GL_TRUE, mvp.getData());
+		auto aspect = (GLfloat)width / (GLfloat)height;
+		ESMatrix perspective;
+		esMatrixLoadIdentity(&perspective);
+		esPerspective(&perspective, 60.0f, aspect, 1.0f, 20.0f);
+		//esMatrixMultiply(&m, &n.modelMatrix, &projectionMatrix);
+		ESMatrix modelview;
+		esMatrixLoadIdentity(&modelview);
+		esTranslate(&modelview, -1, -1, -2.0f);
+		auto a = fmodf(elapsedSeconds * 40.0f, 360.f);
+		esRotate(&modelview, a, 1.0, 0.0, 1.0);
+		ESMatrix m;
+		esMatrixMultiply(&m, &modelview, &perspective);
+
+		glUniformMatrix4fv(0, 1, GL_TRUE, (float*)&m);
 
 		glBindBuffer(GL_ARRAY_BUFFER, n.vb);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, n.ib);
@@ -508,14 +550,16 @@ void main() {
 	XX_FORCEINLINE void Update() {
 		DrawFps();
 
-		//glDepthMask(true);
-		//glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		//glDepthMask(false);
+		glViewport(0, 0, width, height);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-		//c->Update();
-		n->Update();
-		Draw(/**c, */*n);
+		////glDepthMask(true);
+		////glClearColor(0, 0, 0, 1);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		////glDepthMask(false);
+
+		//n->Update();
+		Draw(*n);
 	}
 };
 
@@ -531,57 +575,12 @@ inline Node::Node() {
 
 void Node::Update() {
 	auto& g = *Game::instance;
-	a = g.elapsedSeconds;
-	x = fmodf(g.elapsedSeconds, 10);
+	a = fmodf(g.elapsedSeconds * 100, 360.f);
+	x = -fmodf(g.elapsedSeconds, 1.0f);
 	y = x;
 	z = x;
 	sz = sx = sy = 0.5f;
-	dirty = true;
-
-	auto rZ = vmath::mat3f::rotateZ(a);
-	auto translate = vmath::vec3f(x, y, z);
-	auto scale3 = vmath::mat3f::scale(sx,sy,sz);
-	auto translated = vmath::mat4f(scale3, translate);
-	auto rot4 = vmath::mat4f(rZ);
-	modelMatrix = rot4 * translated;
-
-	////if (dirty) {
-	//	{
-	//		float c = std::cos(a);
-	//		float s = std::sin(a);
-	//		modelMatrix[0] = c;
-	//		modelMatrix[1] = s;
-	//		modelMatrix[2] = 0;
-	//		modelMatrix[3] = 0;
-	//		modelMatrix[4] = -s;
-	//		modelMatrix[5] = c;
-	//		modelMatrix[6] = 0;
-	//		modelMatrix[7] = 0;
-	//		modelMatrix[8] = 0;
-	//		modelMatrix[9] = 0;
-	//		modelMatrix[10] = 1.0f;
-	//		modelMatrix[11] = 0;
-	//		modelMatrix[12] = 0;
-	//		modelMatrix[13] = 0;
-	//		modelMatrix[14] = 0;
-	//		modelMatrix[15] = 1.0f;
-	//	}
-	//	if (sx != 1.f) {
-	//		modelMatrix[0] *= sx;
-	//		modelMatrix[1] *= sx;
-	//		modelMatrix[2] *= sx;
-	//	}
-	//	if (sy != 1.f) {
-	//		modelMatrix[4] *= sx;
-	//		modelMatrix[5] *= sy;
-	//		modelMatrix[6] *= sy;
-	//	}
-	//	modelMatrix = Multiply(Translation(x, y, 0), modelMatrix);
-	////}
 }
-
-//void Camera::Update() {
-//}
 
 int main() {
 	Game g;
@@ -701,5 +700,37 @@ inline Matrix Scale(float const& xScale, float const& yScale, float const& zScal
 		//}
 
 
-
+		////if (dirty) {
+	//	{
+	//		float c = std::cos(a);
+	//		float s = std::sin(a);
+	//		modelMatrix[0] = c;
+	//		modelMatrix[1] = s;
+	//		modelMatrix[2] = 0;
+	//		modelMatrix[3] = 0;
+	//		modelMatrix[4] = -s;
+	//		modelMatrix[5] = c;
+	//		modelMatrix[6] = 0;
+	//		modelMatrix[7] = 0;
+	//		modelMatrix[8] = 0;
+	//		modelMatrix[9] = 0;
+	//		modelMatrix[10] = 1.0f;
+	//		modelMatrix[11] = 0;
+	//		modelMatrix[12] = 0;
+	//		modelMatrix[13] = 0;
+	//		modelMatrix[14] = 0;
+	//		modelMatrix[15] = 1.0f;
+	//	}
+	//	if (sx != 1.f) {
+	//		modelMatrix[0] *= sx;
+	//		modelMatrix[1] *= sx;
+	//		modelMatrix[2] *= sx;
+	//	}
+	//	if (sy != 1.f) {
+	//		modelMatrix[4] *= sx;
+	//		modelMatrix[5] *= sy;
+	//		modelMatrix[6] *= sy;
+	//	}
+	//	modelMatrix = Multiply(Translation(x, y, 0), modelMatrix);
+	////}
 */
