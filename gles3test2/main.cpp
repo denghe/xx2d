@@ -2,6 +2,7 @@
 #include "xx_chrono.h"
 #include "glew/glew.h"
 #include "glfw/glfw3.h"
+#include "camera.hh"
 
 
 template<typename T>
@@ -21,12 +22,12 @@ struct Env {
 	GLFWmonitor* monitor = nullptr;
 	GLFWwindow* wnd = nullptr;
 
-	float w = 0;
-	float h = 0;
+	float w = 1280;
+	float h = 720;
 	double beginTime = 0;
 	double lastTime = 0;
-	float totalElapsedSeconds = 0;
 	float elapsedSeconds = 0;
+	float delta = 0;
 	uint64_t numFrames = 0;
 	double fpsTimer = 0;
 
@@ -35,13 +36,13 @@ struct Env {
 		lastErrorMessage = msg;
 	}
 	inline void onMouseButtonCallback(int button, int action, int modify) {
-		std::cout << button << " " << action << " " << modify << std::endl;
+		//std::cout << button << " " << action << " " << modify << std::endl;
 	}
 	inline void onCursorPosCallback(double x, double y) {
-		std::cout << x << " " << y << std::endl;
+		//std::cout << x << " " << y << std::endl;
 	}
 	inline void onScrollCallback(double x, double y) {
-		std::cout << x << " " << y << std::endl;
+		//std::cout << x << " " << y << std::endl;
 	}
 	inline void onKeyCallback(int key, int scancode, int action, int mods) {
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -54,7 +55,10 @@ struct Env {
 		width = w;
 		height = h;
 	}
-	inline void onWindowSizeCallback(int w, int h) {}
+	inline void onWindowSizeCallback(int w, int h) {
+		width = w;
+		height = h;
+	}
 	inline void onWindowIconifyCallback(int iconified) {}
 	inline void onWindowFocusCallback(int focused) {}
 
@@ -138,8 +142,8 @@ struct Env {
 			++numFrames;
 			glfwPollEvents();
 
-			elapsedSeconds = (float)xx::NowSteadyEpochSeconds(lastTime);
-			totalElapsedSeconds = (float)(lastTime - beginTime);
+			delta = (float)xx::NowSteadyEpochSeconds(lastTime);
+			elapsedSeconds = (float)(lastTime - beginTime);
 			((T*)this)->Update();
 
 			glfwSwapBuffers(wnd);
@@ -385,6 +389,213 @@ using Shader = ResHolder<ShaderBase>;
 using Program = ResHolder<ProgramBase>;
 using Buffer = ResHolder<BufferBase>;
 
+
+struct Node {
+	// 局部坐标
+	inline static const std::array<Vec4fColor4f, 3> vertices = {
+		Vec4fColor4f{{ 0.0f,    300, 2.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v0 c0
+		Vec4fColor4f{{ 150,    0.0f, 2.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v1 c1
+		Vec4fColor4f{{-150.f,  0.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+	};
+
+	inline static const std::array<GLushort, 3> indices = {
+		0, 1, 2
+	};
+
+	Buffer vb, ib;
+
+	bool dirty = false;
+	float x = 0;
+	float y = 0;
+	float z = 0;
+	float sx = 1.0f;
+	float sy = 1.0f;
+	float sz = 1.0f;
+	float a = 0;
+
+	vmath::mat4f modelMatrix;
+
+	Node();
+	void Update();
+};
+
+struct Game : Env<Game> {
+	GLint imat = 0;
+
+	Shader vs, fs;
+	Program ps;
+	vmath::mat4f projectionMatrix;
+
+	Camera c;
+	xx::Shared<Node> n;
+
+	inline int GLInit() {
+		vs = LoadVertexShader({ R"--(
+#version 300 es
+layout(location = 0) in vec4 iPosition;
+layout(location = 1) in vec4 iColor;
+//uniform mat4 u_projectionMatrix;
+//uniform mat4 u_viewMatrix;
+//uniform mat4 u_modelMatrix;
+uniform mat4 u_mvpMatrix;
+out vec4 vColor;
+void main() {
+	vColor = iColor;
+	//gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * iPosition;
+	gl_Position = u_mvpMatrix * iPosition;
+}
+)--" });
+		if (!vs) return __LINE__;
+
+		fs = LoadFragmentShader({ R"--(
+#version 300 es
+precision mediump float;
+in vec4 vColor;
+out vec4 oColor;
+void main() {
+   oColor = vColor;
+}
+)--" });
+		if (!fs) return __LINE__;
+
+		ps = LinkProgram(vs, fs);
+		if (!ps) return __LINE__;
+
+
+		glDisable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
+		glClearColor(0, 0, 0, 1);
+		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
+
+		// todo: call from window resize event
+		glViewport((width - height) / 2, 0, height, height);
+
+		float aspect = (float)width / height;
+		projectionMatrix = vmath::mat4f::projection(45.0f, aspect, 1.f, 1000.f);
+
+		//c.Emplace();
+		n.Emplace();
+
+		return 0;
+	}
+
+	void Draw(/*Camera& c, */Node& n) {
+		glUseProgram(ps);
+
+		auto& view = c.getMatrix();
+		auto mvp = projectionMatrix * view * n.modelMatrix;
+		glUniformMatrix4fv(0, 1, GL_TRUE, mvp.getData());
+
+		glBindBuffer(GL_ARRAY_BUFFER, n.vb);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, n.ib);
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+
+		glVertexAttribPointer(0, sizeof(Vec4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec4fColor4f), (GLvoid*)offsetof(Vec4fColor4f, vec4f));
+		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec4fColor4f), (GLvoid*)offsetof(Vec4fColor4f, color4f));
+
+		glDrawElements(GL_TRIANGLES, n.ib.len, GL_UNSIGNED_SHORT, 0);
+
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+
+	XX_FORCEINLINE void Update() {
+		DrawFps();
+
+		//glDepthMask(true);
+		//glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//glDepthMask(false);
+
+		//c->Update();
+		n->Update();
+		Draw(/**c, */*n);
+	}
+};
+
+inline Node::Node() {
+	auto& g = *Game::instance;
+	vb = g.LoadVertices(vertices.data(), sizeof(vertices));
+	assert(vb);
+
+	ib = g.LoadIndexes(indices.data(), sizeof(indices));
+	assert(ib);
+	ib.len = sizeof(indices);
+}
+
+void Node::Update() {
+	auto& g = *Game::instance;
+	a = g.elapsedSeconds;
+	x = fmodf(g.elapsedSeconds, 10);
+	y = x;
+	z = x;
+	sz = sx = sy = 0.5f;
+	dirty = true;
+
+	auto rZ = vmath::mat3f::rotateZ(a);
+	auto translate = vmath::vec3f(x, y, z);
+	auto scale3 = vmath::mat3f::scale(sx,sy,sz);
+	auto translated = vmath::mat4f(scale3, translate);
+	auto rot4 = vmath::mat4f(rZ);
+	modelMatrix = rot4 * translated;
+
+	////if (dirty) {
+	//	{
+	//		float c = std::cos(a);
+	//		float s = std::sin(a);
+	//		modelMatrix[0] = c;
+	//		modelMatrix[1] = s;
+	//		modelMatrix[2] = 0;
+	//		modelMatrix[3] = 0;
+	//		modelMatrix[4] = -s;
+	//		modelMatrix[5] = c;
+	//		modelMatrix[6] = 0;
+	//		modelMatrix[7] = 0;
+	//		modelMatrix[8] = 0;
+	//		modelMatrix[9] = 0;
+	//		modelMatrix[10] = 1.0f;
+	//		modelMatrix[11] = 0;
+	//		modelMatrix[12] = 0;
+	//		modelMatrix[13] = 0;
+	//		modelMatrix[14] = 0;
+	//		modelMatrix[15] = 1.0f;
+	//	}
+	//	if (sx != 1.f) {
+	//		modelMatrix[0] *= sx;
+	//		modelMatrix[1] *= sx;
+	//		modelMatrix[2] *= sx;
+	//	}
+	//	if (sy != 1.f) {
+	//		modelMatrix[4] *= sx;
+	//		modelMatrix[5] *= sy;
+	//		modelMatrix[6] *= sy;
+	//	}
+	//	modelMatrix = Multiply(Translation(x, y, 0), modelMatrix);
+	////}
+}
+
+//void Camera::Update() {
+//}
+
+int main() {
+	Game g;
+	g.vsync = 0;
+	if (int r = g.Run()) {
+		std::cout << "g.Run() r = " << r << ", lastErrorNumber = " << g.lastErrorNumber << ", lastErrorMessage = " << g.lastErrorMessage << std::endl;
+	}
+}
+
+
+
+
+/*
+
 using Matrix = std::array<float, 16>;
 inline static const Matrix matrixIdentity = {
 		1.0f, 0.0f, 0.0f, 0.0f,
@@ -452,16 +663,6 @@ inline Matrix RotationZ(float const& a) {
 	return m;
 }
 
-inline Matrix Scale(float const& xScale, float const& yScale, float const& zScale) {
-	auto m = matrixIdentity;
-
-	m[0] = xScale;
-	m[5] = yScale;
-	m[10] = zScale;
-
-	return m;
-}
-
 inline Matrix Translation(float const& xTranslation, float const& yTranslation, float const& zTranslation) {
 	auto m = matrixIdentity;
 
@@ -472,149 +673,33 @@ inline Matrix Translation(float const& xTranslation, float const& yTranslation, 
 	return m;
 }
 
-struct Node {
-	// 局部坐标
-	inline static const std::array<Vec4fColor4f, 3> vertices = {
-		Vec4fColor4f{{ 0.0f,  360.f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v0 c0
-		Vec4fColor4f{{ 640.f,  0.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v1 c1
-		Vec4fColor4f{{-640.f,  0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
-	};
+inline Matrix Scale(float const& xScale, float const& yScale, float const& zScale) {
+	auto m = matrixIdentity;
 
-	inline static const std::array<GLushort, 3> indices = {
-		0, 1, 2
-	};
+	m[0] = xScale;
+	m[5] = yScale;
+	m[10] = zScale;
 
-	Buffer vb, ib;
-	Matrix mat = matrixIdentity;
-
-	Node();
-	void Update();
-};
-
-struct Game : Env<Game> {
-	GLint imat = 0;
-
-	Shader vs, fs;
-	Program ps;
-	Matrix mat;
-
-	xx::Shared<Node> n;
-
-	inline int GLInit() {
-		vs = LoadVertexShader({ R"--(
-#version 300 es
-layout(location = 0) in vec4 iPosition;
-layout(location = 1) in vec4 iColor;
-uniform mat4 uMatrix;
-out vec4 vColor;
-void main() {
-   vColor = iColor;
-   gl_Position = uMatrix * iPosition;//iPosition; //
-}
-)--" });
-		if (!vs) return __LINE__;
-
-		fs = LoadFragmentShader({ R"--(
-#version 300 es
-precision mediump float;
-in vec4 vColor;
-out vec4 oColor;
-void main() {
-   oColor = vColor;
-}
-)--" });
-		if (!fs) return __LINE__;
-
-		ps = LinkProgram(vs, fs);
-		if (!ps) return __LINE__;
-
-
-		glDisable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-		glClearColor(0, 0, 0, 1);
-		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-
-		imat = glGetUniformLocation(ps, "uMatrix");
-
-		// 引述 https://blog.csdn.net/hiwoshixiaoyu/article/details/83895621
-		// 右手坐标: 从左到右，x递增  从下到上，y递增  从远到近，z递增
-
-		// MVP
-		// 模型矩阵(Model) :将局部坐标转换为世界坐标
-		// 观察矩阵(View) :
-		// 投影矩阵(Projection)：正交还是透视投影
-
-		// 为了将坐标从一个坐标系变换到另一个坐标系，我们需要用到几个变换矩阵，最重要的几个分别是模型(Model)、观察(View)、投影(Projection)三个矩阵。
-		// 我们的顶点坐标起始于局部空间(Local Space)，在这里它称为局部坐标(Local Coordinate)，
-		// 它在之后会变为世界坐标(World Coordinate)，观察坐标(View Coordinate)，裁剪坐标(Clip Coordinate)，
-		// 并最后以屏幕坐标(Screen Coordinate)的形式结束
-
-		float hw = w / 2.0f;
-		float hh = h / 2.0f;
-		mat = OrthographicOffCenter(-hw, hw, -hh, hh, 1024, -1024);
-
-		n.Emplace();
-
-		return 0;
-	}
-
-	void Draw(Node& n) {
-		glUseProgram(ps);
-
-		auto m2 = Multiply(mat, n.mat);
-
-		glUniformMatrix4fv(imat, 1, GL_TRUE, m2.data());
-
-		glBindBuffer(GL_ARRAY_BUFFER, n.vb);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, n.ib);
-
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-
-		glVertexAttribPointer(0, sizeof(Vec4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec4fColor4f), (GLvoid*)offsetof(Vec4fColor4f, vec4f));
-		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec4fColor4f), (GLvoid*)offsetof(Vec4fColor4f, color4f));
-
-		glDrawElements(GL_TRIANGLES, n.ib.len, GL_UNSIGNED_SHORT, 0);
-
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	}
-
-	XX_FORCEINLINE void Update() {
-		DrawFps();
-		glViewport(0, 0, width, height);
-
-		//glDepthMask(true);
-		//glClearColor(0, 0, 0, 1);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		//glDepthMask(false);
-
-		n->Update();
-		Draw(*n);
-	}
-};
-
-inline Node::Node() {
-	auto& g = *Game::instance;
-	vb = g.LoadVertices(vertices.data(), sizeof(vertices));
-	assert(vb);
-
-	ib = g.LoadIndexes(indices.data(), sizeof(indices));
-	assert(ib);
-	ib.len = sizeof(indices);
+	return m;
 }
 
-void Node::Update() {
-	auto m = RotationZ(Game::instance->totalElapsedSeconds / 10);
-	mat = Multiply(mat, m);
-}
 
-int main() {
-	Game g;
-	if (int r = g.Run()) {
-		std::cout << "g.Run() r = " << r << ", lastErrorNumber = " << g.lastErrorNumber << ", lastErrorMessage = " << g.lastErrorMessage << std::endl;
-	}
-}
+
+
+		//if (w > h) {
+		//	projectionMatrix = OrthographicOffCenter(-w / 2, w / 2, -w / 2, w / 2, 1024, -1024);
+		//}
+		//else {
+		//	projectionMatrix = OrthographicOffCenter(-h / 2, h / 2, -h / 2, h / 2, 1024, -1024);
+		//}
+		//// todo: 当 window resize 时重新执行这个函数
+		//if (width > height) {
+		//	glViewport(0, (height - width) / 2, width, width);
+		//}
+		//else {
+		//	glViewport((width - height) / 2, 0, height, height);
+		//}
+
+
+
+*/
