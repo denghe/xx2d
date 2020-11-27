@@ -315,6 +315,7 @@ struct Env {
 			return 0;
 		}
 
+		glBindBuffer(target, 0);
 		sgVbo.Cancel();
 		return vbo;
 	}
@@ -327,17 +328,6 @@ struct Env {
 	}
 };
 
-
-struct Vec4f {
-	GLfloat x, y, z, w;
-};
-struct Color4f {
-	GLfloat r, g, b, a;
-};
-struct Vec4fColor4f {
-	Vec4f vec4f;
-	Color4f color4f;
-};
 
 struct ShaderBase {
 	static void Release(GLuint const& handle) {
@@ -391,39 +381,43 @@ using Buffer = ResHolder<BufferBase>;
 #include "esMatrix.h"
 
 
-
+union Color4b {
+	struct {
+		uint8_t r, g, b, a;
+	};
+	uint32_t data = 0;
+};
 
 
 struct Node {
-	// 局部坐标
-	inline static const std::array<Vec4fColor4f, 24> vertices = {
-		Vec4fColor4f{{-0.5f, -0.5f, -0.5f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v0 c0
-		Vec4fColor4f{{-0.5f, -0.5f,  0.5f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v1 c1
-		Vec4fColor4f{{0.5f, -0.5f,  0.5f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f, -0.5f, -0.5f, 1.0f},  {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f,  0.5f, -0.5f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f,  0.5f,  0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f,  0.5f,  0.5f, 1.0f},  {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f,  0.5f, -0.5f, 1.0f},  {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f, -0.5f, -0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f,  0.5f, -0.5f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f,  0.5f, -0.5f, 1.0f},  {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f, -0.5f, -0.5f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f, -0.5f, 0.5f, 1.0f},  {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f,  0.5f, 0.5f, 1.0f},  {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f,  0.5f, 0.5f, 1.0f},   {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f, -0.5f, 0.5f, 1.0f},   {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f, -0.5f, -0.5f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f, -0.5f,  0.5f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f,  0.5f,  0.5f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{-0.5f,  0.5f, -0.5f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f, -0.5f, -0.5f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f, -0.5f,  0.5f, 1.0f},  {1.0f, 0.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f,  0.5f,  0.5f, 1.0f},  {0.0f, 1.0f, 0.0f, 1.0f}},  // v2 c2
-		Vec4fColor4f{{0.5f,  0.5f, -0.5f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f}},  // v2 c2
+	std::array<GLfloat, 24 * 3> vertices = {
+		   -0.5f, -0.5f, -0.5f,
+		   -0.5f, -0.5f,  0.5f,
+		   0.5f, -0.5f,  0.5f,
+		   0.5f, -0.5f, -0.5f,
+		   -0.5f,  0.5f, -0.5f,
+		   -0.5f,  0.5f,  0.5f,
+		   0.5f,  0.5f,  0.5f,
+		   0.5f,  0.5f, -0.5f,
+		   -0.5f, -0.5f, -0.5f,
+		   -0.5f,  0.5f, -0.5f,
+		   0.5f,  0.5f, -0.5f,
+		   0.5f, -0.5f, -0.5f,
+		   -0.5f, -0.5f, 0.5f,
+		   -0.5f,  0.5f, 0.5f,
+		   0.5f,  0.5f, 0.5f,
+		   0.5f, -0.5f, 0.5f,
+		   -0.5f, -0.5f, -0.5f,
+		   -0.5f, -0.5f,  0.5f,
+		   -0.5f,  0.5f,  0.5f,
+		   -0.5f,  0.5f, -0.5f,
+		   0.5f, -0.5f, -0.5f,
+		   0.5f, -0.5f,  0.5f,
+		   0.5f,  0.5f,  0.5f,
+		   0.5f,  0.5f, -0.5f,
 	};
 
-	inline static const std::array<GLushort, 12*3> indices = {
+	std::array<GLushort, 12 * 3> indices = {
 		   0, 2, 1,
 		   0, 3, 2,
 		   4, 5, 6,
@@ -447,6 +441,8 @@ struct Node {
 	float sy = 1.0f;
 	float sz = 1.0f;
 	float a = 0;
+	Color4b color = { 255, 127, 127, 0 };
+
 
 	ESMatrix modelMatrix;
 
@@ -455,24 +451,29 @@ struct Node {
 };
 
 struct Game : Env<Game> {
+	static Game& Instance() { return *(Game*)instance; }
+
 	GLint imat = 0;
 
 	Shader vs, fs;
 	Program ps;
-	//ESMatrix projectionMatrix;
+	inline static int iPosition = 0;
+	inline static int uMvpMatrix = 0;
+	inline static int uColor = 0;
+	ESMatrix projectionMatrix;
 
 	xx::Shared<Node> n;
 
 	inline int GLInit() {
 		vs = LoadVertexShader({ R"--(
 #version 300 es
-layout(location = 0) in vec4 iPosition;
-layout(location = 1) in vec4 iColor;
-uniform mat4 u_mvpMatrix;
+in vec4 iPosition;
+uniform vec4 uColor;
+uniform mat4 uMvpMatrix;
 out vec4 vColor;
 void main() {
-	vColor = iColor;
-	gl_Position = u_mvpMatrix * iPosition;
+	gl_Position = uMvpMatrix * iPosition;
+	vColor = uColor;
 }
 )--" });
 		if (!vs) return __LINE__;
@@ -491,20 +492,23 @@ void main() {
 		ps = LinkProgram(vs, fs);
 		if (!ps) return __LINE__;
 
+		iPosition = glGetAttribLocation(ps, "iPosition");
+		uMvpMatrix = glGetUniformLocation(ps, "uMvpMatrix");
+		uColor = glGetUniformLocation(ps, "uColor");
 
+		glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+
+		//glClearColor(0, 0, 0, 1);
 		//glDisable(GL_BLEND);
 		//glDisable(GL_DEPTH_TEST);
-		glClearColor(0, 0, 0, 1);
 		//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-
 		// todo: call from window resize event
-		glViewport((width - height) / 2, 0, height, height);
+		glViewport(0, 0, width, height);
 
-		//auto aspect = (GLfloat)width / height;
-		//esMatrixLoadIdentity(&projectionMatrix);
-		//esPerspective(&projectionMatrix, 60.0f, aspect, 1.0f, 20.0f);
-		////esOrtho(&projectionMatrix, -aspect, aspect, -1, 1, -10, 10);
+		auto aspect = (GLfloat)width / (GLfloat)height;
+		esMatrixLoadIdentity(&projectionMatrix);
+		esOrtho(&projectionMatrix, -aspect, aspect, 1, -1, -10, 10);
 
 		n.Emplace();
 
@@ -514,37 +518,18 @@ void main() {
 	void Draw(/*Camera& c, */Node& n) {
 		glUseProgram(ps);
 
-		auto aspect = (GLfloat)width / (GLfloat)height;
-		ESMatrix perspective;
-		esMatrixLoadIdentity(&perspective);
-		esPerspective(&perspective, 60.0f, aspect, 1.0f, 20.0f);
-		//esMatrixMultiply(&m, &n.modelMatrix, &projectionMatrix);
-		ESMatrix modelview;
-		esMatrixLoadIdentity(&modelview);
-		esTranslate(&modelview, -1, -1, -2.0f);
-		auto a = fmodf(elapsedSeconds * 40.0f, 360.f);
-		esRotate(&modelview, a, 1.0, 0.0, 1.0);
 		ESMatrix m;
-		esMatrixMultiply(&m, &modelview, &perspective);
+		esMatrixMultiply(&m, &n.modelMatrix, &projectionMatrix);
+		glUniformMatrix4fv(uMvpMatrix, 1, GL_FALSE, (float*)&m);
+		glUniform4f(uColor, (float)n.color.r / 255, (float)n.color.g / 255, (float)n.color.b / 255, (float)n.color.a / 255);
 
-		glUniformMatrix4fv(0, 1, GL_TRUE, (float*)&m);
 
 		glBindBuffer(GL_ARRAY_BUFFER, n.vb);
+		glVertexAttribPointer(iPosition, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (const void*)0);
+		glEnableVertexAttribArray(iPosition);
+
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, n.ib);
-
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-
-		glVertexAttribPointer(0, sizeof(Vec4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec4fColor4f), (GLvoid*)offsetof(Vec4fColor4f, vec4f));
-		glVertexAttribPointer(1, sizeof(Color4f) / sizeof(GLfloat), GL_FLOAT, GL_FALSE, sizeof(Vec4fColor4f), (GLvoid*)offsetof(Vec4fColor4f, color4f));
-
-		glDrawElements(GL_TRIANGLES, n.ib.len, GL_UNSIGNED_SHORT, 0);
-
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glDrawElements(GL_TRIANGLES, (GLsizei)n.indices.size(), GL_UNSIGNED_SHORT, 0);
 	}
 
 	XX_FORCEINLINE void Update() {
@@ -553,18 +538,14 @@ void main() {
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		////glDepthMask(true);
-		////glClearColor(0, 0, 0, 1);
-		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		////glDepthMask(false);
 
-		//n->Update();
+		n->Update();
 		Draw(*n);
 	}
 };
 
 inline Node::Node() {
-	auto& g = *Game::instance;
+	auto& g = Game::Instance();
 	vb = g.LoadVertices(vertices.data(), sizeof(vertices));
 	assert(vb);
 
@@ -574,12 +555,21 @@ inline Node::Node() {
 }
 
 void Node::Update() {
-	auto& g = *Game::instance;
+	auto& g = Game::Instance();
+	x = fmodf(g.elapsedSeconds, 2.f);;
+	y = 0;
+	z = -2;
+
 	a = fmodf(g.elapsedSeconds * 100, 360.f);
-	x = -fmodf(g.elapsedSeconds, 1.0f);
-	y = x;
-	z = x;
-	sz = sx = sy = 0.5f;
+
+	sz = sx = sy = 0.5;
+
+	color = { 11, 11, 255, 0 };
+
+	esMatrixLoadIdentity(&modelMatrix);
+	esTranslate(&modelMatrix, x, y, z);
+	esRotate(&modelMatrix, a, 1.0, 0.0, 1.0);
+	esScale(&modelMatrix, sx, sy, sz);
 }
 
 int main() {
@@ -594,6 +584,9 @@ int main() {
 
 
 /*
+		////glDepthMask(true);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		////glDepthMask(false);
 
 using Matrix = std::array<float, 16>;
 inline static const Matrix matrixIdentity = {

@@ -41,7 +41,7 @@ struct GLManager
 
 	// 加载指定类型 shader
 	// 返回 0 表示失败, 错误信息在 lastErrorMessage
-	inline GLuint LoadShader(GLenum const& type, const GLchar* const& src, GLint const& len)
+	inline GLuint LoadShader(GLenum const& type, const GLchar* const& src, GLint const& len = 0)
 	{
 		// 先判断下这个, 如果先申请在判断到错误, 还要 glDeleteShader 太麻烦.
 		if (!src)
@@ -235,6 +235,7 @@ struct GLManager
 			lastErrorMessage.append(std::to_string(glGetError()));
 			return 0;
 		}
+		glBindBuffer(target, 0);
 
 		vbos.emplace(vbo);
 		sgVbo.Cancel();
