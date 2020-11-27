@@ -28,5 +28,9 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="esMatrix.h" />
+    <ClInclude Include="esBase.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="bak.txt" />
   </ItemGroup>
 </Project>

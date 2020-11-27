@@ -1,0 +1,145 @@
+
+/*
+		////glDepthMask(true);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		////glDepthMask(false);
+
+using Matrix = std::array<float, 16>;
+inline static const Matrix matrixIdentity = {
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f };
+inline static const Matrix matrixZero = {
+		0, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0, 0 };
+
+inline static Matrix Multiply(Matrix const& m1, Matrix const& m2) {
+	Matrix r;
+	r[0] = m1[0] * m2[0] + m1[4] * m2[1] + m1[8] * m2[2] + m1[12] * m2[3];
+	r[1] = m1[1] * m2[0] + m1[5] * m2[1] + m1[9] * m2[2] + m1[13] * m2[3];
+	r[2] = m1[2] * m2[0] + m1[6] * m2[1] + m1[10] * m2[2] + m1[14] * m2[3];
+	r[3] = m1[3] * m2[0] + m1[7] * m2[1] + m1[11] * m2[2] + m1[15] * m2[3];
+
+	r[4] = m1[0] * m2[4] + m1[4] * m2[5] + m1[8] * m2[6] + m1[12] * m2[7];
+	r[5] = m1[1] * m2[4] + m1[5] * m2[5] + m1[9] * m2[6] + m1[13] * m2[7];
+	r[6] = m1[2] * m2[4] + m1[6] * m2[5] + m1[10] * m2[6] + m1[14] * m2[7];
+	r[7] = m1[3] * m2[4] + m1[7] * m2[5] + m1[11] * m2[6] + m1[15] * m2[7];
+
+	r[8] = m1[0] * m2[8] + m1[4] * m2[9] + m1[8] * m2[10] + m1[12] * m2[11];
+	r[9] = m1[1] * m2[8] + m1[5] * m2[9] + m1[9] * m2[10] + m1[13] * m2[11];
+	r[10] = m1[2] * m2[8] + m1[6] * m2[9] + m1[10] * m2[10] + m1[14] * m2[11];
+	r[11] = m1[3] * m2[8] + m1[7] * m2[9] + m1[11] * m2[10] + m1[15] * m2[11];
+
+	r[12] = m1[0] * m2[12] + m1[4] * m2[13] + m1[8] * m2[14] + m1[12] * m2[15];
+	r[13] = m1[1] * m2[12] + m1[5] * m2[13] + m1[9] * m2[14] + m1[13] * m2[15];
+	r[14] = m1[2] * m2[12] + m1[6] * m2[13] + m1[10] * m2[14] + m1[14] * m2[15];
+	r[15] = m1[3] * m2[12] + m1[7] * m2[13] + m1[11] * m2[14] + m1[15] * m2[15];
+	return r;
+}
+
+inline Matrix OrthographicOffCenter(float const& left, float const& right, float const& bottom, float const& top, float const& zNearPlane, float const& zFarPlane) {
+	assert(right != left);
+	assert(top != bottom);
+	assert(zFarPlane != zNearPlane);
+
+	Matrix m{};
+	m[0] = 2 / (right - left);
+	m[5] = 2 / (top - bottom);
+	m[10] = 2 / (zNearPlane - zFarPlane);
+
+	m[12] = (left + right) / (left - right);
+	m[13] = (top + bottom) / (bottom - top);
+	m[14] = (zNearPlane + zFarPlane) / (zNearPlane - zFarPlane);
+	m[15] = 1;
+	return m;
+}
+
+inline Matrix RotationZ(float const& a) {
+	auto m = matrixIdentity;
+
+	float c = std::cos(a);
+	float s = std::sin(a);
+
+	m[0] = c;
+	m[1] = s;
+	m[4] = -s;
+	m[5] = c;
+
+	return m;
+}
+
+inline Matrix Translation(float const& xTranslation, float const& yTranslation, float const& zTranslation) {
+	auto m = matrixIdentity;
+
+	m[12] = xTranslation;
+	m[13] = yTranslation;
+	m[14] = zTranslation;
+
+	return m;
+}
+
+inline Matrix Scale(float const& xScale, float const& yScale, float const& zScale) {
+	auto m = matrixIdentity;
+
+	m[0] = xScale;
+	m[5] = yScale;
+	m[10] = zScale;
+
+	return m;
+}
+
+
+
+
+		//if (w > h) {
+		//	projectionMatrix = OrthographicOffCenter(-w / 2, w / 2, -w / 2, w / 2, 1024, -1024);
+		//}
+		//else {
+		//	projectionMatrix = OrthographicOffCenter(-h / 2, h / 2, -h / 2, h / 2, 1024, -1024);
+		//}
+		//// todo: 当 window resize 时重新执行这个函数
+		//if (width > height) {
+		//	glViewport(0, (height - width) / 2, width, width);
+		//}
+		//else {
+		//	glViewport((width - height) / 2, 0, height, height);
+		//}
+
+
+		////if (dirty) {
+	//	{
+	//		float c = std::cos(a);
+	//		float s = std::sin(a);
+	//		modelMatrix[0] = c;
+	//		modelMatrix[1] = s;
+	//		modelMatrix[2] = 0;
+	//		modelMatrix[3] = 0;
+	//		modelMatrix[4] = -s;
+	//		modelMatrix[5] = c;
+	//		modelMatrix[6] = 0;
+	//		modelMatrix[7] = 0;
+	//		modelMatrix[8] = 0;
+	//		modelMatrix[9] = 0;
+	//		modelMatrix[10] = 1.0f;
+	//		modelMatrix[11] = 0;
+	//		modelMatrix[12] = 0;
+	//		modelMatrix[13] = 0;
+	//		modelMatrix[14] = 0;
+	//		modelMatrix[15] = 1.0f;
+	//	}
+	//	if (sx != 1.f) {
+	//		modelMatrix[0] *= sx;
+	//		modelMatrix[1] *= sx;
+	//		modelMatrix[2] *= sx;
+	//	}
+	//	if (sy != 1.f) {
+	//		modelMatrix[4] *= sx;
+	//		modelMatrix[5] *= sy;
+	//		modelMatrix[6] *= sy;
+	//	}
+	//	modelMatrix = Multiply(Translation(x, y, 0), modelMatrix);
+	////}
+*/
