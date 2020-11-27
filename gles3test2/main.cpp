@@ -1,6 +1,11 @@
 ﻿#include "esBase.h"
 
+struct Node;
+using Node_s = xx::Shared<Node>;
 struct Node {
+	xx::Weak<Node> parent;
+	std::vector<Node_s> children;
+
 	std::array<GLfloat, 24 * 3> vertices = {
 		   -0.5f, -0.5f, -0.5f,
 		   -0.5f, -0.5f,  0.5f,
@@ -27,7 +32,6 @@ struct Node {
 		   0.5f,  0.5f,  0.5f,
 		   0.5f,  0.5f, -0.5f,
 	};
-
 	std::array<GLushort, 12 * 3> indices = {
 		   0, 2, 1,
 		   0, 3, 2,
@@ -42,7 +46,6 @@ struct Node {
 		   20, 23, 22,
 		   20, 22, 21
 	};
-
 	xx::es::Buffer vb, ib;
 
 	bool dirty = false;
@@ -58,8 +61,8 @@ struct Node {
 	xx::es::Matrix modelMatrix;
 
 	Node();
-	void Update();
-	void Draw();
+	std::function<void()> Update;
+	void Draw(xx::es::Matrix const& parentMatrix);
 };
 
 struct Game : xx::es::Context<Game> {
@@ -79,8 +82,6 @@ struct Game : xx::es::Context<Game> {
 	// 使用示例： if (int r = CheckGLError(__LINE__)) return r;
 
 	inline int GLInit() {
-
-
 		vs = LoadVertexShader({ R"--(
 #version 300 es
 in vec4 iPosition;
@@ -126,7 +127,33 @@ void main() {
 		esMatrixLoadIdentity(&projectionMatrix);
 		esOrtho(&projectionMatrix, -aspect, aspect, 1, -1, -10, 10);
 
+
+
 		n.Emplace();
+		n->Update = [n = n.pointer, this]{
+			n->x = fmodf(elapsedSeconds, 2.f);
+			n->y = 0;
+			n->z = -2;
+
+			n->a = fmodf(elapsedSeconds * 100, 360.f);
+
+			n->color = { 11, 11, (uint8_t)(int)(elapsedSeconds * 100), 0 };
+
+			n->dirty = true;
+
+			for (auto& c : n->children) {
+				c->Update();
+			}
+		};
+		for (size_t i = 0; i < 10; i++) {
+			auto&& n2 = n->children.emplace_back().Emplace();
+			n2->Update = [i = i, n = n2.pointer, this]{
+				n->y = 0.1f + (float)i * 0.3f;
+				n->a = fmodf(elapsedSeconds * 100, 360.f);
+				n->sz = n->sx = n->sy = 0.1f + fmodf(elapsedSeconds / 10, 0.5f);
+				n->dirty = true;
+			};
+		}
 
 		return 0;
 	}
@@ -138,7 +165,7 @@ void main() {
 
 	XX_FORCEINLINE void Draw() {
 		glClear(GL_COLOR_BUFFER_BIT);
-		n->Draw();
+		n->Draw(projectionMatrix);
 	}
 };
 
@@ -150,45 +177,50 @@ inline Node::Node() {
 	ib = g.LoadIndexes(indices.data(), sizeof(indices));
 	assert(ib);
 	ib.len = sizeof(indices);
-}
-
-void Node::Update() {
-	auto& g = Game::Instance();
-	x = fmodf(g.elapsedSeconds, 2.f);
-	y = 0;
-	z = -2;
-
-	a = fmodf(g.elapsedSeconds * 100, 360.f);
-
-	sz = sx = sy = 0.1 + fmodf(g.elapsedSeconds / 10, 0.9f);
-
-	color = { 11, 11, (uint8_t)(int)(g.elapsedSeconds * 100), 0 };
-
-	dirty = true;
-}
-
-void Node::Draw() {
-	auto& g = Game::Instance();
-	if (dirty) {
-		esMatrixLoadIdentity(&modelMatrix);
-		esTranslate(&modelMatrix, x, y, z);
-		esRotate(&modelMatrix, a, 1.0, 0.0, 1.0);
-		esScale(&modelMatrix, sx, sy, sz);
-		esMatrixMultiply(&modelMatrix, &modelMatrix, &g.projectionMatrix);
-		dirty = false;
-	}
 
 	glUseProgram(g.ps);
-
-	glUniformMatrix4fv(g.uMvpMatrix, 1, GL_FALSE, (float*)&modelMatrix);
-	glUniform4f(g.uColor, (float)color.r / 255, (float)color.g / 255, (float)color.b / 255, (float)color.a / 255);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
 	glVertexAttribPointer(g.iPosition, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (const void*)0);
 	glEnableVertexAttribArray(g.iPosition);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+}
+
+void Node::Draw(xx::es::Matrix const& parentMatrix) {
+	auto& g = Game::Instance();
+
+	if (dirty) {
+		dirty = false;
+		esMatrixLoadIdentity(&modelMatrix);
+		if (x != 0.f || y != 0.f || z != 0.f) {
+			esTranslate(&modelMatrix, x, y, z);
+		}
+		if (a != 0.f) {
+			esRotate(&modelMatrix, a, 1.0, 0.0, 1.0);
+		}
+		if (sx != 1.f || sy != 1.f || sz != 1.f) {
+			esScale(&modelMatrix, sx, sy, sz);
+		}
+		esMatrixMultiply(&modelMatrix, &modelMatrix, &parentMatrix);
+	}
+
+	//glUseProgram(g.ps);
+
+	//glBindBuffer(GL_ARRAY_BUFFER, vb);
+	//glVertexAttribPointer(g.iPosition, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (const void*)0);
+	//glEnableVertexAttribArray(g.iPosition);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+
+	glUniformMatrix4fv(g.uMvpMatrix, 1, GL_FALSE, (float*)&modelMatrix);
+	glUniform4f(g.uColor, (float)color.r / 255, (float)color.g / 255, (float)color.b / 255, (float)color.a / 255);
+
 	glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_SHORT, 0);
+
+	for (auto& c : children) {
+		c->Draw(modelMatrix);
+	}
 }
 
 int main() {

@@ -14,7 +14,7 @@ namespace xx::es {
 
 #define PI 3.1415926535897932384626433832795f
 
-	inline void esMatrixMultiply(Matrix* result, Matrix* srcA, Matrix* srcB) {
+	inline void esMatrixMultiply(Matrix* result, Matrix const* srcA, Matrix const* srcB) {
 		Matrix    tmp;
 		int         i;
 
