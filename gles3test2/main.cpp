@@ -45,6 +45,7 @@ struct Node {
 
 	xx::es::Buffer vb, ib;
 
+	bool dirty = false;
 	float x = 0;
 	float y = 0;
 	float z = 0;
@@ -162,22 +163,25 @@ void Node::Update() {
 	sz = sx = sy = 0.1 + fmodf(g.elapsedSeconds / 10, 0.9f);
 
 	color = { 11, 11, (uint8_t)(int)(g.elapsedSeconds * 100), 0 };
+
+	dirty = true;
 }
 
 void Node::Draw() {
 	auto& g = Game::Instance();
-	esMatrixLoadIdentity(&modelMatrix);
-	esTranslate(&modelMatrix, x, y, z);
-	esRotate(&modelMatrix, a, 1.0, 0.0, 1.0);
-	esScale(&modelMatrix, sx, sy, sz);
+	if (dirty) {
+		esMatrixLoadIdentity(&modelMatrix);
+		esTranslate(&modelMatrix, x, y, z);
+		esRotate(&modelMatrix, a, 1.0, 0.0, 1.0);
+		esScale(&modelMatrix, sx, sy, sz);
+		esMatrixMultiply(&modelMatrix, &modelMatrix, &g.projectionMatrix);
+		dirty = false;
+	}
 
 	glUseProgram(g.ps);
 
-	xx::es::Matrix m;
-	esMatrixMultiply(&m, &modelMatrix, &g.projectionMatrix);
-	glUniformMatrix4fv(g.uMvpMatrix, 1, GL_FALSE, (float*)&m);
+	glUniformMatrix4fv(g.uMvpMatrix, 1, GL_FALSE, (float*)&modelMatrix);
 	glUniform4f(g.uColor, (float)color.r / 255, (float)color.g / 255, (float)color.b / 255, (float)color.a / 255);
-
 
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
 	glVertexAttribPointer(g.iPosition, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (const void*)0);
