@@ -311,11 +311,11 @@ namespace xx::es {
 			return vbo;
 		}
 
-		inline GLuint LoadVertices(void const* const& data, GLsizeiptr const& len) {
-			return LoadBuffer(GL_ARRAY_BUFFER, data, len);
+		inline GLuint LoadVertices(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+			return LoadBuffer(GL_ARRAY_BUFFER, data, len, usage);
 		}
-		inline GLuint LoadIndexes(void const* const& data, GLsizeiptr const& len) {
-			return LoadBuffer(GL_ELEMENT_ARRAY_BUFFER, data, len);
+		inline GLuint LoadIndexes(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+			return LoadBuffer(GL_ELEMENT_ARRAY_BUFFER, data, len, usage);
 		}
 	};
 
