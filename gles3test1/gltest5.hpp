@@ -138,6 +138,6 @@ struct GLTest5
 		glEnableVertexAttribArray(iPosition);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_SHORT, 0);
 	}
 };
