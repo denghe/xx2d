@@ -189,8 +189,7 @@ namespace xx::es {
 			// 申请 shader 上下文. 返回 0 表示失败, 参数：GL_VERTEX_SHADER 或 GL_FRAGMENT_SHADER
 			auto&& shader = glCreateShader(type);
 			if (!shader) {
-				lastErrorNumber = __LINE__;
-				lastErrorMessage = "LoadShader error. glGetError() = " + std::to_string(glGetError());
+				CheckGLError(__LINE__);
 				return 0;
 			}
 			auto&& sg = MakeScopeGuard([&] {
@@ -247,30 +246,18 @@ namespace xx::es {
 			// 创建一个 program. 返回 0 表示失败
 			auto program = glCreateProgram();
 			if (!program) {
-				lastErrorNumber = __LINE__;
-				lastErrorMessage = "LoadProgram error. glCreateProgram fail, glGetError() = ";
-				lastErrorMessage.append(std::to_string(glGetError()));
+				CheckGLError(__LINE__);
 				return 0;
 			}
 			auto sg = MakeScopeGuard([&] { glDeleteProgram(program); });
 
 			// 向 program 附加 vs
 			glAttachShader(program, vs);
-			if (auto e = glGetError()) {
-				lastErrorNumber = __LINE__;
-				lastErrorMessage = "LoadProgram error. glAttachShader vs fail, glGetError() = ";
-				lastErrorMessage.append(std::to_string(glGetError()));
-				return 0;
-			}
+			if (auto e = CheckGLError(__LINE__)) return 0;
 
 			// 向 program 附加 ps
 			glAttachShader(program, fs);
-			if (auto e = glGetError()) {
-				lastErrorNumber = __LINE__;
-				lastErrorMessage = "LoadProgram error. glAttachShader fs fail, glGetError() = ";
-				lastErrorMessage.append(std::to_string(glGetError()));
-				return 0;
-			}
+			if (auto e = CheckGLError(__LINE__)) return 0;
 
 			// 链接
 			glLinkProgram(program);
@@ -313,21 +300,11 @@ namespace xx::es {
 
 			// 类型绑定
 			glBindBuffer(target, vbo);
-			if (auto e = glGetError()) {
-				lastErrorNumber = __LINE__;
-				lastErrorMessage = "LoadVBO error. glBindBuffer fail, glGetError() = ";
-				lastErrorMessage.append(std::to_string(glGetError()));
-				return 0;
-			}
+			if (auto e = CheckGLError(__LINE__)) return 0;
 
 			// 数据填充
 			glBufferData(target, len, data, usage);
-			if (auto e = glGetError()) {
-				lastErrorNumber = __LINE__;
-				lastErrorMessage = "LoadVBO error. glBufferData fail, glGetError() = ";
-				lastErrorMessage.append(std::to_string(glGetError()));
-				return 0;
-			}
+			if (auto e = CheckGLError(__LINE__)) return 0;
 
 			glBindBuffer(target, 0);
 			sgVbo.Cancel();
