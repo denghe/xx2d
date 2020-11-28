@@ -33,12 +33,10 @@ namespace xx::es {
 			return *this;
 		}
 
-		bool operator==(GLRes const& o) {
-			return handle == o.handle;
-		}
-		bool operator!=(GLRes const& o) {
-			return handle != o.handle;
-		}
+		bool operator==(GLRes const& o) { return handle == o.handle; }
+		bool operator!=(GLRes const& o) { return handle != o.handle; }
+		bool operator==(GLuint const& o) { return handle == o; }
+		bool operator!=(GLuint const& o) { return handle != o; }
 
 		XX_FORCEINLINE void operator=(GLuint const& h) {
 			Reset();

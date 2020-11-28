@@ -4,56 +4,27 @@
 struct Node {
 	std::vector<xx::Shared<Node>> children;
 
-	std::array<GLfloat, 24 * 3> vertices = {
-		   -0.5f, -0.5f, -0.5f,
-		   -0.5f, -0.5f,  0.5f,
-		   0.5f, -0.5f,  0.5f,
-		   0.5f, -0.5f, -0.5f,
-		   -0.5f,  0.5f, -0.5f,
-		   -0.5f,  0.5f,  0.5f,
-		   0.5f,  0.5f,  0.5f,
-		   0.5f,  0.5f, -0.5f,
-		   -0.5f, -0.5f, -0.5f,
-		   -0.5f,  0.5f, -0.5f,
-		   0.5f,  0.5f, -0.5f,
-		   0.5f, -0.5f, -0.5f,
-		   -0.5f, -0.5f, 0.5f,
-		   -0.5f,  0.5f, 0.5f,
-		   0.5f,  0.5f, 0.5f,
-		   0.5f, -0.5f, 0.5f,
-		   -0.5f, -0.5f, -0.5f,
-		   -0.5f, -0.5f,  0.5f,
-		   -0.5f,  0.5f,  0.5f,
-		   -0.5f,  0.5f, -0.5f,
-		   0.5f, -0.5f, -0.5f,
-		   0.5f, -0.5f,  0.5f,
-		   0.5f,  0.5f,  0.5f,
-		   0.5f,  0.5f, -0.5f,
+	std::array<GLfloat, 8> squareVertices = {
+		-1.0f, -1.0f,
+		1.0f, -1.0f,
+		-1.0f,  1.0f,
+		1.0f,  1.0f,
 	};
-	std::array<GLushort, 12 * 3> indices = {
-		   0, 2, 1,
-		   0, 3, 2,
-		   4, 5, 6,
-		   4, 6, 7,
-		   8, 9, 10,
-		   8, 10, 11,
-		   12, 15, 14,
-		   12, 14, 13,
-		   16, 17, 18,
-		   16, 18, 19,
-		   20, 23, 22,
-		   20, 22, 21
+	std::array<GLfloat, 8> textureVertices = {
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f,  1.0f,
+		0.0f,  0.0f,
 	};
-	xx::es::Buffer vb, ib;
+
+	xx::es::Buffer sv, tv;
 	xx::es::Texture t;
 
 	bool dirty = false;
 	float x = 0;
 	float y = 0;
-	float z = 0;
 	float sx = 1.0f;
 	float sy = 1.0f;
-	float sz = 1.0f;
 	float a = 0;
 	xx::es::Color4b color = { 255, 127, 127, 0 };
 
@@ -71,9 +42,14 @@ struct Game : xx::es::Context<Game> {
 
 	xx::es::Shader vs, fs;
 	xx::es::Program ps;
-	inline static int iPosition = 0;
+
+	inline static int iXY = 0;
+	inline static int iUV = 0;
+
 	inline static int uMvpMatrix = 0;
 	inline static int uColor = 0;
+	inline static int uTexture = 0;
+
 	xx::es::Matrix projectionMatrix;
 
 	xx::Shared<Node> n;
@@ -83,13 +59,20 @@ struct Game : xx::es::Context<Game> {
 	inline int GLInit() {
 		vs = LoadVertexShader({ R"--(
 #version 300 es
-in vec4 iPosition;
+
 uniform vec4 uColor;
 uniform mat4 uMvpMatrix;
+
+in vec4 iXY;
+in vec4 iUV;
+
 out vec4 vColor;
+out vec2 vUV;
+
 void main() {
-	gl_Position = uMvpMatrix * iPosition;
+	gl_Position = uMvpMatrix * iXY;
 	vColor = uColor;
+	vUV = iUV.xy;
 }
 )--" });
 		if (!vs) return __LINE__;
@@ -97,10 +80,16 @@ void main() {
 		fs = LoadFragmentShader({ R"--(
 #version 300 es
 precision mediump float;
+
+uniform sampler2D uTexture;
+
 in vec4 vColor;
+in vec2 vUV;
+
 out vec4 oColor;
+
 void main() {
-   oColor = vColor;
+   oColor = texture2D(uTexture, vUV);	// * vColor ?
 }
 )--" });
 		if (!fs) return __LINE__;
@@ -108,9 +97,11 @@ void main() {
 		ps = LinkProgram(vs, fs);
 		if (!ps) return __LINE__;
 
-		iPosition = glGetAttribLocation(ps, "iPosition");
+		iXY = glGetAttribLocation(ps, "iXY");
+		iUV = glGetAttribLocation(ps, "iUV");
 		uMvpMatrix = glGetUniformLocation(ps, "uMvpMatrix");
 		uColor = glGetUniformLocation(ps, "uColor");
+		uTexture = glGetUniformLocation(ps, "uTexture");
 
 		glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 
@@ -132,7 +123,6 @@ void main() {
 		n->Update = [n = n.pointer, this]{
 			n->x = fmodf(elapsedSeconds, 2.f);
 			n->y = 0;
-			n->z = -2;
 
 			n->a = fmodf(elapsedSeconds * 100, 360.f);
 
@@ -140,19 +130,19 @@ void main() {
 
 			n->dirty = true;
 
-			for (auto& c : n->children) {
-				c->Update();
-			}
+			//for (auto& c : n->children) {
+			//	c->Update();
+			//}
 		};
-		for (size_t i = 0; i < 10; i++) {
-			auto&& n2 = n->children.emplace_back().Emplace();
-			n2->Update = [i = i, n = n2.pointer, this]{
-				n->y = 0.1f + (float)i * 0.1f;
-				n->a = fmodf(elapsedSeconds * 100, 360.f);
-				n->sz = n->sx = n->sy = 0.1f + fmodf(elapsedSeconds / 10, 0.5f);
-				n->dirty = true;
-			};
-		}
+		//for (size_t i = 0; i < 10; i++) {
+		//	auto&& n2 = n->children.emplace_back().Emplace();
+		//	n2->Update = [i = i, n = n2.pointer, this]{
+		//		n->y = 0.1f + (float)i * 0.1f;
+		//		n->a = fmodf(elapsedSeconds * 100, 360.f);
+		//		n->sz = n->sx = n->sy = 0.1f + fmodf(elapsedSeconds / 10, 0.5f);
+		//		n->dirty = true;
+		//	};
+		//}
 
 		return 0;
 	}
@@ -171,12 +161,11 @@ void main() {
 
 inline Node::Node() {
 	auto& g = Game::Instance();
-	vb = g.LoadVertices(vertices.data(), sizeof(vertices));
-	assert(vb);
+	sv = g.LoadVertices(squareVertices.data(), sizeof(squareVertices));
+	assert(sv);
 
-	ib = g.LoadIndexes(indices.data(), sizeof(indices));
-	assert(ib);
-	ib.ud = sizeof(indices);
+	tv = g.LoadVertices(textureVertices.data(), sizeof(textureVertices));
+	assert(tv);
 
 	t = g.LoadEtc2TextureFile(g.rootPath / "all.pkm");
 	assert(t);
@@ -184,7 +173,7 @@ inline Node::Node() {
 
 // 指令合并思路：如果相同 ps 且 vb ib 一致, 似乎可跳过这部分代码. 
 // 如果 ps 不一致 则清0 vb ib. 如果中途会 释放资源，则可能需要每帧清 0
-inline GLuint _ps = 0, _vb = 0, _ib = 0;
+inline GLuint _ps = 0, _sv = 0, _tv = 0, _t = 0;
 
 void Node::Draw(xx::es::Matrix const& parentMatrix) {
 	auto& g = Game::Instance();
@@ -193,38 +182,47 @@ void Node::Draw(xx::es::Matrix const& parentMatrix) {
 		dirty = false;
 		xx::es::Matrix m;
 		esMatrixLoadIdentity(&m);
-		if (x != 0.f || y != 0.f || z != 0.f) {
-			esTranslate(&m, x, y, z);
+		if (x != 0.f || y != 0.f) {
+			esTranslate(&m, x, y, 0.f);
 		}
 		if (a != 0.f) {
-			esRotate(&m, a, 1.0, 0.0, 1.0);
+			esRotate(&m, a, 0.0, 0.0, 1.0);
 		}
-		if (sx != 1.f || sy != 1.f || sz != 1.f) {
-			esScale(&m, sx, sy, sz);
+		if (sx != 1.f || sy != 1.f) {
+			esScale(&m, sx, sy, 1.f);
 		}
 		esMatrixMultiply(&modelMatrix, &m, &parentMatrix);
 	}
 
-	if (_ps != g.ps) {
+	if (g.ps != _ps) {
 		_ps = g.ps;
-		_vb = _ib = 0;
+		_sv = _tv = 0;
 		glUseProgram(g.ps);
 	}
-	if (_vb != vb) {
-		_vb = vb;
-		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glVertexAttribPointer(g.iPosition, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (const void*)0);
-		glEnableVertexAttribArray(g.iPosition);
-	}
-	if (_ib != ib) {
-		_ib = ib;
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+	if (_sv != sv) {
+		_sv = sv;
+		glBindBuffer(GL_ARRAY_BUFFER, sv);											assert(!g.CheckGLError(__LINE__));
+		glVertexAttribPointer(g.iXY, 2, GL_FLOAT, GL_FALSE, 8, 0);					assert(!g.CheckGLError(__LINE__));
+		glEnableVertexAttribArray(g.iXY);											assert(!g.CheckGLError(__LINE__));
 	}
 
-	glUniformMatrix4fv(g.uMvpMatrix, 1, GL_FALSE, (float*)&modelMatrix);
-	glUniform4f(g.uColor, (float)color.r / 255, (float)color.g / 255, (float)color.b / 255, (float)color.a / 255);
+	if (_tv != tv) {
+		_tv = tv;
+		glBindBuffer(GL_ARRAY_BUFFER, tv);											assert(!g.CheckGLError(__LINE__));
+		glVertexAttribPointer(g.iUV, 2, GL_FLOAT, GL_FALSE, 8, 0);					assert(!g.CheckGLError(__LINE__));
+		glEnableVertexAttribArray(g.iUV);											assert(!g.CheckGLError(__LINE__));
+	}
 
-	glDrawElements(GL_TRIANGLES, ib.ud, GL_UNSIGNED_SHORT, 0);
+	if (_t != t) {
+		glActiveTexture(GL_TEXTURE0);												assert(!g.CheckGLError(__LINE__));
+		glBindTexture(GL_TEXTURE_2D, t);											assert(!g.CheckGLError(__LINE__));
+		glUniform1i(g.uTexture, 0);													assert(!g.CheckGLError(__LINE__));
+	}
+
+	glUniformMatrix4fv(g.uMvpMatrix, 1, GL_FALSE, (float*)&modelMatrix);			assert(!g.CheckGLError(__LINE__));
+	glUniform4f(g.uColor, (float)color.r / 255, (float)color.g / 255, (float)color.b / 255, (float)color.a / 255);	assert(!g.CheckGLError(__LINE__));
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);											assert(!g.CheckGLError(__LINE__));
 
 	for (auto& c : children) {
 		c->Draw(modelMatrix);
