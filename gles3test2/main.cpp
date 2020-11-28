@@ -26,7 +26,7 @@ struct Node {
 	float sx = 1.0f;
 	float sy = 1.0f;
 	float a = 0;
-	xx::es::Color4b color = { 255, 127, 127, 0 };
+	xx::es::Color4b color{};
 
 	xx::es::Matrix modelMatrix;
 
@@ -89,7 +89,7 @@ in vec2 vUV;
 out vec4 oColor;
 
 void main() {
-   oColor = texture2D(uTexture, vUV);	// * vColor ?
+   oColor = vColor * texture2D(uTexture, vUV);
 }
 )--" });
 		if (!fs) return __LINE__;
@@ -126,7 +126,7 @@ void main() {
 
 			n->a = fmodf(elapsedSeconds * 100, 360.f);
 
-			n->color = { 11, 11, (uint8_t)(int)(elapsedSeconds * 100), 0 };
+			n->color = { (uint8_t)(int)(elapsedSeconds * 100), 111, 111, 255 };
 
 			n->dirty = true;
 
