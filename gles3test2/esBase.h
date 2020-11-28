@@ -1,11 +1,78 @@
-#pragma once
+ï»¿#pragma once
 #include "xx_ptr.h"
+#include "xx_file.h"
 #include "xx_chrono.h"
 #include "glew/glew.h"
 #include "glfw/glfw3.h"
 #include "esMatrix.h"
 
 namespace xx::es {
+
+	enum class GLResTypes {
+		shader, program, buffer, texture
+	};
+
+	template<GLResTypes T, typename UD = GLsizei>
+	struct GLRes {
+		GLuint handle{};
+		UD ud{};
+
+		XX_FORCEINLINE operator GLuint const& () const { return handle; }
+
+		GLRes() = default;
+		GLRes(GLRes const&) = delete;
+		GLRes& operator=(GLRes const&) = delete;
+
+		GLRes(GLuint const& handle) : handle(handle) {}
+		GLRes(GLRes&& o) {
+			this->operator=(std::move(o));
+		}
+		GLRes& operator=(GLRes&& o) {
+			std::swap(handle, o.handle);
+			std::swap(ud, o.ud);
+			return *this;
+		}
+
+		bool operator==(GLRes const& o) {
+			return handle == o.handle;
+		}
+		bool operator!=(GLRes const& o) {
+			return handle != o.handle;
+		}
+
+		XX_FORCEINLINE void operator=(GLuint const& h) {
+			Reset();
+			handle = h;
+		}
+		XX_FORCEINLINE void Reset() {
+			if (handle) {
+				if constexpr (T == GLResTypes::shader) { glDeleteShader(handle); }
+				if constexpr (T == GLResTypes::program) { glDeleteProgram(handle); }
+				if constexpr (T == GLResTypes::buffer) { glDeleteBuffers(1, &handle); }
+				if constexpr (T == GLResTypes::texture) { glDeleteTextures(1, &handle); }
+				handle = 0;
+			}
+		}
+		~GLRes() {
+			Reset();
+		}
+	};
+
+	using Shader = GLRes<GLResTypes::shader>;
+	using Program = GLRes<GLResTypes::program>;
+	using Buffer = GLRes<GLResTypes::buffer>;
+	using Texture = GLRes<GLResTypes::texture, std::pair<GLsizei, GLsizei>>;
+
+	union Color4b {
+		struct {
+			uint8_t r, g, b, a;
+		};
+		uint32_t data = 0;
+	};
+
+
+
+
 	template<typename T>
 	struct Context {
 		inline static Context* instance = nullptr;
@@ -15,7 +82,7 @@ namespace xx::es {
 		int vsync = 1;	// 0: 0ff
 		bool fullScreen = false;
 		std::string title = "gles3test2 fps: ";
-		std::filesystem::path rootPath;
+		std::filesystem::path rootPath = std::filesystem::current_path() / "res";
 
 		int lastErrorNumber = 0;
 		std::string lastErrorMessage;
@@ -72,7 +139,7 @@ namespace xx::es {
 
 		inline int Run() {
 			/************************************************************************************************/
-			// ³õÊ¼»¯´°¿ÚÈİÆ÷
+			// åˆå§‹åŒ–çª—å£å®¹å™¨
 
 			glfwSetErrorCallback([](auto n, auto m) { instance->onGLFWError(n, m); });
 			if (glfwInit() == GLFW_FALSE) return __LINE__;
@@ -104,7 +171,7 @@ namespace xx::es {
 			w = (float)width;
 			h = (float)height;
 
-			// »Øµ÷×ªµ½³ÉÔ±º¯Êı
+			// å›è°ƒè½¬åˆ°æˆå‘˜å‡½æ•°
 			glfwSetMouseButtonCallback(wnd, [](auto w, auto b, auto a, auto m) { instance->onMouseButtonCallback(b, a, m); });
 			glfwSetCursorPosCallback(wnd, [](auto w, auto x, auto y) { instance->onCursorPosCallback(x, y); });
 			glfwSetScrollCallback(wnd, [](auto w, auto x, auto y) { instance->onScrollCallback(x, y); });
@@ -117,7 +184,7 @@ namespace xx::es {
 			glfwSetWindowFocusCallback(wnd, [](auto w, auto f) { instance->onWindowFocusCallback(f); });
 
 			/************************************************************************************************/
-			// ³õÊ¼»¯ opengl
+			// åˆå§‹åŒ– opengl
 
 			if (int r = glewInit()) {
 				lastErrorNumber = r;
@@ -134,7 +201,7 @@ namespace xx::es {
 			if (int r = ((T*)this)->GLInit()) return r;
 
 			/************************************************************************************************/
-			// ¿ªÊ¼Ö¡Ñ­»·
+			// å¼€å§‹å¸§å¾ªç¯
 
 			beginTime = lastTime = NowSteadyEpochSeconds();
 			fpsTimer = lastTime + 0.5;
@@ -177,26 +244,21 @@ namespace xx::es {
 		std::vector<GLchar const*> codes;
 		std::vector<GLint> codeLens;
 
-		// ¼ÓÔØ shader ´úÂë¶Î. ·µ»Ø 0 ´ú±í³ö´í
-		inline GLuint LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
-			// Ç°ÖÃ¼ì²é
+		// åŠ è½½ shader ä»£ç æ®µ. è¿”å› 0 ä»£è¡¨å‡ºé”™
+		inline Shader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
+			// å‰ç½®æ£€æŸ¥
 			if (!codes_.size() || !(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER)) {
 				lastErrorNumber = __LINE__;
 				lastErrorMessage = "LoadShader if (!codes.size() || !(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER))";
 				return 0;
 			}
 
-			// ÉêÇë shader ÉÏÏÂÎÄ. ·µ»Ø 0 ±íÊ¾Ê§°Ü, ²ÎÊı£ºGL_VERTEX_SHADER »ò GL_FRAGMENT_SHADER
+			// ç”³è¯· shader ä¸Šä¸‹æ–‡. è¿”å› 0 è¡¨ç¤ºå¤±è´¥, å‚æ•°ï¼šGL_VERTEX_SHADER æˆ– GL_FRAGMENT_SHADER
 			auto&& shader = glCreateShader(type);
-			if (!shader) {
-				CheckGLError(__LINE__);
-				return 0;
-			}
-			auto&& sg = MakeScopeGuard([&] {
-				glDeleteShader(shader);
-				});
+			if (!shader) { CheckGLError(__LINE__); return 0; }
+			auto&& sg = MakeScopeGuard([&] { glDeleteShader(shader); });
 
-			// Ìî³ä codes & codeLens
+			// å¡«å…… codes & codeLens
 			codes.resize(codes_.size());
 			codeLens.resize(codes_.size());
 			auto ss = codes_.begin();
@@ -205,25 +267,25 @@ namespace xx::es {
 				codeLens[i] = (GLint)ss[i].size();
 			}
 
-			// ²ÎÊı£ºÄ¿±ê shader, ´úÂë¶ÎÊı, ¶ÎÊı×é, ¶Î³¤¶ÈÊı×é
+			// å‚æ•°ï¼šç›®æ ‡ shader, ä»£ç æ®µæ•°, æ®µæ•°ç»„, æ®µé•¿åº¦æ•°ç»„
 			glShaderSource(shader, (GLsizei)codes_.size(), codes.data(), codeLens.data());
 
-			// ±àÒë
+			// ç¼–è¯‘
 			glCompileShader(shader);
 
-			// ×´Ì¬ÈİÆ÷
+			// çŠ¶æ€å®¹å™¨
 			GLint r = GL_FALSE;
 
-			// ²éÑ¯ÊÇ·ñ±àÒë³É¹¦
+			// æŸ¥è¯¢æ˜¯å¦ç¼–è¯‘æˆåŠŸ
 			glGetShaderiv(shader, GL_COMPILE_STATUS, &r);
 
-			// Ê§°Ü
+			// å¤±è´¥
 			if (!r) {
-				// ²éÑ¯ÈÕÖ¾ĞÅÏ¢ÎÄ±¾³¤¶È
+				// æŸ¥è¯¢æ—¥å¿—ä¿¡æ¯æ–‡æœ¬é•¿åº¦
 				glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &r);
 				if (r) {
 					lastErrorNumber = __LINE__;
-					// ¸´ÖÆ´íÎóÎÄ±¾
+					// å¤åˆ¶é”™è¯¯æ–‡æœ¬
 					lastErrorMessage.resize(r);
 					glGetShaderInfoLog(shader, r, nullptr, lastErrorMessage.data());
 				}
@@ -234,46 +296,43 @@ namespace xx::es {
 			return shader;
 		}
 
-		inline GLuint LoadVertexShader(std::initializer_list<std::string_view>&& codes_) {
+		inline Shader LoadVertexShader(std::initializer_list<std::string_view>&& codes_) {
 			return LoadShader(GL_VERTEX_SHADER, std::move(codes_));
 		}
-		inline GLuint LoadFragmentShader(std::initializer_list<std::string_view>&& codes_) {
+		inline Shader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_) {
 			return LoadShader(GL_FRAGMENT_SHADER, std::move(codes_));
 		}
 
-		// ÓÃ vs fs Á´½Ó³ö program. ·µ»Ø 0 ±íÊ¾Ê§°Ü
-		inline GLuint LinkProgram(GLuint const& vs, GLuint const& fs) {
-			// ´´½¨Ò»¸ö program. ·µ»Ø 0 ±íÊ¾Ê§°Ü
+		// ç”¨ vs fs é“¾æ¥å‡º program. è¿”å› 0 è¡¨ç¤ºå¤±è´¥
+		inline Program LinkProgram(GLuint const& vs, GLuint const& fs) {
+			// åˆ›å»ºä¸€ä¸ª program. è¿”å› 0 è¡¨ç¤ºå¤±è´¥
 			auto program = glCreateProgram();
-			if (!program) {
-				CheckGLError(__LINE__);
-				return 0;
-			}
+			if (!program) { CheckGLError(__LINE__); return 0; }
 			auto sg = MakeScopeGuard([&] { glDeleteProgram(program); });
 
-			// Ïò program ¸½¼Ó vs
+			// å‘ program é™„åŠ  vs
 			glAttachShader(program, vs);
 			if (auto e = CheckGLError(__LINE__)) return 0;
 
-			// Ïò program ¸½¼Ó ps
+			// å‘ program é™„åŠ  ps
 			glAttachShader(program, fs);
 			if (auto e = CheckGLError(__LINE__)) return 0;
 
-			// Á´½Ó
+			// é“¾æ¥
 			glLinkProgram(program);
 
-			// ×´Ì¬ÈİÆ÷
+			// çŠ¶æ€å®¹å™¨
 			GLint r = GL_FALSE;
 
-			// ²éÑ¯Á´½ÓÊÇ·ñ³É¹¦
+			// æŸ¥è¯¢é“¾æ¥æ˜¯å¦æˆåŠŸ
 			glGetProgramiv(program, GL_LINK_STATUS, &r);
 
-			// Ê§°Ü
+			// å¤±è´¥
 			if (!r) {
-				// ²éÑ¯ÈÕÖ¾ĞÅÏ¢ÎÄ±¾³¤¶È
+				// æŸ¥è¯¢æ—¥å¿—ä¿¡æ¯æ–‡æœ¬é•¿åº¦
 				glGetProgramiv(program, GL_INFO_LOG_LENGTH, &r);
 				if (r) {
-					// ¸´ÖÆ´íÎóÎÄ±¾
+					// å¤åˆ¶é”™è¯¯æ–‡æœ¬
 					lastErrorMessage.resize(r);
 					glGetProgramInfoLog(program, r, nullptr, lastErrorMessage.data());
 				}
@@ -286,23 +345,18 @@ namespace xx::es {
 
 		// target: GL_ARRAY_BUFFER, GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, or GL_UNIFORM_BUFFER. 
 		// usage:  GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY. 
-		inline GLuint LoadBuffer(GLenum const& target, void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		inline Buffer LoadBuffer(GLenum const& target, void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
 			GLuint vbo = 0;
-			// ÉêÇë
+			// ç”³è¯·
 			glGenBuffers(1, &vbo);
-			if (!vbo) {
-				lastErrorNumber = __LINE__;
-				lastErrorMessage = "LoadVBO error. glGenBuffers fail, glGetError() = ";
-				lastErrorMessage.append(std::to_string(glGetError()));
-				return 0;
-			}
+			if (!vbo) { CheckGLError(__LINE__); return 0; }
 			auto sgVbo = MakeScopeGuard([&] { glDeleteVertexArrays(1, &vbo); });
 
-			// ÀàĞÍ°ó¶¨
+			// ç±»å‹ç»‘å®š
 			glBindBuffer(target, vbo);
 			if (auto e = CheckGLError(__LINE__)) return 0;
 
-			// Êı¾İÌî³ä
+			// æ•°æ®å¡«å……
 			glBufferData(target, len, data, usage);
 			if (auto e = CheckGLError(__LINE__)) return 0;
 
@@ -311,69 +365,72 @@ namespace xx::es {
 			return vbo;
 		}
 
-		inline GLuint LoadVertices(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		inline Buffer LoadVertices(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
 			return LoadBuffer(GL_ARRAY_BUFFER, data, len, usage);
 		}
-		inline GLuint LoadIndexes(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		inline Buffer LoadIndexes(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
 			return LoadBuffer(GL_ELEMENT_ARRAY_BUFFER, data, len, usage);
 		}
-	};
 
 
-	struct ShaderBase {
-		static void Release(GLuint const& handle) {
-			glDeleteShader(handle);
-		}
-	};
-	struct ProgramBase {
-		static void Release(GLuint const& handle) {
-			glDeleteProgram(handle);
-		}
-	};
-	struct BufferBase {
-		static void Release(GLuint const& handle) {
-			glDeleteBuffers(1, &handle);
-		}
-		GLsizei len = 0;
-	};
-	template<typename ResBase>
-	struct ResHolder : ResBase {
-		GLuint handle = 0;
-		XX_FORCEINLINE operator GLuint const& () const { return handle; }
+		// åŠ è½½ etc2 å‹ç¼©çº¹ç†æ•°æ®. è¿”å› 0 è¡¨ç¤ºå‡ºé”™
+		inline Texture LoadEtc2TextureData(void* const& data, GLsizei const& len, GLsizei const& width, GLsizei const& height, bool const& hasAlpha = true) {
+			GLuint t = 0;
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glGenTextures(1, &t);
+			if (auto e = CheckGLError(__LINE__)) return 0;
+			auto sg = MakeScopeGuard([&] { glDeleteTextures(1, &t); });
+			glBindTexture(GL_TEXTURE_2D, t);
+			if (auto e = CheckGLError(__LINE__)) return 0;
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST/*GL_LINEAR*/);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glCompressedTexImage2D(GL_TEXTURE_2D, 0, hasAlpha ? GL_COMPRESSED_RGBA8_ETC2_EAC : GL_COMPRESSED_RGB8_ETC2, width, height, 0, len, data);
+			if (auto e = CheckGLError(__LINE__)) return 0;
 
-		ResHolder() = default;
-		ResHolder(ResHolder const&) = delete;
-		ResHolder& operator=(ResHolder const&) = delete;
+			sg.Cancel();
+			Texture rtv = t;
+			rtv.ud.first = width;
+			rtv.ud.second = height;
+			return rtv;
+		}
 
-		ResHolder(ResHolder&& o) : handle(o.handle) {
-			o.handle = 0;
-		}
-		ResHolder& operator=(ResHolder&& o) {
-			std::swap(handle, o.handle);
-		}
-		XX_FORCEINLINE void operator=(GLuint const& handle) {
-			Reset();
-			this->handle = handle;
-		}
-		XX_FORCEINLINE void Reset() {
-			if (handle) {
-				this->ResBase::Release(handle);
+		// åŠ è½½ æ–‡ä»¶å¤´éƒ¨ä»¥ "PKM 20" æˆ– "Â«KTX 11Â»" æ‰“å¤´çš„å‹ç¼©çº¹ç†æ•°æ®æ–‡ä»¶
+		// æ”¯æŒåŠ è½½ zip å‹ç¼©åçš„ pkm æˆ– ktx æ–‡ä»¶ã€‚å¤´éƒ¨ä¸º 50 4B 03 04 "PK.."ï¼Œé‡Œé¢åªå¯ä»¥æœ‰ 1 ä¸ªä¸å¸¦è·¯å¾„çš„æ•°æ®æ–‡ä»¶  ( todo )
+		inline Texture LoadEtc2TextureFile(std::filesystem::path const& fp) {
+			xx::Data d;
+			if (int r = xx::ReadAllBytes(fp, d)) {
+				lastErrorNumber = __LINE__;
+				lastErrorMessage = std::string("read file error. rtv = ") + std::to_string(r) + ", path = " + fp.string();
+				return 0;
 			}
-		}
-		~ResHolder() {
-			Reset();
+			if (d.len >= 4 && memcmp("PK\x03\x04", d.buf, 4) == 0) {
+				// todo: decompress, fill data to d
+			}
+			if (d.len >= 6 && memcmp("PKM 20", d.buf, 6) == 0 && d.len >= 16) {
+				auto p = (uint8_t*)d.buf;
+				uint16_t format = (p[6] << 8) | p[7];				// æ ¼å¼å€¼:  1 ETC2_RGB_NO_MIPMAPS, 3 ETC2_RGBA_NO_MIPMAPS
+				uint16_t encodedWidth = (p[8] << 8) | p[9];			// 4 å­—èŠ‚å¯¹é½ å®½
+				uint16_t encodedHeight = (p[10] << 8) | p[11];		// 4 å­—èŠ‚å¯¹é½ é«˜
+				uint16_t width = (p[12] << 8) | p[13];				// å®½
+				uint16_t height = (p[14] << 8) | p[15];				// é«˜
+				if ((format == 1 || format == 3)
+					&& width > 0 && height > 0
+					&& encodedWidth >= width && encodedWidth - width < 4
+					&& encodedHeight >= height && encodedHeight - height < 4
+					&& d.len == 16 + encodedWidth * encodedHeight
+					) {
+					//return LoadEtc2TextureData(d.buf + 16, (GLsizei)(d.len - 16), encodedWidth, encodedHeight, false/*format == 3*/);
+					return LoadEtc2TextureData(d.buf + 16, (GLsizei)(d.len - 16), width, height, format == 3);
+				}
+			}
+			else if (d.len >= 8 && memcmp("\xABKTX 11\xBB", d.buf, 8) == 0) {
+				// todo
+			}
+			lastErrorNumber = __LINE__;
+			lastErrorMessage = "bad file format type";
+			return 0;
 		}
 	};
-
-	using Shader = ResHolder<ShaderBase>;
-	using Program = ResHolder<ProgramBase>;
-	using Buffer = ResHolder<BufferBase>;
-
-	union Color4b {
-		struct {
-			uint8_t r, g, b, a;
-		};
-		uint32_t data = 0;
-	};
-
 }

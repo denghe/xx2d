@@ -1,4 +1,5 @@
 ﻿#include "esBase.h"
+#include "texLoader.h"
 
 struct Node {
 	std::vector<xx::Shared<Node>> children;
@@ -44,6 +45,7 @@ struct Node {
 		   20, 22, 21
 	};
 	xx::es::Buffer vb, ib;
+	xx::es::Texture t;
 
 	bool dirty = false;
 	float x = 0;
@@ -174,7 +176,10 @@ inline Node::Node() {
 
 	ib = g.LoadIndexes(indices.data(), sizeof(indices));
 	assert(ib);
-	ib.len = sizeof(indices);
+	ib.ud = sizeof(indices);
+
+	t = g.LoadEtc2TextureFile(g.rootPath / "all.pkm");
+	assert(t);
 }
 
 // 指令合并思路：如果相同 ps 且 vb ib 一致, 似乎可跳过这部分代码. 
@@ -219,12 +224,16 @@ void Node::Draw(xx::es::Matrix const& parentMatrix) {
 	glUniformMatrix4fv(g.uMvpMatrix, 1, GL_FALSE, (float*)&modelMatrix);
 	glUniform4f(g.uColor, (float)color.r / 255, (float)color.g / 255, (float)color.b / 255, (float)color.a / 255);
 
-	glDrawElements(GL_TRIANGLES, ib.len, GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, ib.ud, GL_UNSIGNED_SHORT, 0);
 
 	for (auto& c : children) {
 		c->Draw(modelMatrix);
 	}
 }
+
+
+
+
 
 int main() {
 	Game g;

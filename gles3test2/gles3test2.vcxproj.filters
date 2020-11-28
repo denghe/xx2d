@@ -29,6 +29,10 @@
     </ClInclude>
     <ClInclude Include="esMatrix.h" />
     <ClInclude Include="esBase.h" />
+    <ClInclude Include="..\xxlib\xx_file.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="texLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak.txt" />
