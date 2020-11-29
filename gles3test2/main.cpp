@@ -1,83 +1,43 @@
 ﻿#include "esBase.h"
-#include "texLoader.h"
 
-struct Node {
-	std::vector<xx::Shared<Node>> children;
-
-	std::array<GLfloat, 8> squareVertices = {
-		-1.0f, -1.0f,
-		1.0f, -1.0f,
-		-1.0f,  1.0f,
-		1.0f,  1.0f,
-	};
-	std::array<GLfloat, 8> textureVertices = {
-		1.0f, 1.0f,
-		1.0f, 0.0f,
-		0.0f,  1.0f,
-		0.0f,  0.0f,
-	};
-
-	xx::es::Buffer sv, tv;
-	xx::es::Texture t;
-
-	bool dirty = false;
-	float x = 0;
-	float y = 0;
-	float sx = 1.0f;
-	float sy = 1.0f;
-	float a = 0;
-	xx::es::Color4b color{};
-
-	xx::es::Matrix modelMatrix;
-
-	Node();
-	std::function<void()> Update;
-	void Draw(xx::es::Matrix const& parentMatrix);
+struct Vec2f {
+	GLfloat x, y;
+};
+struct Vec3f : Vec2f {
+	GLfloat z;
+};
+struct Color4b {
+	GLubyte r, g, b, a;
+};
+struct XyzColorUv {
+	Vec3f pos;
+	Color4b color;
+	Vec2f uv;
 };
 
 struct Game : xx::es::Context<Game> {
 	static Game& Instance() { return *(Game*)instance; }
 
-	GLint imat = 0;
-
-	xx::es::Shader vs, fs;
-	xx::es::Program ps;
-
-	inline static int iXY = 0;
-	inline static int iUV = 0;
-
-	inline static int uMvpMatrix = 0;
-	inline static int uColor = 0;
-	inline static int uTexture = 0;
-
-	xx::es::Matrix projectionMatrix;
-
-	xx::Shared<Node> n;
-
-	// 使用示例： if (int r = CheckGLError(__LINE__)) return r;
-
-	inline int GLInit() {
-		vs = LoadVertexShader({ R"--(
+	inline static decltype(auto) vsSrc = R"--(
 #version 300 es
 
-uniform vec4 uColor;
-uniform mat4 uMvpMatrix;
+//uniform mat4 uMatrix;
 
-in vec4 iXY;
-in vec4 iUV;
+in vec3 iPos;
+in vec4 iColor;
+in vec2 iUV;
 
 out vec4 vColor;
 out vec2 vUV;
 
 void main() {
-	gl_Position = uMvpMatrix * iXY;
-	vColor = uColor;
-	vUV = iUV.xy;
+	//gl_Position = uMatrix * vec4(iPos, 1.0f);
+	gl_Position = vec4(iPos, 1.0f);
+	vColor = iColor;
+	vUV = iUV;
 }
-)--" });
-		if (!vs) return __LINE__;
-
-		fs = LoadFragmentShader({ R"--(
+)--";
+	inline static decltype(auto) fsSrc = R"--(
 #version 300 es
 precision mediump float;
 
@@ -91,144 +51,112 @@ out vec4 oColor;
 void main() {
    oColor = vColor * texture2D(uTexture, vUV);
 }
-)--" });
+)--";
+
+	xx::es::Shader vs, fs;
+	xx::es::Program ps;
+	GLuint iPos{}, iColor{}, iUV{}, uMatrix{}, uTexture{};
+	xx::es::Buffer vb, ib;
+	std::vector<XyzColorUv> verts;
+	std::vector<GLushort> idxs;
+	xx::es::Texture t;
+
+	inline int GLInit() {
+		vs = LoadVertexShader({ vsSrc });
+		if (!vs) return __LINE__;
+
+		fs = LoadFragmentShader({ fsSrc });
 		if (!fs) return __LINE__;
 
 		ps = LinkProgram(vs, fs);
 		if (!ps) return __LINE__;
 
-		iXY = glGetAttribLocation(ps, "iXY");
+		iPos = glGetAttribLocation(ps, "iPos");
+		iColor = glGetAttribLocation(ps, "iColor");
 		iUV = glGetAttribLocation(ps, "iUV");
-		uMvpMatrix = glGetUniformLocation(ps, "uMvpMatrix");
-		uColor = glGetUniformLocation(ps, "uColor");
+		uMatrix = glGetUniformLocation(ps, "uMatrix");
 		uTexture = glGetUniformLocation(ps, "uTexture");
 
 		glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 
-		glDisable(GL_BLEND);
-		//glDisable(GL_DEPTH_TEST);
-		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		if (int r = CheckGLError(__LINE__)) return r;
-
 		// todo: call from window resize event
 		glViewport(0, 0, width, height);
 
-		auto aspect = (GLfloat)width / (GLfloat)height;
-		esMatrixLoadIdentity(&projectionMatrix);
-		esOrtho(&projectionMatrix, -aspect, aspect, 1, -1, -10, 10);
-
-
-
-		n.Emplace();
-		n->Update = [n = n.pointer, this]{
-			n->x = fmodf(elapsedSeconds, 2.f);
-			n->y = 0;
-
-			n->a = fmodf(elapsedSeconds * 100, 360.f);
-
-			n->color = { (uint8_t)(int)(elapsedSeconds * 100), 111, 111, 255 };
-
-			n->dirty = true;
-
-			//for (auto& c : n->children) {
-			//	c->Update();
-			//}
-		};
-		//for (size_t i = 0; i < 10; i++) {
-		//	auto&& n2 = n->children.emplace_back().Emplace();
-		//	n2->Update = [i = i, n = n2.pointer, this]{
-		//		n->y = 0.1f + (float)i * 0.1f;
-		//		n->a = fmodf(elapsedSeconds * 100, 360.f);
-		//		n->sz = n->sx = n->sy = 0.1f + fmodf(elapsedSeconds / 10, 0.5f);
-		//		n->dirty = true;
-		//	};
-		//}
-
+		//vb = LoadVertices(verts.data(), verts.size() * sizeof(XyzColorUv));
+		glGenBuffers(1, &vb.handle);
+		assert(vb);
+		//ib = LoadIndexes(idxs.data(), idxs.size() * sizeof(GLushort));
+		glGenBuffers(1, &ib.handle);
+		assert(ib);
+		t = LoadEtc2TextureFile(rootPath / "all.pkm");
+		assert(t);
 		return 0;
 	}
 
 	XX_FORCEINLINE void Update() {
 		ShowFpsInTitle();
-		n->Update();
+
+		if (verts.empty()) {
+			for (size_t i = 0; i < 10000; i++) {
+				Color4b c{ 255,111,111,255 };
+				{
+					auto&& o = verts.emplace_back();
+					o.pos = { 0,0,0 };
+					o.color = c;
+					o.uv = { 0,0 };
+				}
+				{
+					auto&& o = verts.emplace_back();
+					o.pos = { 1,0,0 };
+					o.color = c;
+					o.uv = { 1,0 };
+				}
+				{
+					auto&& o = verts.emplace_back();
+					o.pos = { 1,1,0 };
+					o.color = c;
+					o.uv = { 1,1 };
+				}
+				{
+					auto&& o = verts.emplace_back();
+					o.pos = { 0,1,0 };
+					o.color = c;
+					o.uv = { 0,1 };
+				}
+				{
+					idxs.insert(idxs.begin(), { 0, 1, 2, 2, 3, 0 });
+				}
+			}
+
+			glBindBuffer(GL_ARRAY_BUFFER, vb); assert(!CheckGLError(__LINE__));
+			glBufferData(GL_ARRAY_BUFFER, (GLsizei)(verts.size() * sizeof(XyzColorUv)), verts.data(), GL_STATIC_DRAW); assert(!CheckGLError(__LINE__));
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib); assert(!CheckGLError(__LINE__));
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)(idxs.size() * sizeof(GLushort)), idxs.data(), GL_STATIC_DRAW); assert(!CheckGLError(__LINE__));
+		}
 	}
 
 	XX_FORCEINLINE void Draw() {
-		glClear(GL_COLOR_BUFFER_BIT);
-		n->Draw(projectionMatrix);
-		assert(!CheckGLError(__LINE__));
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glUseProgram(ps); assert(!CheckGLError(__LINE__));
+		glBindBuffer(GL_ARRAY_BUFFER, vb); assert(!CheckGLError(__LINE__));
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib); assert(!CheckGLError(__LINE__));
+
+		glEnableVertexAttribArray(iPos); assert(!CheckGLError(__LINE__));
+		glVertexAttribPointer(iPos, 3, GL_FLOAT, GL_FALSE, sizeof(XyzColorUv), (GLvoid*)offsetof(XyzColorUv, pos)); assert(!CheckGLError(__LINE__));
+		glEnableVertexAttribArray(iColor); assert(!CheckGLError(__LINE__));
+		glVertexAttribPointer(iColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XyzColorUv), (GLvoid*)offsetof(XyzColorUv, color)); assert(!CheckGLError(__LINE__));
+		glEnableVertexAttribArray(iUV); assert(!CheckGLError(__LINE__));
+		glVertexAttribPointer(iUV, 2, GL_FLOAT, GL_FALSE, sizeof(XyzColorUv), (GLvoid*)offsetof(XyzColorUv, uv)); assert(!CheckGLError(__LINE__));
+
+		glActiveTexture(GL_TEXTURE0); assert(!CheckGLError(__LINE__));
+		glBindTexture(GL_TEXTURE_2D, t); assert(!CheckGLError(__LINE__));
+		glUniform1i(uTexture, 0); assert(!CheckGLError(__LINE__));
+
+		glDrawElements(GL_TRIANGLES, (GLsizei)idxs.size(), GL_UNSIGNED_SHORT, 0); assert(!CheckGLError(__LINE__));
 	}
 };
-
-inline Node::Node() {
-	auto& g = Game::Instance();
-	sv = g.LoadVertices(squareVertices.data(), sizeof(squareVertices));
-	assert(sv);
-
-	tv = g.LoadVertices(textureVertices.data(), sizeof(textureVertices));
-	assert(tv);
-
-	t = g.LoadEtc2TextureFile(g.rootPath / "all.pkm");
-	assert(t);
-}
-
-// 指令合并思路：如果相同 ps 且 vb ib 一致, 似乎可跳过这部分代码. 
-// 如果 ps 不一致 则清0 vb ib. 如果中途会 释放资源，则可能需要每帧清 0
-inline GLuint _ps = 0, _sv = 0, _tv = 0, _t = 0;
-
-void Node::Draw(xx::es::Matrix const& parentMatrix) {
-	auto& g = Game::Instance();
-
-	if (dirty) {
-		dirty = false;
-		xx::es::Matrix m;
-		esMatrixLoadIdentity(&m);
-		if (x != 0.f || y != 0.f) {
-			esTranslate(&m, x, y, 0.f);
-		}
-		if (a != 0.f) {
-			esRotate(&m, a, 0.0, 0.0, 1.0);
-		}
-		if (sx != 1.f || sy != 1.f) {
-			esScale(&m, sx, sy, 1.f);
-		}
-		esMatrixMultiply(&modelMatrix, &m, &parentMatrix);
-	}
-
-	if (g.ps != _ps) {
-		_ps = g.ps;
-		_sv = _tv = 0;
-		glUseProgram(g.ps);
-	}
-	if (_sv != sv) {
-		_sv = sv;
-		glBindBuffer(GL_ARRAY_BUFFER, sv);											assert(!g.CheckGLError(__LINE__));
-		glVertexAttribPointer(g.iXY, 2, GL_FLOAT, GL_FALSE, 8, 0);					assert(!g.CheckGLError(__LINE__));
-		glEnableVertexAttribArray(g.iXY);											assert(!g.CheckGLError(__LINE__));
-	}
-
-	if (_tv != tv) {
-		_tv = tv;
-		glBindBuffer(GL_ARRAY_BUFFER, tv);											assert(!g.CheckGLError(__LINE__));
-		glVertexAttribPointer(g.iUV, 2, GL_FLOAT, GL_FALSE, 8, 0);					assert(!g.CheckGLError(__LINE__));
-		glEnableVertexAttribArray(g.iUV);											assert(!g.CheckGLError(__LINE__));
-	}
-
-	if (_t != t) {
-		glActiveTexture(GL_TEXTURE0);												assert(!g.CheckGLError(__LINE__));
-		glBindTexture(GL_TEXTURE_2D, t);											assert(!g.CheckGLError(__LINE__));
-		glUniform1i(g.uTexture, 0);													assert(!g.CheckGLError(__LINE__));
-	}
-
-	glUniformMatrix4fv(g.uMvpMatrix, 1, GL_FALSE, (float*)&modelMatrix);			assert(!g.CheckGLError(__LINE__));
-	glUniform4f(g.uColor, (float)color.r / 255, (float)color.g / 255, (float)color.b / 255, (float)color.a / 255);	assert(!g.CheckGLError(__LINE__));
-
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);											assert(!g.CheckGLError(__LINE__));
-
-	for (auto& c : children) {
-		c->Draw(modelMatrix);
-	}
-}
-
 
 
 
