@@ -614,7 +614,7 @@ void Game::CreateResources()
 
     // Load the Texture
     //DX::ThrowIfFailed(CreateDDSTextureFromFile(m_d3dDevice.Get(), L"2.dds", nullptr, &g_pTextureRV));
-    DX::ThrowIfFailed(CreateWICTextureFromFile(m_d3dDevice.Get(), m_d3dContext.Get() , L"1.png", nullptr, &g_pTextureRV));
+    DX::ThrowIfFailed(CreateWICTextureFromFile(m_d3dDevice.Get(), m_d3dContext.Get() , L"2.dds", nullptr, &g_pTextureRV));
 
 
     // Create the sample state
