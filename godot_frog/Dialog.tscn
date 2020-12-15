@@ -1,0 +1,29 @@
+[gd_scene format=2]
+
+[node name="Dialog" type="WindowDialog"]
+rect_min_size = Vector2( 318, 165 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="LineEdit" type="LineEdit" parent="."]
+margin_left = 68.7787
+margin_top = 45.5949
+margin_right = 252.779
+margin_bottom = 69.5949
+text = "focus here SPACE no jump"
+caret_blink = true
+caret_blink_speed = 0.5
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Button" type="Button" parent="."]
+margin_left = 66.7787
+margin_top = 84.4358
+margin_right = 259.779
+margin_bottom = 104.436
+text = "focus here SPACE will jump"
+__meta__ = {
+"_edit_use_anchors_": false
+}
