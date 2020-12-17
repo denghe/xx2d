@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DX11Test1", "DX11Test1\DX11
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DX11Test2", "DX11Test2\DX11Test2.vcxproj", "{BFC58178-12A6-457D-813E-40FA3F808B87}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "structTest1", "structTest1\structTest1.vcxproj", "{8369DDBC-1234-4444-BAC3-D68F5FA593F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -39,6 +41,10 @@ Global
 		{BFC58178-12A6-457D-813E-40FA3F808B87}.Debug|x64.Build.0 = Debug|x64
 		{BFC58178-12A6-457D-813E-40FA3F808B87}.Release|x64.ActiveCfg = Release|x64
 		{BFC58178-12A6-457D-813E-40FA3F808B87}.Release|x64.Build.0 = Release|x64
+		{8369DDBC-1234-4444-BAC3-D68F5FA593F2}.Debug|x64.ActiveCfg = Debug|x64
+		{8369DDBC-1234-4444-BAC3-D68F5FA593F2}.Debug|x64.Build.0 = Debug|x64
+		{8369DDBC-1234-4444-BAC3-D68F5FA593F2}.Release|x64.ActiveCfg = Release|x64
+		{8369DDBC-1234-4444-BAC3-D68F5FA593F2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
