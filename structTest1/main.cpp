@@ -39,9 +39,9 @@ struct Node {
 		return WeakFromThis<T>().Lock();
 	}
 
-	SceneTree* tree;
+	SceneTree* const tree;
 	Node(SceneTree* tree) : tree(tree) {
-		assert(tree);
+		if (!tree) throw std::runtime_error("first args: tree is nullptr");
 	}
 	SceneTree* GetTree() const;
 
@@ -60,6 +60,7 @@ struct Node {
 	void CallReady();
 	void CallProcess(float delta);
 
+	xx::Shared<Node> GetParent();
 	void AddChild(xx::Shared<Node> const& node);
 	void RemoveChild(xx::Shared<Node> const& node);
 	void Remove();
@@ -79,6 +80,10 @@ SceneTree* Node::GetTree() const {
 	return tree;
 }
 
+xx::Shared<Node> Node::GetParent() {
+	return parent.Lock();
+}
+
 void Node::AddChild(xx::Shared<Node> const& node) {
 	if (node->parent) throw std::runtime_error("AddChild error: already have parent");
 	if (node->entered) throw std::runtime_error("AddChild error: already entered");
@@ -93,8 +98,8 @@ void Node::AddChild(xx::Shared<Node> const& node) {
 }
 
 void Node::CallEnterTree() {
-	entered = true;
 	EnterTree();
+	entered = true;
 	for (auto&& c : children) {
 		c->CallEnterTree();
 	}
@@ -122,11 +127,11 @@ void Node::Remove() {
 
 void Node::CallExitTree() {
 	for (auto iter = children.rbegin(); iter != children.rend(); ++iter) {
-		(*iter)->CallExitTree();
 		(*iter)->entered = false;
+		(*iter)->CallExitTree();
 	}
-	ExitTree();
 	entered = false;
+	ExitTree();
 }
 
 void Node::CallReady() {
@@ -137,7 +142,6 @@ void Node::CallReady() {
 }
 
 void Node::CallProcess(float delta) {
-	assert(tree);
 	Process(delta);
 	for (auto&& c : children) {
 		c->CallProcess(delta);
@@ -150,8 +154,9 @@ SceneTree::SceneTree() {
 
 int SceneTree::MainLoop() {
 	while (true) {
+		// simulate frame delay
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
-		float delta = 0.016f;	// todo
+		float delta = 0.016f;
 		root->CallProcess(delta);
 	}
 	return 0;
@@ -165,44 +170,51 @@ xx::Shared<T> SceneTree::CreateNode(Args&&...args) {
 
 
 float timer = -1.0f;
+struct S : Node {
+	S(SceneTree* tree, std::string const& name) : Node(tree) { this->name = name; std::cout << "new " << name << "()" << std::endl;}
+	void EnterTree() override { std::cout << name << " EnterTree" << std::endl; }
+	void ExitTree() override { std::cout << name << " ExitTree" << std::endl; }
+	void Ready() override { std::cout << name << " Ready" << std::endl; }
+	//void Process(float delta) override { std::cout << name << " Process delta = " << delta << std::endl; }
+	~S() { std::cout << "~" << name << "()" << std::endl; }
+};
 
-struct Sprite : Node {
-	using Node::Node;
-	void EnterTree() override {
-		std::cout << name << " EnterTree" << std::endl;
-	}
-	void ExitTree() override {
-		std::cout << name << " ExitTree" << std::endl;
-	}
-	void Ready() override {
-		std::cout << name << " Ready" << std::endl;
-	}
-	std::function<void(float)> onProcess;
-	void Process(float delta) override {
-		if (onProcess) {
-			onProcess(delta);
+struct S1 : S {
+	S1(SceneTree* tree) : S(tree, "S1") {}
+	void Process(float delta) override { 
+		timer += delta;
+		if (timer > 0) {
+			Remove();
 		}
 	}
 };
 
+struct S2 : S {
+	S2(SceneTree* tree) : S(tree, "S2") {}
+	void EnterTree() override;
+};
+
+struct S3 : S {
+	S3(SceneTree* tree) : S(tree, "S3") {}
+};
+
+void S2::EnterTree() {
+	this->S::EnterTree();
+	auto s3 = tree->CreateNode<S3>();
+	std::cout << "------------ s2->AddChild(s3);" << std::endl;
+	AddChild(s3);
+}
+
 int main() {
 	SceneTree tree;
-
-	auto s1 = tree.CreateNode<Sprite>();
-	s1->name = "s1";
-
-	auto s2 = tree.CreateNode<Sprite>();
-	s2->name = "s2";
-
-	s1->AddChild(s2);
-	tree.root->AddChild(s1);
-
-	s1->onProcess = [s1](float delta) {
-		timer += delta;
-		if (timer > 0) {
-			s1->Remove();
-		}
-	};
-
+	{
+		auto s1 = tree.CreateNode<S1>();
+		auto s2 = tree.CreateNode<S2>();
+		std::cout << "------------ s1->AddChild(s2)" << std::endl;
+		s1->AddChild(s2);
+		std::cout << "------------ tree.root->AddChild(s1);" << std::endl;
+		tree.root->AddChild(s1);
+	}
+	std::cout << "------------ MainLoop" << std::endl;
 	return tree.MainLoop();
 }
