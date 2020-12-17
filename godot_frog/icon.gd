@@ -5,6 +5,10 @@ var draging_offset = Vector2()
 onready var parent = $"../"
 onready var tree = get_tree()
 
+func _enter_tree():
+	add_child(Node.new())
+	get_parent().remove_child(self)
+
 func _ready():
 	set_process_unhandled_input(true)
 
