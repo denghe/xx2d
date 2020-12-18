@@ -67,8 +67,6 @@ struct Node {
 	void RemoveSelf();
 	void MoveChild(xx::Shared<Node> const& node, size_t const& index);
 	xx::Shared<Node> GetNode(std::string_view const& path) const;
-	Node* GetNodePointer(char const* const& p, size_t const& s) const;
-	Node* FindChildNodePointer(char const* const& p, size_t const& s) const;
 };
 
 struct Viewport : Node {
@@ -161,53 +159,58 @@ void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
 	buf[index] = node.pointer;
 }
 
-Node* Node::GetNodePointer(char const* const& p, size_t const& s) const {
-	if (!s) return (Node*)this;
-	if (p[0] == '/') return nullptr;								// syntax error?
+xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
+	Node* rtv = (Node*)this;
+	if (!path.size()) return *(xx::Shared<Node>*)&rtv;
+	auto p = path.data();
+	auto e = p + path.size();
+	if (p[0] == '/') {
+		rtv = tree->root.pointer;
+		++p;
+	}
+LabBegin:
+	if (p == e) return *(xx::Shared<Node>*) & rtv;
+	if (p[0] == '/') return {};										// syntax error?
 	if (p[0] == '.') {
-		if (s == 1) return (Node*)this;								// .
+		if (p + 1 == e) return *(xx::Shared<Node>*) & rtv;			// .
 		if (p[1] == '.') {
-			if (s == 2) {
-				if (!parent) return nullptr;						// no parent?
-				return parent.pointer();							// ..
+			rtv = rtv->parent.Lock().pointer;
+			if (p + 2 == e) {										// ..
+				return *(xx::Shared<Node>*) & rtv;
 			}
 			if (p[2] == '/') {										// ../
-				if (!parent) return nullptr;						// no parent?
-				return parent.pointer()->GetNodePointer(p + 3, s - 3);
+				if (!rtv) return {};
+				p += 3;
+				goto LabBegin;
 			}
-			else return nullptr;									// syntax error?
+			else return {};											// syntax error?
 		}
-		else if (p[1] == '/') return GetNodePointer(p + 2, s - 2);	// ./
-		else return nullptr;										// syntax error?
+		else if (p[1] == '/') {										// ./
+			p += 2;
+			goto LabBegin;
+		}
+		else return {};												// syntax error?
 	}
 	else {
-		size_t i = 0, j = 0;
-		for (; i < s; ++i) {
-			if (p[i] == '/') {										// name/
+		size_t j = 0;
+		auto b = p;
+		for (; b < e; ++b) {
+			if (*b == '/') {										// name/
 				j = 1;
 				break;
 			}
-			else if (p[i] == '.') return nullptr;					// syntax error?
+			else if (*b == '.') return {};							// syntax error?
 		}
-		if (auto n = FindChildNodePointer(p, i)) return n->GetNodePointer(p + i + j, s - i - j);
-		return nullptr;												// not found
+		auto s = (size_t)(b - p);
+		for (auto& c : rtv->children) {
+			if (c->name.size() == s && memcmp(c->name.data(), p, s) == 0) {
+				rtv = c.pointer;
+				p = b + j;
+				goto LabBegin;
+			}
+		}
+		return {};													// not found
 	}
-}
-
-Node* Node::FindChildNodePointer(char const* const& p, size_t const& s) const {
-	for (auto& c : children) {
-		if (c->name.size() == s && memcmp(c->name.data(), p, s) == 0) return c.pointer;
-	}
-	return nullptr;
-}
-
-xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
-	Node* rtv = nullptr;
-	if (path[0] == '/') {
-		rtv = tree->root->GetNodePointer(path.data() + 1, path.size() - 1);
-	}
-	else rtv = GetNodePointer(path.data(), path.size());
-	return *(xx::Shared<Node>*)&rtv;
 }
 
 void Node::CallExitTree() {
@@ -235,7 +238,7 @@ void Node::CallProcess(float delta) {
 
 void Node::PrintTreePretty(std::string const& prefix, bool const& last) const {
 	std::cout << prefix + (last ? " L-" : " |-") + name << std::endl;
-	for(auto& c : children) {
+	for (auto& c : children) {
 		c->PrintTreePretty(prefix + (last ? "   " : " | "), c == children.back());
 	}
 }
