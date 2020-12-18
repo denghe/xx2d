@@ -69,6 +69,7 @@ struct Node {
 	void MoveChild(xx::Shared<Node> const& node, size_t const& index);
 	xx::Shared<Node> GetNode(std::string_view const& path) const;
 	xx::Shared<Node> GetNodeEx(std::initializer_list<std::string_view> paths) const;
+	xx::Shared<Node> GetNodeEx2(std::vector<std::string> const& paths) const;
 };
 
 struct Viewport : Node {
@@ -198,6 +199,23 @@ xx::Shared<Node> Node::GetNodeEx(std::initializer_list<std::string_view> paths =
 	NodePath np(c);
 	for (; iter != paths.end(); ++iter) {
 		np / *iter;
+	}
+	return np;
+}
+
+xx::Shared<Node> Node::GetNodeEx2(std::vector<std::string> const& paths) const {
+	auto c = (Node*)this;
+	auto siz = paths.size();
+	auto buf = paths.data();
+	if (!paths.size()) return *(xx::Shared<Node>*) & c;
+	size_t i = 0;
+	if (paths[i] == "/") {
+		c = tree->root.pointer;
+		++i;
+	}
+	NodePath np(c);
+	for (; i != siz; ++i) {
+		np / buf[i];
 	}
 	return np;
 }
@@ -401,6 +419,20 @@ struct S1__________ : S {
 			n = GetNodeEx({ "/", "S1__________", "S4__________" });
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4__________
 
+			std::cout << "test GetNodeEx2( names vector )" << std::endl;
+			n = GetNodeEx2({});
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S1__________
+			n = GetNodeEx({ ".." });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
+			n = GetNodeEx({ "S2__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2__________
+			n = GetNodeEx({ "S2__________", "S3__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S3__________
+			n = GetNodeEx({ "S2__________", "S3__________", "S4__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr not found
+			n = GetNodeEx({ "/", "S1__________", "S4__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4__________
+
 			std::cout << "performance compare" << std::endl;
 
 			auto seconds = xx::NowEpochSeconds();
@@ -419,11 +451,18 @@ struct S1__________ : S {
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
 
 			i = 0;
+			std::vector<std::string> paths{ "/", "S1__________", "S4__________", "..", "S2__________", "S3__________" };
+			for (; i < 100000000; i++) {
+				n = GetNodeEx2(paths);
+			}
+			std::cout << "GetNodeEx2 " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
+
+			i = 0;
 			for (; i < 100000000; i++) {
 				n = NodePath(tree->root) / "S1__________" / "S4__________" / ".." / "S2__________" / "S3__________";
 			}
 			std::cout << "NodePath " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
-
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
 
 			RemoveSelf();
