@@ -30,5 +30,6 @@
     <ClInclude Include="..\xxlib\xx_file.h">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="string_text_view.hpp" />
   </ItemGroup>
 </Project>

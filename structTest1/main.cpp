@@ -4,6 +4,7 @@
 #include <chrono>
 #include "xx_ptr.h"	// xx::Shared xx::Weak
 #include "xx_chrono.h"
+#include "string_text_view.hpp"
 
 struct SceneTree;
 struct Viewport;
@@ -72,6 +73,7 @@ struct Node {
 	xx::Shared<Node> GetNodeEx(std::initializer_list<std::string_view> paths) const;
 	xx::Shared<Node> GetNodeEx2(std::vector<std::string> const& paths) const;
 	xx::Shared<Node> GetNodeEx3(NodePathEx const& paths) const;
+	xx::Shared<Node> GetNodeEx4(std::string_view const& paths) const;
 };
 
 struct Viewport : Node {
@@ -254,20 +256,50 @@ xx::Shared<Node> Node::GetNodeEx3(NodePathEx const& paths) const {
 	if (s.empty()) return {};
 	size_t i = 0, siz = s.size();
 	auto c = (Node*)this;
-	if (s[0] == "/") {
+	if (s[0].size() == 1 && s[0][0] == '/') {
 		c = tree->root.pointer;
 		i = 1;
 	}
 	for (; i < siz; ++i) {
 		auto&& path = s[i];
-		if (path == "..") {
+		auto pathSiz = path.size();
+		if (pathSiz == 2 && path[0] == '.' && path[1] == '.') {
 			c = c->parent.Lock().pointer;
 			if (!c) break;
 		}
 		else {
 			auto bak = c;
 			for (auto& o : c->children) {
-				if (o->name == path) {
+				if (o->name.size() == pathSiz && memcmp(o->name.data(), path.data(), pathSiz) == 0) {
+					c = o.pointer;
+					break;
+				}
+			}
+			if (bak == c) {
+				c = nullptr;
+				break;
+			}
+		}
+	}
+	return *(xx::Shared<Node>*) & c;
+}
+
+xx::Shared<Node> Node::GetNodeEx4(std::string_view const& paths) const {
+	string_text_view stv{ paths,'/' };
+	auto c = (Node*)this;
+	if (paths[0] == '/') {
+		c = tree->root.pointer;
+	}
+	for (auto&& path : stv) {
+		if (!path.size()) continue;
+		if (path.size() == 2 && path[0] == '.' && path[1] == '.') {
+			c = c->parent.Lock().pointer;
+			if (!c) break;
+		}
+		else {
+			auto bak = c;
+			for (auto& o : c->children) {
+				if (o->name.size() == path.size() && memcmp(o->name.data(), path.data(), path.size()) == 0) {
 					c = o.pointer;
 					break;
 				}
@@ -458,6 +490,12 @@ struct S1__________ : S {
 			n = GetNodeEx3({ "/S1__________/S4__________/../S2__________/S3__________" });
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// S3__________
 
+			std::cout << "test GetNodeEx4(path)" << std::endl;
+			n = GetNodeEx4({ "../S1__________/S4__________/../S2__________/S3__________/../../S4__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4__________
+			n = GetNodeEx4({ "/S1__________/S4__________/../S2__________/S3__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S3__________
+
 			std::cout << "test NodePath(node) / path / path ... " << std::endl;
 			n = NodePath(this);
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// S1__________
@@ -531,6 +569,13 @@ struct S1__________ : S {
 				n = GetNodeEx3(pathsex);
 			}
 			std::cout << "GetNodeEx3 " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
+
+			i = 0;
+			for (; i < 10000000; i++) {
+				n = GetNodeEx4("/S1__________/S4__________/../S2__________/S3__________");
+			}
+			std::cout << "GetNodeEx4 " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
 
 			i = 0;
