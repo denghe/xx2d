@@ -25,6 +25,7 @@ struct SceneTree {
 	xx::Shared<T> CreateNode(Args&&...args);
 };
 
+struct NodePathEx;
 struct Node {
 	virtual ~Node() = default;
 	Node(Node const&) = delete;
@@ -70,6 +71,7 @@ struct Node {
 	xx::Shared<Node> GetNode(std::string_view const& path) const;
 	xx::Shared<Node> GetNodeEx(std::initializer_list<std::string_view> paths) const;
 	xx::Shared<Node> GetNodeEx2(std::vector<std::string> const& paths) const;
+	xx::Shared<Node> GetNodeEx3(NodePathEx const& paths) const;
 };
 
 struct Viewport : Node {
@@ -79,7 +81,6 @@ struct Viewport : Node {
 	}
 };
 
-// GetNode's cpp better version
 struct NodePath {
 	Node const* c;
 	NodePath(Node const* const& c) : c(c) {}
@@ -104,6 +105,34 @@ struct NodePath {
 		return *(xx::Shared<Node>*) & c;
 	}
 };
+
+struct NodePathEx {
+	std::string path;
+	std::vector<std::string_view> split;	// split by '/'
+	NodePathEx(std::string_view const& paths) : path(paths) {
+		if (!path.size()) return;
+		auto p = path.data();
+		auto e = p + path.size();
+		if (p[0] == '/') {
+			split.emplace_back(p, 1);
+			++p;
+		}
+		auto b = p;
+		for (; b != e; ++b) {
+			if (*b == '/') {
+				if (b != p) {
+					split.emplace_back(p, b - p);
+					p = b + 1;
+					++b;
+				}
+			}
+		}
+		if (b != p) {
+			split.emplace_back(p, b - p);
+		}
+	}
+};
+
 
 SceneTree* Node::GetTree() const {
 	return tree;
@@ -218,6 +247,38 @@ xx::Shared<Node> Node::GetNodeEx2(std::vector<std::string> const& paths) const {
 		np / buf[i];
 	}
 	return np;
+}
+
+xx::Shared<Node> Node::GetNodeEx3(NodePathEx const& paths) const {
+	auto& s = paths.split;
+	if (s.empty()) return {};
+	size_t i = 0, siz = s.size();
+	auto c = (Node*)this;
+	if (s[0] == "/") {
+		c = tree->root.pointer;
+		i = 1;
+	}
+	for (; i < siz; ++i) {
+		auto&& path = s[i];
+		if (path == "..") {
+			c = c->parent.Lock().pointer;
+			if (!c) break;
+		}
+		else {
+			auto bak = c;
+			for (auto& o : c->children) {
+				if (o->name == path) {
+					c = o.pointer;
+					break;
+				}
+			}
+			if (bak == c) {
+				c = nullptr;
+				break;
+			}
+		}
+	}
+	return *(xx::Shared<Node>*) & c;
 }
 
 xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
@@ -391,6 +452,12 @@ struct S1__________ : S {
 			n = GetNode("../S1__________/S4__________/../S2__________/S3__________/../../S4__________");
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4__________
 
+			std::cout << "test GetNodeEx3(path)" << std::endl;
+			n = GetNodeEx3({ "../S1__________/S4__________/../S2__________/S3__________/../../S4__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4__________
+			n = GetNodeEx3({ "/S1__________/S4__________/../S2__________/S3__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S3__________
+
 			std::cout << "test NodePath(node) / path / path ... " << std::endl;
 			n = NodePath(this);
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// S1__________
@@ -422,29 +489,29 @@ struct S1__________ : S {
 			std::cout << "test GetNodeEx2( names vector )" << std::endl;
 			n = GetNodeEx2({});
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// S1__________
-			n = GetNodeEx({ ".." });
+			n = GetNodeEx2({ ".." });
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
-			n = GetNodeEx({ "S2__________" });
+			n = GetNodeEx2({ "S2__________" });
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2__________
-			n = GetNodeEx({ "S2__________", "S3__________" });
+			n = GetNodeEx2({ "S2__________", "S3__________" });
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// S3__________
-			n = GetNodeEx({ "S2__________", "S3__________", "S4__________" });
+			n = GetNodeEx2({ "S2__________", "S3__________", "S4__________" });
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr not found
-			n = GetNodeEx({ "/", "S1__________", "S4__________" });
+			n = GetNodeEx2({ "/", "S1__________", "S4__________" });
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4__________
 
 			std::cout << "performance compare" << std::endl;
 
 			auto seconds = xx::NowEpochSeconds();
 			size_t i = 0;
-			for (; i < 100000000; i++) {
+			for (; i < 10000000; i++) {
 				n = GetNode("/S1__________/S4__________/../S2__________/S3__________");
 			}
 			std::cout << "GetNode " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
 
 			i = 0;
-			for (; i < 100000000; i++) {
+			for (; i < 10000000; i++) {
 				n = GetNodeEx({ "/", "S1__________", "S4__________", "..", "S2__________", "S3__________" });
 			}
 			std::cout << "GetNodeEx " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
@@ -452,14 +519,22 @@ struct S1__________ : S {
 
 			i = 0;
 			std::vector<std::string> paths{ "/", "S1__________", "S4__________", "..", "S2__________", "S3__________" };
-			for (; i < 100000000; i++) {
+			for (; i < 10000000; i++) {
 				n = GetNodeEx2(paths);
 			}
 			std::cout << "GetNodeEx2 " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
 
 			i = 0;
-			for (; i < 100000000; i++) {
+			NodePathEx pathsex("/S1__________/S4__________/../S2__________/S3__________");
+			for (; i < 10000000; i++) {
+				n = GetNodeEx3(pathsex);
+			}
+			std::cout << "GetNodeEx3 " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
+
+			i = 0;
+			for (; i < 10000000; i++) {
 				n = NodePath(tree->root) / "S1__________" / "S4__________" / ".." / "S2__________" / "S3__________";
 			}
 			std::cout << "NodePath " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
