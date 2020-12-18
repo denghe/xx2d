@@ -3,6 +3,7 @@
 #include <vector>
 #include <chrono>
 #include "xx_ptr.h"	// xx::Shared xx::Weak
+#include "xx_chrono.h"
 
 struct SceneTree;
 struct Viewport;
@@ -67,12 +68,39 @@ struct Node {
 	void RemoveSelf();
 	void MoveChild(xx::Shared<Node> const& node, size_t const& index);
 	xx::Shared<Node> GetNode(std::string_view const& path) const;
+	xx::Shared<Node> GetNodeEx(std::initializer_list<std::string_view> paths) const;
 };
 
 struct Viewport : Node {
 	Viewport(SceneTree* tree) : Node(tree) {
 		name = "root";
 		entered = true;
+	}
+};
+
+// GetNode's cpp better version
+struct NodePath {
+	Node const* c;
+	NodePath(Node const* const& c) : c(c) {}
+	NodePath& operator/(std::string_view const& path) {
+		if (c) {
+			if (path == "..") {
+				c = c->parent.Lock().pointer;
+			}
+			else {
+				for (auto& o : c->children) {
+					if (o->name == path) {
+						c = o.pointer;
+						return *this;
+					}
+				}
+				c = nullptr;	// not found
+			}
+		}
+		return *this;
+	}
+	operator xx::Shared<Node> const& () {
+		return *(xx::Shared<Node>*) & c;
 	}
 };
 
@@ -159,9 +187,24 @@ void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
 	buf[index] = node.pointer;
 }
 
+xx::Shared<Node> Node::GetNodeEx(std::initializer_list<std::string_view> paths = {}) const {
+	auto c = (Node*)this;
+	if (!paths.size()) return *(xx::Shared<Node>*) & c;
+	auto iter = paths.begin();
+	if (*iter == "/") {
+		c = tree->root.pointer;
+		++iter;
+	}
+	NodePath np(c);
+	for (; iter != paths.end(); ++iter) {
+		np / *iter;
+	}
+	return np;
+}
+
 xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
 	Node* rtv = (Node*)this;
-	if (!path.size()) return *(xx::Shared<Node>*)&rtv;
+	if (!path.size()) return *(xx::Shared<Node>*) & rtv;
 	auto p = path.data();
 	auto e = p + path.size();
 	if (p[0] == '/') {
@@ -290,12 +333,14 @@ struct S : Node {
 	~S() { std::cout << "~" << name << "()" << std::endl; }
 };
 
-struct S1 : S {
-	S1(SceneTree* tree) : S(tree, "S1") {}
+struct S1__________ : S {
+	S1__________(SceneTree* tree) : S(tree, "S1__________") {}
 	void Process(float delta) override {
 		timer += delta;
 		if (timer > 0) {
 			PrintTreePretty();
+			// todo: test MoveNode
+
 			std::cout << "test GetNode(path)" << std::endl;
 			auto n = GetNode("/");
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
@@ -306,49 +351,102 @@ struct S1 : S {
 			n = GetNode("../");
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
 			n = GetNode("/..");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr no parent
 			n = GetNode("//");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr syntex error
 			n = GetNode(".");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S1
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S1__________
 			n = GetNode("..");
 			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
-			n = GetNode("S2");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2
-			n = GetNode("./S2");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2
-			n = GetNode("./S2/S3");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2
-			n = GetNode("./S2/S2");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr
-			n = GetNode("./S2/S3/S4");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr
-			n = GetNode("../S1/S4");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4
-			n = GetNode("../S1/S4/../S2/S3/../../S4");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4
+			n = GetNode("S2__________");
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2__________
+			n = GetNode("./S2__________");
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2__________
+			n = GetNode("./S2__________/S3__________");
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2__________
+			n = GetNode("./S2__________/S2__________");
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr not found
+			n = GetNode("./S2__________/S3__________/S4__________");
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr not found
+			n = GetNode("/S1__________/S4__________");
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4__________
+			n = GetNode("../S1__________/S4__________/../S2__________/S3__________/../../S4__________");
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4__________
+
+			std::cout << "test NodePath(node) / path / path ... " << std::endl;
+			n = NodePath(this);
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S1__________
+			n = NodePath(this) / "..";
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
+			n = NodePath(this) / "S2__________";
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2__________
+			n = NodePath(this) / "S2__________" / "S3__________";
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S3__________
+			n = NodePath(this) / "S2__________" / "S3__________" / "S4__________";
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr not found
+			n = NodePath(tree->root) / "S1__________" / "S4__________";
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// s4
+
+			std::cout << "test GetNodeEx({ name, name, .... })" << std::endl;
+			n = GetNodeEx();
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S1__________
+			n = GetNodeEx({ ".." });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
+			n = GetNodeEx({ "S2__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2__________
+			n = GetNodeEx({ "S2__________", "S3__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S3__________
+			n = GetNodeEx({ "S2__________", "S3__________", "S4__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr not found
+			n = GetNodeEx({ "/", "S1__________", "S4__________" });
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4__________
+
+			std::cout << "performance compare" << std::endl;
+
+			auto seconds = xx::NowEpochSeconds();
+			size_t i = 0;
+			for (; i < 100000000; i++) {
+				n = GetNode("/S1__________/S4__________/../S2__________/S3__________");
+			}
+			std::cout << "GetNode " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
+
+			i = 0;
+			for (; i < 100000000; i++) {
+				n = GetNodeEx({ "/", "S1__________", "S4__________", "..", "S2__________", "S3__________" });
+			}
+			std::cout << "GetNodeEx " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
+
+			i = 0;
+			for (; i < 100000000; i++) {
+				n = NodePath(tree->root) / "S1__________" / "S4__________" / ".." / "S2__________" / "S3__________";
+			}
+			std::cout << "NodePath " << i << " times. elapsed seconds = " << (xx::NowEpochSeconds() - seconds) << std::endl;
+
+			std::cout << (n ? n->name : "nullptr") << std::endl;	// s3
 
 			RemoveSelf();
 		}
 	}
 };
 
-struct S2 : S {
-	S2(SceneTree* tree) : S(tree, "S2") {}
+struct S2__________ : S {
+	S2__________(SceneTree* tree) : S(tree, "S2__________") {}
 	void EnterTree() override;
 };
 
-struct S3 : S {
-	S3(SceneTree* tree) : S(tree, "S3") {}
+struct S3__________ : S {
+	S3__________(SceneTree* tree) : S(tree, "S3__________") {}
 };
 
-struct S4 : S {
-	S4(SceneTree* tree) : S(tree, "S4") {}
+struct S4__________ : S {
+	S4__________(SceneTree* tree) : S(tree, "S4__________") {}
 };
 
-void S2::EnterTree() {
+void S2__________::EnterTree() {
 	this->S::EnterTree();
-	auto s3 = tree->CreateNode<S3>();
+	auto s3 = tree->CreateNode<S3__________>();
 	std::cout << "------------ s2->AddChild(s3);" << std::endl;
 	AddChild(s3);
 }
@@ -358,9 +456,9 @@ int main() {
 
 	SceneTree tree;
 	{
-		auto s1 = tree.CreateNode<S1>();
-		auto s2 = tree.CreateNode<S2>();
-		auto s4 = tree.CreateNode<S4>();
+		auto s1 = tree.CreateNode<S1__________>();
+		auto s2 = tree.CreateNode<S2__________>();
+		auto s4 = tree.CreateNode<S4__________>();
 
 		std::cout << "------------ s1->AddChild(s2)" << std::endl;
 		s1->AddChild(s2);
