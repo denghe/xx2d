@@ -19,7 +19,6 @@ struct SceneTree {
 	SceneTree& operator=(SceneTree const&) = delete;
 
 	int MainLoop();
-	void PrintTreePretty(xx::Shared<Node> const& node = nullptr, size_t const& indent = 0) const;
 
 	template<typename T, typename ...Args, class = std::enable_if_t<std::is_base_of_v<Node, T>>>
 	xx::Shared<T> CreateNode(Args&&...args);
@@ -61,7 +60,7 @@ struct Node {
 	void CallReady();
 	void CallProcess(float delta);
 
-	void PrintTreePretty() const;
+	void PrintTreePretty(std::string const& prefix = "", bool const& last = true) const;
 	xx::Shared<Node> GetParent();
 	void AddChild(xx::Shared<Node> const& node);
 	void RemoveChild(xx::Shared<Node> const& node);
@@ -234,8 +233,11 @@ void Node::CallProcess(float delta) {
 	}
 }
 
-void Node::PrintTreePretty() const {
-	tree->PrintTreePretty(tree->root);
+void Node::PrintTreePretty(std::string const& prefix, bool const& last) const {
+	std::cout << prefix + (last ? " L-" : " |-") + name << std::endl;
+	for(auto& c : children) {
+		c->PrintTreePretty(prefix + (last ? "   " : " | "), c == children.back());
+	}
 }
 
 SceneTree::SceneTree() {
@@ -250,13 +252,6 @@ int SceneTree::MainLoop() {
 		root->CallProcess(delta);
 	}
 	return 0;
-}
-
-void SceneTree::PrintTreePretty(xx::Shared<Node> const& node, size_t const& indent) const {
-	std::cout << std::string(indent, ' ') << node->name << std::endl;
-	for (auto&& c : node->children) {
-		PrintTreePretty(c, indent + 2);
-	}
 }
 
 template<typename T, typename ...Args, class>
@@ -356,6 +351,8 @@ void S2::EnterTree() {
 }
 
 int main() {
+
+
 	SceneTree tree;
 	{
 		auto s1 = tree.CreateNode<S1>();
