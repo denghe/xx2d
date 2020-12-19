@@ -17,7 +17,7 @@ xx::Shared<Node> Node::GetParent() {
 void Node::AddChild(xx::Shared<Node> const& node) {
 	if (node->parent) throw std::runtime_error("AddChild error: already have parent");
 	if (node->entered) throw std::runtime_error("AddChild error: already entered");
-	node->parent = WeakFromThis<Node>();
+	node->parent = WeakFromThis();
 	children.push_back(node);
 	if (entered) {
 		tree->removeProtect = true;
@@ -36,7 +36,7 @@ void Node::CallEnterTree() {
 }
 
 void Node::RemoveChild(xx::Shared<Node> const& node) {
-	if (WeakFromThis() != node->parent) throw std::runtime_error("RemoveChild error: bad parent??");
+	if (GetPtrHeader() != node->parent.h) throw std::runtime_error("RemoveChild error: bad parent??");
 	// find index
 	auto siz = children.size();
 	auto buf = (Node**)children.data();
@@ -60,7 +60,7 @@ void Node::RemoveChild(xx::Shared<Node> const& node) {
 	node->parent.Reset();
 }
 
-void Node::RemoveSelf() {
+void Node::Remove() {
 	if (auto&& p = parent.Lock()) {
 		p->RemoveChild(SharedFromThis());
 	}
@@ -89,9 +89,16 @@ void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
 	buf[index] = node.pointer;
 }
 
+void Node::MoveToLast() {
+	auto self = this;
+	if (auto&& p = parent.Lock()) {
+		p->MoveChild(*(xx::Shared<Node>*)&self, p->children.size() - 1);
+	}
+}
+
 xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
 	Node* rtv = (Node*)this;
-	if (!path.size()) return *(xx::Shared<Node>*) & rtv;
+	if (!path.size()) return *(xx::Shared<Node>*)&rtv;
 	auto p = path.data();
 	auto e = p + path.size();
 	if (p[0] == '/') {
@@ -99,14 +106,14 @@ xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
 		++p;
 	}
 LabBegin:
-	if (p == e) return *(xx::Shared<Node>*) & rtv;
+	if (p == e) return *(xx::Shared<Node>*)&rtv;
 	if (p[0] == '/') return {};										// syntax error?
 	if (p[0] == '.') {
-		if (p + 1 == e) return *(xx::Shared<Node>*) & rtv;			// .
+		if (p + 1 == e) return *(xx::Shared<Node>*)&rtv;							// .
 		if (p[1] == '.') {
 			rtv = rtv->parent.Lock().pointer;
 			if (p + 2 == e) {										// ..
-				return *(xx::Shared<Node>*) & rtv;
+				return *(xx::Shared<Node>*)&rtv;
 			}
 			if (p[2] == '/') {										// ../
 				if (!rtv) return {};

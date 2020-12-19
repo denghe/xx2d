@@ -3,8 +3,6 @@
 #include "Viewport.h"
 #include "Node.h"
 
-
-float timer = -1.0f;
 struct S : Node {
 	S(SceneTree* tree, std::string const& name) : Node(tree) { this->name = name; std::cout << "new " << name << "()" << std::endl; }
 	void EnterTree() override { std::cout << name << " EnterTree" << std::endl; }
@@ -14,47 +12,18 @@ struct S : Node {
 	~S() { std::cout << "~" << name << "()" << std::endl; }
 };
 
+float timer = -0.1f;
 struct S1 : S {
 	S1(SceneTree* tree) : S(tree, "S1") {}
 	void Process(float delta) override {
 		timer += delta;
 		if (timer > 0) {
 			PrintTreePretty();
-			// todo: test MoveNode
+			//MoveChild(GetNode("S2"), children.size() - 1);
+			GetNode("S2")->MoveToLast();
+			PrintTreePretty();
 
-			std::cout << "test GetNode(path)" << std::endl;
-			auto n = GetNode("/");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
-			n = GetNode("/.");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
-			n = GetNode("..");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
-			n = GetNode("../");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
-			n = GetNode("/..");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr no parent
-			n = GetNode("//");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr syntex error
-			n = GetNode(".");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S1
-			n = GetNode("..");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// root
-			n = GetNode("S2");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2
-			n = GetNode("./S2");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2
-			n = GetNode("./S2/S3");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S2
-			n = GetNode("./S2/S2");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr not found
-			n = GetNode("./S2/S3/S4");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// nullptr not found
-			n = GetNode("/S1/S4");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4
-			n = GetNode("../S1/S4/../S2/S3/../../S4");
-			std::cout << (n ? n->name : "nullptr") << std::endl;	// S4
-
-			RemoveSelf();
+			Remove();
 		}
 	}
 };
@@ -80,8 +49,6 @@ void S2::EnterTree() {
 }
 
 int main() {
-
-
 	SceneTree tree;
 	{
 		auto s1 = tree.CreateNode<S1>();

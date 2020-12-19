@@ -631,3 +631,43 @@ int main() {
 	std::cout << "------------ MainLoop" << std::endl;
 	return tree.MainLoop();
 }
+
+
+
+
+
+
+
+
+
+			// test GetNode
+			auto n = GetNode("/");
+			assert(n && n->name == "root");
+			n = GetNode("/.");
+			assert(n && n->name == "root");
+			n = GetNode("..");
+			assert(n && n->name == "root");
+			n = GetNode("../");
+			assert(n && n->name == "root");
+			n = GetNode("/..");
+			assert(!n);
+			n = GetNode("//");
+			assert(!n);
+			n = GetNode(".");
+			assert(n && n->name == "S1");
+			n = GetNode("..");
+			assert(n && n->name == "root");
+			n = GetNode("S2");
+			assert(n && n->name == "S2");
+			n = GetNode("./S2");
+			assert(n && n->name == "S2");
+			n = GetNode("./S2/S3");
+			assert(n && n->name == "S3");
+			n = GetNode("./S2/S2");
+			assert(!n);
+			n = GetNode("./S2/S3/S4");
+			assert(!n);
+			n = GetNode("/S1/S4");
+			assert(n && n->name == "S4");
+			n = GetNode("../S1/S4/../S2/S3/../../S4");
+			assert(n && n->name == "S4");
