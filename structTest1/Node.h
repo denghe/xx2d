@@ -53,18 +53,20 @@ struct Node {
 	/*********************************************************************/
 	// Shared / Weak utils
 
+	xx::PtrHeader* GetPtrHeader() const {
+		return (xx::PtrHeader*)this - 1;
+	}
+
+	// unsafe
 	template<typename T = Node>
 	xx::Weak<T> WeakFromThis() const {
-		auto h = (xx::PtrHeader*)this - 1;
-		return *((xx::Weak<T>*) & h);
+		auto h = GetPtrHeader();
+		assert((*(xx::Weak<T>*) & h).Lock().As<Node>());
+		return *(xx::Weak<T>*)&h;
 	}
 
 	template<typename T = Node>
 	xx::Shared<T> SharedFromThis() const {
 		return WeakFromThis<T>().Lock();
-	}
-
-	xx::PtrHeader* GetPtrHeader() const {
-		return (xx::PtrHeader*)this - 1;
 	}
 };
