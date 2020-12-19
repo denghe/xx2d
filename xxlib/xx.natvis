@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <Type Name="xx::Shared&lt;*&gt;" Inheritable="false">
+    <DisplayString Condition="pointer == 0">nullptr</DisplayString>
+    <DisplayString Condition="pointer != 0">{*((xx::PtrHeader*)this->pointer - 1)}</DisplayString>
+  </Type>
+
+  <Type Name="xx::Weak&lt;*&gt;" Inheritable="false">
+    <DisplayString Condition="pointer == 0">nullptr</DisplayString>
+    <DisplayString Condition="pointer != 0">{*this->h}</DisplayString>
+  </Type>
+  
+  <Type Name="xx::PtrHeader" Inheritable="false">
+    <Expand>
+      <Item Name="useCount">strongCount</Item>
+      <Item Name="refCount">weakCount</Item>
+      <Item Name="typeId">typeId</Item>
+      <Item Name="offset">offset</Item>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

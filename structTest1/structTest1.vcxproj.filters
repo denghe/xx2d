@@ -52,4 +52,9 @@
       <Filter>bak</Filter>
     </Text>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\xxlib\xx.natvis">
+      <Filter>xxlib</Filter>
+    </Natvis>
+  </ItemGroup>
 </Project>

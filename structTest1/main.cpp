@@ -6,35 +6,14 @@
 
 
 /*
-实现需求分析：
-	发起方 有个接收者映射字典："信号", 接收者( Weak<Node>? )
-	接收者 有处理函数映射字典："信号", 处理函数( 函数指针? )
-	有字典相关 注册 & 反注册工具函数
-
-	当 Button 发起方 产生 点击 事件时，会发出 "pressed" 信号。
-	由于在 映射字典 中找到了相应条目，则常识联系接收方( .Lock() ), 并将信号塞给对方( 调用对方的接收入口函数 )
-
-	如果接收者 已释放( Lock 后为空 ): 从字典移除该条目。 如果接收者 未释放 但未在 tree 中，则保留但不发出 ??
-	接收者 收到 "pressed" 后，在 映射字典 中查找 并定位到相应的 处理函数，投递参数并调用。
-	如果没有找到相应的处理函数，就算了。
-
-	思考：有没有可能一对多发送? 顺序? 需要返回值来告知是否已 handled 以阻止继续向下传递?
-
-	//std::unordered_map<std::string, xx::Weak<Node>> signalReceivers;
-	//typedef void (Node::* SignalHandler)(Signal const& sig);
-	//std::unordered_map<std::string, SignalHandler> signalHandlers;
-	//void SignalHandle(Signal const& sig);
-
-// godot 示例代码：
+// godot example：
 
 func _ready():
 	get_node("Button").connect("pressed", self, "_on_Button_pressed")
 
 func _on_Button_pressed():
 	get_node("Label").text = "HELLO!"
-
 */
-
 
 struct Canvas : Node {
 	using Node::Node;
