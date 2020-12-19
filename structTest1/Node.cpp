@@ -1,6 +1,11 @@
 ﻿#include "Node.h"
 #include "SceneTree.h"
 #include "Viewport.h"
+#include "Signal.h"
+
+void Node::RecvSignal(Signal const& s) {
+	std::cout << "unhandled signal: " << s.name << std::endl;
+}
 
 Node::Node(SceneTree* tree) : tree(tree) {
 	if (!tree) throw std::runtime_error("first args: tree is nullptr");

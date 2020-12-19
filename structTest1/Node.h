@@ -1,8 +1,9 @@
 ﻿#pragma once
-#include "xx_ptr.h"	// xx::Shared xx::Weak
+#include "Ref.h"
 
 struct SceneTree;
-struct Node {
+struct Signal;
+struct Node : Ref<Node> {
 	/*********************************************************************/
 	// constructs
 
@@ -22,6 +23,15 @@ struct Node {
 
 	/*********************************************************************/
 	// events
+
+	// 似乎可以不需要这个？直接用个 Weak 变量存储某 signal 需要发给谁即可
+	//std::unordered_map<std::string, xx::Weak<Node>> signalReceivers;
+
+	//typedef void (Node::* SignalHandler)(Signal const& sig);
+	//std::unordered_map<std::string, SignalHandler> signalHandlers;
+	//void SignalHandle(Signal const& sig);
+
+	virtual void RecvSignal(Signal const& sig);
 
 	virtual void EnterTree() {}
 	virtual void ExitTree() {}
@@ -48,25 +58,4 @@ struct Node {
 	void MoveToLast();
 
 	void PrintTreePretty(std::string const& prefix = "", bool const& last = true) const;
-
-
-	/*********************************************************************/
-	// Shared / Weak utils
-
-	XX_FORCEINLINE xx::PtrHeader* GetPtrHeader() const {
-		return (xx::PtrHeader*)this - 1;
-	}
-
-	// unsafe
-	template<typename T = Node>
-	XX_FORCEINLINE xx::Weak<T> WeakFromThis() const {
-		auto h = GetPtrHeader();
-		assert((*(xx::Weak<T>*) & h).Lock().As<Node>());
-		return *(xx::Weak<T>*)&h;
-	}
-
-	template<typename T = Node>
-	XX_FORCEINLINE xx::Shared<T> SharedFromThis() const {
-		return WeakFromThis<T>().Lock();
-	}
 };

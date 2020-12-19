@@ -93,6 +93,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="SceneTree.cpp" />
+    <ClCompile Include="Signal.cpp" />
     <ClCompile Include="Viewport.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -104,7 +105,9 @@
     <ClInclude Include="..\xxlib\xx_typehelpers.h" />
     <ClInclude Include="..\xxlib\xx_typename_islambda.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="Ref.h" />
     <ClInclude Include="SceneTree.h" />
+    <ClInclude Include="Signal.h" />
     <ClInclude Include="string_text_view.hpp" />
     <ClInclude Include="Viewport.h" />
   </ItemGroup>
