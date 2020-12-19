@@ -39,19 +39,13 @@ func _on_Button_pressed():
 struct Canvas : Node {
 	using Node::Node;
 	void Ready() override;
-	void Receive(Signal const& sig) override;	// 收到 Button 的 pressed 去改 Label.text
+	void Receive(xx::Shared<Node> const& sender, Signal const& sig) override;	// 收到 Button 的 pressed 去改 Label.text
 };
 
 struct Button : Node {
-	using Node::Node;
+	Button(SceneTree* const& tree);
+	xx::Weak<Node>* pressedReceiverPointer;	// cache
 	void Process(float delta) override;	// 模拟产生 pressed
-
-	static constexpr const std::string_view SIGNAL_PRESSED = "pressed";
-	xx::Weak<Node> pressedReceiver;
-	template<typename ...Args>
-	void pressedSignalEmit(Args&&... args);
-
-	void Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver);
 };
 
 struct Label : Node {
@@ -75,43 +69,44 @@ int main() {
 		canvas->AddChild(label);
 
 		tree.root->AddChild(canvas);
+
+		std::cout << "tree: " << std::endl;
 		canvas->PrintTreePretty();
+		std::cout << "Button's signals: " << std::endl;
+		for (auto&& kv : button->signalReceivers) {
+			std::cout << "    " << kv.first << std::endl;
+		}
 	}
 	return tree.MainLoop();
 }
 
 void Canvas::Ready() {
 	// get_node("Button").connect("pressed", self, "_on_Button_pressed")
-	GetNode("Button").As<Button>()->Connect(Button::SIGNAL_PRESSED, this);
+	GetNode("Button").As<Button>()->Connect("pressed", this);
 }
 
-void Canvas::Receive(Signal const& sig) {
-	if (sig.name == Button::SIGNAL_PRESSED) {
+void Canvas::Receive(xx::Shared<Node> const& sender, Signal const& sig) {
+	if (sender->name == "Button" && sig.name == "pressed") {
 		// get_node("Label").text = "HELLO!"
 		GetNode("Label").As<Label>()->text = "HELLO!";
 	}
 }
 
-void Button::Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver) {
-	if (signalName == SIGNAL_PRESSED) {
-		pressedReceiver = receiver;
-	}
-}
-
-template<typename ...Args>
-void Button::pressedSignalEmit(Args&&... args) {
-	if (auto r = pressedReceiver.Lock()) {
-		r->Receive({SIGNAL_PRESSED});
-	}
+Button::Button(SceneTree* const& tree) : Node(tree) {
+	// register & cache signal keyword
+	pressedReceiverPointer = &signalReceivers.insert({ "pressed" , {} }).first->second;
 }
 
 void Button::Process(float delta) {
-	// 模拟点击 产生 pressed 信号
-	pressedSignalEmit();
+	// emit pressed signal
+	if (auto&& receiver = pressedReceiverPointer->Lock()) {
+		receiver->Receive(SharedFromThis(), { "pressed" });
+	}
 }
 
 void Label::Process(float delta) {
 	if (!text.empty()) {
+		// dump result & exit
 		std::cout << text << std::endl;
 		GetNode("../")->Remove();
 	}

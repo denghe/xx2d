@@ -7,7 +7,7 @@ struct Node : Ref<Node> {
 	/*********************************************************************/
 	// constructs
 
-	Node(SceneTree* tree);
+	Node(SceneTree* const& tree);
 	virtual ~Node() = default;
 	Node(Node const&) = delete;
 	Node& operator=(Node const&) = delete;
@@ -20,23 +20,15 @@ struct Node : Ref<Node> {
 	xx::Weak<Node> parent;
 	std::vector<xx::Shared<Node>> children;
 	std::string name;
+	std::unordered_map<std::string_view, xx::Weak<Node>> signalReceivers;
 
 	/*********************************************************************/
-	// events
+	// generic events
 
-	// 似乎可以不需要这个？直接用个 Weak 变量存储某 signal 需要发给谁即可
-	//std::unordered_map<std::string, xx::Weak<Node>> signalReceivers;
-
-	//typedef void (Node::* SignalHandler)(Signal const& sig);
-	//std::unordered_map<std::string, SignalHandler> signalHandlers;
-	//void SignalHandle(Signal const& sig);
-
-	virtual void Receive(Signal const& sig);
-
-	virtual void EnterTree() {}
-	virtual void ExitTree() {}
-	virtual void Ready() {}
-	virtual void Process(float delta) {}
+	virtual void EnterTree();
+	virtual void ExitTree();
+	virtual void Ready();
+	virtual void Process(float delta);
 
 	void CallEnterTree();
 	void CallExitTree();
@@ -58,4 +50,7 @@ struct Node : Ref<Node> {
 	void MoveToLast();
 
 	void PrintTreePretty(std::string const& prefix = "", bool const& last = true) const;
+
+	void Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver);
+	virtual void Receive(xx::Shared<Node> const& sender, Signal const& sig);
 };

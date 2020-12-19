@@ -3,12 +3,44 @@
 #include "Viewport.h"
 #include "Signal.h"
 
-void Node::Receive(Signal const& s) {
-	std::cout << "unhandled signal: " << s.name << std::endl;
+Node::Node(SceneTree* const& tree) : tree(tree) {
+	if (!tree) throw std::runtime_error("first args: tree is nullptr");
 }
 
-Node::Node(SceneTree* tree) : tree(tree) {
-	if (!tree) throw std::runtime_error("first args: tree is nullptr");
+void Node::EnterTree() {}
+void Node::ExitTree() {}
+void Node::Ready() {}
+void Node::Process(float delta) {}
+
+void Node::CallEnterTree() {
+	EnterTree();
+	entered = true;
+	for (auto&& c : children) {
+		c->CallEnterTree();
+	}
+}
+
+void Node::CallExitTree() {
+	for (auto iter = children.rbegin(); iter != children.rend(); ++iter) {
+		(*iter)->entered = false;
+		(*iter)->CallExitTree();
+	}
+	entered = false;
+	ExitTree();
+}
+
+void Node::CallReady() {
+	for (auto&& c : children) {
+		c->CallReady();
+	}
+	Ready();
+}
+
+void Node::CallProcess(float delta) {
+	Process(delta);
+	for (auto&& c : children) {
+		c->CallProcess(delta);
+	}
 }
 
 XX_FORCEINLINE SceneTree* Node::GetTree() const {
@@ -18,6 +50,61 @@ XX_FORCEINLINE SceneTree* Node::GetTree() const {
 XX_FORCEINLINE xx::Shared<Node> Node::GetParent() {
 	return parent.Lock();
 }
+
+xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
+	Node* rtv = (Node*)this;
+	if (!path.size()) return *(xx::Shared<Node>*) & rtv;
+	auto p = path.data();
+	auto e = p + path.size();
+	if (p[0] == '/') {
+		rtv = tree->root.pointer;
+		++p;
+	}
+LabBegin:
+	if (p == e) return *(xx::Shared<Node>*) & rtv;
+	if (p[0] == '/') return {};										// syntax error?
+	if (p[0] == '.') {
+		if (p + 1 == e) return *(xx::Shared<Node>*) & rtv;							// .
+		if (p[1] == '.') {
+			rtv = rtv->parent.Lock().pointer;
+			if (p + 2 == e) {										// ..
+				return *(xx::Shared<Node>*) & rtv;
+			}
+			if (p[2] == '/') {										// ../
+				if (!rtv) return {};
+				p += 3;
+				goto LabBegin;
+			}
+			else return {};											// syntax error?
+		}
+		else if (p[1] == '/') {										// ./
+			p += 2;
+			goto LabBegin;
+		}
+		else return {};												// syntax error?
+	}
+	else {
+		size_t j = 0;
+		auto b = p;
+		for (; b < e; ++b) {
+			if (*b == '/') {										// name/
+				j = 1;
+				break;
+			}
+			else if (*b == '.') return {};							// syntax error?
+		}
+		auto s = (size_t)(b - p);
+		for (auto& c : rtv->children) {
+			if (c->name.size() == s && memcmp(c->name.data(), p, s) == 0) {
+				rtv = c.pointer;
+				p = b + j;
+				goto LabBegin;
+			}
+		}
+		return {};													// not found
+	}
+}
+
 
 void Node::AddChild(xx::Shared<Node> const& node) {
 	if (node->parent) throw std::runtime_error("AddChild error: already have parent");
@@ -29,14 +116,6 @@ void Node::AddChild(xx::Shared<Node> const& node) {
 		node->CallEnterTree();
 		node->CallReady();
 		tree->removeProtect = false;
-	}
-}
-
-void Node::CallEnterTree() {
-	EnterTree();
-	entered = true;
-	for (auto&& c : children) {
-		c->CallEnterTree();
 	}
 }
 
@@ -101,86 +180,20 @@ XX_FORCEINLINE void Node::MoveToLast() {
 	}
 }
 
-xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
-	Node* rtv = (Node*)this;
-	if (!path.size()) return *(xx::Shared<Node>*)&rtv;
-	auto p = path.data();
-	auto e = p + path.size();
-	if (p[0] == '/') {
-		rtv = tree->root.pointer;
-		++p;
-	}
-LabBegin:
-	if (p == e) return *(xx::Shared<Node>*)&rtv;
-	if (p[0] == '/') return {};										// syntax error?
-	if (p[0] == '.') {
-		if (p + 1 == e) return *(xx::Shared<Node>*)&rtv;							// .
-		if (p[1] == '.') {
-			rtv = rtv->parent.Lock().pointer;
-			if (p + 2 == e) {										// ..
-				return *(xx::Shared<Node>*)&rtv;
-			}
-			if (p[2] == '/') {										// ../
-				if (!rtv) return {};
-				p += 3;
-				goto LabBegin;
-			}
-			else return {};											// syntax error?
-		}
-		else if (p[1] == '/') {										// ./
-			p += 2;
-			goto LabBegin;
-		}
-		else return {};												// syntax error?
-	}
-	else {
-		size_t j = 0;
-		auto b = p;
-		for (; b < e; ++b) {
-			if (*b == '/') {										// name/
-				j = 1;
-				break;
-			}
-			else if (*b == '.') return {};							// syntax error?
-		}
-		auto s = (size_t)(b - p);
-		for (auto& c : rtv->children) {
-			if (c->name.size() == s && memcmp(c->name.data(), p, s) == 0) {
-				rtv = c.pointer;
-				p = b + j;
-				goto LabBegin;
-			}
-		}
-		return {};													// not found
-	}
-}
-
-void Node::CallExitTree() {
-	for (auto iter = children.rbegin(); iter != children.rend(); ++iter) {
-		(*iter)->entered = false;
-		(*iter)->CallExitTree();
-	}
-	entered = false;
-	ExitTree();
-}
-
-void Node::CallReady() {
-	for (auto&& c : children) {
-		c->CallReady();
-	}
-	Ready();
-}
-
-void Node::CallProcess(float delta) {
-	Process(delta);
-	for (auto&& c : children) {
-		c->CallProcess(delta);
-	}
-}
-
 void Node::PrintTreePretty(std::string const& prefix, bool const& last) const {
 	std::cout << prefix + (last ? " L-" : " |-") + name << std::endl;
 	for (auto& c : children) {
 		c->PrintTreePretty(prefix + (last ? "   " : " | "), c == children.back());
 	}
+}
+
+void Node::Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver) {
+	auto&& iter = signalReceivers.find(signalName);
+	if (iter != signalReceivers.end()) {
+		iter->second = receiver;
+	}
+}
+
+void Node::Receive(xx::Shared<Node> const& sender, Signal const& s) {
+	std::cout << "Receive " << sender->name << "'s signal: " << s.name << std::endl;
 }
