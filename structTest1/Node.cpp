@@ -2,6 +2,10 @@
 #include "SceneTree.h"
 #include "Viewport.h"
 
+Node::Node(SceneTree* tree) : tree(tree) {
+	if (!tree) throw std::runtime_error("first args: tree is nullptr");
+}
+
 SceneTree* Node::GetTree() const {
 	return tree;
 }

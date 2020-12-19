@@ -18,9 +18,7 @@ struct Node {
 	}
 
 	SceneTree* const tree;
-	Node(SceneTree* tree) : tree(tree) {
-		if (!tree) throw std::runtime_error("first args: tree is nullptr");
-	}
+	Node(SceneTree* tree);
 	SceneTree* GetTree() const;
 
 	bool entered = false;

@@ -1,7 +1,8 @@
-﻿// 简单模拟 godot 的场景组织结构和事件
+﻿#pragma once
 #include "SceneTree.h"
 #include "Viewport.h"
 #include "Node.h"
+
 
 float timer = -1.0f;
 struct S : Node {
