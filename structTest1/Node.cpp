@@ -6,11 +6,11 @@ Node::Node(SceneTree* tree) : tree(tree) {
 	if (!tree) throw std::runtime_error("first args: tree is nullptr");
 }
 
-SceneTree* Node::GetTree() const {
+XX_FORCEINLINE SceneTree* Node::GetTree() const {
 	return tree;
 }
 
-xx::Shared<Node> Node::GetParent() {
+XX_FORCEINLINE xx::Shared<Node> Node::GetParent() {
 	return parent.Lock();
 }
 
@@ -60,7 +60,7 @@ void Node::RemoveChild(xx::Shared<Node> const& node) {
 	node->parent.Reset();
 }
 
-void Node::Remove() {
+XX_FORCEINLINE void Node::Remove() {
 	if (auto&& p = parent.Lock()) {
 		p->RemoveChild(SharedFromThis());
 	}
@@ -89,7 +89,7 @@ void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
 	buf[index] = node.pointer;
 }
 
-void Node::MoveToLast() {
+XX_FORCEINLINE void Node::MoveToLast() {
 	auto self = this;
 	if (auto&& p = parent.Lock()) {
 		p->MoveChild(*(xx::Shared<Node>*)&self, p->children.size() - 1);
