@@ -671,3 +671,32 @@ int main() {
 			assert(n && n->name == "S4");
 			n = GetNode("../S1/S4/../S2/S3/../../S4");
 			assert(n && n->name == "S4");
+
+
+
+
+
+
+
+	timer += delta;
+	if (timer > 0) {
+		PrintTreePretty();
+		//MoveChild(GetNode("S2"), children.size() - 1);
+		GetNode("S2")->MoveToLast();
+		PrintTreePretty();
+
+		GetNode("S4")->Receive({ "test", 1.2, std::string("asdf"), 345 });
+
+		Remove();
+	}
+
+	void Receive(Signal const& s) override {
+		auto& a = s.args;
+		if (s.name == "test" && a.size() == 3) {
+			test(std::get<double>(a[0]), std::get<std::string>(a[1]), std::get<int32_t>(a[2]));
+		}
+	}
+
+	void test(double const& a, std::string const& b, int const& c) {
+		std::cout << "recv signal: test, args = " << a << " " << b << " " << c << std::endl;
+	}

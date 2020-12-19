@@ -31,7 +31,7 @@ struct Node : Ref<Node> {
 	//std::unordered_map<std::string, SignalHandler> signalHandlers;
 	//void SignalHandle(Signal const& sig);
 
-	virtual void RecvSignal(Signal const& sig);
+	virtual void Receive(Signal const& sig);
 
 	virtual void EnterTree() {}
 	virtual void ExitTree() {}

@@ -6,15 +6,6 @@
 
 
 /*
-
-// godot 示例代码：
-
-func _ready():
-	get_node("Button").connect("pressed", self, "_on_Button_pressed")
-
-func _on_Button_pressed():
-	get_node("Label").text = "HELLO!"
-
 实现需求分析：
 	发起方 有个接收者映射字典："信号", 接收者( Weak<Node>? )
 	接收者 有处理函数映射字典："信号", 处理函数( 函数指针? )
@@ -28,85 +19,100 @@ func _on_Button_pressed():
 	如果没有找到相应的处理函数，就算了。
 
 	思考：有没有可能一对多发送? 顺序? 需要返回值来告知是否已 handled 以阻止继续向下传递?
+
+	//std::unordered_map<std::string, xx::Weak<Node>> signalReceivers;
+	//typedef void (Node::* SignalHandler)(Signal const& sig);
+	//std::unordered_map<std::string, SignalHandler> signalHandlers;
+	//void SignalHandle(Signal const& sig);
+
+// godot 示例代码：
+
+func _ready():
+	get_node("Button").connect("pressed", self, "_on_Button_pressed")
+
+func _on_Button_pressed():
+	get_node("Label").text = "HELLO!"
+
 */
 
 
-struct S : Node {
-	S(SceneTree* tree, std::string const& name) : Node(tree) { this->name = name; std::cout << "new " << name << "()" << std::endl; }
-	void EnterTree() override { std::cout << name << " EnterTree" << std::endl; }
-	void ExitTree() override { std::cout << name << " ExitTree" << std::endl; }
-	void Ready() override { std::cout << name << " Ready" << std::endl; }
-	//void Process(float delta) override { std::cout << name << " Process delta = " << delta << std::endl; }
-	~S() { std::cout << "~" << name << "()" << std::endl; }
+struct Canvas : Node {
+	using Node::Node;
+	void Ready() override;
+	void Receive(Signal const& sig) override;	// 收到 Button 的 pressed 去改 Label.text
 };
 
-float timer = -0.1f;
+struct Button : Node {
+	using Node::Node;
+	void Process(float delta) override;	// 模拟产生 pressed
 
-struct S1 : S {
-	S1(SceneTree* tree) : S(tree, "S1") {}
-	void Process(float delta) override {
-		timer += delta;
-		if (timer > 0) {
-			PrintTreePretty();
-			//MoveChild(GetNode("S2"), children.size() - 1);
-			GetNode("S2")->MoveToLast();
-			PrintTreePretty();
+	static constexpr const std::string_view SIGNAL_PRESSED = "pressed";
+	xx::Weak<Node> pressedReceiver;
+	template<typename ...Args>
+	void pressedSignalEmit(Args&&... args);
 
-			GetNode("S4")->RecvSignal({ "test", 1.2, std::string("asdf"), 345 });
-
-			//Remove();
-			timer = -100;
-		}
-	}
+	void Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver);
 };
 
-struct S2 : S {
-	S2(SceneTree* tree) : S(tree, "S2") {}
-	void EnterTree() override;
+struct Label : Node {
+	using Node::Node;
+	std::string text;
+	void Process(float delta) override;	// 模拟打印 text
 };
-
-struct S3 : S {
-	S3(SceneTree* tree) : S(tree, "S3") {}
-};
-
-struct S4 : S {
-	S4(SceneTree* tree) : S(tree, "S4") {}
-
-	void RecvSignal(Signal const& s) override {
-		auto& a = s.args;
-		if (s.name == "test" && a.size() == 3) {
-			test(std::get<double>(a[0]), std::get<std::string>(a[1]), std::get<int32_t>(a[2]));
-		}
-	}
-
-	void test(double const& a, std::string const& b, int const& c) {
-		std::cout << "recv signal: test, args = " << a << " " << b << " " << c << std::endl;
-	}
-};
-
-void S2::EnterTree() {
-	this->S::EnterTree();
-	auto s3 = tree->CreateNode<S3>();
-	std::cout << "------------ s2->AddChild(s3);" << std::endl;
-	AddChild(s3);
-}
 
 int main() {
 	SceneTree tree;
 	{
-		auto s1 = tree.CreateNode<S1>();
-		auto s2 = tree.CreateNode<S2>();
-		auto s4 = tree.CreateNode<S4>();
+		auto canvas = tree.CreateNode<Canvas>();
+		canvas->name = "Canvas";
 
-		std::cout << "------------ s1->AddChild(s2)" << std::endl;
-		s1->AddChild(s2);
+		auto button = tree.CreateNode<Button>();
+		button->name = "Button";
+		canvas->AddChild(button);
 
-		std::cout << "------------ tree.root->AddChild(s1);" << std::endl;
-		tree.root->AddChild(s1);
+		auto label = tree.CreateNode<Label>();
+		label->name = "Label";
+		canvas->AddChild(label);
 
-		std::cout << "------------ s1->AddChild(s4);" << std::endl;
-		s1->AddChild(s4);
+		tree.root->AddChild(canvas);
+		canvas->PrintTreePretty();
 	}
-	std::cout << "------------ MainLoop" << std::endl;
 	return tree.MainLoop();
+}
+
+void Canvas::Ready() {
+	// get_node("Button").connect("pressed", self, "_on_Button_pressed")
+	GetNode("Button").As<Button>()->Connect(Button::SIGNAL_PRESSED, this);
+}
+
+void Canvas::Receive(Signal const& sig) {
+	if (sig.name == Button::SIGNAL_PRESSED) {
+		// get_node("Label").text = "HELLO!"
+		GetNode("Label").As<Label>()->text = "HELLO!";
+	}
+}
+
+void Button::Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver) {
+	if (signalName == SIGNAL_PRESSED) {
+		pressedReceiver = receiver;
+	}
+}
+
+template<typename ...Args>
+void Button::pressedSignalEmit(Args&&... args) {
+	if (auto r = pressedReceiver.Lock()) {
+		r->Receive({SIGNAL_PRESSED});
+	}
+}
+
+void Button::Process(float delta) {
+	// 模拟点击 产生 pressed 信号
+	pressedSignalEmit();
+}
+
+void Label::Process(float delta) {
+	if (!text.empty()) {
+		std::cout << text << std::endl;
+		GetNode("../")->Remove();
+	}
 }

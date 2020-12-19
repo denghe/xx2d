@@ -3,7 +3,7 @@
 #include "Viewport.h"
 #include "Signal.h"
 
-void Node::RecvSignal(Signal const& s) {
+void Node::Receive(Signal const& s) {
 	std::cout << "unhandled signal: " << s.name << std::endl;
 }
 
