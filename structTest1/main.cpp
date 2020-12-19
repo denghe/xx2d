@@ -56,9 +56,9 @@ struct Label : Node {
 int main() {
 	SceneTree tree;
 	{
-		auto canvas = tree.CreateNode<Canvas>("Canvas");
-		auto button = canvas->AddChild(tree.CreateNode<Button>("Button"));
-		auto label = canvas->AddChild(tree.CreateNode<Label>("Label"));
+		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
+		auto&& button = canvas->AddChild(tree.CreateNode<Button>("Button"));
+		auto&& label = canvas->AddChild(tree.CreateNode<Label>("Label"));
 
 		tree.root->AddChild(canvas);
 		canvas->PrintTreePretty();

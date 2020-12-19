@@ -1,7 +1,7 @@
 ﻿#include "SceneTree.h"
 
 template<typename T, class>
-xx::Shared<T> const& Node::AddChild(xx::Shared<T> const& node) {
+xx::Shared<T> Node::AddChild(xx::Shared<T> const& node) {
 	if (node->parent) throw std::runtime_error("AddChild error: already have parent");
 	if (node->entered) throw std::runtime_error("AddChild error: already entered");
 	node->parent = WeakFromThis();
