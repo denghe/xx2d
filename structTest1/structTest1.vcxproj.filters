@@ -2,10 +2,16 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Node.cpp" />
+    <ClCompile Include="SceneTree.cpp" />
+    <ClCompile Include="Viewport.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">
       <UniqueIdentifier>{e722cbb7-e937-4351-993f-01d0343c0234}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="bak">
+      <UniqueIdentifier>{8dd1c71c-221f-4ea4-8def-9e149f664ea5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -30,6 +36,16 @@
     <ClInclude Include="..\xxlib\xx_file.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="string_text_view.hpp" />
+    <ClInclude Include="string_text_view.hpp">
+      <Filter>bak</Filter>
+    </ClInclude>
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="SceneTree.h" />
+    <ClInclude Include="Viewport.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="bak.txt">
+      <Filter>bak</Filter>
+    </Text>
   </ItemGroup>
 </Project>

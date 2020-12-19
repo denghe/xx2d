@@ -107,7 +107,7 @@ namespace xx {
 					if (h->refCount == 0) {
 						free(h);
 					} else {
-						h->useCount == 0;
+						h->useCount = 0;
 					}
 				}
 				else {
