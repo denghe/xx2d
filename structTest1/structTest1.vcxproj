@@ -105,6 +105,7 @@
     <ClInclude Include="..\xxlib\xx_typehelpers.h" />
     <ClInclude Include="..\xxlib\xx_typename_islambda.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="Node.hh" />
     <ClInclude Include="Ref.h" />
     <ClInclude Include="SceneTree.h" />
     <ClInclude Include="Signal.h" />

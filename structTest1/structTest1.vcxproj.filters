@@ -45,6 +45,7 @@
     <ClInclude Include="Viewport.h" />
     <ClInclude Include="Signal.h" />
     <ClInclude Include="Ref.h" />
+    <ClInclude Include="Node.hh" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak.txt">

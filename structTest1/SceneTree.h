@@ -19,8 +19,10 @@ struct SceneTree {
 
 	xx::Shared<Viewport>& GetRoot() { return root; }
 
-	template<typename T, typename ...Args, class = std::enable_if_t<std::is_base_of_v<Node, T>>>
-	xx::Shared<T> CreateNode(Args&&...args) {
-		return xx::MakeShared<T>(this, std::forward<Args>(args)...);
+	template<typename T, typename Name, typename ...Args, class = std::enable_if_t<std::is_base_of_v<Node, T>>>
+	xx::Shared<T> CreateNode(Name&& name, Args&&...args) {
+		auto r = xx::MakeShared<T>(this, std::forward<Args>(args)...);
+		r->name = std::forward<Name>(name);
+		return r;
 	}
 };

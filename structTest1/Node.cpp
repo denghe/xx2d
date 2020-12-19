@@ -105,20 +105,6 @@ LabBegin:
 	}
 }
 
-
-void Node::AddChild(xx::Shared<Node> const& node) {
-	if (node->parent) throw std::runtime_error("AddChild error: already have parent");
-	if (node->entered) throw std::runtime_error("AddChild error: already entered");
-	node->parent = WeakFromThis();
-	children.push_back(node);
-	if (entered) {
-		tree->removeProtect = true;
-		node->CallEnterTree();
-		node->CallReady();
-		tree->removeProtect = false;
-	}
-}
-
 void Node::RemoveChild(xx::Shared<Node> const& node) {
 	if (GetPtrHeader() != node->parent.h) throw std::runtime_error("RemoveChild error: bad parent??");
 	// find index

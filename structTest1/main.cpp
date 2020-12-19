@@ -39,43 +39,29 @@ func _on_Button_pressed():
 struct Canvas : Node {
 	using Node::Node;
 	void Ready() override;
-	void Receive(xx::Shared<Node> const& sender, Signal const& sig) override;	// 收到 Button 的 pressed 去改 Label.text
+	void Receive(xx::Shared<Node> const& sender, Signal const& sig) override;
 };
 
 struct Button : Node {
 	Button(SceneTree* const& tree);
-	xx::Weak<Node>* pressedReceiverPointer;	// cache
-	void Process(float delta) override;	// 模拟产生 pressed
+	void Process(float delta) override;
 };
 
 struct Label : Node {
 	using Node::Node;
 	std::string text;
-	void Process(float delta) override;	// 模拟打印 text
+	void Process(float delta) override;
 };
 
 int main() {
 	SceneTree tree;
 	{
-		auto canvas = tree.CreateNode<Canvas>();
-		canvas->name = "Canvas";
-
-		auto button = tree.CreateNode<Button>();
-		button->name = "Button";
-		canvas->AddChild(button);
-
-		auto label = tree.CreateNode<Label>();
-		label->name = "Label";
-		canvas->AddChild(label);
+		auto canvas = tree.CreateNode<Canvas>("Canvas");
+		auto button = canvas->AddChild(tree.CreateNode<Button>("Button"));
+		auto label = canvas->AddChild(tree.CreateNode<Label>("Label"));
 
 		tree.root->AddChild(canvas);
-
-		std::cout << "tree: " << std::endl;
 		canvas->PrintTreePretty();
-		std::cout << "Button's signals: " << std::endl;
-		for (auto&& kv : button->signalReceivers) {
-			std::cout << "    " << kv.first << std::endl;
-		}
 	}
 	return tree.MainLoop();
 }
@@ -94,14 +80,12 @@ void Canvas::Receive(xx::Shared<Node> const& sender, Signal const& sig) {
 
 Button::Button(SceneTree* const& tree) : Node(tree) {
 	// register & cache signal keyword
-	pressedReceiverPointer = &signalReceivers.insert({ "pressed" , {} }).first->second;
+	signalReceivers["pressed"] = {};
 }
 
 void Button::Process(float delta) {
 	// emit pressed signal
-	if (auto&& receiver = pressedReceiverPointer->Lock()) {
-		receiver->Receive(SharedFromThis(), { "pressed" });
-	}
+	EmitSignal("pressed");
 }
 
 void Label::Process(float delta) {
