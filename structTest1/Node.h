@@ -53,13 +53,14 @@ struct Node : Ref<Node> {
 	void PrintTreePretty(std::string const& prefix = "", bool const& last = true) const;
 
 	// signal funcs
-	void Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver);
 	virtual void Receive(xx::Shared<Node> const& sender, Signal const& sig);
+	// register: signalReceivers["pressed"] = {};
+	virtual void Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver);
 	template<typename Name, typename ...Args>
 	void EmitSignal(Name&& name, Args&&...args);
-	// register: signalReceivers["pressed"] = {};
-	// register & cache: ptr = &signalReceivers.insert({ "pressed" , {} }).first->second;
-	// fast emit: if (auto r = ptr->Lock()) r->Receive( SharedFromThis(), { "pressed", ...... });
+	// faster way: 
+	// override Connect: if ( signalName == "xxxx" ) xxxxReceiver = receiver;
+	// if (auto r = xxxxReceiver->Lock()) r->Receive( SharedFromThis(), { "xxxx", ...... });
 };
 
 #include "Node.hh"

@@ -4,6 +4,8 @@
 #include "Node.h"
 #include "Signal.h"
 
+#include "xx_chrono.h"
+
 
 /*
 // godot example：
@@ -29,15 +31,14 @@ struct Button : Node {
 struct Label : Node {
 	using Node::Node;
 	std::string text;
-	void Process(float delta) override;
 };
 
 int main() {
 	SceneTree tree;
 	{
 		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
-		auto&& button = canvas->AddChild(tree.CreateNode<Button>("Button"));
-		auto&& label = canvas->AddChild(tree.CreateNode<Label>("Label"));
+		canvas->AddChild(tree.CreateNode<Button>("Button"));
+		canvas->AddChild(tree.CreateNode<Label>("Label"));
 
 		tree.root->AddChild(canvas);
 		canvas->PrintTreePretty();
@@ -51,9 +52,9 @@ void Canvas::Ready() {
 }
 
 void Canvas::Receive(xx::Shared<Node> const& sender, Signal const& sig) {
+	// get_node("Label").text = "HELLO!"
 	if (sender->name == "Button" && sig.name == "pressed") {
-		// get_node("Label").text = "HELLO!"
-		GetNode("Label").As<Label>()->text = "HELLO!";
+		GetNode("Label").As<Label>()->text = "HELLO! from Button";
 	}
 }
 
@@ -65,12 +66,4 @@ Button::Button(SceneTree* const& tree) : Node(tree) {
 void Button::Process(float delta) {
 	// emit pressed signal
 	EmitSignal("pressed");
-}
-
-void Label::Process(float delta) {
-	if (!text.empty()) {
-		// dump result & exit
-		std::cout << text << std::endl;
-		GetNode("../")->Remove();
-	}
 }
