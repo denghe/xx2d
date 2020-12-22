@@ -21,6 +21,7 @@ struct Node : Ref<Node> {
 	std::vector<xx::Shared<Node>> children;
 	std::string name;
 	std::unordered_map<std::string_view, xx::Weak<Node>> signalReceivers;
+	//std::unordered_map<std::string_view, void(*)(void* const& self, Signal const&)>* methodMaps;	// 放到 PtrHeader 去
 
 	/*********************************************************************/
 	// generic events
@@ -38,9 +39,11 @@ struct Node : Ref<Node> {
 	/*********************************************************************/
 	// utils
 
-	SceneTree* GetTree() const;
+	SceneTree& GetTree() const;
 	xx::Shared<Node> GetParent();
 	xx::Shared<Node> GetNode(std::string_view const& path) const;
+
+	void AddToGroup(std::string_view const& gn);
 
 	template<typename T, class = std::enable_if_t<std::is_base_of_v<Node, T>>>
 	xx::Shared<T> AddChild(xx::Shared<T> const& node);

@@ -43,8 +43,8 @@ void Node::CallProcess(float delta) {
 	}
 }
 
-XX_FORCEINLINE SceneTree* Node::GetTree() const {
-	return tree;
+XX_FORCEINLINE SceneTree& Node::GetTree() const {
+	return *tree;
 }
 
 XX_FORCEINLINE xx::Shared<Node> Node::GetParent() {
@@ -104,6 +104,12 @@ LabBegin:
 		return {};													// not found
 	}
 }
+
+
+void Node::AddToGroup(std::string_view const& gn) {
+	tree->groups[gn].emplace_back(WeakFromThis());
+}
+
 
 void Node::RemoveChild(xx::Shared<Node> const& node) {
 	if (GetPtrHeader() != node->parent.h) throw std::runtime_error("RemoveChild error: bad parent??");

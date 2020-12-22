@@ -7,63 +7,47 @@
 #include "xx_chrono.h"
 
 
+
 /*
 // godot example：
 
 func _ready():
-	get_node("Button").connect("pressed", self, "_on_Button_pressed")
+	add_to_group("enemies")
 
-func _on_Button_pressed():
-	get_node("Label").text = "HELLO!"
+func _on_discovered(): # This is a purely illustrative function.
+	get_tree().call_group("enemies", "player_was_discovered")
 */
 
-struct Canvas : Node {
+struct Player : Node {
 	using Node::Node;
-	void Ready() override;
-	void Receive(xx::Shared<Node> const& sender, Signal const& sig) override;
+	void PlayerWasDiscovered() { 
+		std::cout << "PlayerWasDiscovered() called" << std::endl; 
+	}
+	void PlayerWasDiscovered2(std::string xxx, float xxxx) { 
+		std::cout << "PlayerWasDiscovered2(xxx, xxxx) called. xxx = " << xxx << ", xxxx = " << xxxx << std::endl;
+	}
+	void Ready() override {
+		AddToGroup("enemies");
+	}
 };
 
-struct Button : Node {
-	Button(SceneTree* const& tree);
-	void Process(float delta) override;
-};
-
-struct Label : Node {
+struct Enemy : Node {
 	using Node::Node;
-	std::string text;
+	void Process(float delta) override {
+		GetTree().CallGroup("enemies", "PlayerWasDiscovered");
+		GetTree().CallGroup("enemies", "PlayerWasDiscovered2", "asdf", 1.2f);
+	}
 };
 
 int main() {
 	SceneTree tree;
 	{
-		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
-		canvas->AddChild(tree.CreateNode<Button>("Button"));
-		canvas->AddChild(tree.CreateNode<Label>("Label"));
+		RegisterMethod(Player, PlayerWasDiscovered);
+		RegisterMethod(Player, PlayerWasDiscovered2);
 
-		tree.root->AddChild(canvas);
-		canvas->PrintTreePretty();
+		tree.root->AddChild(tree.CreateNode<Player>("Player"));
+		tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
+		tree.root->PrintTreePretty();
 	}
 	return tree.MainLoop();
-}
-
-void Canvas::Ready() {
-	// get_node("Button").connect("pressed", self, "_on_Button_pressed")
-	GetNode("Button").As<Button>()->Connect("pressed", this);
-}
-
-void Canvas::Receive(xx::Shared<Node> const& sender, Signal const& sig) {
-	// get_node("Label").text = "HELLO!"
-	if (sender->name == "Button" && sig.name == "pressed") {
-		GetNode("Label").As<Label>()->text = "HELLO! from Button";
-	}
-}
-
-Button::Button(SceneTree* const& tree) : Node(tree) {
-	// register & cache signal keyword
-	signalReceivers["pressed"] = {};
-}
-
-void Button::Process(float delta) {
-	// emit pressed signal
-	EmitSignal("pressed");
 }

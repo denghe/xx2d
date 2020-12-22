@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "xx_typehelpers.h"
+#include "xx_typename_islambda.h"
 
 // 类似 std::shared_ptr / weak_ptr，非线程安全，Weak 提供了无损 useCount 检测功能以方便直接搞事情
 
@@ -12,8 +13,13 @@ namespace xx {
 	struct PtrHeader {
 		uint32_t useCount;      // 强引用技术
 		uint32_t refCount;      // 弱引用技术
-		uint32_t typeId;        // 序列化 或 类型转换用
-		uint32_t offset;        // 序列化等过程中使用
+		union {
+			struct {
+				uint32_t typeId;        // 序列化 或 类型转换用
+				uint32_t offset;        // 序列化等过程中使用
+			};
+			void* ud;
+		};
 	};
 
 
