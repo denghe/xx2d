@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "xx_typehelpers.h"
-#include "xx_typename_islambda.h"
 
 // 类似 std::shared_ptr / weak_ptr，非线程安全，Weak 提供了无损 useCount 检测功能以方便直接搞事情
 

@@ -23,7 +23,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "xx_chrono.h"
+#include "xx_typehelpers.h"
 
 using namespace DirectX;
 

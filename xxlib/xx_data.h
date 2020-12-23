@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "xx_typehelpers.h"
 #include "xx_math.h"
-#include <cstring>
 
 namespace xx {
 
@@ -274,6 +273,82 @@ namespace xx {
 		}
 
 
+
+
+
+
+		template<typename T, typename ...TS>
+		void WriteStructMember(T const& in, TS const&...ins) {
+			WriteStructMember(in);
+			WriteStructMember(ins...);
+		}
+		template<typename T>
+		void WriteStructMember(T const& in) {
+			if constexpr (std::is_arithmetic_v<T>) {
+				WriteFixed(in);
+			}
+			else if constexpr (std::is_same_v<T, std::string>) {
+				WriteVarIntger(in.size());
+				WriteBuf(in.data(), in.size());
+			}
+			// todo: 继续添加常见类型支持?
+			else if constexpr (std::is_class_v<T>) {
+				WriteStruct(in);
+			}
+			else {
+				std::string s("unsupported data type: ");
+				s.append(TypeName_v<T>);
+				throw std::runtime_error(s);
+			}
+		}
+		template<class T>
+		void WriteStruct(T const& in) {
+			std::apply([&](auto const&...args) {
+				WriteStructMember(*args...);
+				}, xx::StructToPtrTuple(in));
+		}
+
+
+		template<typename T, typename ...TS>
+		int ReadStructMember(T& out, TS&...outs) {
+			if (int r = ReadStructMember(out)) return r;
+			return ReadStructMember(outs...);
+		}
+		template<typename T>
+		int ReadStructMember(T& out) {
+			if constexpr (std::is_arithmetic_v<T>) {
+				return ReadFixed(out);
+			}
+			else if constexpr (std::is_same_v<T, std::string>) {
+				size_t siz = 0;
+				if (int r = ReadVarInteger(siz)) return r;
+				if (siz > offset - len) return -1;
+				out.assign(buf + offset, siz);
+				offset += siz;
+				return 0;
+			}
+			// todo: 继续添加常见类型支持?
+			else if constexpr (std::is_class_v<T>) {
+				return ReadStruct(out);
+			}
+			else {
+				return __LINE__;
+			}
+		}
+		template<class T>
+		int ReadStruct(T& out) {
+			int r = 0;
+			std::apply([&](auto&&...args) {
+				r = ReadStructMember(*args...);
+				}, xx::StructToPtrTuple(out));
+			return r;
+		}
+
+
+
+
+
+
 		// 设置为只读模式, 并初始化引用计数( 开启只读引用计数模式. 没数据不允许开启 )
 		XX_FORCEINLINE void SetReadonlyMode() {
 			assert(cap != _1);
@@ -323,4 +398,14 @@ namespace xx {
 		char const* const& buf;
 		size_t const& len;
 	};
+
+
+	template<> inline void DumpStruct(DataView const& in) {
+		for (size_t i = 0; i < in.len; ++i) {
+			std::cout << (int)in.buf[i] << " ";
+		}
+	}
+	template<> inline void DumpStruct(Data const& in) {
+		DumpStruct(DataView{ in.buf, in.len });
+	}
 }

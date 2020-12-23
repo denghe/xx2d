@@ -2,7 +2,6 @@
 #include "Viewport.h"
 #include "Signal.h"
 #include <thread>
-#include "xx_chrono.h"
 
 SceneTree::SceneTree() {
 	root.Emplace(this);

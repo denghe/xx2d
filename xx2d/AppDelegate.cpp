@@ -1,5 +1,4 @@
 ﻿#include "AppDelegate.h"
-#include "xx_chrono.h"
 
 AppDelegate::AppDelegate() {
 	resRootPath = std::filesystem::current_path() / "res";
