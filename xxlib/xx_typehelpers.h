@@ -676,46 +676,43 @@ namespace xx {
 	};
 
 
+
+	// for 打印结构体数据
+	struct TupleDumper {
+
+		template<std::size_t I = 0, typename... Tp>
+		static std::enable_if_t<I == sizeof...(Tp) - 1> DumpTuple(std::tuple<Tp...> const& t) {
+			Dump(std::get<I>(t));
+		}
+
+		template<std::size_t I = 0, typename... Tp>
+		static std::enable_if_t<I < sizeof...(Tp) - 1> DumpTuple(std::tuple<Tp...> const& t) {
+			Dump(std::get<I>(t));
+			DumpTuple<I + 1, Tp...>(t);
+		}
+
+		template<typename T>
+		static void Dump(T const* const& v) {
+			if constexpr (xx::IsTuple_v<T>) {
+				DumpTuple(*v);
+			}
+			else if constexpr (std::is_same_v<T, std::string>) {
+				std::cout << *v << " ";
+			}
+			else if constexpr (std::is_class_v<T>) {
+				auto t = xx::StructToPtrTuple(*v);
+				DumpTuple(t);
+			}
+			else {
+				std::cout << *v << " ";
+			}
+		}
+	};
+
 	// 打印结构体数据
-	template<class T> void DumpStruct(T const& in) {
-		std::apply([](auto const&...args) {
-			(DumpStruct(*args), ...);
-			}, xx::StructToPtrTuple(in));
-	}
-	template<> inline void DumpStruct(int const& in) {
-		std::cout << in << " ";
-	}
-	template<> inline void DumpStruct(double const& in) {
-		std::cout << in << " ";
-	}
-	template<> inline void DumpStruct(std::string const& in) {
-		std::cout << in << " ";
-	}
-	// todo: more type sup
-
-	// todo: 改造成下面这种长相?
-
-	template<typename T, class = void>
-	struct DumpStructImpl;
-
-	template<typename T>
-	struct DumpStructImpl<T, std::enable_if_t<std::is_class_v<T>>> {
-		static void Exec(T const& in) {
-			std::apply([](auto const&...args) {
-				(DumpStructImpl<decltype(*args)>::Exec(*args), ...);
-			}, xx::StructToPtrTuple(in));
-		}
-	};
-	template<typename T>
-	struct DumpStructImpl<T, std::enable_if_t<!std::is_class_v<T>>> {
-		static void Exec(T const& in) {
-			std::cout << in << " ";
-		}
-	};
-
 	template<class T>
-	void DumpStructEx(T const& in) {
-		DumpStructImpl<T>::Exec(in);
+	void DumpStruct(T const& in) {
+		TupleDumper::DumpTuple(StructToPtrTuple(in));
 	}
 
 	/************************************************************************************/
