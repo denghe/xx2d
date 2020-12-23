@@ -38,9 +38,9 @@ struct SceneTree {
 			auto& v = iter->second;
 			for (int i = (int)v.size() - 1; i >= 0; --i) {
 				if (auto&& c = v[i].Lock()) {
-					auto&& m = *(MFuncMap*)(v[i].h->ud);
-					auto&& pair = m[fn];
-					pair.first(c.pointer, pair.second, s);
+					auto&& map = *(MFuncMap*)(v[i].h->ud);
+					auto&& [f, fp] = map[fn];
+					f(c.pointer, fp, s);
 				}
 				else {
 					// todo: 对于已失效的指针，与最后一个元素交换删除. 这将改变组内顺序

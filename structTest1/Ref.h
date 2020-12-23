@@ -11,7 +11,6 @@ struct Ref {
 	template<typename U = T>
 	XX_FORCEINLINE xx::Weak<U> WeakFromThis() const {
 		auto h = GetPtrHeader();
-		assert((*(xx::Weak<U>*) & h).Lock().As<U>());
 		return *(xx::Weak<U>*) & h;
 	}
 
