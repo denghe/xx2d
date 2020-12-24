@@ -157,7 +157,7 @@ void Node::Remove() {
 }
 
 void Node::QueueRemove() {
-	// todo: 将 weak 指针放入 vector 待帧末 remove from parent
+	tree->needRemoves.push_back(WeakFromThis());
 }
 
 void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {

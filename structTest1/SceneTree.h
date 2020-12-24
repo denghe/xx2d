@@ -16,7 +16,7 @@ struct SceneTree {
 	double lastSeconds = 0;
 	xx::Shared<Viewport> root;
 	std::unordered_map<std::string_view, std::vector<xx::Weak<Node>>> groups;
-
+	std::vector<xx::Weak<Node>> needRemoves;
 
 	int MainLoop();
 

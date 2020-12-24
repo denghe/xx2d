@@ -26,6 +26,9 @@ struct Enemy : Node {
 	}
 	void PlayerWasDiscovered() {
 		std::cout << "PlayerWasDiscovered() called." << std::endl;
+		assert(IsInGroup("enemies"));
+		RemoveFromGroup("enemies");
+		assert(!IsInGroup("enemies"));
 	}
 };
 
