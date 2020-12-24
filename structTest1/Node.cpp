@@ -110,6 +110,20 @@ void Node::AddToGroup(std::string_view const& gn) {
 	tree->groups[gn].emplace_back(WeakFromThis());
 }
 
+void Node::RemoveFromGroup(std::string_view const& gn) {
+	auto&& g = tree->groups[gn];
+	auto&& w = WeakFromThis();
+	if (auto&& iter = std::find(g.begin(), g.end(), w); iter != g.end()) {
+		g.erase(iter);
+	}
+}
+
+bool Node::IsInGroup(std::string_view const& gn) const {
+	auto&& g = tree->groups[gn];
+	auto&& w = WeakFromThis();
+	return std::find(g.begin(), g.end(), w) != g.end();
+}
+
 
 void Node::RemoveChild(xx::Shared<Node> const& node) {
 	if (GetPtrHeader() != node->parent.h) throw std::runtime_error("RemoveChild error: bad parent??");
@@ -136,10 +150,14 @@ void Node::RemoveChild(xx::Shared<Node> const& node) {
 	node->parent.Reset();
 }
 
-XX_FORCEINLINE void Node::Remove() {
+void Node::Remove() {
 	if (auto&& p = parent.Lock()) {
 		p->RemoveChild(SharedFromThis());
 	}
+}
+
+void Node::QueueRemove() {
+	// todo: 将 weak 指针放入 vector 待帧末 remove from parent
 }
 
 void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
@@ -165,7 +183,7 @@ void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
 	buf[index] = node.pointer;
 }
 
-XX_FORCEINLINE void Node::MoveToLast() {
+void Node::MoveToLast() {
 	auto self = this;
 	if (auto&& p = parent.Lock()) {
 		p->MoveChild(*(xx::Shared<Node>*)&self, p->children.size() - 1);

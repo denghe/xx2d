@@ -331,7 +331,6 @@ namespace xx {
 			Reset(o);
 		}
 
-
 		XX_FORCEINLINE ~Weak() {
 			Reset();
 		}
@@ -343,6 +342,24 @@ namespace xx {
 				++o.h->refCount;
 			}
 		}
+		template<typename U>
+		XX_FORCEINLINE Weak(Weak<U> const& o) {
+			static_assert(std::is_base_of_v<T, U>);
+			if ((h = o.h)) {
+				++o.h->refCount;
+			}
+		}
+
+		XX_FORCEINLINE Weak(Weak&& o) noexcept {
+			h = o.h;
+			o.h = nullptr;
+		}
+		template<typename U>
+		XX_FORCEINLINE Weak(Weak<U>&& o) noexcept {
+			static_assert(std::is_base_of_v<T, U>);
+			h = o.h;
+			o.h = nullptr;
+		}
 
 		XX_FORCEINLINE Weak& operator=(Weak const& o) {
 			if (&o != this) {
@@ -350,21 +367,27 @@ namespace xx {
 			}
 			return *this;
 		}
-
-		XX_FORCEINLINE Weak(Weak&& o) noexcept {
-			std::swap(h, o.h);
+		template<typename U>
+		XX_FORCEINLINE Weak& operator=(Weak<U> const& o) {
+			static_assert(std::is_base_of_v<T, U>);
+			if ((void*)&o != (void*)this) {
+				Reset(((Weak*)(&o))->Lock());
+			}
+			return *this;
 		}
 
 		XX_FORCEINLINE Weak& operator=(Weak&& o) noexcept {
 			std::swap(h, o.h);
 			return *this;
 		}
+		// operator=(Weak&& o) 没有模板实现，因为不确定交换 h 之后的类型是否匹配
 
-		XX_FORCEINLINE bool operator==(Weak const& o) const noexcept {
+		template<typename U>
+		XX_FORCEINLINE bool operator==(Weak<U> const& o) const noexcept {
 			return h == o.h;
 		}
-
-		XX_FORCEINLINE bool operator!=(Weak const& o) const noexcept {
+		template<typename U>
+		XX_FORCEINLINE bool operator!=(Weak<U> const& o) const noexcept {
 			return h != o.h;
 		}
 	};
