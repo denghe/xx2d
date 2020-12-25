@@ -1,7 +1,4 @@
-﻿#include "SceneTree.h"
-#include "Viewport.h"
-#include "Node.h"
-#include "Signal.h"
+﻿#include "All.h"
 
 /*
 // godot example：
@@ -16,10 +13,11 @@ func _on_Button_pressed():
 struct Label : Node {
 	using Node::Node;
 	std::string text;
+	typedef bool AutoEnableProcess;	// auto call EnableProcess() after Create
 	void Process(float delta) override {
 		if (text == "HELLO!") {
 			std::cout << text << std::endl;
-			GetNode("/Canvas")->Remove();
+			GetNode("/Canvas")->QueueRemove();
 		}
 	}
 };
@@ -38,6 +36,7 @@ struct Canvas : Node {
 
 struct Button : Node {
 	using Node::Node;
+	typedef bool AutoEnableProcess;
 	void Process(float delta) override {
 		EmitSignal("pressed");	// fire button event
 	}
@@ -46,7 +45,7 @@ struct Button : Node {
 int main() {
 	SceneTree tree;
 	{
-		RegisterMethod(Canvas, OnButtonPressed);
+		RegisterMethod("OnButtonPressed", &Canvas::OnButtonPressed);
 		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
 		canvas->CreateChild<Button>("Button");
 		canvas->CreateChild<Label>("Label");
@@ -105,7 +104,7 @@ int main() {
 //int main() {
 //	SceneTree tree;
 //	{
-//		RegisterMethod(Enemy, PlayerWasDiscovered);
+//		RegisterMethod_(Enemy, PlayerWasDiscovered);
 //		tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
 //		tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
 //		tree.root->AddChild(tree.CreateNode<Player>("Player"));

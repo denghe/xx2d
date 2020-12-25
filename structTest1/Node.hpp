@@ -1,18 +1,19 @@
-﻿#include "Node.h"
-#include "SceneTree.h"
-#include "Viewport.h"
-#include "Signal.h"
+﻿#pragma once
 
-Node::Node(SceneTree* const& tree) : tree(tree) {
+inline Node::Node(SceneTree* const& tree) : tree(tree) {
 	if (!tree) throw std::runtime_error("first args: tree is nullptr");
 }
 
-void Node::EnterTree() {}
-void Node::ExitTree() {}
-void Node::Ready() {}
-void Node::Process(float delta) {}
+inline Node::~Node() {
+	EnableProcess(false);
+}
 
-void Node::CallEnterTree() {
+inline void Node::EnterTree() {}
+inline void Node::ExitTree() {}
+inline void Node::Ready() {}
+inline void Node::Process(float delta) {}
+
+inline void Node::CallEnterTree() {
 	EnterTree();
 	entered = true;
 	for (auto&& c : children) {
@@ -20,7 +21,7 @@ void Node::CallEnterTree() {
 	}
 }
 
-void Node::CallExitTree() {
+inline void Node::CallExitTree() {
 	for (auto iter = children.rbegin(); iter != children.rend(); ++iter) {
 		(*iter)->entered = false;
 		(*iter)->CallExitTree();
@@ -29,29 +30,22 @@ void Node::CallExitTree() {
 	ExitTree();
 }
 
-void Node::CallReady() {
+inline void Node::CallReady() {
 	for (auto&& c : children) {
 		c->CallReady();
 	}
 	Ready();
 }
 
-void Node::CallProcess(float delta) {
-	Process(delta);
-	for (auto&& c : children) {
-		c->CallProcess(delta);
-	}
-}
-
-XX_FORCEINLINE SceneTree& Node::GetTree() const {
+inline  SceneTree& Node::GetTree() const {
 	return *tree;
 }
 
-XX_FORCEINLINE xx::Shared<Node> Node::GetParent() {
+inline  xx::Shared<Node> Node::GetParent() {
 	return parent.Lock();
 }
 
-xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
+inline xx::Shared<Node> Node::GetNode(std::string_view const& path) const {
 	Node* rtv = (Node*)this;
 	if (!path.size()) return *(xx::Shared<Node>*) & rtv;
 	auto p = path.data();
@@ -106,11 +100,11 @@ LabBegin:
 }
 
 
-void Node::AddToGroup(std::string_view const& gn) {
+inline void Node::AddToGroup(std::string_view const& gn) {
 	tree->groups[gn].emplace_back(WeakFromThis());
 }
 
-void Node::RemoveFromGroup(std::string_view const& gn) {
+inline void Node::RemoveFromGroup(std::string_view const& gn) {
 	auto&& g = tree->groups[gn];
 	auto&& w = WeakFromThis();
 	if (auto&& iter = std::find(g.begin(), g.end(), w); iter != g.end()) {
@@ -118,14 +112,14 @@ void Node::RemoveFromGroup(std::string_view const& gn) {
 	}
 }
 
-bool Node::IsInGroup(std::string_view const& gn) const {
+inline bool Node::IsInGroup(std::string_view const& gn) const {
 	auto&& g = tree->groups[gn];
 	auto&& w = WeakFromThis();
 	return std::find(g.begin(), g.end(), w) != g.end();
 }
 
 
-void Node::RemoveChild(xx::Shared<Node> const& node) {
+inline void Node::RemoveChild(xx::Shared<Node> const& node) {
 	if (GetPtrHeader() != node->parent.h) throw std::runtime_error("RemoveChild error: bad parent??");
 	// find index
 	auto siz = children.size();
@@ -150,17 +144,17 @@ void Node::RemoveChild(xx::Shared<Node> const& node) {
 	node->parent.Reset();
 }
 
-void Node::Remove() {
+inline void Node::Remove() {
 	if (auto&& p = parent.Lock()) {
 		p->RemoveChild(SharedFromThis());
 	}
 }
 
-void Node::QueueRemove() {
+inline void Node::QueueRemove() {
 	tree->needRemoves.push_back(WeakFromThis());
 }
 
-void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
+inline void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
 	if (WeakFromThis() != node->parent) throw std::runtime_error("Find error: bad parent??");
 	if (entered && tree->removeProtect) throw std::runtime_error("MoveChild error: removeProtected");
 	auto siz = children.size();
@@ -183,21 +177,79 @@ void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
 	buf[index] = node.pointer;
 }
 
-void Node::MoveToLast() {
+inline void Node::MoveToLast() {
 	auto self = this;
 	if (auto&& p = parent.Lock()) {
-		p->MoveChild(*(xx::Shared<Node>*)&self, p->children.size() - 1);
+		p->MoveChild(*(xx::Shared<Node>*) & self, p->children.size() - 1);
 	}
 }
 
-void Node::PrintTreePretty(std::string const& prefix, bool const& last) const {
+inline void Node::PrintTreePretty(std::string const& prefix, bool const& last) const {
 	std::cout << prefix + (last ? " L-" : " |-") + name << std::endl;
 	for (auto& c : children) {
 		c->PrintTreePretty(prefix + (last ? "   " : " | "), c == children.back());
 	}
 }
 
-void Node::Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver, std::string_view const& funcName) {
-	auto&& map = *(MFuncMap*)(receiver.header()->ud);
-	signalReceivers[signalName] = { receiver, &map[funcName] };
+inline void Node::EnableProcess(bool const& enable) {
+	if (enable) {
+		if (indexOfProcess >= 0) return;
+		else {
+			indexOfProcess = (int)tree->processNodes.size();
+			tree->processNodes.push_back(this);
+		}
+	}
+	else {
+		if (indexOfProcess >= 0) {
+			// swap with last one & delete
+			auto&& ns = tree->processNodes;
+			ns.back()->indexOfProcess = indexOfProcess;
+			ns[indexOfProcess] = ns.back();
+			ns.pop_back();
+			indexOfProcess = -1;
+		}
+	}
+}
+
+inline void Node::Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver, std::string_view const& funcName) {
+	auto&& funcs = ((TypeInfo*)receiver.header()->ud)->funcs;
+	signalReceivers[signalName] = { receiver, &funcs[funcName] };
+}
+
+
+template<typename T, class>
+inline xx::Shared<T> Node::GetNode(std::string_view const& path) const {
+	return GetNode(path).As<T>();
+}
+
+template<typename T, typename Name, typename ...Args, class>
+inline xx::Shared<T> Node::CreateChild(Name&& name, Args&&...args) {
+	return AddChild(tree->CreateNode<T>(name, std::forward<Args>(args)...));
+}
+
+template<typename T, class>
+inline xx::Shared<T> Node::AddChild(xx::Shared<T> const& node) {
+	if (node->parent) throw std::runtime_error("AddChild error: already have parent");
+	if (node->entered) throw std::runtime_error("AddChild error: already entered");
+	node->parent = WeakFromThis();
+	children.push_back(node);
+	if (entered) {
+		tree->removeProtect = true;
+		node->CallEnterTree();
+		node->CallReady();
+		tree->removeProtect = false;
+	}
+	return node;
+}
+
+template<typename Name, typename ...Args>
+inline int Node::EmitSignal(Name&& name, Args&&...args) {
+	auto&& [weak, funcData] = signalReceivers[name];
+	if (auto&& receiver = weak.Lock()) {
+		auto&& [f, fp] = *funcData;
+		Signal s(name, std::forward<Args>(args)...);
+		f(receiver.pointer, fp, s);
+		return 1;
+	}
+	return 0;
 }

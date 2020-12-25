@@ -1,6 +1,6 @@
 ﻿#pragma once
+
 #include "Ref.h"
-#include <variant>
 
 struct Signal : Ref<Signal> {
 	std::string name;
@@ -11,54 +11,17 @@ struct Signal : Ref<Signal> {
 	Signal() = default;
 
 	template<typename Name, typename ...Args>
-	Signal(Name&& name, Args&&... args) {
-		this->name = std::forward<Name>(name);
-		((this->args.emplace_back(std::forward<Args>(args)), 0), ...);
-	}
-
+	Signal(Name&& name, Args&&... args);
 
 	template<std::size_t I = 0, typename... Tp>
-	XX_FORCEINLINE std::enable_if_t<I == sizeof...(Tp), int> FillTuple_(std::tuple<Tp...>& t) const {
-		return 0;
-	}
+	XX_FORCEINLINE std::enable_if_t<I == sizeof...(Tp), int> FillTuple_(std::tuple<Tp...>& t) const;
 
 	template<std::size_t I = 0, typename... Tp>
-	XX_FORCEINLINE std::enable_if_t < I < sizeof...(Tp), int> FillTuple_(std::tuple<Tp...>& t) const {
-		auto& a = std::get<I>(t);
-		typedef std::tuple_element_t<I, std::tuple<Tp...>> AT;
-		auto& b = args[I];
-		if constexpr (std::is_same_v<std::string, AT> || std::is_same_v<std::string_view, AT>) {
-			if (b.index() != 4) return __LINE__;
-			a = std::get<std::string>(b);
-		}
-		else {
-			switch (b.index()) {
-			case 0:
-				a = (AT)std::get<int32_t>(b);
-				break;
-			case 1:
-				a = (AT)std::get<int64_t>(b);
-				break;
-			case 2:
-				a = (AT)std::get<float>(b);
-				break;
-			case 3:
-				a = (AT)std::get<double>(b);
-				break;
-			default:
-				return __LINE__;
-			}
-		}
-		return FillTuple_<I + 1, Tp...>(t);
-	}
+	XX_FORCEINLINE std::enable_if_t < I < sizeof...(Tp), int> FillTuple_(std::tuple<Tp...>& t) const;
 
 	// args 的内容填充到 t. 出错返回非 0
 	template<typename Tuple>
-	int FillTuple(Tuple& t) const {
-		if (std::tuple_size_v<Tuple> != args.size()) return __LINE__;
-		FillTuple_(t);
-		return 0;
-	}
+	int FillTuple(Tuple& t) const;
 };
 
 
@@ -67,31 +30,34 @@ using MFuncLambda = void(*)(void* const&, MFuncHolder const&, Signal const&);
 using MFuncData = std::pair<MFuncLambda, MFuncHolder>;
 using MFuncMap = std::unordered_map<std::string_view, MFuncData>;
 
-// 为每个类型声明一个 函数名 & 调用lambda 映射
+struct TypeInfo {
+	MFuncMap funcs;
+	// todo: props ....
+};
+
 template<typename T>
-struct TypeMFuncMappings {
-	inline static MFuncMap map;
+struct TypeInfoMappings {
+	inline static TypeInfo typeInfo;
 };
 
 #define __stringify(x)  __stringify_1(x)
 #define __stringify_1(x)  #x
-#define RegisterMethod( T, funcName ) \
-	RegisterMethod_Impl(__stringify(funcName), &T::funcName);
+
+#define RegisterMethod_( T, funcName ) \
+	RegisterMethod(__stringify(funcName), &T::funcName);
 
 template<typename CT, typename FT>
-inline void CallMFunc(CT* const& self, FT const& f, Signal const& s) {
-	xx::FuncA_t<FT> tuple;
-	if (s.FillTuple(tuple)) return;
-	std::apply([&](auto &... args) {
-		(self->*f)(args...);
-		}, tuple);
-}
+inline void CallMFunc(CT* const& self, FT const& f, Signal const& s);
 
 template<typename FN, typename FT>
-inline void RegisterMethod_Impl(FN&& fn, FT&& f) {
-	static_assert(sizeof(f) == sizeof(MFuncHolder));
-	using CT = xx::FuncC_t<FT>;
-	TypeMFuncMappings<CT>::map[fn] = std::make_pair([](void* const& self, MFuncHolder const& f, Signal const& s) {
-		CallMFunc<CT, FT>((CT*)self, *(FT*)f.data(), s);
-		}, *(MFuncHolder*)&f);
-}
+inline void RegisterMethod(FN&& fn, FT&& f);
+
+
+// todo: RegisterProperty
+
+#define HasTypedef( TN ) \
+template<typename, typename = void> struct HasTypedef_##TN : std::false_type {}; \
+template<typename T> struct HasTypedef_##TN<T, std::void_t<typename T::TN>> : std::true_type {}; \
+template<typename T> constexpr bool TN = HasTypedef_##TN<T>::value;
+
+HasTypedef(AutoEnableProcess)

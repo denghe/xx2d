@@ -5,6 +5,7 @@
 #include <optional>
 #include <vector>
 #include <string>
+#include <variant>
 #include <chrono>
 #include <unordered_set>
 #include <unordered_map>

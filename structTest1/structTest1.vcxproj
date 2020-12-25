@@ -91,10 +91,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Node.cpp" />
-    <ClCompile Include="SceneTree.cpp" />
-    <ClCompile Include="Signal.cpp" />
-    <ClCompile Include="Viewport.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\xxlib\xx_data.h" />
@@ -102,13 +98,18 @@
     <ClInclude Include="..\xxlib\xx_obj.h" />
     <ClInclude Include="..\xxlib\xx_ptr.h" />
     <ClInclude Include="..\xxlib\xx_typehelpers.h" />
+    <ClInclude Include="All.h" />
     <ClInclude Include="Node.h" />
-    <ClInclude Include="Node.hh" />
+    <ClInclude Include="Node.hpp" />
     <ClInclude Include="Ref.h" />
+    <ClInclude Include="Ref.hpp" />
     <ClInclude Include="SceneTree.h" />
+    <ClInclude Include="SceneTree.hpp" />
     <ClInclude Include="Signal.h" />
+    <ClInclude Include="Signal.hpp" />
     <ClInclude Include="string_text_view.hpp" />
     <ClInclude Include="Viewport.h" />
+    <ClInclude Include="Viewport.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak.txt" />

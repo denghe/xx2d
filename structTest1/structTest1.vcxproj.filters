@@ -2,10 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Node.cpp" />
-    <ClCompile Include="SceneTree.cpp" />
-    <ClCompile Include="Viewport.cpp" />
-    <ClCompile Include="Signal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">
@@ -34,12 +30,17 @@
     <ClInclude Include="string_text_view.hpp">
       <Filter>bak</Filter>
     </ClInclude>
-    <ClInclude Include="Node.h" />
-    <ClInclude Include="SceneTree.h" />
-    <ClInclude Include="Viewport.h" />
-    <ClInclude Include="Signal.h" />
+    <ClInclude Include="All.h" />
     <ClInclude Include="Ref.h" />
-    <ClInclude Include="Node.hh" />
+    <ClInclude Include="Ref.hpp" />
+    <ClInclude Include="SceneTree.h" />
+    <ClInclude Include="SceneTree.hpp" />
+    <ClInclude Include="Signal.h" />
+    <ClInclude Include="Signal.hpp" />
+    <ClInclude Include="Viewport.h" />
+    <ClInclude Include="Viewport.hpp" />
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="Node.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak.txt">

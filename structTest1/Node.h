@@ -1,27 +1,29 @@
 ﻿#pragma once
+
 #include "Ref.h"
-#include "Signal.h"
 
 struct SceneTree;
-struct Signal;
 struct Node : Ref<Node> {
 	/*********************************************************************/
 	// constructs
 
 	Node(SceneTree* const& tree);
-	virtual ~Node() = default;
+	virtual ~Node();
 	Node(Node const&) = delete;
 	Node& operator=(Node const&) = delete;
 
 	/*********************************************************************/
 	// fields
 
-	SceneTree* const tree;
 	bool entered = false;
+	int indexOfProcess = -1;
+	SceneTree* const tree;
 	xx::Weak<Node> parent;
 	std::vector<xx::Shared<Node>> children;
 	std::string name;
 	std::unordered_map<std::string_view, std::pair<xx::Weak<Node>, MFuncData*>> signalReceivers;
+
+	// todo: map< groupName, group* > for destructor auto remove ?
 
 	/*********************************************************************/
 	// generic events
@@ -34,7 +36,6 @@ struct Node : Ref<Node> {
 	void CallEnterTree();
 	void CallExitTree();
 	void CallReady();
-	void CallProcess(float delta);
 
 	/*********************************************************************/
 	// utils
@@ -63,6 +64,8 @@ struct Node : Ref<Node> {
 
 	void PrintTreePretty(std::string const& prefix = "", bool const& last = true) const;
 
+	void EnableProcess(bool const& enable = true);
+
 	// like AddToGroup( signalName ) but store  receiver + funcName
 	void Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver, std::string_view const& funcName);
 
@@ -70,5 +73,3 @@ struct Node : Ref<Node> {
 	template<typename Name, typename ...Args>
 	int EmitSignal(Name&& signalName, Args&&...args);
 };
-
-#include "Node.hh"
