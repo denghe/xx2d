@@ -197,13 +197,6 @@ void Node::PrintTreePretty(std::string const& prefix, bool const& last) const {
 	}
 }
 
-void Node::Receive(xx::Shared<Node> const& sender, Signal const& s) {
-	std::cout << "Receive " << sender->name << "'s signal: " << s.name << std::endl;
-}
-
-void Node::Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver) {
-	auto&& iter = signalReceivers.find(signalName);
-	if (iter != signalReceivers.end()) {
-		iter->second = receiver;
-	}
+void Node::Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver, std::string_view const& funcName) {
+	signalReceivers[signalName] = { receiver, funcName };
 }

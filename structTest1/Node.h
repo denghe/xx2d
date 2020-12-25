@@ -20,8 +20,7 @@ struct Node : Ref<Node> {
 	xx::Weak<Node> parent;
 	std::vector<xx::Shared<Node>> children;
 	std::string name;
-	std::unordered_map<std::string_view, xx::Weak<Node>> signalReceivers;
-	//std::unordered_map<std::string_view, void(*)(void* const& self, Signal const&)>* methodMaps;	// 放到 PtrHeader 去
+	std::unordered_map<std::string_view, std::pair<xx::Weak<Node>, std::string_view>> signalReceivers;
 
 	/*********************************************************************/
 	// generic events
@@ -58,15 +57,12 @@ struct Node : Ref<Node> {
 
 	void PrintTreePretty(std::string const& prefix = "", bool const& last = true) const;
 
-	// signal funcs
-	virtual void Receive(xx::Shared<Node> const& sender, Signal const& sig);
-	// register: signalReceivers["pressed"] = {};
-	virtual void Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver);
+	// like AddToGroup( signalName ) but store  receiver + funcName
+	void Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver, std::string_view const& funcName);
+
+	// like tree->CallGroup( signalName, receiver: funcName, ... )
 	template<typename Name, typename ...Args>
-	void EmitSignal(Name&& name, Args&&...args);
-	// faster way: 
-	// override Connect: if ( signalName == "xxxx" ) xxxxReceiver = receiver;
-	// if (auto r = xxxxReceiver->Lock()) r->Receive( SharedFromThis(), { "xxxx", ...... });
+	int EmitSignal(Name&& signalName, Args&&...args);
 };
 
 #include "Node.hh"

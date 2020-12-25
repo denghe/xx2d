@@ -1,53 +1,115 @@
-﻿#pragma once
-#include "SceneTree.h"
+﻿#include "SceneTree.h"
 #include "Viewport.h"
 #include "Node.h"
 #include "Signal.h"
 
-// todo: Connect + EmitSignal 似乎可以用类似 group 的工艺来做?
-
-/* // godot example：
+/*
+// godot example：
 
 func _ready():
-	add_to_group("enemies")
+	get_node("Button").connect("pressed", self, "_on_Button_pressed")
 
-func _on_discovered(): # This is a purely illustrative function.
-	get_tree().call_group("enemies", "player_was_discovered")
+func _on_Button_pressed():
+	get_node("Label").text = "HELLO!"
 */
 
-struct Player : Node {
+struct Label : Node {
 	using Node::Node;
+	std::string text;
 	void Process(float delta) override {
-		if (!GetTree().CallGroup("enemies", "PlayerWasDiscovered")) {
-			QueueRemove();
+		if (text == "HELLO!") {
+			std::cout << text << std::endl;
+			GetNode("/Canvas")->Remove();
 		}
 	}
 };
 
-struct Enemy : Node {
-	Enemy(SceneTree* const& tree) : Node(tree) {
-		AddToGroup("enemies");
+struct Canvas : Node {
+	using Node::Node;
+	void Ready() override {
+		// get_node("Button").connect("pressed", self, "_on_Button_pressed")
+		GetNode("Button")->Connect("pressed", this, "OnButtonPressed");
 	}
-	void PlayerWasDiscovered() {
-		std::cout << "Enemy's PlayerWasDiscovered() called." << std::endl;
-		QueueRemove();
+	void OnButtonPressed(/*xx::Shared<Node> const& sender*/) {
+		// get_node("Label").text = "HELLO!"
+		GetNode("Label").As<Label>()->text = "HELLO!";
 	}
-	void ExitTree() override {
-		std::cout << "Enemy ExitTree" << std::endl;
-	}
-	~Enemy() {
-		std::cout << "~Enemy" << std::endl;
+};
+
+struct Button : Node {
+	using Node::Node;
+	void Process(float delta) override {
+		EmitSignal("pressed");	// fire button event
 	}
 };
 
 int main() {
 	SceneTree tree;
 	{
-		RegisterMethod(Enemy, PlayerWasDiscovered);
-		tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
-		tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
-		tree.root->AddChild(tree.CreateNode<Player>("Player"));
-		tree.root->PrintTreePretty();
+		RegisterMethod(Canvas, OnButtonPressed);
+		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
+		canvas->AddChild(tree.CreateNode<Button>("Button"));
+		canvas->AddChild(tree.CreateNode<Label>("Label"));
+		tree.root->AddChild(canvas);
+		canvas->PrintTreePretty();
 	}
 	return tree.MainLoop();
 }
+
+
+
+
+
+//#include "SceneTree.h"
+//#include "Viewport.h"
+//#include "Node.h"
+//#include "Signal.h"
+//
+//// todo: Connect + EmitSignal 似乎可以用类似 group 的工艺来做?
+//
+///* // godot example：
+//
+//func _ready():
+//	add_to_group("enemies")
+//
+//func _on_discovered(): # This is a purely illustrative function.
+//	get_tree().call_group("enemies", "player_was_discovered")
+//*/
+//
+//struct Player : Node {
+//	using Node::Node;
+//	void Process(float delta) override {
+//		if (!GetTree().CallGroup("enemies", "PlayerWasDiscovered")) {
+//			QueueRemove();
+//		}
+//	}
+//};
+//
+//struct Enemy : Node {
+//	using Node::Node;
+//	void Ready() override {
+//		AddToGroup("enemies");
+//	}
+//	void PlayerWasDiscovered() {
+//		std::cout << "Enemy's PlayerWasDiscovered() called." << std::endl;
+//		QueueRemove();
+//	}
+//	void ExitTree() override {
+//		std::cout << "Enemy ExitTree" << std::endl;
+//	}
+//	~Enemy() {
+//		std::cout << "~Enemy" << std::endl;
+//	}
+//};
+//
+//int main() {
+//	SceneTree tree;
+//	{
+//		RegisterMethod(Enemy, PlayerWasDiscovered);
+//		tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
+//		tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
+//		tree.root->AddChild(tree.CreateNode<Player>("Player"));
+//		tree.root->PrintTreePretty();
+//	}
+//	return tree.MainLoop();
+//}
