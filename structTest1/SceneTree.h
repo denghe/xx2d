@@ -31,7 +31,7 @@ struct SceneTree {
 	}
 
 	template<typename ...Args>
-	void CallGroup(std::string_view const& gn, std::string_view const& fn, Args&&...args) {
+	int CallGroup(std::string_view const& gn, std::string_view const& fn, Args&&...args) {
 		auto iter = groups.find(gn);
 		if (iter != groups.end()) {
 			Signal s(fn, std::forward<Args>(args)...);
@@ -43,9 +43,13 @@ struct SceneTree {
 					f(c.pointer, fp, s);
 				}
 				else {
-					// todo: 对于已失效的指针，与最后一个元素交换删除. 这将改变组内顺序
+					// 与最后一个元素交换删除并 pop
+					std::swap(v.back().h, v[i].h);
+					v.pop_back();
 				}
 			}
+			return (int)v.size();
 		}
+		return 0;
 	}
 };

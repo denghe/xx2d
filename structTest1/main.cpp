@@ -4,6 +4,8 @@
 #include "Node.h"
 #include "Signal.h"
 
+// todo: Connect + EmitSignal 似乎可以用类似 group 的工艺来做?
+
 /* // godot example：
 
 func _ready():
@@ -15,8 +17,10 @@ func _on_discovered(): # This is a purely illustrative function.
 
 struct Player : Node {
 	using Node::Node;
-	void Ready() override {
-		GetTree().CallGroup("enemies", "PlayerWasDiscovered");
+	void Process(float delta) override {
+		if (!GetTree().CallGroup("enemies", "PlayerWasDiscovered")) {
+			QueueRemove();
+		}
 	}
 };
 
@@ -25,27 +29,23 @@ struct Enemy : Node {
 		AddToGroup("enemies");
 	}
 	void PlayerWasDiscovered() {
-		std::cout << "PlayerWasDiscovered() called." << std::endl;
-		assert(IsInGroup("enemies"));
-		RemoveFromGroup("enemies");
-		assert(!IsInGroup("enemies"));
+		std::cout << "Enemy's PlayerWasDiscovered() called." << std::endl;
+		QueueRemove();
+	}
+	void ExitTree() override {
+		std::cout << "Enemy ExitTree" << std::endl;
+	}
+	~Enemy() {
+		std::cout << "~Enemy" << std::endl;
 	}
 };
 
 int main() {
-	struct {
-		int xxx = 12;
-		bool eee = true;
-	} s;
-	if (auto&& [a, b] = s; b) {
-		std::cout << a << std::endl;
-	}
-
-
 	SceneTree tree;
 	{
 		RegisterMethod(Enemy, PlayerWasDiscovered);
-		auto e = tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
+		tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
+		tree.root->AddChild(tree.CreateNode<Enemy>("Enemy"));
 		tree.root->AddChild(tree.CreateNode<Player>("Player"));
 		tree.root->PrintTreePretty();
 	}
