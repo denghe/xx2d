@@ -198,5 +198,6 @@ void Node::PrintTreePretty(std::string const& prefix, bool const& last) const {
 }
 
 void Node::Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver, std::string_view const& funcName) {
-	signalReceivers[signalName] = { receiver, funcName };
+	auto&& map = *(MFuncMap*)(receiver.header()->ud);
+	signalReceivers[signalName] = { receiver, &map[funcName] };
 }

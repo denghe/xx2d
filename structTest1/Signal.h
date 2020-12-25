@@ -63,8 +63,9 @@ struct Signal : Ref<Signal> {
 
 
 using MFuncHolder = std::array<size_t, 2>;
-typedef void(*MFuncLambda)(void* const&, MFuncHolder const&, Signal const&);
-using MFuncMap = std::unordered_map<std::string_view, std::pair<MFuncLambda, MFuncHolder>>;
+using MFuncLambda = void(*)(void* const&, MFuncHolder const&, Signal const&);
+using MFuncData = std::pair<MFuncLambda, MFuncHolder>;
+using MFuncMap = std::unordered_map<std::string_view, MFuncData>;
 
 // 为每个类型声明一个 函数名 & 调用lambda 映射
 template<typename T>

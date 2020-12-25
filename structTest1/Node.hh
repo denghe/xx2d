@@ -17,11 +17,10 @@ xx::Shared<T> Node::AddChild(xx::Shared<T> const& node) {
 
 template<typename Name, typename ...Args>
 int Node::EmitSignal(Name&& name, Args&&...args) {
-	auto&& [weak, fn] = signalReceivers[name];
+	auto&& [weak, funcData] = signalReceivers[name];
 	if (auto&& receiver = weak.Lock()) {
-		Signal s(fn, std::forward<Args>(args)...);
-		auto&& map = *(MFuncMap*)(weak.h->ud);
-		auto&& [f, fp] = map[fn];
+		auto&& [f, fp] = *funcData;
+		Signal s(name, std::forward<Args>(args)...);
 		f(receiver.pointer, fp, s);
 		return 1;
 	}

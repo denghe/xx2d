@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Ref.h"
+#include "Signal.h"
 
 struct SceneTree;
 struct Signal;
@@ -20,7 +21,7 @@ struct Node : Ref<Node> {
 	xx::Weak<Node> parent;
 	std::vector<xx::Shared<Node>> children;
 	std::string name;
-	std::unordered_map<std::string_view, std::pair<xx::Weak<Node>, std::string_view>> signalReceivers;
+	std::unordered_map<std::string_view, std::pair<xx::Weak<Node>, MFuncData*>> signalReceivers;
 
 	/*********************************************************************/
 	// generic events
