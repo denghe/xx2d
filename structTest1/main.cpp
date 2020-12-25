@@ -32,7 +32,7 @@ struct Canvas : Node {
 	}
 	void OnButtonPressed(/*xx::Shared<Node> const& sender*/) {
 		// get_node("Label").text = "HELLO!"
-		GetNode("Label").As<Label>()->text = "HELLO!";
+		GetNode<Label>("Label")->text = "HELLO!";
 	}
 };
 
@@ -48,8 +48,8 @@ int main() {
 	{
 		RegisterMethod(Canvas, OnButtonPressed);
 		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
-		canvas->AddChild(tree.CreateNode<Button>("Button"));
-		canvas->AddChild(tree.CreateNode<Label>("Label"));
+		canvas->CreateChild<Button>("Button");
+		canvas->CreateChild<Label>("Label");
 		tree.root->AddChild(canvas);
 		canvas->PrintTreePretty();
 	}

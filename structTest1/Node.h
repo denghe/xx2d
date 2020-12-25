@@ -42,11 +42,16 @@ struct Node : Ref<Node> {
 	SceneTree& GetTree() const;
 	xx::Shared<Node> GetParent();
 	xx::Shared<Node> GetNode(std::string_view const& path) const;
+	template<typename T, class = std::enable_if_t<std::is_base_of_v<Node, T>>>
+	xx::Shared<T> GetNode(std::string_view const& path) const;
 
 	void AddToGroup(std::string_view const& gn);
 	void RemoveFromGroup(std::string_view const& gn);
 	bool IsInGroup(std::string_view const& gn) const;
 
+
+	template<typename T, typename Name, typename ...Args, class = std::enable_if_t<std::is_base_of_v<Node, T>>>
+	xx::Shared<T> CreateChild(Name&& name, Args&&...args);
 	template<typename T, class = std::enable_if_t<std::is_base_of_v<Node, T>>>
 	xx::Shared<T> AddChild(xx::Shared<T> const& node);
 	void RemoveChild(xx::Shared<Node> const& node);
