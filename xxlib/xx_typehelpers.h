@@ -38,6 +38,16 @@
 #endif
 #define XX_INLINE inline
 
+
+#define XX_STRINGIFY(x)  XX_STRINGIFY_(x)
+#define XX_STRINGIFY_(x)  #x
+
+#define XX_HAS_TYPEDEF( TN ) \
+template<typename, typename = void> struct HasTypedef_##TN : std::false_type {}; \
+template<typename T> struct HasTypedef_##TN<T, std::void_t<typename T::TN>> : std::true_type {}; \
+template<typename T> constexpr bool TN = HasTypedef_##TN<T>::value;
+
+
 namespace xx {
 	/************************************************************************************/
 	// std::is_pod 的自定义扩展, 用于标识一个类可以在容器中被r memcpy | memmove

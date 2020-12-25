@@ -5,15 +5,14 @@ inline SceneTree::SceneTree() {
 	beginSeconds = lastSeconds = xx::NowEpochSeconds();
 }
 
-inline int SceneTree::MainLoop() {
+inline int SceneTree::MainLoop(float const& frameRate) {
+	// simulate frame delay
+	int ms = (int)(1000.f / frameRate);
 	while (!root->children.empty()) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(16));	// simulate frame delay
+		std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 		auto delta = (float)xx::NowEpochSeconds(lastSeconds);
-
-		if (int i = (int)processNodes.size()) {
-			for (--i; i >= 0; --i) {
-				processNodes[i]->Process(delta);
-			}
+		for (auto&& n : processNodes) {
+			n->Process(delta);
 		}
 
 		for (auto&& o : needRemoves) {
@@ -49,7 +48,6 @@ int SceneTree::CallGroup(std::string_view const& gn, std::string_view const& fn,
 				f(c.pointer, fp, s);
 			}
 			else {
-				// 与最后一个元素交换删除并 pop
 				std::swap(v.back().h, v[i].h);
 				v.pop_back();
 			}

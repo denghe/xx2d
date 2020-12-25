@@ -14,10 +14,10 @@ struct Signal : Ref<Signal> {
 	Signal(Name&& name, Args&&... args);
 
 	template<std::size_t I = 0, typename... Tp>
-	XX_FORCEINLINE std::enable_if_t<I == sizeof...(Tp), int> FillTuple_(std::tuple<Tp...>& t) const;
+	std::enable_if_t<I == sizeof...(Tp), int> FillTuple_(std::tuple<Tp...>& t) const;
 
 	template<std::size_t I = 0, typename... Tp>
-	XX_FORCEINLINE std::enable_if_t < I < sizeof...(Tp), int> FillTuple_(std::tuple<Tp...>& t) const;
+	std::enable_if_t < I < sizeof...(Tp), int> FillTuple_(std::tuple<Tp...>& t) const;
 
 	// args 的内容填充到 t. 出错返回非 0
 	template<typename Tuple>
@@ -40,8 +40,6 @@ struct TypeInfoMappings {
 	inline static TypeInfo typeInfo;
 };
 
-#define __stringify(x)  __stringify_1(x)
-#define __stringify_1(x)  #x
 
 #define RegisterMethod_( T, funcName ) \
 	RegisterMethod(__stringify(funcName), &T::funcName);
@@ -55,9 +53,5 @@ inline void RegisterMethod(FN&& fn, FT&& f);
 
 // todo: RegisterProperty
 
-#define HasTypedef( TN ) \
-template<typename, typename = void> struct HasTypedef_##TN : std::false_type {}; \
-template<typename T> struct HasTypedef_##TN<T, std::void_t<typename T::TN>> : std::true_type {}; \
-template<typename T> constexpr bool TN = HasTypedef_##TN<T>::value;
 
-HasTypedef(AutoEnableProcess)
+XX_HAS_TYPEDEF(AutoEnableProcess)

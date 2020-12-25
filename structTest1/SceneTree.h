@@ -17,7 +17,7 @@ struct SceneTree {
 	std::vector<xx::Weak<Node>> needRemoves;
 	std::vector<Node*> processNodes;
 
-	int MainLoop();
+	int MainLoop(float const& frameRate = 60);
 
 	xx::Shared<Viewport>& GetRoot() { return root; }
 
