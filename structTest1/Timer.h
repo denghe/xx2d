@@ -13,6 +13,8 @@ protected:
 	// 试着从时间轮链表移除
 	void RemoveFromWheel();
 public:
+	// todo: 暴露属性 float timeoutSeconds ?
+
 	using Node::Node;
 	~Timer() override;
 	// 设置超时( 单位：秒 ). 如果时长小于 1 帧的间隔时长，则至少为 1 帧的间隔时长
