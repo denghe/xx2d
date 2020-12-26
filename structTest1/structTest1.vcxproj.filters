@@ -41,6 +41,8 @@
     <ClInclude Include="Viewport.hpp" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="Node.hpp" />
+    <ClInclude Include="Timer.h" />
+    <ClInclude Include="Timer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak.txt">

@@ -42,7 +42,7 @@ struct TypeInfoMappings {
 
 
 #define RegisterMethod_( T, funcName ) \
-	RegisterMethod(__stringify(funcName), &T::funcName);
+	RegisterMethod(XX_STRINGIFY(funcName), &T::funcName);
 
 template<typename CT, typename FT>
 inline void CallMFunc(CT* const& self, FT const& f, Signal const& s);

@@ -24,6 +24,7 @@
 #include <filesystem>
 #include <thread>
 
+
 #ifndef NDEBUG
 #define XX_NOINLINE
 #define XX_FORCEINLINE
@@ -586,145 +587,6 @@ namespace xx {
 }
 */
 
-	/************************************************************************************/
-	// StructMemberCount 统计结构体成员变量个数
-
-	namespace Detail {
-		template<std::size_t N> struct PriorityTag : PriorityTag<N - 1> {};
-		template<> struct PriorityTag<0> {};
-
-		template<class T> struct AnyConverter {
-			template <class U, class = std::enable_if_t<!std::is_same<typename std::decay<T>::type, typename std::decay<U>::type>::value>>
-			constexpr operator U ();
-		};
-		template<class T, std::size_t I> struct AnyConverterTag : AnyConverter<T> {};
-
-		template<class T, class...Args> constexpr auto IsAggregateConstructibleImpl(T&&, Args &&...args) -> decltype(T{ std::forward<Args>(args)... }, std::true_type());
-		template<class T, class Arg> constexpr auto IsAggregateConstructibleImpl(T&&, Arg&& args) -> decltype(T{ std::forward<Arg>(args) }, std::true_type());
-		constexpr auto IsAggregateConstructibleImpl(...) -> std::false_type;
-		template<class T, class...Args> struct IsAggregateConstructible : decltype(IsAggregateConstructibleImpl(std::declval<T>(), std::declval<Args>()...)) {};
-
-		template<class T, std::size_t...I> constexpr auto StructMemberCountImpl(std::index_sequence<I...>, PriorityTag<2>) -> std::enable_if_t<IsAggregateConstructible<T, AnyConverterTag<T, I>...>::value, std::size_t> { return sizeof...(I); }
-		constexpr auto StructMemberCountImpl(std::index_sequence<>, PriorityTag<1>) -> std::size_t { return 0; }
-		template<class T, class Seq> constexpr auto StructMemberCountImpl(Seq, PriorityTag<0>) -> std::size_t { return StructMemberCountImpl<T>(std::make_index_sequence<Seq::size() - 1>(), PriorityTag<2>()); };
-		template<class T> constexpr auto StructMemberCountImpl() -> std::size_t { return StructMemberCountImpl<T>(std::make_index_sequence<sizeof(T)>(), PriorityTag<2>()); };
-	}
-
-	template<class T> struct StructMemberCount : std::integral_constant<std::size_t, Detail::StructMemberCountImpl< std::remove_cv_t<std::remove_reference_t<T>> >()> {};
-
-
-	/************************************************************************************/
-	// 利用 structured binding 以及宏展开 实现依次访问 结构体 每个成员
-
-#define ENUM_PARAMS_0(x)
-#define ENUM_PARAMS_1(x) x ## 1
-#define ENUM_PARAMS_2(x) ENUM_PARAMS_1(x), x ## 2
-#define ENUM_PARAMS_3(x) ENUM_PARAMS_2(x), x ## 3
-#define ENUM_PARAMS_4(x) ENUM_PARAMS_3(x), x ## 4
-#define ENUM_PARAMS_5(x) ENUM_PARAMS_4(x), x ## 5
-#define ENUM_PARAMS_6(x) ENUM_PARAMS_5(x), x ## 6
-#define ENUM_PARAMS_7(x) ENUM_PARAMS_6(x), x ## 7
-#define ENUM_PARAMS_8(x) ENUM_PARAMS_7(x), x ## 8
-#define ENUM_PARAMS_9(x) ENUM_PARAMS_8(x), x ## 9
-#define ENUM_PARAMS_10(x) ENUM_PARAMS_9(x), x ## 10
-#define ENUM_PARAMS_11(x) ENUM_PARAMS_10(x), x ## 11
-#define ENUM_PARAMS_12(x) ENUM_PARAMS_11(x), x ## 12
-#define ENUM_PARAMS_13(x) ENUM_PARAMS_12(x), x ## 13
-#define ENUM_PARAMS_14(x) ENUM_PARAMS_13(x), x ## 14
-#define ENUM_PARAMS_15(x) ENUM_PARAMS_14(x), x ## 15
-#define ENUM_PARAMS_16(x) ENUM_PARAMS_15(x), x ## 16
-#define ENUM_PARAMS(x, N) ENUM_PARAMS_##N(x)
-
-#define ENUM_FOR_EACH_0(x)
-#define ENUM_FOR_EACH_1(x) ENUM_FOR_EACH_0(x) x(1)
-#define ENUM_FOR_EACH_2(x) ENUM_FOR_EACH_1(x) x(2)
-#define ENUM_FOR_EACH_3(x) ENUM_FOR_EACH_2(x) x(3)
-#define ENUM_FOR_EACH_4(x) ENUM_FOR_EACH_3(x) x(4)
-#define ENUM_FOR_EACH_5(x) ENUM_FOR_EACH_4(x) x(5)
-#define ENUM_FOR_EACH_6(x) ENUM_FOR_EACH_5(x) x(6)
-#define ENUM_FOR_EACH_7(x) ENUM_FOR_EACH_6(x) x(7)
-#define ENUM_FOR_EACH_8(x) ENUM_FOR_EACH_7(x) x(8)
-#define ENUM_FOR_EACH_9(x) ENUM_FOR_EACH_8(x) x(9)
-#define ENUM_FOR_EACH_10(x) ENUM_FOR_EACH_9(x) x(10)
-#define ENUM_FOR_EACH_11(x) ENUM_FOR_EACH_10(x) x(11)
-#define ENUM_FOR_EACH_12(x) ENUM_FOR_EACH_11(x) x(12)
-#define ENUM_FOR_EACH_13(x) ENUM_FOR_EACH_12(x) x(13)
-#define ENUM_FOR_EACH_14(x) ENUM_FOR_EACH_13(x) x(14)
-#define ENUM_FOR_EACH_15(x) ENUM_FOR_EACH_14(x) x(15)
-#define ENUM_FOR_EACH_16(x) ENUM_FOR_EACH_15(x) x(16)
-#define ENUM_FOR_EACH(x, N) ENUM_FOR_EACH_##N(x)
-
-	namespace Detail {
-#define APPLYER_DEF(N) \
-    template<class T, class ApplyFunc> auto StructApply_impl(T &&in, ApplyFunc &&f, std::integral_constant<std::size_t, N>) { \
-        auto &&[ENUM_PARAMS(x, N)] = std::forward<T>(in); \
-        return f(ENUM_PARAMS(x, N)); \
-    }; \
-
-		ENUM_FOR_EACH(APPLYER_DEF, 16)
-#undef APPLYER_DEF
-
-			template<class T, class ApplyFunc> auto StructApply(T&& in, ApplyFunc&& f) {
-			return StructApply_impl(std::forward<T>(in), std::forward<ApplyFunc>(f), xx::StructMemberCount<T>());
-		};
-	}
-
-	template<class T> auto StructToTuple(T&& in) {
-		return Detail::StructApply(std::forward<T>(in), [](auto const&...args) { return std::make_tuple(args...); });
-	};
-
-	template<class T, class U> void TupleToStruct(T& out, U&& in) {
-		Detail::StructApply(out, [in = std::forward<U>(in)](auto&...args) { return std::tie(args...) = in; });
-	};
-
-	//auto&& t1 = StructToTuple(A{ 1, '2', 3.0 }); // std::tuple<int, char, double> a{1, '2', 3.0}
-	//std::cout << std::get<0>(t1) << std::get<1>(t1) << std::get<2>(t1) << std::endl;
-	//A a2; TupleToStruct(a2, std::make_tuple(4, '5', 6.0)); // a = A{4, '5', 6.0};
-	//std::cout << a2.v1 << a2.v2 << a2.v3 << std::endl;
-
-	template<class T> auto StructToPtrTuple(T&& in) {
-		return Detail::StructApply(std::forward<T>(in), [](auto&&...args) { return std::make_tuple(&args...); });
-	};
-
-
-
-	// for 打印结构体数据
-	struct TupleDumper {
-
-		template<std::size_t I = 0, typename... Tp>
-		static std::enable_if_t<I == sizeof...(Tp) - 1> DumpTuple(std::tuple<Tp...> const& t) {
-			Dump(std::get<I>(t));
-		}
-
-		template<std::size_t I = 0, typename... Tp>
-		static std::enable_if_t<I < sizeof...(Tp) - 1> DumpTuple(std::tuple<Tp...> const& t) {
-			Dump(std::get<I>(t));
-			DumpTuple<I + 1, Tp...>(t);
-		}
-
-		template<typename T>
-		static void Dump(T const* const& v) {
-			if constexpr (xx::IsTuple_v<T>) {
-				DumpTuple(*v);
-			}
-			else if constexpr (std::is_same_v<T, std::string>) {
-				std::cout << *v << " ";
-			}
-			else if constexpr (std::is_class_v<T>) {
-				auto t = xx::StructToPtrTuple(*v);
-				DumpTuple(t);
-			}
-			else {
-				std::cout << *v << " ";
-			}
-		}
-	};
-
-	// 打印结构体数据
-	template<class T>
-	void DumpStruct(T const& in) {
-		TupleDumper::DumpTuple(StructToPtrTuple(in));
-	}
 
 	/************************************************************************************/
 	// TypeName_v
@@ -945,4 +807,148 @@ auto __cdecl xx::Detail::NameOf<
 	//		NowToString(s);
 	//		return s;
 	//	}
+
+
+
+
+
+//	/************************************************************************************/
+//	// StructMemberCount 统计结构体成员变量个数
+//
+//	namespace Detail {
+//		template<std::size_t N> struct PriorityTag : PriorityTag<N - 1> {};
+//		template<> struct PriorityTag<0> {};
+//
+//		template<class T> struct AnyConverter {
+//			template <class U, class = std::enable_if_t<!std::is_same<typename std::decay<T>::type, typename std::decay<U>::type>::value>>
+//			constexpr operator U ();
+//		};
+//		template<class T, std::size_t I> struct AnyConverterTag : AnyConverter<T> {};
+//
+//		template<class T, class...Args> constexpr auto IsAggregateConstructibleImpl(T&&, Args &&...args) -> decltype(T{ std::forward<Args>(args)... }, std::true_type());
+//		template<class T, class Arg> constexpr auto IsAggregateConstructibleImpl(T&&, Arg&& args) -> decltype(T{ std::forward<Arg>(args) }, std::true_type());
+//		constexpr auto IsAggregateConstructibleImpl(...)->std::false_type;
+//		template<class T, class...Args> struct IsAggregateConstructible : decltype(IsAggregateConstructibleImpl(std::declval<T>(), std::declval<Args>()...)) {};
+//
+//		template<class T, std::size_t...I> constexpr auto StructMemberCountImpl(std::index_sequence<I...>, PriorityTag<2>) -> std::enable_if_t<IsAggregateConstructible<T, AnyConverterTag<T, I>...>::value, std::size_t> { return sizeof...(I); }
+//		constexpr auto StructMemberCountImpl(std::index_sequence<>, PriorityTag<1>) -> std::size_t { return 0; }
+//		template<class T, class Seq> constexpr auto StructMemberCountImpl(Seq, PriorityTag<0>) -> std::size_t { return StructMemberCountImpl<T>(std::make_index_sequence<Seq::size() - 1>(), PriorityTag<2>()); };
+//		template<class T> constexpr auto StructMemberCountImpl() -> std::size_t { return StructMemberCountImpl<T>(std::make_index_sequence<sizeof(T)>(), PriorityTag<2>()); };
+//	}
+//
+//	template<class T> struct StructMemberCount : std::integral_constant<std::size_t, Detail::StructMemberCountImpl< std::remove_cv_t<std::remove_reference_t<T>> >()> {};
+//
+//
+//	/************************************************************************************/
+//	// 利用 structured binding 以及宏展开 实现依次访问 结构体 每个成员
+//
+//#define ENUM_PARAMS_0(x)
+//#define ENUM_PARAMS_1(x) x ## 1
+//#define ENUM_PARAMS_2(x) ENUM_PARAMS_1(x), x ## 2
+//#define ENUM_PARAMS_3(x) ENUM_PARAMS_2(x), x ## 3
+//#define ENUM_PARAMS_4(x) ENUM_PARAMS_3(x), x ## 4
+//#define ENUM_PARAMS_5(x) ENUM_PARAMS_4(x), x ## 5
+//#define ENUM_PARAMS_6(x) ENUM_PARAMS_5(x), x ## 6
+//#define ENUM_PARAMS_7(x) ENUM_PARAMS_6(x), x ## 7
+//#define ENUM_PARAMS_8(x) ENUM_PARAMS_7(x), x ## 8
+//#define ENUM_PARAMS_9(x) ENUM_PARAMS_8(x), x ## 9
+//#define ENUM_PARAMS_10(x) ENUM_PARAMS_9(x), x ## 10
+//#define ENUM_PARAMS_11(x) ENUM_PARAMS_10(x), x ## 11
+//#define ENUM_PARAMS_12(x) ENUM_PARAMS_11(x), x ## 12
+//#define ENUM_PARAMS_13(x) ENUM_PARAMS_12(x), x ## 13
+//#define ENUM_PARAMS_14(x) ENUM_PARAMS_13(x), x ## 14
+//#define ENUM_PARAMS_15(x) ENUM_PARAMS_14(x), x ## 15
+//#define ENUM_PARAMS_16(x) ENUM_PARAMS_15(x), x ## 16
+//#define ENUM_PARAMS(x, N) ENUM_PARAMS_##N(x)
+//
+//#define ENUM_FOR_EACH_0(x)
+//#define ENUM_FOR_EACH_1(x) ENUM_FOR_EACH_0(x) x(1)
+//#define ENUM_FOR_EACH_2(x) ENUM_FOR_EACH_1(x) x(2)
+//#define ENUM_FOR_EACH_3(x) ENUM_FOR_EACH_2(x) x(3)
+//#define ENUM_FOR_EACH_4(x) ENUM_FOR_EACH_3(x) x(4)
+//#define ENUM_FOR_EACH_5(x) ENUM_FOR_EACH_4(x) x(5)
+//#define ENUM_FOR_EACH_6(x) ENUM_FOR_EACH_5(x) x(6)
+//#define ENUM_FOR_EACH_7(x) ENUM_FOR_EACH_6(x) x(7)
+//#define ENUM_FOR_EACH_8(x) ENUM_FOR_EACH_7(x) x(8)
+//#define ENUM_FOR_EACH_9(x) ENUM_FOR_EACH_8(x) x(9)
+//#define ENUM_FOR_EACH_10(x) ENUM_FOR_EACH_9(x) x(10)
+//#define ENUM_FOR_EACH_11(x) ENUM_FOR_EACH_10(x) x(11)
+//#define ENUM_FOR_EACH_12(x) ENUM_FOR_EACH_11(x) x(12)
+//#define ENUM_FOR_EACH_13(x) ENUM_FOR_EACH_12(x) x(13)
+//#define ENUM_FOR_EACH_14(x) ENUM_FOR_EACH_13(x) x(14)
+//#define ENUM_FOR_EACH_15(x) ENUM_FOR_EACH_14(x) x(15)
+//#define ENUM_FOR_EACH_16(x) ENUM_FOR_EACH_15(x) x(16)
+//#define ENUM_FOR_EACH(x, N) ENUM_FOR_EACH_##N(x)
+//
+//	namespace Detail {
+//#define APPLYER_DEF(N) \
+//    template<class T, class ApplyFunc> auto StructApply_impl(T &&in, ApplyFunc &&f, std::integral_constant<std::size_t, N>) { \
+//        auto &&[ENUM_PARAMS(x, N)] = std::forward<T>(in); \
+//        return f(ENUM_PARAMS(x, N)); \
+//    }; \
+//
+//		ENUM_FOR_EACH(APPLYER_DEF, 16)
+//#undef APPLYER_DEF
+//
+//			template<class T, class ApplyFunc> auto StructApply(T&& in, ApplyFunc&& f) {
+//			return StructApply_impl(std::forward<T>(in), std::forward<ApplyFunc>(f), xx::StructMemberCount<T>());
+//		};
+//	}
+//
+//	template<class T> auto StructToTuple(T&& in) {
+//		return Detail::StructApply(std::forward<T>(in), [](auto const&...args) { return std::make_tuple(args...); });
+//	};
+//
+//	template<class T, class U> void TupleToStruct(T& out, U&& in) {
+//		Detail::StructApply(out, [in = std::forward<U>(in)](auto&...args) { return std::tie(args...) = in; });
+//	};
+//
+//	//auto&& t1 = StructToTuple(A{ 1, '2', 3.0 }); // std::tuple<int, char, double> a{1, '2', 3.0}
+//	//std::cout << std::get<0>(t1) << std::get<1>(t1) << std::get<2>(t1) << std::endl;
+//	//A a2; TupleToStruct(a2, std::make_tuple(4, '5', 6.0)); // a = A{4, '5', 6.0};
+//	//std::cout << a2.v1 << a2.v2 << a2.v3 << std::endl;
+//
+//	template<class T> auto StructToPtrTuple(T&& in) {
+//		return Detail::StructApply(std::forward<T>(in), [](auto&&...args) { return std::make_tuple(&args...); });
+//	};
+//
+//
+//
+//	// for 打印结构体数据
+//	struct TupleDumper {
+//
+//		template<std::size_t I = 0, typename... Tp>
+//		static std::enable_if_t<I == sizeof...(Tp) - 1> DumpTuple(std::tuple<Tp...> const& t) {
+//			Dump(std::get<I>(t));
+//		}
+//
+//		template<std::size_t I = 0, typename... Tp>
+//		static std::enable_if_t < I < sizeof...(Tp) - 1> DumpTuple(std::tuple<Tp...> const& t) {
+//			Dump(std::get<I>(t));
+//			DumpTuple<I + 1, Tp...>(t);
+//		}
+//
+//		template<typename T>
+//		static void Dump(T const* const& v) {
+//			if constexpr (xx::IsTuple_v<T>) {
+//				DumpTuple(*v);
+//			}
+//			else if constexpr (std::is_same_v<T, std::string>) {
+//				std::cout << *v << " ";
+//			}
+//			else if constexpr (std::is_class_v<T>) {
+//				auto t = xx::StructToPtrTuple(*v);
+//				DumpTuple(t);
+//			}
+//			else {
+//				std::cout << *v << " ";
+//			}
+//		}
+//	};
+//
+//	// 打印结构体数据
+//	template<class T>
+//	void DumpStruct(T const& in) {
+//		TupleDumper::DumpTuple(StructToPtrTuple(in));
+//	}
 }

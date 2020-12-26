@@ -1,21 +1,46 @@
 ﻿#pragma once
 
-inline SceneTree::SceneTree() {
+inline SceneTree::SceneTree(float const& frameRate, size_t const& wheelLen)
+	: frameRate(frameRate)
+	, secondsPerFrame(1.f / frameRate)
+{
 	root.Emplace(this);
 	beginSeconds = lastSeconds = xx::NowEpochSeconds();
+
+	wheel.resize(wheelLen);
 }
 
-inline int SceneTree::MainLoop(float const& frameRate) {
-	// simulate frame delay
-	int ms = (int)(1000.f / frameRate);
+inline int SceneTree::MainLoop(int const& delayMS) {
 	while (!root->children.empty()) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+		std::this_thread::sleep_for(std::chrono::milliseconds(delayMS));	// simulate frame delay
 		auto delta = (float)xx::NowEpochSeconds(lastSeconds);
+
+		// step time wheel & call timers Timeout
+		int cursorEnd = (int)((lastSeconds - beginSeconds) / secondsPerFrame) % ((int)wheel.size() - 1);
+		int mod = (int)wheel.size() - 1;
+		while (cursor != cursorEnd) {
+			cursor = (cursor + 1) & mod;
+			auto p = wheel[cursor];
+			wheel[cursor] = nullptr;
+			while (p) {
+				auto np = p->timerNext;
+
+				p->indexAtWheel = -1;
+				p->timerPrev = nullptr;
+				p->timerNext = nullptr;
+
+				p->Timeout();
+				p = np;
+			};
+		}
+
+		// call nodes Process
 		for (auto&& n : processNodes) {
 			n->Process(delta);
 		}
 
-		for (auto&& o : needRemoves) {
+		// remove queued nodes
+		for (auto&& o : removedNodes) {
 			if (o) {
 				o->Remove();
 			}

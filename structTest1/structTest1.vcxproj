@@ -108,6 +108,8 @@
     <ClInclude Include="Signal.h" />
     <ClInclude Include="Signal.hpp" />
     <ClInclude Include="string_text_view.hpp" />
+    <ClInclude Include="Timer.h" />
+    <ClInclude Include="Timer.hpp" />
     <ClInclude Include="Viewport.h" />
     <ClInclude Include="Viewport.hpp" />
   </ItemGroup>

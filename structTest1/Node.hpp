@@ -151,7 +151,7 @@ inline void Node::Remove() {
 }
 
 inline void Node::QueueRemove() {
-	tree->needRemoves.push_back(WeakFromThis());
+	tree->removedNodes.push_back(WeakFromThis());
 }
 
 inline void Node::MoveChild(xx::Shared<Node> const& node, size_t const& index) {
@@ -214,6 +214,7 @@ inline void Node::EnableProcess(bool const& enable) {
 inline void Node::Connect(std::string_view const& signalName, xx::Shared<Node> const& receiver, std::string_view const& funcName) {
 	auto&& funcs = ((TypeInfo*)receiver.header()->ud)->funcs;
 	signalReceivers[signalName] = { receiver, &funcs[funcName] };
+	assert(signalReceivers[signalName].second->first);
 }
 
 

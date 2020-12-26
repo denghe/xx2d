@@ -1,12 +1,13 @@
 ﻿#include "All.h"
 
+
 /*
 // godot example：
 
 func _ready():
-	get_node("Button").connect("pressed", self, "_on_Button_pressed")
+	get_node("Timer").connect("timeout", self, "_on_Timer_timeout")
 
-func _on_Button_pressed():
+func _on_Timer_timeout():
 	get_node("Label").text = "HELLO!"
 */
 
@@ -25,46 +26,98 @@ struct Label : Node {
 struct Canvas : Node {
 	using Node::Node;
 	void Ready() override {
-		// get_node("Button").connect("pressed", self, "_on_Button_pressed")
-		GetNode("Button")->Connect("pressed", this, "OnButtonPressed");
+		// get_node("Timer").connect("timeout", self, "_on_Timer_timeout")
+		GetNode("Timer")->Connect("timeout", this, "OnTimerTimeout");
 	}
-	void OnButtonPressed(/*xx::Shared<Node> const& sender*/) {
+	void OnTimerTimeout() {
 		// get_node("Label").text = "HELLO!"
 		GetNode<Label>("Label")->text = "HELLO!";
 	}
 };
 
-struct Button : Node {
-	using Node::Node;
-	typedef bool AutoEnableProcess;
-	void Process(float delta) override {
-		EmitSignal("pressed");	// fire button event
-	}
-};
-
 int main() {
-	SceneTree tree;
+	SceneTree tree(60, 4096);	// 时间轮精度：每秒 60 次，长度 4096
 	{
-		RegisterMethod("OnButtonPressed", &Canvas::OnButtonPressed);
+		RegisterMethod("OnTimerTimeout", &Canvas::OnTimerTimeout);
 		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
-		canvas->CreateChild<Button>("Button");
+		canvas->CreateChild<Timer>("Timer")->SetTimeout(2);	// timeout seconds = 2
 		canvas->CreateChild<Label>("Label");
 		tree.root->AddChild(canvas);
 		canvas->PrintTreePretty();
 	}
-	return tree.MainLoop();
+	return tree.MainLoop(100);	// 每帧模拟 100ms 延迟（实际 10帧每秒 )
 }
 
 
 
 
 
-//#include "SceneTree.h"
-//#include "Viewport.h"
-//#include "Node.h"
-//#include "Signal.h"
+
+
+//#include "All.h"
 //
-//// todo: Connect + EmitSignal 似乎可以用类似 group 的工艺来做?
+///*
+//// godot example：
+//
+//func _ready():
+//	get_node("Button").connect("pressed", self, "_on_Button_pressed")
+//
+//func _on_Button_pressed():
+//	get_node("Label").text = "HELLO!"
+//*/
+//
+//struct Label : Node {
+//	using Node::Node;
+//	std::string text;
+//	typedef bool AutoEnableProcess;	// auto call EnableProcess() after Create
+//	void Process(float delta) override {
+//		if (text == "HELLO!") {
+//			std::cout << text << std::endl;
+//			GetNode("/Canvas")->QueueRemove();
+//		}
+//	}
+//};
+//
+//struct Canvas : Node {
+//	using Node::Node;
+//	void Ready() override {
+//		// get_node("Button").connect("pressed", self, "_on_Button_pressed")
+//		GetNode("Button")->Connect("pressed", this, "OnButtonPressed");
+//	}
+//	void OnButtonPressed(/*xx::Shared<Node> const& sender*/) {
+//		// get_node("Label").text = "HELLO!"
+//		GetNode<Label>("Label")->text = "HELLO!";
+//	}
+//};
+//
+//struct Button : Node {
+//	using Node::Node;
+//	typedef bool AutoEnableProcess;
+//	void Process(float delta) override {
+//		EmitSignal("pressed");	// fire button event
+//	}
+//};
+//
+//int main() {
+//	SceneTree tree;
+//	{
+//		RegisterMethod("OnButtonPressed", &Canvas::OnButtonPressed);
+//		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
+//		canvas->CreateChild<Button>("Button");
+//		canvas->CreateChild<Label>("Label");
+//		tree.root->AddChild(canvas);
+//		canvas->PrintTreePretty();
+//	}
+//	return tree.MainLoop();
+//}
+
+
+
+
+
+
+
+//#include "All.h"
 //
 ///* // godot example：
 //
@@ -77,6 +130,7 @@ int main() {
 //
 //struct Player : Node {
 //	using Node::Node;
+//	using AutoEnableProcess = bool;
 //	void Process(float delta) override {
 //		if (!GetTree().CallGroup("enemies", "PlayerWasDiscovered")) {
 //			QueueRemove();
