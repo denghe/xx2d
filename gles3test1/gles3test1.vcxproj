@@ -60,6 +60,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)xxlib\;$(SolutionDir)deps\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -80,6 +81,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)xxlib\;$(SolutionDir)deps\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

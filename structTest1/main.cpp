@@ -33,12 +33,15 @@ struct Canvas : Node {
 		// get_node("Label").text = "HELLO!"
 		GetNode<Label>("Label")->text = "HELLO!";
 	}
+	void Xxxx() {}
+	void Xxxx2() {}
 };
 
 int main() {
 	SceneTree tree(60, 4096);	// 时间轮精度：每秒 60 次，长度 4096
 	{
-		RegisterMethod("OnTimerTimeout", &Canvas::OnTimerTimeout);
+		REGISTER_METHODS(Canvas, OnTimerTimeout, Xxxx, Xxxx2);
+		//RegisterMethod("OnTimerTimeout", &Canvas::OnTimerTimeout);
 		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
 		canvas->CreateChild<Timer>("Timer")->SetTimeout(2);	// timeout seconds = 2
 		canvas->CreateChild<Label>("Label");

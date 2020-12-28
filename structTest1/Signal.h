@@ -41,8 +41,6 @@ struct TypeInfoMappings {
 };
 
 
-#define RegisterMethod_( T, funcName ) \
-	RegisterMethod(XX_STRINGIFY(funcName), &T::funcName);
 
 template<typename CT, typename FT>
 inline void CallMFunc(CT* const& self, FT const& f, Signal const& s);
@@ -53,5 +51,9 @@ inline void RegisterMethod(FN&& fn, FT&& f);
 
 // todo: RegisterProperty
 
+
+#define REGISTER_METHODS_1(t) 
+#define REGISTER_METHODS_2(t, a) RegisterMethod(XX_STRINGIFY(a), &t::a);
+#define REGISTER_METHODS(...) XX_CONCAT(XX_, XX_BUGFIX(XX_NARG(__VA_ARGS__))) (REGISTER_METHODS_1, REGISTER_METHODS_2, __VA_ARGS__)
 
 XX_HAS_TYPEDEF(AutoEnableProcess)
