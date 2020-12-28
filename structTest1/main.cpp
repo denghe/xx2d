@@ -33,8 +33,6 @@ struct Canvas : Node {
 		// get_node("Label").text = "HELLO!"
 		GetNode<Label>("Label")->text = "HELLO!";
 	}
-	void Xxxx() {}
-	void Xxxx2() {}
 };
 
 int main() {
