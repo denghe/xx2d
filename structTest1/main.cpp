@@ -38,7 +38,7 @@ struct Canvas : Node {
 int main() {
 	SceneTree tree(60, 4096);	// 时间轮精度：每秒 60 次，长度 4096
 	{
-		REGISTER_METHODS(Canvas, OnTimerTimeout, Xxxx, Xxxx2);
+		REGISTER_METHODS(Canvas, OnTimerTimeout);
 		//RegisterMethod("OnTimerTimeout", &Canvas::OnTimerTimeout);
 		auto&& canvas = tree.CreateNode<Canvas>("Canvas");
 		canvas->CreateChild<Timer>("Timer")->SetTimeout(2);	// timeout seconds = 2
