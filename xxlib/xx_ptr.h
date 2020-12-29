@@ -194,7 +194,7 @@ namespace xx {
 		XX_FORCEINLINE Shared& operator=(Shared<U>&& o) {
 			static_assert(std::is_base_of_v<T, U>);
 			Reset();
-			std::swap(pointer, o.pointer);
+			std::swap(pointer, (*(Shared*)&o).pointer);
 			return *this;
 		}
 		XX_FORCEINLINE Shared& operator=(Shared&& o) {

@@ -282,7 +282,7 @@ namespace xx {
 						d.Reserve<false>(cap);
 					}
 					for (auto&& o : v) {
-						d.WriteVarIntger<false>(o);
+						d.WriteVarIntger<typename T::value_type, false>(o);
 					}
 				}
 				else {
