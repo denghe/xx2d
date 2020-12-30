@@ -22,6 +22,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <shellapi.h>	// APPBARDATA
 
 #include "xx_typehelpers.h"
 #include "xx_ptr.h"
@@ -30,3 +31,5 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+
+#include "CCGeometry.h"

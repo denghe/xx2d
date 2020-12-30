@@ -245,3 +245,41 @@ const CCSize CCSizeZero;
 
 /* The "zero" rectangle -- equivalent to CCRectMake(0, 0, 0, 0). */
 const CCRect CCRectZero;
+
+
+
+
+enum class ResolutionPolicy{
+	// The entire application is visible in the specified area without trying to preserve the original aspect ratio.
+	// Distortion can occur, and the application may appear stretched or compressed.
+	ExactFit,
+	// The entire application fills the specified area, without distortion but possibly with some cropping,
+	// while maintaining the original aspect ratio of the application.
+	NoBorder,
+	// The entire application is visible in the specified area without distortion while maintaining the original
+	// aspect ratio of the application. Borders can appear on two sides of the application.
+	ShowAll,
+	// The application takes the height of the design resolution size and modifies the width of the internal
+	// canvas so that it fits the aspect ratio of the device
+	// no distortion will occur however you must make sure your application works on different
+	// aspect ratios
+	FixedHeight,
+	// The application takes the width of the design resolution size and modifies the height of the internal
+	// canvas so that it fits the aspect ratio of the device
+	// no distortion will occur however you must make sure your application works on different
+	// aspect ratios
+	FixedWidth,
+};
+
+
+#ifndef NDEBUG
+#define CHECK_GL_ERROR_DEBUG() \
+    do { \
+        GLenum __error = glGetError(); \
+        if(__error) { \
+            throw std::runtime_error(std::string("OpenGL error 0x%04X in %s %s %d\n") + std::to_string(__error) + __FILE__ + __FUNCTION__ +  std::to_string(__LINE__)); \
+        } \
+    } while (false)
+#else
+#define CHECK_GL_ERROR_DEBUG()
+#endif

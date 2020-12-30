@@ -4,8 +4,10 @@
 int main() {
     gAppDelegate.Emplace();
     gAppDelegate->setTitle("HelloCpp");
-    gAppDelegate->setFrameSize(1280, 720);
-    gAppDelegate->setFrameZoomFactor(1.f);
+    gAppDelegate->setFrameSize({ 1280, 720 });
+    gAppDelegate->setFrameZoomFactor(1);
+    gAppDelegate->setDesignResolutionSize({ 1280, 720 }, ResolutionPolicy::NoBorder);
+    gAppDelegate->setAnimationInterval(1.0 / 60);
 
     gAppDelegate->onDidFinishLaunching = []()->bool {
         // create scene ?
@@ -16,6 +18,5 @@ int main() {
     };
 
     if (int r = gAppDelegate->initWindow()) return r;
-    if (int r = gAppDelegate->initGL()) return r;
     return gAppDelegate->run();
 }

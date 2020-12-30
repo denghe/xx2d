@@ -7,13 +7,17 @@ struct AppDelegate {
     const std::filesystem::path& getResourceRootPath();
 
     void setTitle(std::string const& title);
-    void setFrameSize(float const& width, float const& height);
+    void setFrameSize(CCSize const& siz);
     void setFrameZoomFactor(float const& factor);
     void setAnimationInterval(double const& interval);
+    void setDesignResolutionSize(CCSize const& siz, ResolutionPolicy const& policy);
 
     int initWindow();
     int initGL();
     void destroyGL();
+    void setGLDefaultValues();
+    void setAlphaBlending(bool const& bOn);
+    void setDepthTest(bool const& bOn);
     int run();
 
     std::function<bool()> onDidFinishLaunching;
@@ -34,8 +38,14 @@ struct AppDelegate {
     LARGE_INTEGER                   m_nAnimationInterval;
     std::filesystem::path           m_resourceRootPath;
     std::string                     m_title;
-    float                           m_frameWidth = 0.f;
-    float                           m_frameHeight = 0.f;
+    CCSize                          m_frameSize;
+    CCSize                          m_obScreenSize;
+    CCSize                          m_obWinSizeInPoints;
+    CCSize                          m_obDesignResolutionSize;
+    CCRect                          m_obViewPortRect;
+    ResolutionPolicy                m_eResolutionPolicy;
+    float                           m_fScaleX;
+    float                           m_fScaleY;
 
     bool                            m_bCaptured = false;
     HWND                            m_hWnd = nullptr;

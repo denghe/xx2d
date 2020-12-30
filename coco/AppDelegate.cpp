@@ -1,7 +1,5 @@
 #include "pch.h"
 #include "AppDelegate.h"
-#include "CCGeometry.h"
-#include <shellapi.h>	// APPBARDATA
 
 AppDelegate::AppDelegate() {
 	m_resourceRootPath = std::filesystem::current_path() / "res";
@@ -13,24 +11,23 @@ const std::filesystem::path& AppDelegate::getResourceRootPath() {
 
 void AppDelegate::setTitle(std::string const& title) {
 	m_title = title;
-	if (m_hInstance) {
-		// todo: set win title
+	if (m_hWnd) {
+		WCHAR wszBuf[MAX_PATH] = { 0 };
+		MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, wszBuf, sizeof(wszBuf));
+		SetWindowText(m_hWnd, wszBuf);
 	}
 }
 
-void AppDelegate::setFrameSize(float const& width, float const& height) {
-	m_frameWidth = width;
-	m_frameHeight = height;
-	if (m_hInstance) {
-		// todo: resize win
-	}
+void AppDelegate::setFrameSize(CCSize const& siz) {
+	assert(!m_hWnd);
+	m_frameSize = siz;
+	m_obScreenSize = siz * m_frameZoomFactor;
 }
 
 void AppDelegate::setFrameZoomFactor(float const& factor) {
+	assert(!m_hWnd);
 	m_frameZoomFactor = factor;
-	if (m_hInstance) {
-		// todo: resize win
-	}
+	m_obScreenSize = m_frameSize * factor;
 }
 
 void AppDelegate::setAnimationInterval(double const& interval) {
@@ -39,8 +36,45 @@ void AppDelegate::setAnimationInterval(double const& interval) {
 	m_nAnimationInterval.QuadPart = (LONGLONG)(interval * nFreq.QuadPart);
 }
 
+void AppDelegate::setDesignResolutionSize(CCSize const& siz, ResolutionPolicy const& policy) {
+	assert(!m_hWnd);
+	m_obDesignResolutionSize = siz;
+
+	m_fScaleX = (float)m_obScreenSize.width / m_obDesignResolutionSize.width;
+	m_fScaleY = (float)m_obScreenSize.height / m_obDesignResolutionSize.height;
+
+	switch (policy) {
+	case ResolutionPolicy::NoBorder:
+		m_fScaleX = m_fScaleY = std::max(m_fScaleX, m_fScaleY);
+		break;
+	case ResolutionPolicy::ShowAll:
+		m_fScaleX = m_fScaleY = std::min(m_fScaleX, m_fScaleY);
+		break;
+	case ResolutionPolicy::FixedHeight:
+		m_fScaleX = m_fScaleY;
+		m_obDesignResolutionSize.width = ceilf(m_obScreenSize.width / m_fScaleX);
+		break;
+	case ResolutionPolicy::FixedWidth:
+		m_fScaleY = m_fScaleX;
+		m_obDesignResolutionSize.height = ceilf(m_obScreenSize.height / m_fScaleY);
+		break;
+	}
+
+	// calculate the rect of viewport    
+	float viewPortW = m_obDesignResolutionSize.width * m_fScaleX;
+	float viewPortH = m_obDesignResolutionSize.height * m_fScaleY;
+
+	m_obViewPortRect.setRect((m_obScreenSize.width - viewPortW) / 2, (m_obScreenSize.height - viewPortH) / 2, viewPortW, viewPortH);
+
+	m_eResolutionPolicy = policy;
+
+	// reset director's member variables to fit visible rect
+	m_obWinSizeInPoints = m_obDesignResolutionSize;
+}
+
 static const WCHAR* kWindowClassName = L"CocoWin32";
 static LRESULT CALLBACK _WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	std::cout << gAppDelegate->m_hWnd << "---" << hWnd << std::endl;
 	if (gAppDelegate && gAppDelegate->m_hWnd == hWnd) {
 		return gAppDelegate->WindowProc(uMsg, wParam, lParam);
 	}
@@ -50,63 +84,73 @@ static LRESULT CALLBACK _WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 }
 
 LRESULT AppDelegate::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
+	std::cout << "WindowProc" << std::endl;
 	BOOL bProcessed = FALSE;
 	switch (message) {
-		//case WM_LBUTTONDOWN:
-		//	if (m_pDelegate && MK_LBUTTON == wParam)
-		//	{
-		//		POINT point = { (short)LOWORD(lParam), (short)HIWORD(lParam) };
-		//		CCPoint pt(point.x, point.y);
-		//		pt.x /= m_frameZoomFactor;
-		//		pt.y /= m_frameZoomFactor;
-		//		CCPoint tmp = ccp(pt.x, m_obScreenSize.height - pt.y);
-		//		if (m_obViewPortRect.equals(CCRectZero) || m_obViewPortRect.containsPoint(tmp))
-		//		{
-		//			m_bCaptured = true;
-		//			SetCapture(m_hWnd);
-		//			int id = 0;
-		//			handleTouchesBegin(1, &id, &pt.x, &pt.y);
-		//		}
-		//	}
-		//	break;
+	case WM_LBUTTONDOWN:
+		std::cout << "WM_LBUTTONDOWN" << std::endl;
+		if (/*m_pDelegate && */MK_LBUTTON == wParam) {
+			POINT point = { (short)LOWORD(lParam), (short)HIWORD(lParam) };
+			auto pt = CCPointMake(point.x, point.y);
+			pt.x /= m_frameZoomFactor;
+			pt.y /= m_frameZoomFactor;
+			CCPoint tmp(pt.x, m_obScreenSize.height - pt.y);
+			if (m_obViewPortRect.equals(CCRectZero) || m_obViewPortRect.containsPoint(tmp)) {
+				m_bCaptured = true;
+				SetCapture(m_hWnd);
+				int id = 0;
+				//handleTouchesBegin(1, &id, &pt.x, &pt.y);
+				std::cout << "handleTouchesBegin " << pt.x << " " << pt.y << std::endl;
+			}
+		}
+		break;
 
-		//case WM_MOUSEMOVE:
-		//	if (MK_LBUTTON == wParam && m_bCaptured)
-		//	{
-		//		POINT point = { (short)LOWORD(lParam), (short)HIWORD(lParam) };
-		//		CCPoint pt(point.x, point.y);
-		//		int id = 0;
-		//		pt.x /= m_fFrameZoomFactor;
-		//		pt.y /= m_fFrameZoomFactor;
-		//		handleTouchesMove(1, &id, &pt.x, &pt.y);
-		//	}
-		//	break;
+	case WM_MOUSEMOVE:
+		std::cout << "WM_MOUSEMOVE" << std::endl;
+		if (MK_LBUTTON == wParam && m_bCaptured)
+		{
+			POINT point = { (short)LOWORD(lParam), (short)HIWORD(lParam) };
+			auto pt = CCPointMake(point.x, point.y);
+			int id = 0;
+			pt.x /= m_frameZoomFactor;
+			pt.y /= m_frameZoomFactor;
+			//handleTouchesMove(1, &id, &pt.x, &pt.y);
+			std::cout << "handleTouchesMove " << pt.x << " " << pt.y << std::endl;
+		}
+		break;
 
-		//case WM_LBUTTONUP:
-		//	if (m_bCaptured)
-		//	{
-		//		POINT point = { (short)LOWORD(lParam), (short)HIWORD(lParam) };
-		//		CCPoint pt(point.x, point.y);
-		//		int id = 0;
-		//		pt.x /= m_fFrameZoomFactor;
-		//		pt.y /= m_fFrameZoomFactor;
-		//		handleTouchesEnd(1, &id, &pt.x, &pt.y);
+	case WM_LBUTTONUP:
+		std::cout << "WM_LBUTTONUP" << std::endl;
+		if (m_bCaptured) {
+			POINT point = { (short)LOWORD(lParam), (short)HIWORD(lParam) };
+			auto pt = CCPointMake(point.x, point.y);
+			int id = 0;
+			pt.x /= m_frameZoomFactor;
+			pt.y /= m_frameZoomFactor;
+			//handleTouchesEnd(1, &id, &pt.x, &pt.y);
+			std::cout << "handleTouchesEnd " << pt.x << " " << pt.y << std::endl;
 
-		//		ReleaseCapture();
-		//		m_bCaptured = false;
-		//	}
-		//	break;
-		//case WM_SIZE:
-		//	switch (wParam)
-		//	{
-		//	case SIZE_RESTORED:
-		//		CCApplication::sharedApplication()->applicationWillEnterForeground();
-		//		break;
-		//	case SIZE_MINIMIZED:
-		//		CCApplication::sharedApplication()->applicationDidEnterBackground();
-		//		break;
-		//	}
-		//	break;
+			ReleaseCapture();
+			m_bCaptured = false;
+		}
+		break;
+
+	case WM_SIZE:
+		switch (wParam)
+		{
+		case SIZE_RESTORED:
+			if (onDidEnterBackground) {
+				onDidEnterBackground();
+			}
+			break;
+		case SIZE_MINIMIZED:
+			if (onWillEnterForeground) {
+				onWillEnterForeground();
+			}
+			break;
+		}
+		break;
+
 		//case WM_KEYDOWN:
 		//	if (wParam == VK_F1 || wParam == VK_F2)
 		//	{
@@ -130,6 +174,7 @@ LRESULT AppDelegate::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
 		//		(*m_lpfnAccelerometerKeyHook)(message, wParam, lParam);
 		//	}
 		//	break;
+
 		//case WM_CHAR:
 		//{
 		//	if (wParam < 0x20)
@@ -169,6 +214,7 @@ LRESULT AppDelegate::WindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
 		//	}
 		//}
 		//break;
+
 	case WM_PAINT:
 		PAINTSTRUCT ps;
 		BeginPaint(m_hWnd, &ps);
@@ -236,8 +282,8 @@ int AppDelegate::initWindow() {
 		WS_CAPTION | WS_POPUPWINDOW | WS_MINIMIZEBOX,   // Defined Window Style
 		0, 0,                                           // Window Position
 		//TODO: Initializing width with a large value to avoid getting a wrong client area by 'GetClientRect' function.
-		(int)(m_frameWidth * m_frameZoomFactor),        // Window Width
-		(int)(m_frameHeight * m_frameZoomFactor),       // Window Height
+		(int)m_obScreenSize.width,						// Window Width
+		(int)m_obScreenSize.height,						// Window Height
 		nullptr,                                        // No Parent Window
 		nullptr,                                        // No Menu
 		hInstance,                                      // Instance
@@ -258,6 +304,8 @@ int AppDelegate::initWindow() {
 		SubtractRect(&rcDesktop, &rcDesktop, &abd.rc);
 	}
 	GetWindowRect(m_hWnd, &rcWindow);
+	m_obScreenSize.setSize((float)(rcWindow.right - rcWindow.left), (float)(rcWindow.bottom - rcWindow.top));
+
 
 	int offsetX = rcDesktop.left + (rcDesktop.right - rcDesktop.left - (rcWindow.right - rcWindow.left)) / 2;
 	offsetX = (offsetX > 0) ? offsetX : rcDesktop.left;
@@ -276,76 +324,49 @@ int AppDelegate::initWindow() {
 }
 
 int AppDelegate::initGL() {
+	// todo
+	//setGLDefaultValues();
 	return 0;
 }
 
 void AppDelegate::destroyGL() {
 }
 
+void AppDelegate::setGLDefaultValues() {
+	assert(m_hWnd);
 
-//bool AppDelegate::applicationDidFinishLaunching() {
-	//    // initialize director
-	//    CCDirector* pDirector = CCDirector::sharedDirector();
-	//    CCEGLView* pEGLView = CCEGLView::sharedOpenGLView();
-	//
-	//    pDirector->setOpenGLView(pEGLView);
-	//    CCSize frameSize = pEGLView->getFrameSize();
-	//
-	//    // Set the design resolution
-	//#if (CC_TARGET_PLATFORM == CC_PLATFORM_WINRT) || (CC_TARGET_PLATFORM == CC_PLATFORM_WP8)
-	//    pEGLView->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height, kResolutionShowAll);
-	//#else
-	//    pEGLView->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height, kResolutionNoBorder);
-	//#endif
-	//
-	//
-	//    vector<string> searchPath;
-	//
-	//    // In this demo, we select resource according to the frame's height.
-	//    // If the resource size is different from design resolution size, you need to set contentScaleFactor.
-	//    // We use the ratio of resource's height to the height of design resolution,
-	//    // this can make sure that the resource's height could fit for the height of design resolution.
-	//
-	//    // if the frame's height is larger than the height of medium resource size, select large resource.
-	//    if (frameSize.height > mediumResource.size.height)
-	//    {
-	//        searchPath.push_back(largeResource.directory);
-	//
-	//        pDirector->setContentScaleFactor(MIN(largeResource.size.height / designResolutionSize.height, largeResource.size.width / designResolutionSize.width));
-	//    }
-	//    // if the frame's height is larger than the height of small resource size, select medium resource.
-	//    else if (frameSize.height > smallResource.size.height)
-	//    {
-	//        searchPath.push_back(mediumResource.directory);
-	//
-	//        pDirector->setContentScaleFactor(MIN(mediumResource.size.height / designResolutionSize.height, mediumResource.size.width / designResolutionSize.width));
-	//    }
-	//    // if the frame's height is smaller than the height of medium resource size, select small resource.
-	//    else
-	//    {
-	//        searchPath.push_back(smallResource.directory);
-	//
-	//        pDirector->setContentScaleFactor(MIN(smallResource.size.height / designResolutionSize.height, smallResource.size.width / designResolutionSize.width));
-	//    }
-	//
-	//
-	//    // set searching path
-	//    CCFileUtils::sharedFileUtils()->setSearchPaths(searchPath);
-	//
-	//    // turn on display FPS
-	//    pDirector->setDisplayStats(true);
-	//
-	//    // set FPS. the default value is 1.0/60 if you don't call this
-	//    pDirector->setAnimationInterval(1.0 / 60);
-	//
-	//    // create a scene. it's an autorelease object
-	//    CCScene* pScene = HelloWorld::scene();
-	//
-	//    // run
-	//    pDirector->runWithScene(pScene);
+	setAlphaBlending(true);
+	// XXX: Fix me, should enable/disable depth test according the depth format as cocos2d-iphone did
+	// [self setDepthTest: view_.depthFormat];
+	setDepthTest(false);
+	//setProjection(m_eProjection);
 
-//	return true;
-//}
+	// set other opengl default values
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+void AppDelegate::setAlphaBlending(bool const& bOn) {
+	if (bOn) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	else {
+		glDisable(GL_BLEND);
+	}
+	CHECK_GL_ERROR_DEBUG();
+}
+
+void AppDelegate::setDepthTest(bool const& bOn) {
+	if (bOn) {
+		glClearDepthf(1.0f);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+	}
+	else {
+		glDisable(GL_DEPTH_TEST);
+	}
+	CHECK_GL_ERROR_DEBUG();
+}
 
 
 int AppDelegate::run() {
