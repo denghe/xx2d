@@ -17,6 +17,7 @@ struct AppDelegate {
     int run();
 
     std::function<bool()> onDidFinishLaunching;
+    std::function<void()> onMainLoop;
     std::function<void()> onDidEnterBackground;
     std::function<void()> onWillEnterForeground;
 
