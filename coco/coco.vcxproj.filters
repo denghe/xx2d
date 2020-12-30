@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="..\glad\glad.c" />
     <ClCompile Include="AppDelegate.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -28,9 +27,8 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="..\glad\glad.h" />
     <ClInclude Include="AppDelegate.h" />
-    <ClInclude Include="CCGeometry.h" />
+    <ClInclude Include="Primitives.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">
