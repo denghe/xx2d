@@ -103,7 +103,7 @@ int AppDelegate::InitWindow(HINSTANCE hInstance, int nCmdShow) {
 	return 0;
 }
 
-LRESULT CALLBACK AppDelegate::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT AppDelegate::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message)
 	{
 	case WM_PAINT: {

@@ -17,7 +17,7 @@ struct AppDelegate {
     //void setDepthTest(bool const& bOn);
 
     int InitWindow(HINSTANCE hInstance, int nCmdShow);
-    LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+    LRESULT WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     int run();
 
