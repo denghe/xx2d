@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="AppDelegate.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="xxlib">
+      <UniqueIdentifier>{e722cbb7-e937-4351-993f-01d0343c0234}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\xxlib\xx_data.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_obj.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_ptr.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_typehelpers.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_file.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="AppDelegate.h" />
+    <ClInclude Include="Primitives.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\xxlib\xx.natvis">
+      <Filter>xxlib</Filter>
+    </Natvis>
+  </ItemGroup>
+</Project>

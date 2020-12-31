@@ -171,19 +171,24 @@ int AppDelegate::run() {
 	/***********************************************************************************************************************/
 	_lastTime = xx::NowSteadyEpochSeconds();
 	_beginTime = _lastTime - 0.0000000001;
+
 	while (!glfwWindowShouldClose(_wnd)) {
-		_delta = xx::NowSteadyEpochSeconds(_lastTime);
+		auto delta = xx::NowSteadyEpochSeconds(_lastTime);
 		++_numFrames;
+
 		// draw title
-		glfwSetWindowTitle(_wnd, std::to_string((double)_numFrames / (_lastTime - _beginTime)).c_str());
+		if (_fpsTimer < _lastTime) {
+			_fpsTimer = _lastTime + 1;
+			glfwSetWindowTitle(_wnd, std::to_string((double)_numFrames / (_lastTime - _beginTime)).c_str());
+		}
 
 		glfwPollEvents();
 		// todo: event handles
 		// todo: frame logic
 
-		//glDepthMask(true);
+		glDepthMask(true);
 		glClear(GL_COLOR_BUFFER_BIT/* | GL_DEPTH_BUFFER_BIT*/);
-		//glDepthMask(false);
+		glDepthMask(false);
 
 		//_modelViewMatrixStack.push(_modelViewMatrixStack.top());
 

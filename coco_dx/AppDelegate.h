@@ -5,7 +5,7 @@ struct AppDelegate {
     AppDelegate();
     ~AppDelegate();
 
-    const std::filesystem::path& getResourceRootPath();
+    std::filesystem::path const& getResourceRootPath();
     void setTitle(std::string const& title);
     void setFrameSize(CCSize const& siz);
     void setFrameZoomFactor(float const& factor);
@@ -15,6 +15,10 @@ struct AppDelegate {
     //void setGLDefaultValues();
     //void setAlphaBlending(bool const& bOn);
     //void setDepthTest(bool const& bOn);
+
+    int InitWindow(HINSTANCE hInstance, int nCmdShow);
+    LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
     int run();
 
     std::function<bool()> onDidFinishLaunching;
@@ -22,18 +26,6 @@ struct AppDelegate {
     std::function<void()> onDidEnterBackground;
     std::function<void()> onWillEnterForeground;
 
-protected:
-    void onGLFWError(int errorID, const char* errorDesc);
-    void onGLFWMouseCallBack(int button, int action, int modify);
-    void onGLFWMouseMoveCallBack(double x, double y);
-    void onGLFWMouseScrollCallback(double x, double y);
-    void onGLFWKeyCallback(int key, int scancode, int action, int mods);
-    void onGLFWCharCallback(unsigned int character);
-    void onGLFWWindowPosCallback(int x, int y);
-    void onGLFWframebuffersize(int w, int h);
-    void onGLFWWindowSizeFunCallback(int width, int height);
-    void onGLFWWindowIconifyCallback(int iconified);
-    void onGLFWWindowFocusCallback(int focused);
 
     std::filesystem::path           _resourceRootPath;
     std::string                     _title;
@@ -52,24 +44,13 @@ protected:
     double                          _beginTime = 0;
     double                          _lastTime = 0;
     double                          _fpsTimer = 0;
-    uint64_t                        _numFrames = 0;
+    uint64_t                        _counter = 0;
 
-    GLFWmonitor*                    _monitor = nullptr;
-    GLFWwindow*                     _wnd = nullptr;
+    HINSTANCE					    _hInst = nullptr;
+    HWND						    _hWnd = nullptr;
 
     bool                            _captured = false;  // mouse
 
-    //static const int VBO_SIZE = 65536;
-    //static const int INDEX_VBO_SIZE = VBO_SIZE * 6 / 4;
-    //static const int BATCH_TRIAGCOMMAND_RESERVED_SIZE = 64;
-    //static const int MATERIAL_ID_DO_NOT_BATCH = 0;
-
-    //V3F_C4B_T2F _verts[VBO_SIZE];
-    //GLushort _indices[INDEX_VBO_SIZE];
-    //GLuint _buffersVAO;
-    //GLuint _buffersVBO[2]; //0: vertex  1: indices
-
-public:
     int                             _lastErrorNumber = 0;
     std::string                     _lastErrorMessage;
 
