@@ -250,7 +250,7 @@ namespace xx {
 				}
 			}
 			else if constexpr (IsXxWeak_v<T>) {
-				if (v.h) {
+				if (v) {
 					auto p = v.h + 1;
 					Write_(*(Shared<typename T::ElementType>*) & p);
 				}
