@@ -31,7 +31,7 @@ struct TexturePackerConfig {
 	Size size;
 	//std::string smartupdate;
 	std::string textureFileName;
-	std::map<std::string, TexturePackerItem> items;
+	std::vector<TexturePackerItem> items;
 	int Fill(std::string_view const& text);
 };
 
@@ -59,171 +59,148 @@ void SkipLines(std::string_view const& text, size_t& offset, size_t n) {
 	}
 }
 template<typename T>
-void FillVector(std::vector<T>& vs, std::string_view const& line) {
-    vs.clear();
+int CommaSplitFill(std::string_view const& line, T& a, T& b) {
+	auto dotPos = line.find(',', 1);
+	if (dotPos == std::string_view::npos) return __LINE__;
+	std::from_chars(line.data(), line.data() + dotPos, a);
+	std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), b);
+	return 0;
+}
+int Trim(std::string_view& line, size_t const& from, size_t const& to) {
+	if (line.size() <= (from + to)) return __LINE__;
+	line = std::string_view(line.data() + from, (line.size() - (from + to)));
+	return 0;
+}
+bool LineToBool(std::string_view& line, size_t const& numSpaces) {
+	return line[numSpaces + 1] == 't';
+}
+template<typename T>
+void CommaSplitFillVector(std::vector<T>& vs, std::string_view const& line) {
+	vs.clear();
 	T i;
 	size_t offset = 0;
 LabBegin:
 	auto pos = line.find(' ', offset);
-    if (pos == std::string_view::npos) {    // eof
-        std::from_chars(line.data() + offset, line.data() + line.size(), i);
-        vs.push_back(i);
-        return;
-    }
-    std::from_chars(line.data() + offset, line.data() + pos, i);
-    vs.push_back(i);
-    offset = pos + 1;
-    goto LabBegin;
+	if (pos == std::string_view::npos) {    // eof
+		std::from_chars(line.data() + offset, line.data() + line.size(), i);
+		vs.push_back(i);
+		return;
+	}
+	std::from_chars(line.data() + offset, line.data() + pos, i);
+	vs.push_back(i);
+	offset = pos + 1;
+	goto LabBegin;
 }
 int TexturePackerConfig::Fill(std::string_view const& text) {
-	items.clear();
-	size_t offset = 0, siz = text.size();
-	std::string_view line;
-	while (NextLine(text, offset, line)) {
-		if (line == "    <dict>") {                                     // 定位到数据起始点
-			SkipLines(text, offset, 2);                                 // 跳过 <key>frames</key> 和 <dict> 这 2 行
+	try {
+		items.clear();
+		size_t offset = 0, siz = text.size();
+		std::string_view line;
+		while (NextLine(text, offset, line)) {
+			if (line == "    <dict>") {                                         // 定位到数据起始点
+				SkipLines(text, offset, 2);                                     // 跳过 <key>frames</key> 和 <dict> 这 2 行
 
-            // todo: 提取读 x,y 为函数 复用。{{x,y},{w,h}} 可查找 } 的位置 从而 简化为 x,y
-            // todo: 去掉各种长度检查
-		LabBegin:
-			// 开始读一个 item
-			TexturePackerItem o;
-			if (!NextLine(text, offset, line)) return __LINE__;         // 定位到 <key>???????</key>
-			if (line.size() <= (17 + 6)) return __LINE__;
-			o.name.assign(line.data() + 17, line.size() - (17 + 6));    // 读出 item.name
+			LabBegin:
+				auto&& o = items.emplace_back();
+				if (!NextLine(text, offset, line)) return __LINE__;             // 定位到 <key>???????</key>
+				if (Trim(line, 17, 6)) return __LINE__;                         // 剥离出 item.name 然后保存
+				o.name = line;
 
+				SkipLines(text, offset, 4);                                     // 跳过 <dict> 和 <key>aliases</key> 和 <array/> 和 <key>spriteOffset</key> 这 4 行
+				if (!NextLine(text, offset, line)) return __LINE__;             // <string>{x,y}</string>
+				if (Trim(line, 25, 10)) return __LINE__;                        // 剥离出 x,y 然后保存
+				if (CommaSplitFill(line, o.spriteOffset.x, o.spriteOffset.y)) return __LINE__;
 
-			SkipLines(text, offset, 4);                                 // 跳过 <dict> 和 <key>aliases</key> 和 <array/> 和 <key>spriteOffset</key> 这 4 行
-			if (!NextLine(text, offset, line)) return __LINE__;         // <string>{x,y}</string>
-			if (line.size() <= (25 + 10)) return __LINE__;
-			line = std::string_view(line.data() + 25, (line.size() - (25 + 10)));   // 剥离到只剩 x,y 然后转为 float 填充
-			auto dotPos = line.find(',', 1);
-			if (dotPos == std::string_view::npos) return __LINE__;
-			std::from_chars(line.data(), line.data() + dotPos, o.spriteOffset.x);
-			std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), o.spriteOffset.y);
+				SkipLines(text, offset, 1);                                     // 跳过 <key>spriteSize</key>
+				if (!NextLine(text, offset, line)) return __LINE__;             // <string>{w,h}</string>
+				if (Trim(line, 25, 10)) return __LINE__;                        // 剥离出 w,h 然后保存
+				if (CommaSplitFill(line, o.spriteSize.w, o.spriteSize.h)) return __LINE__;
 
-			SkipLines(text, offset, 1);                                 // 跳过 <key>spriteSize</key>
-			if (!NextLine(text, offset, line)) return __LINE__;         // <string>{w,h}</string>
-			if (line.size() <= (25 + 10)) return __LINE__;
-			line = std::string_view(line.data() + 25, (line.size() - (25 + 10)));   // 剥离到只剩 w,h 然后转为 float 填充
-			dotPos = line.find(',', 1);
-			if (dotPos == std::string_view::npos) return __LINE__;
-			std::from_chars(line.data(), line.data() + dotPos, o.spriteSize.w);
-			std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), o.spriteSize.h);
+				SkipLines(text, offset, 1);                                     // 跳过 <key>spriteSourceSize</key>
+				if (!NextLine(text, offset, line)) return __LINE__;             // <string>{w,h}</string>
+				if (Trim(line, 25, 10)) return __LINE__;                        // 剥离出 w,h 然后保存
+				if (CommaSplitFill(line, o.spriteSourceSize.w, o.spriteSourceSize.h)) return __LINE__;
 
-			SkipLines(text, offset, 1);                                 // 跳过 <key>spriteSourceSize</key>
-			if (!NextLine(text, offset, line)) return __LINE__;         // <string>{w,h}</string>
-			if (line.size() <= (25 + 10)) return __LINE__;
-			line = std::string_view(line.data() + 25, (line.size() - (25 + 10)));   // 剥离到只剩 w,h 然后转为 float 填充
-			dotPos = line.find(',', 1);
-			if (dotPos == std::string_view::npos) return __LINE__;
-			std::from_chars(line.data(), line.data() + dotPos, o.spriteSourceSize.w);
-			std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), o.spriteSourceSize.h);
+				SkipLines(text, offset, 1);                                     // 跳过 <key>textureRect</key>
+				if (!NextLine(text, offset, line)) return __LINE__;             // <string>{{x,y},{w,h}}</string>
+				if (Trim(line, 26, 11)) return __LINE__;                        // 剥离出 x,y},{w,h
+				auto quotaPos = line.find('}', 1);
+				if (quotaPos == std::string_view::npos) return __LINE__;
+				if (CommaSplitFill(std::string_view(line.data(), quotaPos), o.textureRect.pos.x, o.textureRect.pos.y)) return __LINE__;
+				if (CommaSplitFill(std::string_view(line.data() + quotaPos + 3, line.size() - (quotaPos + 3)), o.textureRect.siz.w, o.textureRect.siz.h)) return __LINE__;
 
-			SkipLines(text, offset, 1);                                 // 跳过 <key>textureRect</key>
-			if (!NextLine(text, offset, line)) return __LINE__;         // <string>{{x,y},{w,h}}</string>
-			if (line.size() <= (26 + 11)) return __LINE__;
-			line = std::string_view(line.data() + 26, (line.size() - (26 + 11)));   // 剥离到只剩 x,y},{w,h 然后转为 float 填充
-			dotPos = line.find(',', 1);
-			if (dotPos == std::string_view::npos) return __LINE__;
-			std::from_chars(line.data(), line.data() + dotPos, o.textureRect.pos.x);
-			std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), o.textureRect.pos.y);
-			dotPos = line.find(',', dotPos + 1);                        // },{
-			if (dotPos == std::string_view::npos) return __LINE__;
-			auto bak = dotPos + 2;
-			dotPos = line.find(',', bak);
-			if (dotPos == std::string_view::npos) return __LINE__;
-			std::from_chars(line.data() + bak, line.data() + dotPos, o.textureRect.siz.w);
-			std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), o.textureRect.siz.h);
+				SkipLines(text, offset, 1);                                     // 跳过 <key>textureRotated</key>
+				if (!NextLine(text, offset, line)) return __LINE__;             // <true/> 或 <false/>
+				o.textureRotated = LineToBool(line, 16);
 
-			SkipLines(text, offset, 1);                                 // 跳过 <key>textureRotated</key>
-			if (!NextLine(text, offset, line)) return __LINE__;         // <true/> 或 <false/>
-			if (line == "                <true/>") {
-				o.textureRotated = true;
-			}
-			else if (line == "                <false/>") {
-				o.textureRotated = false;
-			}
-			else return __LINE__;
+				if (!NextLine(text, offset, line)) return __LINE__;             // <key>triangles</key> 或 </dict>
+				if (line == "                <key>triangles</key>") {
+					if (!NextLine(text, offset, line)) return __LINE__;         // <string>27 29 7 27 1...</string>
+					if (Trim(line, 24, 9)) return __LINE__;                     // 剥离到只剩 空格间隔的数字 然后填充
+					CommaSplitFillVector(o.triangles, line);
 
-			if (!NextLine(text, offset, line)) return __LINE__;         // <key>triangles</key> 或 </dict>
-			if (line == "                <key>triangles</key>") {
-				if (!NextLine(text, offset, line)) return __LINE__;     // <string>27 29 7 27 1...</string>
-				if (line.size() <= (24 + 9)) return __LINE__;
-				line = std::string_view(line.data() + 24, (line.size() - (24 + 9)));   // 剥离到只剩 空格间隔的数字 然后转为 int 填充
-                FillVector(o.triangles, line);
+					SkipLines(text, offset, 1);                                 // 跳过 <key>vertices</key>
+					if (!NextLine(text, offset, line)) return __LINE__;         // <string>471 408...</string>
+					if (Trim(line, 24, 9)) return __LINE__;                     // 剥离到只剩 空格间隔的数字 然后填充
+					CommaSplitFillVector(o.vertices, line);
 
-                SkipLines(text, offset, 1);                             // 跳过 <key>vertices</key>
-                if (!NextLine(text, offset, line)) return __LINE__;     // <string>471 408...</string>
-                if (line.size() <= (24 + 9)) return __LINE__;
-                line = std::string_view(line.data() + 24, (line.size() - (24 + 9)));   // 剥离到只剩 空格间隔的数字 然后转为 int 填充
-                FillVector(o.vertices, line);
+					SkipLines(text, offset, 1);                                 // 跳过 <key>verticesUV</key>
+					if (!NextLine(text, offset, line)) return __LINE__;         // <string>1280 1321...</string>
+					if (Trim(line, 24, 9)) return __LINE__;                     // 剥离到只剩 空格间隔的数字 然后填充
+					CommaSplitFillVector(o.verticesUV, line);
 
-                SkipLines(text, offset, 1);                             // 跳过 <key>verticesUV</key>
-                if (!NextLine(text, offset, line)) return __LINE__;     // <string>1280 1321...</string>
-                if (line.size() <= (24 + 9)) return __LINE__;
-                line = std::string_view(line.data() + 24, (line.size() - (24 + 9)));   // 剥离到只剩 空格间隔的数字 然后转为 int 填充
-                FillVector(o.verticesUV, line);
-
-                if (!NextLine(text, offset, line)) return __LINE__;     // </dict>
-			}
-
-			if (line == "            </dict>") {
-                auto bak = offset;
-				if (!NextLine(text, offset, line)) return __LINE__;     // <key> 或 </dict>
-				items[o.name] = std::move(o);
-				if (line == "        </dict>") {
-					SkipLines(text, offset, 3);                             // 跳过 <key>metadata</key>    <dict>     <key>format</key>
-					if (!NextLine(text, offset, line)) return __LINE__;     // <integer>???</integer>
-					if (line.size() <= (21 + 10)) return __LINE__;
-                    line = std::string_view(line.data() + 21, (line.size() - (21 + 10)));    // 剥离到只剩 数字 然后转为 int 填充
-					std::from_chars(line.data(), line.data() + line.size(), format);
-
-                    SkipLines(text, offset, 1);                             // 跳过 <key>pixelFormat</key>
-                    if (!NextLine(text, offset, line)) return __LINE__;     // <string>RGBA8888</string>
-                    if (line == "            <string>RGBA8888</string>") {
-                        pixelFormat = TexturePackerPixelFormats::RGBA8888;
-                    }
-                    else return __LINE__;
-                    
-                    SkipLines(text, offset, 1);                                 // 跳过 <key>premultiplyAlpha</key>
-                    if (!NextLine(text, offset, line)) return __LINE__;         // <true/> 或 <false/>
-                    if (line == "            <true/>") {
-                        premultiplyAlpha = true;
-                    }
-                    else if (line == "            <false/>") {
-                        premultiplyAlpha = false;
-                    }
-                    else return __LINE__;
-
-                    SkipLines(text, offset, 1);                                 // 跳过 <key>realTextureFileName</key>
-                    if (!NextLine(text, offset, line)) return __LINE__;         // <string>abc123.png</string>
-                    if (line.size() <= (20 + 9)) return __LINE__;
-                    realTextureFileName.assign(line.data() + 20, line.size() - (20 + 9));
-
-                    SkipLines(text, offset, 1);                                 // 跳过 <key>size</key>
-                    if (!NextLine(text, offset, line)) return __LINE__;         // <string>{w,h}</string>
-                    if (line.size() <= (21 + 10)) return __LINE__;
-                    line = std::string_view(line.data() + 21, (line.size() - (21 + 10)));   // 剥离到只剩 w,h 然后转为 float 填充
-                    dotPos = line.find(',', 1);
-                    if (dotPos == std::string_view::npos) return __LINE__;
-                    std::from_chars(line.data(), line.data() + dotPos, size.w);
-                    std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), size.h);
-
-                    SkipLines(text, offset, 3);                                 // 跳过  <key>smartupdate</key>  ...... <key>textureFileName</key>
-                    if (!NextLine(text, offset, line)) return __LINE__;         // <string>abc123.png</string>
-                    if (line.size() <= (20 + 9)) return __LINE__;
-                    textureFileName.assign(line.data() + 20, line.size() - (20 + 9));
-
-                    return 0;
+					if (!NextLine(text, offset, line)) return __LINE__;         // </dict>
 				}
-                else {
-                    offset = bak;
-                    goto LabBegin;
-                }
+
+				if (line == "            </dict>") {
+					auto bak = offset;
+					if (!NextLine(text, offset, line)) return __LINE__;         // <key> 或 </dict>
+
+					if (line == "        </dict>") {                            // items 填充结束, 开始填 meta
+						SkipLines(text, offset, 3);                             // 跳过 <key>metadata</key>    <dict>     <key>format</key>
+						if (!NextLine(text, offset, line)) return __LINE__;     // <integer>???</integer>
+						if (Trim(line, 21, 10)) return __LINE__;                // 剥离到只剩 数字 然后填充
+						std::from_chars(line.data(), line.data() + line.size(), format);
+
+						SkipLines(text, offset, 1);                             // 跳过 <key>pixelFormat</key>
+						if (!NextLine(text, offset, line)) return __LINE__;     // <string>RGBA8888</string>
+						if (line == "            <string>RGBA8888</string>") {
+							pixelFormat = TexturePackerPixelFormats::RGBA8888;
+						}
+						else return __LINE__;
+
+						SkipLines(text, offset, 1);                             // 跳过 <key>premultiplyAlpha</key>
+						if (!NextLine(text, offset, line)) return __LINE__;     // <true/> 或 <false/>
+						premultiplyAlpha = LineToBool(line, 12);
+
+						SkipLines(text, offset, 1);                             // 跳过 <key>realTextureFileName</key>
+						if (!NextLine(text, offset, line)) return __LINE__;     // <string>abc123.png</string>
+						if (Trim(line, 20, 9)) return __LINE__;                 // 剥离到只剩 fileName 后保存
+						realTextureFileName = line;
+
+						SkipLines(text, offset, 1);                             // 跳过 <key>size</key>
+						if (!NextLine(text, offset, line)) return __LINE__;     // <string>{w,h}</string>
+						if (Trim(line, 21, 10)) return __LINE__;                // 剥离到只剩 w,h 后保存
+						CommaSplitFill(line, size.w, size.h);
+
+						SkipLines(text, offset, 3);                             // 跳过  <key>smartupdate</key>  ...... <key>textureFileName</key>
+						if (!NextLine(text, offset, line)) return __LINE__;     // <string>abc123.png</string>
+						if (Trim(line, 20, 9)) return __LINE__;                 // 剥离到只剩 fileName 后保存
+						textureFileName = line;
+
+						return 0;
+					}
+					else {
+						offset = bak;
+						goto LabBegin;
+					}
+				}
+				else return __LINE__;
 			}
-			else return __LINE__;
 		}
+	}
+	catch (std::exception const& ex) {
+		return __LINE__;
 	}
 	return __LINE__;
 }
@@ -424,6 +401,7 @@ auto str2 = R"-(
 int main() {
 	TexturePackerConfig tpcfg;
 	auto r = tpcfg.Fill(str1);
+	r = tpcfg.Fill(str2);
 	return r;
 }
 
