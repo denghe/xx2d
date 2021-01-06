@@ -61,39 +61,56 @@ struct TexturePackerConfig {
 		}
 	}
 
+	template<bool check9 = false>
 	XX_FORCEINLINE static int ReadInteger(const char*& p) {
 		int x = 0;
-		while (*p >= '0') {
+		while (*p >= '0' && check9 && *p <= '9') {
 			x = (x * 10) + (*p - '0');
 			++p;
 		}
 		return x;
 	}
 
-	template<bool useIntegerParser = true, typename T>
-	XX_FORCEINLINE static int CommaSplitFill(std::string_view const& line, T& a, T& b) {
-		if (useIntegerParser) {
-			auto&& p = line.data();
-			a = (T)ReadInteger(p);
-			++p;	// skip ','
-			b = (T)ReadInteger(p);
-		}
-		else {
-			//double d;
-			//if (auto p = fast_double_parser::parse_number(line.data(), &d)) {
-			//	a = (T)d;
-			//	if (p = fast_double_parser::parse_number(p + 1, &d)) {
-			//		b = (T)d;
-			//		return 0;
-			//	}
-			//}
-			//return __LINE__;
-			auto dotPos = line.find(',', 1);
-			if (dotPos == std::string_view::npos) return __LINE__;
-			std::from_chars(line.data(), line.data() + dotPos, a);
-			std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), b);
-		}
+	// 格式为 a,b
+	template<typename T>
+	XX_FORCEINLINE static int ReadFloat2(std::string_view const& line, T& a, T& b) {
+		//double d;
+		//if (auto p = fast_double_parser::parse_number(line.data(), &d)) {
+		//	a = (T)d;
+		//	if (p = fast_double_parser::parse_number(p + 1, &d)) {
+		//		b = (T)d;
+		//		return 0;
+		//	}
+		//}
+		//return __LINE__;
+		auto dotPos = line.find(',', 1);
+		if (dotPos == std::string_view::npos) return __LINE__;
+		std::from_chars(line.data(), line.data() + dotPos, a);
+		std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), b);
 		return 0;
+	}
+
+	// 格式为 a,b
+	template<typename T>
+	XX_FORCEINLINE static int ReadInteger2(std::string_view const& line, T& a, T& b) {
+		auto&& p = line.data();
+		a = (T)ReadInteger(p);
+		++p;	// skip ','
+		b = (T)ReadInteger<true>(p);
+		return 0;
+	}
+
+	// 格式为 a,b},{c,d
+	template<typename T>
+	XX_FORCEINLINE static void ReadInteger4(std::string_view const& line, T& a, T& b, T& c, T& d) {
+		auto&& p = line.data();
+		a = (T)ReadInteger(p);
+		++p;	// skip ','
+		b = (T)ReadInteger<true>(p);
+		p += 3;	// skip '},{'
+		c = (T)ReadInteger(p);
+		++p;	// skip ','
+		d = (T)ReadInteger<true>(p);
 	}
 
 	XX_FORCEINLINE static int Trim(std::string_view& line, size_t const& from, size_t const& to) {
@@ -137,25 +154,22 @@ struct TexturePackerConfig {
 					SkipLines(text, offset, 4);                                     // 跳过 <dict> 和 <key>aliases</key> 和 <array/> 和 <key>spriteOffset</key> 这 4 行
 					if (!NextLine(text, offset, line)) return __LINE__;             // <string>{x,y}</string>
 					if (Trim(line, 25, 10)) return __LINE__;                        // 剥离出 x,y 然后保存
-					if (CommaSplitFill<false>(line, o.spriteOffset.x, o.spriteOffset.y)) return __LINE__;
+					if (ReadFloat2(line, o.spriteOffset.x, o.spriteOffset.y)) return __LINE__;
 
 					SkipLines(text, offset, 1);                                     // 跳过 <key>spriteSize</key>
 					if (!NextLine(text, offset, line)) return __LINE__;             // <string>{w,h}</string>
 					if (Trim(line, 25, 10)) return __LINE__;                        // 剥离出 w,h 然后保存
-					if (CommaSplitFill(line, o.spriteSize.w, o.spriteSize.h)) return __LINE__;
+					if (ReadInteger2(line, o.spriteSize.w, o.spriteSize.h)) return __LINE__;
 
 					SkipLines(text, offset, 1);                                     // 跳过 <key>spriteSourceSize</key>
 					if (!NextLine(text, offset, line)) return __LINE__;             // <string>{w,h}</string>
 					if (Trim(line, 25, 10)) return __LINE__;                        // 剥离出 w,h 然后保存
-					if (CommaSplitFill(line, o.spriteSourceSize.w, o.spriteSourceSize.h)) return __LINE__;
+					if (ReadInteger2(line, o.spriteSourceSize.w, o.spriteSourceSize.h)) return __LINE__;
 
 					SkipLines(text, offset, 1);                                     // 跳过 <key>textureRect</key>
 					if (!NextLine(text, offset, line)) return __LINE__;             // <string>{{x,y},{w,h}}</string>
-					if (Trim(line, 26, 11)) return __LINE__;                        // 剥离出 x,y},{w,h
-					auto quotaPos = line.find('}', 1);
-					if (quotaPos == std::string_view::npos) return __LINE__;
-					if (CommaSplitFill(std::string_view(line.data(), quotaPos), o.textureRect.pos.x, o.textureRect.pos.y)) return __LINE__;
-					if (CommaSplitFill(std::string_view(line.data() + quotaPos + 3, line.size() - (quotaPos + 3)), o.textureRect.siz.w, o.textureRect.siz.h)) return __LINE__;
+					if (Trim(line, 26, 11)) return __LINE__;                        // 剥离出 x,y},{w,h 然后保存
+					ReadInteger4(line.data(), o.textureRect.pos.x, o.textureRect.pos.y, o.textureRect.siz.w, o.textureRect.siz.h);
 
 					SkipLines(text, offset, 1);                                     // 跳过 <key>textureRotated</key>
 					if (!NextLine(text, offset, line)) return __LINE__;             // <true/> 或 <false/>
@@ -210,7 +224,7 @@ struct TexturePackerConfig {
 							SkipLines(text, offset, 1);                             // 跳过 <key>size</key>
 							if (!NextLine(text, offset, line)) return __LINE__;     // <string>{w,h}</string>
 							if (Trim(line, 21, 10)) return __LINE__;                // 剥离到只剩 w,h 后保存
-							CommaSplitFill(line, size.w, size.h);
+							ReadInteger2(line, size.w, size.h);
 
 							SkipLines(text, offset, 3);                             // 跳过  <key>smartupdate</key>  ...... <key>textureFileName</key>
 							if (!NextLine(text, offset, line)) return __LINE__;     // <string>abc123.png</string>
