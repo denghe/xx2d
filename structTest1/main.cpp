@@ -1,5 +1,6 @@
 ﻿#include "All.h"
 
+// todo: timer 部分的驱动应从帧逻辑移除， timer 似乎也不应该继承自 Node. 应该弄个 Timers 啥的，其子为精简结构的 timer
 
 /*
 // godot example：
