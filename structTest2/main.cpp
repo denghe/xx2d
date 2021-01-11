@@ -91,11 +91,26 @@ namespace AABBCD {
 			o.siz = siz;
 			o.ud = ud;
 
+			o.next = items;
+			o.prev = -1;
+			items = idx;
+
+			ItemCalc(idx);
+
+			return idx;
+		}
+
+		void ItemCalc(int const& idx) {
+			auto& o = itemBuf[idx];
+
 			// 计算 item 覆盖到了哪些 cell
-			int left = (pos.x - siz.w / 2) / cellSize.w;
-			int right = (pos.x + siz.w / 2) / cellSize.w;
-			int top = (pos.y - siz.h / 2) / cellSize.h;
-			int bottom = (pos.y + siz.h / 2) / cellSize.h;
+			int left = (o.pos.x - o.siz.w / 2) / cellSize.w;
+			int right = (o.pos.x + o.siz.w / 2) / cellSize.w;
+			int top = (o.pos.y - o.siz.h / 2) / cellSize.h;
+			int bottom = (o.pos.y + o.siz.h / 2) / cellSize.h;
+
+			// todo: 裁剪 index 范围 避免 for 内 if
+
 			int n = 0;
 			for (int i = top; i <= bottom; ++i) {
 				if (i < 0 || i >= rowCount) continue;
@@ -110,18 +125,6 @@ namespace AABBCD {
 			if (n < cellMappingsSize - 1) {
 				o.cellMappings[n].first = -1;
 			}
-
-			//Size cellSize;
-			//int rowCount;
-			//int columnCount;
-			//std::array<std::pair<int, int>, cellMappingsSize> cellMappings;
-			//o.cellMappings
-
-
-			o.next = items;
-			o.prev = -1;
-			items = idx;
-			return idx;
 		}
 
 		void ItemUpdate(int const& idx, Vec2 const& pos, Size const& siz) {
@@ -129,10 +132,19 @@ namespace AABBCD {
 			assert(idx < itemBufLen);
 			assert(itemBuf[idx].ud);
 
-			// todo
-			// auto& o = itemBuf[idx];
-			// cellMappings
-			// cellMappingsSize
+			auto& o = itemBuf[idx];
+			if (*(int64_t*)&o.pos == *(int64_t*)&pos && *(int64_t*)&o.siz == *(int64_t*)&siz) return;
+			o.pos = pos;
+			o.siz = siz;
+
+			// cleanup cellMappings
+			for (int n = 0; n < cellMappingsSize; ++n) {
+				auto& m = o.cellMappings[n];
+				if (m.first == -1) break;
+				MappingRemoveAt(m.first, m.second);
+			}
+
+			ItemCalc(idx);
 		}
 
 		void ItemRemoveAt(int const& idx) {
@@ -182,10 +194,17 @@ namespace AABBCD {
 			return mappingBuf[idx];
 		}
 
-		void MappingRemoveAt(int const& idx) {
+		void MappingRemoveAt(int const& cellIdx, int const& idx) {
+			assert(cellIdx >= 0);
+			assert(cellIdx < rowCount * columnCount);
 			assert(idx >= 0);
 			assert(idx < mappingBufLen);
 			assert(mappingBuf[idx].item != -1);
+
+			if (cells[cellIdx] == idx) {
+				cells[cellIdx] = mappingBuf[idx].next;
+			}
+
 			mappingBuf[idx].item = -1;
 			mappingBuf[idx].next = freeMappingHeader;
 			freeMappingHeader = idx;
