@@ -1,19 +1,22 @@
 ﻿#include "xx_typehelpers.h"
+
+// CD = collision detection
 namespace AABBCD {
+
 	struct Vec2 { int x, y; };
 	struct Size { int w, h; };
 
 	template<int cellMappingsSize = 4>
-	struct Context {
+	struct Grid {
 		static const int maxCellMappingsSize = cellMappingsSize;
 
 		struct Item {
 			Vec2 pos;
 			Size siz;
-			std::array<std::pair<int, int>, cellMappingsSize> cellMappings;
-
-			void* ud;
 			int prev, next;
+			size_t flag;
+			void* ud;
+			std::array<std::pair<int, int>, cellMappingsSize> cellMappings;
 		};
 
 		struct Mapping {
@@ -42,7 +45,7 @@ namespace AABBCD {
 		int freeMappingCount;
 
 	public:
-		Context(Size const& cellSize, int const& rowCount, int const& columnCount, int const& cap) {
+		Grid(Size const& cellSize, int const& rowCount, int const& columnCount, int const& cap) {
 			this->cellSize = cellSize;
 			this->rowCount = rowCount;
 			this->columnCount = columnCount;
@@ -70,7 +73,7 @@ namespace AABBCD {
 			freeMappingCount = 0;
 		}
 
-		~Context() {
+		~Grid() {
 			free(cells);
 			free(itemBuf);
 			free(mappingBuf);
@@ -100,8 +103,13 @@ namespace AABBCD {
 			o.pos = pos;
 			o.siz = siz;
 			o.ud = ud;
+			o.flag = 0;
 
 			o.next = items;
+			if (items != -1) {
+				assert(itemBuf[items].prev == -1);
+				itemBuf[items].prev = idx;
+			}
 			o.prev = -1;
 			items = idx;
 
@@ -128,7 +136,15 @@ namespace AABBCD {
 			assert(idx < itemBufLen);
 			assert(itemBuf[idx].ud);
 			auto& o = itemBuf[idx];
-			items = o.prev;
+			if (o.prev != -1) {
+				itemBuf[o.prev].next = o.next;
+			}
+			if (o.next != -1) {
+				itemBuf[o.next].prev = o.prev;
+			}
+			if (items == idx) {
+				items = o.next;
+			}
 			o.ud = nullptr;
 			o.next = freeItemHeader;
 			ItemClearMappings(o);
@@ -157,6 +173,37 @@ namespace AABBCD {
 			return itemBufLen - freeItemCount;
 		}
 
+		// 检索 item 覆盖到的格子的邻居 items idxs
+		int ItemQueryNears(int const& idx, std::vector<int>& out) {
+			assert(idx >= 0);
+			assert(idx < itemBufLen);
+			assert(itemBuf[idx].ud);
+			out.clear();
+			auto& o = itemBuf[idx];
+			o.flag = 1;
+			for (int n = 0; n < cellMappingsSize; ++n) {
+				auto& m = o.cellMappings[n];
+				if (m.first == -1) break;
+				int mIdx = cells[m.first];
+				do {
+					auto& m = mappingBuf[mIdx];
+					if (!itemBuf[m.item].flag) {
+						out.push_back(m.item);
+					}
+					mIdx = m.next;
+				} while (mIdx != -1);
+			}
+			o.flag = 0;
+			for (auto& idx : out) {
+				itemBuf[idx].flag = 0;
+			}
+			return (int)out.size();
+		}
+
+		// todo: 按坐标, 距离检索某 圆 范围内的 items idxs
+		// todo: 检索指定 Rect 范围的 items idxs
+		// todo: 找离目标区域 最近的 item ? 得到范围内由近到远排列的 items list?
+
 		void Dump() {
 			int c = Count();
 			std::cout << "---------------- item's count = " << c << std::endl;
@@ -164,9 +211,7 @@ namespace AABBCD {
 
 			ForeachItem([this](int const& idx) {
 				auto& o = ItemAt(idx);
-				std::cout << "idx = " << idx << ", ud = " << o.ud << std::endl;
-				std::cout << "x = " << o.pos.x << ", y = " << o.pos.y << std::endl;
-				std::cout << "w = " << o.siz.w << ", h = " << o.siz.h << std::endl;
+				std::cout << "idx = " << idx << ", ud = " << o.ud << ", x = " << o.pos.x << ", y = " << o.pos.y << ", w = " << o.siz.w << ", h = " << o.siz.h << std::endl;
 				for (int n = 0; n < cellMappingsSize; ++n) {
 					auto& m = o.cellMappings[n];
 					if (m.first == -1) break;
@@ -174,21 +219,21 @@ namespace AABBCD {
 					int cIdx = m.first - rIdx * columnCount;
 					std::cout << "cell = " << rIdx << "," << cIdx << std::endl;
 				}
-				});
+			});
 
 			std::cout << "-------- cells: " << columnCount << " * " << rowCount << std::endl;
 
 			for (int j = 0; j < rowCount; ++j) {
 				for (int i = 0; i < columnCount; ++i) {
-					int cIdx = cells[j * columnCount + i];
-					bool hasItems = cIdx != -1;
+					int mIdx = cells[j * columnCount + i];
+					bool hasItems = mIdx != -1;
 					if (hasItems) {
 						std::cout << j << "," << i << ": items = ";
 					}
-					while (cIdx != -1) {
-						auto& m = mappingBuf[cIdx];
+					while (mIdx != -1) {
+						auto& m = mappingBuf[mIdx];
 						std::cout << m.item << " ";
-						cIdx = m.next;
+						mIdx = m.next;
 					}
 					if (hasItems) {
 						std::cout << std::endl;
@@ -210,6 +255,8 @@ namespace AABBCD {
 			int bottom = (o.pos.y + o.siz.h / 2) / cellSize.h;
 
 			// todo: 裁剪 index 范围 避免 for 内 if. 怀疑如果面积不大，不一定快。要测
+
+			// todo2: 缓存上次的 left right top bottom ? 如果判断没有变化就短路退出. 模板切换启用
 
 			int n = 0;
 			for (int i = top; i <= bottom; ++i) {
@@ -256,9 +303,8 @@ namespace AABBCD {
 			m.prev = -1;
 			m.next = cells[cellIndex];
 			if (cells[cellIndex] != -1) {
-				auto& p = mappingBuf[cells[cellIndex]];
-				assert(p.prev == -1);
-				p.prev = idx;
+				assert(mappingBuf[cells[cellIndex]].prev == -1);
+				mappingBuf[cells[cellIndex]].prev = idx;
 			}
 			cells[cellIndex] = idx;
 
@@ -277,13 +323,19 @@ namespace AABBCD {
 			assert(idx >= 0);
 			assert(idx < mappingBufLen);
 			assert(mappingBuf[idx].item != -1);
-
-			if (cells[cellIdx] == idx) {
-				cells[cellIdx] = mappingBuf[idx].next;
+			auto& m = mappingBuf[idx];
+			if (m.prev != -1) {
+				mappingBuf[m.prev].next = m.next;
 			}
-
-			mappingBuf[idx].item = -1;
-			mappingBuf[idx].next = freeMappingHeader;
+			if (m.next != -1) {
+				mappingBuf[m.next].prev = m.prev;
+			}
+			auto& c = cells[cellIdx];
+			if (c == idx) {
+				c = mappingBuf[idx].next;
+			}
+			m.item = -1;
+			m.next = freeMappingHeader;
 			freeMappingHeader = idx;
 			++freeMappingCount;
 		}
@@ -296,27 +348,45 @@ struct Monster {
 };
 
 int main() {
-	AABBCD::Context<> ctx({ 100, 100 }, 50, 30, 10000);
+	AABBCD::Grid<16> g({ 100, 100 }, 50, 30, 10000);
+
+	size_t numMonsters = 100;
+	size_t i;
+
+	std::vector<Monster> ms;
+	ms.reserve(numMonsters);
+	for (i = 0; i < numMonsters; i++) {
+		ms.push_back({ 0, 0, 80, 80 });
+		auto& m = ms.back();
+		m.idx = g.ItemAdd(&m, { m.x, m.y }, { m.w, m.h });
+	}
+	g.Dump();
 
 	auto secs = xx::NowEpochSeconds();
-
-	size_t i = 0;
-	for (; i < 1000000; i++) {
-		Monster m{ 0, 0, 80, 80 };
-		m.idx = ctx.ItemAdd(&m, { m.x, m.y }, { m.w, m.h });
-		//ctx.Dump();
-
-		m.x = 111;
-		ctx.ItemUpdate(m.idx, { m.x, m.y }, { m.w, m.h });
-		//ctx.Dump();
-
-		ctx.ItemRemoveAt(m.idx);
-		m.idx = -1;
-		//ctx.Dump();
+	auto& m = ms[0];
+	for (i = 0; i < 10000000; i++) {
+		m.x = i % 128;
+		g.ItemUpdate(m.idx, { m.x, m.y }, { m.w, m.h });
 	}
-	std::cout << "for " << i << " times. elapsed seconds = "<< xx::NowEpochSeconds(secs) << std::endl;
+	std::cout << "============================================== Update " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+	g.Dump();
 
-	// todo: Update, Query
+	std::vector<int> nears;
+	secs = xx::NowEpochSeconds();
+	for (i = 0; i < 10000000; i++) {
+		g.ItemQueryNears(m.idx, nears);
+	}
+	std::cout << "============================================== Query " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+	std::cout << "nears:";
+	for (auto& idx : nears) {
+		std::cout << " " << idx;
+	}
+	std::cout << std::endl;
+
+	g.ItemRemoveAt(m.idx);
+	m.idx = -1;
+	g.Dump();
+
 	return 0;
 }
 
