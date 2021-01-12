@@ -92,7 +92,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AABBCD.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -101,7 +100,7 @@
     <ClInclude Include="..\xxlib\xx_obj.h" />
     <ClInclude Include="..\xxlib\xx_ptr.h" />
     <ClInclude Include="..\xxlib\xx_typehelpers.h" />
-    <ClInclude Include="AABBCD.h" />
+    <ClInclude Include="Space2dIndex.h" />
     <ClInclude Include="TexturePackerReader.h" />
   </ItemGroup>
   <ItemGroup>

@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="AABBCD.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">
@@ -26,7 +25,7 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="TexturePackerReader.h" />
-    <ClInclude Include="AABBCD.h" />
+    <ClInclude Include="Space2dIndex.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">
