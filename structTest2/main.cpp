@@ -350,7 +350,7 @@ struct Monster {
 int main() {
 	AABBCD::Grid<16> g({ 100, 100 }, 50, 30, 10000);
 
-	size_t numMonsters = 100;
+	size_t numMonsters = 100000;
 	size_t i;
 
 	std::vector<Monster> ms;
@@ -360,32 +360,30 @@ int main() {
 		auto& m = ms.back();
 		m.idx = g.ItemAdd(&m, { m.x, m.y }, { m.w, m.h });
 	}
-	g.Dump();
+	//g.Dump();
 
 	auto secs = xx::NowEpochSeconds();
 	auto& m = ms[0];
-	for (i = 0; i < 10000000; i++) {
-		m.x = i % 128;
-		g.ItemUpdate(m.idx, { m.x, m.y }, { m.w, m.h });
+	for (i = 0; i < 1000; i++) {
+		for (auto& m : ms) {
+			m.x = i % 128;
+			g.ItemUpdate(m.idx, { m.x, m.y }, { m.w, m.h });
+		}
 	}
 	std::cout << "============================================== Update " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
-	g.Dump();
+	//g.Dump();
 
 	std::vector<int> nears;
 	secs = xx::NowEpochSeconds();
-	for (i = 0; i < 10000000; i++) {
+	for (i = 0; i < 1000; i++) {
 		g.ItemQueryNears(m.idx, nears);
 	}
 	std::cout << "============================================== Query " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
-	std::cout << "nears:";
-	for (auto& idx : nears) {
-		std::cout << " " << idx;
-	}
-	std::cout << std::endl;
+	std::cout << "nears size() = " << nears.size() << std::endl;
 
-	g.ItemRemoveAt(m.idx);
-	m.idx = -1;
-	g.Dump();
+	//g.ItemRemoveAt(m.idx);
+	//m.idx = -1;
+	//g.Dump();
 
 	return 0;
 }
