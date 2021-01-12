@@ -3,8 +3,9 @@ namespace AABBCD {
 	struct Vec2 { int x, y; };
 	struct Size { int w, h; };
 
-	template<size_t cellMappingsSize = 4>
+	template<int cellMappingsSize = 4>
 	struct Context {
+		static const int maxCellMappingsSize = cellMappingsSize;
 
 		struct Item {
 			Vec2 pos;
@@ -23,6 +24,7 @@ namespace AABBCD {
 		Size cellSize;
 		int rowCount;
 		int columnCount;
+	protected:
 
 		int* cells;
 		int items;
@@ -39,23 +41,31 @@ namespace AABBCD {
 		int freeMappingHeader;
 		int freeMappingCount;
 
+	public:
 		Context(Size const& cellSize, int const& rowCount, int const& columnCount, int const& cap) {
 			this->cellSize = cellSize;
 			this->rowCount = rowCount;
 			this->columnCount = columnCount;
 			cells = (int*)malloc(sizeof(int) * rowCount * columnCount);
+
+			itemBuf = (Item*)malloc(sizeof(Item) * cap);
+			itemBufCap = cap;
+
+			mappingBuf = (Mapping*)malloc(sizeof(Mapping) * cap * cellMappingsSize);
+			mappingBufCap = cap * cellMappingsSize;
+
+			Clear();
+		}
+
+		void Clear() {
 			memset((void*)cells, -1, sizeof(int) * rowCount * columnCount);
 			items = -1;
 
-			itemBuf = (Item*)malloc(sizeof(Item) * cap);
 			itemBufLen = 0;
-			itemBufCap = cap;
 			freeItemHeader = -1;
 			freeItemCount = 0;
 
-			mappingBuf = (Mapping*)malloc(sizeof(Mapping) * cap * cellMappingsSize);
 			mappingBufLen = 0;
-			mappingBufCap = cap * cellMappingsSize;
 			freeMappingHeader = -1;
 			freeMappingCount = 0;
 		}
@@ -100,6 +110,96 @@ namespace AABBCD {
 			return idx;
 		}
 
+		void ItemUpdate(int const& idx, Vec2 const& pos, Size const& siz) {
+			assert(idx >= 0);
+			assert(idx < itemBufLen);
+			assert(itemBuf[idx].ud);
+
+			auto& o = itemBuf[idx];
+			if (*(int64_t*)&o.pos == *(int64_t*)&pos && *(int64_t*)&o.siz == *(int64_t*)&siz) return;
+			o.pos = pos;
+			o.siz = siz;
+			ItemClearMappings(o);
+			ItemCalc(idx);
+		}
+
+		void ItemRemoveAt(int const& idx) {
+			assert(idx >= 0);
+			assert(idx < itemBufLen);
+			assert(itemBuf[idx].ud);
+			auto& o = itemBuf[idx];
+			items = o.prev;
+			o.ud = nullptr;
+			o.next = freeItemHeader;
+			ItemClearMappings(o);
+			freeItemHeader = idx;
+			++freeItemCount;
+		}
+
+		Item& ItemAt(int const& idx) {
+			assert(idx >= 0);
+			assert(idx < itemBufLen);
+			assert(itemBuf[idx].ud);
+			return itemBuf[idx];
+		}
+
+		// ForeachItem([](int const& idx){  ctx.ItemAt(idx)  }); 
+		template<typename F>
+		void ForeachItem(F&& f) {
+			int idx = items;
+			while (idx != -1) {
+				f(idx);
+				idx = itemBuf[idx].next;
+			}
+		}
+
+		int Count() const {
+			return itemBufLen - freeItemCount;
+		}
+
+		void Dump() {
+			int c = Count();
+			std::cout << "---------------- item's count = " << c << std::endl;
+			if (!c) return;
+
+			ForeachItem([this](int const& idx) {
+				auto& o = ItemAt(idx);
+				std::cout << "idx = " << idx << ", ud = " << o.ud << std::endl;
+				std::cout << "x = " << o.pos.x << ", y = " << o.pos.y << std::endl;
+				std::cout << "w = " << o.siz.w << ", h = " << o.siz.h << std::endl;
+				for (int n = 0; n < cellMappingsSize; ++n) {
+					auto& m = o.cellMappings[n];
+					if (m.first == -1) break;
+					int rIdx = m.first / columnCount;
+					int cIdx = m.first - rIdx * columnCount;
+					std::cout << "cell = " << rIdx << "," << cIdx << std::endl;
+				}
+				});
+
+			std::cout << "-------- cells: " << columnCount << " * " << rowCount << std::endl;
+
+			for (int j = 0; j < rowCount; ++j) {
+				for (int i = 0; i < columnCount; ++i) {
+					int cIdx = cells[j * columnCount + i];
+					bool hasItems = cIdx != -1;
+					if (hasItems) {
+						std::cout << j << "," << i << ": items = ";
+					}
+					while (cIdx != -1) {
+						auto& m = mappingBuf[cIdx];
+						std::cout << m.item << " ";
+						cIdx = m.next;
+					}
+					if (hasItems) {
+						std::cout << std::endl;
+					}
+				}
+			}
+
+			std::cout << std::endl;
+		};
+
+	protected:
 		void ItemCalc(int const& idx) {
 			auto& o = itemBuf[idx];
 
@@ -109,7 +209,7 @@ namespace AABBCD {
 			int top = (o.pos.y - o.siz.h / 2) / cellSize.h;
 			int bottom = (o.pos.y + o.siz.h / 2) / cellSize.h;
 
-			// todo: 裁剪 index 范围 避免 for 内 if
+			// todo: 裁剪 index 范围 避免 for 内 if. 怀疑如果面积不大，不一定快。要测
 
 			int n = 0;
 			for (int i = top; i <= bottom; ++i) {
@@ -127,42 +227,19 @@ namespace AABBCD {
 			}
 		}
 
-		void ItemUpdate(int const& idx, Vec2 const& pos, Size const& siz) {
-			assert(idx >= 0);
-			assert(idx < itemBufLen);
-			assert(itemBuf[idx].ud);
-
-			auto& o = itemBuf[idx];
-			if (*(int64_t*)&o.pos == *(int64_t*)&pos && *(int64_t*)&o.siz == *(int64_t*)&siz) return;
-			o.pos = pos;
-			o.siz = siz;
-
-			// cleanup cellMappings
+		void ItemClearMappings(Item const& o) {
 			for (int n = 0; n < cellMappingsSize; ++n) {
 				auto& m = o.cellMappings[n];
 				if (m.first == -1) break;
 				MappingRemoveAt(m.first, m.second);
 			}
-
-			ItemCalc(idx);
 		}
-
-		void ItemRemoveAt(int const& idx) {
-			assert(idx >= 0);
-			assert(idx < itemBufLen);
-			assert(itemBuf[idx].ud);
-			itemBuf[idx].ud = nullptr;
-			itemBuf[idx].next = freeItemHeader;
-			freeItemHeader = idx;
-			++freeItemCount;
-		}
-
 
 		int MappingAdd(int const& cellIndex, int const& itemIndex) {
 			int idx;
 			if (freeMappingCount) {
 				idx = freeMappingHeader;
-				freeMappingHeader = itemBuf[idx].next;
+				freeMappingHeader = mappingBuf[idx].next;
 				--freeMappingCount;
 			}
 			else {
@@ -196,7 +273,7 @@ namespace AABBCD {
 
 		void MappingRemoveAt(int const& cellIdx, int const& idx) {
 			assert(cellIdx >= 0);
-			assert(cellIdx < rowCount * columnCount);
+			assert(cellIdx < rowCount* columnCount);
 			assert(idx >= 0);
 			assert(idx < mappingBufLen);
 			assert(mappingBuf[idx].item != -1);
@@ -220,20 +297,26 @@ struct Monster {
 
 int main() {
 	AABBCD::Context<> ctx({ 100, 100 }, 50, 30, 10000);
-	Monster m{ 0, 0, 80, 80 };
-	{
+
+	auto secs = xx::NowEpochSeconds();
+
+	size_t i = 0;
+	for (; i < 1000000; i++) {
+		Monster m{ 0, 0, 80, 80 };
 		m.idx = ctx.ItemAdd(&m, { m.x, m.y }, { m.w, m.h });
-	}
-	{
+		//ctx.Dump();
+
 		m.x = 111;
 		ctx.ItemUpdate(m.idx, { m.x, m.y }, { m.w, m.h });
-	}
+		//ctx.Dump();
 
-	// todo: Update, Query
-	{
 		ctx.ItemRemoveAt(m.idx);
 		m.idx = -1;
+		//ctx.Dump();
 	}
+	std::cout << "for " << i << " times. elapsed seconds = "<< xx::NowEpochSeconds(secs) << std::endl;
+
+	// todo: Update, Query
 	return 0;
 }
 
