@@ -5,8 +5,8 @@
 
 namespace Space2dIndex {
 
-	struct Vec2 { int x, y; };
-	struct Size { int w, h; };
+	struct Vec2 { float x, y; };
+	struct Size { float w, h; };
 
 	template<typename UD, int cellMappingsSize = 4>
 	struct Grid {
@@ -232,7 +232,8 @@ namespace Space2dIndex {
 
 			ForeachItem([this](int const& idx) {
 				auto& o = ItemAt(idx);
-				std::cout << "idx = " << idx << ", ud = " << o.ud << ", x = " << o.pos.x << ", y = " << o.pos.y << ", w = " << o.siz.w << ", h = " << o.siz.h << std::endl;
+				std::cout << "idx = " << idx << ", ud = " << o.ud << ", x = " << o.pos.x << ", y = " << o.pos.y 
+					<< ", w = " << o.siz.w << ", h = " << o.siz.h << std::endl;
 				for (int n = 0; n < cellMappingsSize; ++n) {
 					auto& m = o.cellMappings[n];
 					if (m.first == -1) break;
@@ -266,21 +267,23 @@ namespace Space2dIndex {
 		};
 
 	protected:
+		int inline fasterfloor(float const& x) { return x < 0 ? (int)x == x ? (int)x : (int)x - 1 : (int)x; }
+
 		template<bool isUpdate>
 		void ItemCalc(int const& idx) {
 			auto& o = itemBuf[idx];
 			auto& o2 = itemExBuf[idx];
 
 			// 计算 item 覆盖到了哪些 cell
-			int left = (o.pos.x - o.siz.w / 2) / cellSize.w;
-			int right = (o.pos.x + o.siz.w / 2) / cellSize.w;
-			int top = (o.pos.y - o.siz.h / 2) / cellSize.h;
-			int bottom = (o.pos.y + o.siz.h / 2) / cellSize.h;
-
-			// todo: 裁剪 index 范围 避免 for 内 if. 怀疑如果面积不大，不一定快。要测
+			auto w2 = o.siz.w / 2;
+			auto h2 = o.siz.h / 2;
+			
+			int left = (int)fasterfloor(float(o.pos.x - w2) / cellSize.w);
+			int right = (int)fasterfloor(float(o.pos.x + w2) / cellSize.w);
+			int top = (int)fasterfloor(float(o.pos.y - h2) / cellSize.h);
+			int bottom = (int)fasterfloor(float(o.pos.y + h2) / cellSize.h);
 
 			if constexpr (isUpdate) {
-				// 缓存上次的 left right top bottom ? 如果判断没有变化就短路退出. 模板切换启用
 				if (left == o2.left && right == o2.right && top == o2.top && bottom == o2.bottom) return;
 				ItemClearMappings(idx);
 			}
@@ -289,18 +292,24 @@ namespace Space2dIndex {
 			o2.top = top;
 			o2.bottom = bottom;
 
+			// 裁剪 index 范围 避免 for 内 if. 怀疑如果面积不大，不一定快。要测
+			if (left < 0) left = 0;
+			if (top < 0) top = 0;
+			if (right > columnCount) right = columnCount;
+			if (bottom > rowCount) bottom = rowCount;
+
 			int n = 0;
 			for (int i = top; i <= bottom; ++i) {
-				if (i < 0 || i >= rowCount) continue;
-				for (int j = left; i <= right; ++i) {
-					if (j < 0 || j >= columnCount) continue;
+				//if (i < 0 || i >= rowCount) continue;
+				for (int j = left; j <= right; ++j) {
+					//if (j < 0 || j >= columnCount) continue;
 					int cIdx = i * columnCount + j;
 					o2.cellMappings[n].first = cIdx;
 					o2.cellMappings[n].second = MappingAdd(cIdx, idx);
 					++n;
 				}
 			}
-			if (n < cellMappingsSize - 1) {
+			if (n < cellMappingsSize) {
 				o2.cellMappings[n].first = -1;
 			}
 		}

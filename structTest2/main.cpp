@@ -1,39 +1,52 @@
 ﻿#include "Space2dIndex.h"
 #include "xx_typehelpers.h"
+#include "xx_ptr.h"
 
 struct Monster {
-	int x, y, w, h, idx;
-	Monster(int x, int y, int w, int h) : x(x), y(y), w(w), h(h), idx(-1) {}
+	float x, y, w, h;
+	int idx;
+	Monster(float x, float y, float w, float h) : x(x), y(y), w(w), h(h), idx(-1) {}
 };
 
 int main() {
-	Space2dIndex::Grid<std::weak_ptr<Monster>, 9> g({ 100, 100 }, 50, 30, 10000);
+	Space2dIndex::Grid<xx::Weak<Monster>, 9> g({ 100, 100 }, 50, 30, 10000);
 
 	size_t numMonsters = 100000;
-	size_t i;
+	int i;
 
-	std::vector<std::shared_ptr<Monster>> ms;
+	std::vector<xx::Shared<Monster>> ms;
 	ms.reserve(numMonsters);
 	for (i = 0; i < numMonsters; i++) {
-		ms.push_back(xx::Make<Monster>(0, 0, 180, 180));
+		ms.push_back(xx::MakeShared<Monster>(0.f, 0.f, 180.f, 180.f));
 	}
 
 	auto secs = xx::NowEpochSeconds();
 	for (auto&& m : ms) {
-		m->idx = g.ItemAdd(std::weak_ptr<Monster>(m), { m->x, m->y }, { m->w, m->h });
+		m->idx = g.ItemAdd(m, { m->x, m->y }, { m->w, m->h });
 	}
 	std::cout << "============================================== Add " << numMonsters << " monsters. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
 	//g.Dump();
 
 	secs = xx::NowEpochSeconds();
 	for (i = 0; i < 1000; i++) {
+		auto x = (float)(i * 50 - 1000);
+		auto y = (float)(i * 50 - 1000);
 		for (auto& m : ms) {
-			m->x = i % 128;
+			m->x = x;
+			m->y = y;
 			g.ItemUpdate(m->idx, { m->x, m->y }, { m->w, m->h });
 		}
 	}
 	std::cout << "============================================== Update " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
 	//g.Dump();
+
+	// 分散位置
+	for (i = 0; i < numMonsters; i++) {
+		auto&& m = ms[i];
+		m->x = (float)(i * 50);
+		m->y = 0;
+		g.ItemUpdate(m->idx, { m->x, m->y }, { m->w, m->h });
+	}
 
 	auto& m = *ms[0];
 	std::vector<int> nears;
