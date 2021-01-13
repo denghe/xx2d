@@ -8,17 +8,20 @@ namespace Space2dIndex {
 	struct Vec2 { int x, y; };
 	struct Size { int w, h; };
 
-	template<int cellMappingsSize = 4>
+	template<typename UD, int cellMappingsSize = 4>
 	struct Grid {
-		static const int maxCellMappingsSize = cellMappingsSize;
+		static const int cellMappingsSize_ = cellMappingsSize;
 
 		struct Item {
 			Vec2 pos;
 			Size siz;
 			int prev, next;
 			size_t flag;
-			void* ud;
+		};
+		struct ItemEx {
+			int left, right, top, bottom;
 			std::array<std::pair<int, int>, cellMappingsSize> cellMappings;
+			UD ud;
 		};
 
 		struct Mapping {
@@ -39,6 +42,7 @@ namespace Space2dIndex {
 		int itemBufCap;
 		int freeItemHeader;
 		int freeItemCount;
+		std::vector<ItemEx> itemExBuf;
 
 		Mapping* mappingBuf;
 		int mappingBufLen;
@@ -54,6 +58,8 @@ namespace Space2dIndex {
 			cells = (int*)malloc(sizeof(int) * rowCount * columnCount);
 
 			itemBuf = (Item*)malloc(sizeof(Item) * cap);
+			//itemExBuf = (ItemEx*)malloc(sizeof(ItemEx) * cap);
+			itemExBuf.resize(cap);
 			itemBufCap = cap;
 
 			mappingBuf = (Mapping*)malloc(sizeof(Mapping) * cap * cellMappingsSize);
@@ -63,6 +69,12 @@ namespace Space2dIndex {
 		}
 
 		void Clear() {
+			if constexpr (!std::is_standard_layout_v<UD>) {
+				ForeachItem([this](int const& idx) {
+					itemExBuf[idx].ud = UD();
+					});
+			}
+
 			memset((void*)cells, -1, sizeof(int) * rowCount * columnCount);
 			items = -1;
 
@@ -78,11 +90,12 @@ namespace Space2dIndex {
 		~Grid() {
 			free(cells);
 			free(itemBuf);
+			//free(itemExBuf);
 			free(mappingBuf);
 		}
 
-		int ItemAdd(void* const& ud, Vec2 const& pos, Size const& siz) {
-			assert(ud);
+		int ItemAdd(UD&& ud, Vec2 const& pos, Size const& siz) {
+			//assert(ud);
 			assert(siz.w >= 0 && siz.h >= 0);
 			assert(((siz.w - 1) / cellSize.w + 1) * ((siz.h - 1) / cellSize.h + 1) <= cellMappingsSize);
 
@@ -96,16 +109,19 @@ namespace Space2dIndex {
 				if (itemBufLen == itemBufCap) {
 					itemBufCap *= 2;
 					itemBuf = (Item*)realloc((void*)itemBuf, sizeof(Item) * itemBufCap);
+					//itemExBuf = (ItemEx*)realloc((void*)itemExBuf, sizeof(ItemEx) * itemBufCap);
+					itemExBuf.resize(itemBufCap);
 				}
 				idx = itemBufLen;
 				++itemBufLen;
 			}
 
 			auto& o = itemBuf[idx];
+			auto& o2 = itemExBuf[idx];
 			o.pos = pos;
 			o.siz = siz;
-			o.ud = ud;
 			o.flag = 0;
+			o2.ud = std::forward<UD>(ud);
 
 			o.next = items;
 			if (items != -1) {
@@ -115,7 +131,7 @@ namespace Space2dIndex {
 			o.prev = -1;
 			items = idx;
 
-			ItemCalc(idx);
+			ItemCalc<false>(idx);
 
 			return idx;
 		}
@@ -123,20 +139,19 @@ namespace Space2dIndex {
 		void ItemUpdate(int const& idx, Vec2 const& pos, Size const& siz) {
 			assert(idx >= 0);
 			assert(idx < itemBufLen);
-			assert(itemBuf[idx].ud);
+			//assert(itemExBuf[idx].ud);
 
 			auto& o = itemBuf[idx];
 			if (*(int64_t*)&o.pos == *(int64_t*)&pos && *(int64_t*)&o.siz == *(int64_t*)&siz) return;
 			o.pos = pos;
 			o.siz = siz;
-			ItemClearMappings(o);
-			ItemCalc(idx);
+			ItemCalc<true>(idx);
 		}
 
 		void ItemRemoveAt(int const& idx) {
 			assert(idx >= 0);
 			assert(idx < itemBufLen);
-			assert(itemBuf[idx].ud);
+			//assert(itemBuf[idx].ud);
 			auto& o = itemBuf[idx];
 			if (o.prev != -1) {
 				itemBuf[o.prev].next = o.next;
@@ -147,9 +162,11 @@ namespace Space2dIndex {
 			if (items == idx) {
 				items = o.next;
 			}
-			o.ud = nullptr;
+			if constexpr (!std::is_standard_layout_v<UD>) {
+				o.ud = UD();
+			}
 			o.next = freeItemHeader;
-			ItemClearMappings(o);
+			ItemClearMappings(idx);
 			freeItemHeader = idx;
 			++freeItemCount;
 		}
@@ -179,17 +196,19 @@ namespace Space2dIndex {
 		int ItemQueryNears(int const& idx, std::vector<int>& out) {
 			assert(idx >= 0);
 			assert(idx < itemBufLen);
-			assert(itemBuf[idx].ud);
+			//assert(itemExBuf[idx].ud);
 			out.clear();
 			auto& o = itemBuf[idx];
+			auto& o2 = itemExBuf[idx];
 			o.flag = 1;
 			for (int n = 0; n < cellMappingsSize; ++n) {
-				auto& m = o.cellMappings[n];
+				auto& m = o2.cellMappings[n];
 				if (m.first == -1) break;
 				int mIdx = cells[m.first];
 				do {
 					auto& m = mappingBuf[mIdx];
 					if (!itemBuf[m.item].flag) {
+						itemBuf[m.item].flag = 1;
 						out.push_back(m.item);
 					}
 					mIdx = m.next;
@@ -247,8 +266,10 @@ namespace Space2dIndex {
 		};
 
 	protected:
+		template<bool isUpdate>
 		void ItemCalc(int const& idx) {
 			auto& o = itemBuf[idx];
+			auto& o2 = itemExBuf[idx];
 
 			// 计算 item 覆盖到了哪些 cell
 			int left = (o.pos.x - o.siz.w / 2) / cellSize.w;
@@ -258,7 +279,15 @@ namespace Space2dIndex {
 
 			// todo: 裁剪 index 范围 避免 for 内 if. 怀疑如果面积不大，不一定快。要测
 
-			// todo2: 缓存上次的 left right top bottom ? 如果判断没有变化就短路退出. 模板切换启用
+			if constexpr (isUpdate) {
+				// 缓存上次的 left right top bottom ? 如果判断没有变化就短路退出. 模板切换启用
+				if (left == o2.left && right == o2.right && top == o2.top && bottom == o2.bottom) return;
+				ItemClearMappings(idx);
+			}
+			o2.left = left;
+			o2.right = right;
+			o2.top = top;
+			o2.bottom = bottom;
 
 			int n = 0;
 			for (int i = top; i <= bottom; ++i) {
@@ -266,19 +295,19 @@ namespace Space2dIndex {
 				for (int j = left; i <= right; ++i) {
 					if (j < 0 || j >= columnCount) continue;
 					int cIdx = i * columnCount + j;
-					o.cellMappings[n].first = cIdx;
-					o.cellMappings[n].second = MappingAdd(cIdx, idx);
+					o2.cellMappings[n].first = cIdx;
+					o2.cellMappings[n].second = MappingAdd(cIdx, idx);
 					++n;
 				}
 			}
 			if (n < cellMappingsSize - 1) {
-				o.cellMappings[n].first = -1;
+				o2.cellMappings[n].first = -1;
 			}
 		}
 
-		void ItemClearMappings(Item const& o) {
+		void ItemClearMappings(int const& idx) {
 			for (int n = 0; n < cellMappingsSize; ++n) {
-				auto& m = o.cellMappings[n];
+				auto& m = itemExBuf[idx].cellMappings[n];
 				if (m.first == -1) break;
 				MappingRemoveAt(m.first, m.second);
 			}
