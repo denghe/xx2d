@@ -96,19 +96,22 @@ namespace Space2dIndex2 {
 			//o.x = x;
 			//o.y = y;
 
-			// 计算出格子下标
-			int colIdx = fasterfloor(x / cellWidth);
-			int rowIdx = fasterfloor(y / cellHeight);
-
-			// 根据是否位于 grid 范围内, 填充相应数据
 			int* c;
-			if (rowIdx >= 0 && rowIdx < rowCount && colIdx >= 0 && colIdx < columnCount) {
-				o.cellIdx = rowIdx * columnCount + colIdx;
-				c = &cells[o.cellIdx];
-			}
-			else {
+			if (x < 0 || y < 0) {
 				o.cellIdx = -1;
 				c = &outside;
+			}
+			else {
+				int colIdx = (int)(x / cellWidth);
+				int rowIdx = (int)(y / cellHeight);
+				if (colIdx >= columnCount || rowIdx >= rowCount) {
+					o.cellIdx = -1;
+					c = &outside;
+				}
+				else {
+					o.cellIdx = rowIdx * columnCount + colIdx;
+					c = &cells[o.cellIdx];
+				}
 			}
 
 			o.prev = -1;
