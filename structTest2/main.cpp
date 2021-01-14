@@ -5,7 +5,7 @@
 struct Monster {
 	float x, y;
 	int idx;
-	Monster(float x, float y, float w, float h) : x(x), y(y), idx(-1) {}
+	Monster(float x, float y) : x(x), y(y), idx(-1) {}
 };
 
 int main() {
@@ -16,7 +16,7 @@ int main() {
 	std::vector<xx::Shared<Monster>> ms;
 	ms.reserve(numMonsters);
 	for (i = 0; i < numMonsters; i++) {
-		ms.push_back(xx::MakeShared<Monster>(0.f, 0.f, 180.f, 180.f));
+		ms.push_back(xx::MakeShared<Monster>(0.f, 0.f));
 	}
 
 	auto secs = xx::NowEpochSeconds();
