@@ -355,6 +355,7 @@ namespace Space2dPointIndex {
 			// 格坐标 判定用半径pow
 			XYType rr = (r + cellWH) * (r + cellWH);
 
+			// 因为对称，故可以在 for 的时候先根据距离，计算看要跳过多少个格子， 两头减去
 #define RR_RI_CI_CHECK_RANGE(ri, ci) ((rIdx - ri) * cellWH) * ((rIdx - ri) * cellWH) + ((cIdx - ci) * cellWH) * ((cIdx - ci) * cellWH) < rr
 
 			// 当前格
@@ -370,21 +371,31 @@ namespace Space2dPointIndex {
 				// 上横
 				jb = rIdx - i;
 				if (jb >= 0) {
-					for (int k = kb; k <= ke; k++) {
-						//jb, k
+					// 探索位于圆形范围内的格子坐标边界
+					int k = kb;
+					for (; k <= ke; k++) {
 						if (RR_RI_CI_CHECK_RANGE(jb, k)) {
-							PushTo(jb, k, irs);
+							ke -= kb - k;
+							break;
 						}
+					}
+					for (; k <= ke; k++) {
+						PushTo(jb, k, irs);
 					}
 				}
 
 				// 下横
 				je = rIdx + i;
 				if (je < rowCount) {
-					for (int k = kb; k <= ke; k++) {
-						if (RR_RI_CI_CHECK_RANGE(je, k)) {
-							PushTo(je, k, irs);
+					int k = kb;
+					for (; k <= ke; k++) {
+						if (RR_RI_CI_CHECK_RANGE(jb, k)) {
+							ke -= kb - k;
+							break;
 						}
+					}
+					for (; k <= ke; k++) {
+						PushTo(je, k, irs);
 					}
 				}
 
@@ -394,20 +405,30 @@ namespace Space2dPointIndex {
 				// 左边
 				kb = cIdx - i;
 				if (kb >= 0) {
-					for (int j = jb; j <= je; j++) {
+					int j = jb;
+					for (; j <= je; j++) {
 						if (RR_RI_CI_CHECK_RANGE(j, kb)) {
-							PushTo(j, kb, irs);
+							je -= jb - j;
+							break;
 						}
+					}
+					for (; j <= je; j++) {
+						PushTo(j, kb, irs);
 					}
 				}
 
 				// 右边
 				ke = cIdx + i;
 				if (ke < columnCount) {
-					for (int j = jb; j <= je; j++) {
-						if (RR_RI_CI_CHECK_RANGE(j, ke)) {
-							PushTo(j, ke, irs);
+					int j = jb;
+					for (; j <= je; j++) {
+						if (RR_RI_CI_CHECK_RANGE(j, kb)) {
+							je -= jb - j;
+							break;
 						}
+					}
+					for (; j <= je; j++) {
+						PushTo(j, ke, irs);
 					}
 				}
 
