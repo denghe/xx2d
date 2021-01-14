@@ -1,18 +1,17 @@
-﻿#include "Space2dIndex.h"
+﻿#include "Space2dIndex2.h"
 #include "xx_typehelpers.h"
 #include "xx_ptr.h"
 
 struct Monster {
-	float x, y, w, h;
+	float x, y;
 	int idx;
-	Monster(float x, float y, float w, float h) : x(x), y(y), w(w), h(h), idx(-1) {}
+	Monster(float x, float y, float w, float h) : x(x), y(y), idx(-1) {}
 };
 
 int main() {
-	Space2dIndex::Grid<xx::Weak<Monster>, 9> g({ 100, 100 }, 50, 30, 10000);
-
-	size_t numMonsters = 100000;
 	int i;
+	int numMonsters = 10000;
+	Space2dIndex2::Grid<xx::Weak<Monster>> g(100, 100, 5000, 5000, numMonsters);
 
 	std::vector<xx::Shared<Monster>> ms;
 	ms.reserve(numMonsters);
@@ -22,36 +21,37 @@ int main() {
 
 	auto secs = xx::NowEpochSeconds();
 	for (auto&& m : ms) {
-		m->idx = g.ItemAdd(m, { m->x, m->y }, { m->w, m->h });
+		m->idx = g.ItemAdd(m, m->x, m->y);
 	}
 	std::cout << "============================================== Add " << numMonsters << " monsters. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
 	//g.Dump();
 
 	secs = xx::NowEpochSeconds();
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < 10000; i++) {
 		auto x = (float)(i * 50 - 1000);
 		auto y = (float)(i * 50 - 1000);
 		for (auto& m : ms) {
 			m->x = x;
 			m->y = y;
-			g.ItemUpdate(m->idx, { m->x, m->y }, { m->w, m->h });
+			g.ItemUpdate(m->idx, m->x, m->y);
 		}
 	}
-	std::cout << "============================================== Update " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+	std::cout << "============================================== Update " << numMonsters << " * " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
 	//g.Dump();
 
 	// 分散位置
 	for (i = 0; i < numMonsters; i++) {
 		auto&& m = ms[i];
-		m->x = (float)(i * 50);
-		m->y = 0;
-		g.ItemUpdate(m->idx, { m->x, m->y }, { m->w, m->h });
+		m->x = (float)(i * 50 - 1000);
+		m->y = (float)(i * 50 - 1000);
+		g.ItemUpdate(m->idx, m->x, m->y);
 	}
+	//g.Dump();
 
-	auto& m = *ms[0];
+	auto& m = *ms[22];
 	std::vector<int> nears;
 	secs = xx::NowEpochSeconds();
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < 100000000; i++) {
 		g.ItemQueryNears(m.idx, nears);
 	}
 	std::cout << "============================================== Query " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
@@ -70,6 +70,92 @@ int main() {
 
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//#include "Space2dIndex.h"
+//#include "xx_typehelpers.h"
+//#include "xx_ptr.h"
+//
+//struct Monster {
+//	float x, y, w, h;
+//	int idx;
+//	Monster(float x, float y, float w, float h) : x(x), y(y), w(w), h(h), idx(-1) {}
+//};
+//
+//int main() {
+//	Space2dIndex::Grid<xx::Weak<Monster>, 9> g({ 100, 100 }, 50, 30, 10000);
+//
+//	int numMonsters = 100000;
+//	int i;
+//
+//	std::vector<xx::Shared<Monster>> ms;
+//	ms.reserve(numMonsters);
+//	for (i = 0; i < numMonsters; i++) {
+//		ms.push_back(xx::MakeShared<Monster>(0.f, 0.f, 180.f, 180.f));
+//	}
+//
+//	auto secs = xx::NowEpochSeconds();
+//	for (auto&& m : ms) {
+//		m->idx = g.ItemAdd(m, { m->x, m->y }, { m->w, m->h });
+//	}
+//	std::cout << "============================================== Add " << numMonsters << " monsters. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+//	//g.Dump();
+//
+//	secs = xx::NowEpochSeconds();
+//	for (i = 0; i < 1000; i++) {
+//		auto x = (float)(i * 50 - 1000);
+//		auto y = (float)(i * 50 - 1000);
+//		for (auto& m : ms) {
+//			m->x = x;
+//			m->y = y;
+//			g.ItemUpdate(m->idx, { m->x, m->y }, { m->w, m->h });
+//		}
+//	}
+//	std::cout << "============================================== Update " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+//	//g.Dump();
+//
+//	// 分散位置
+//	for (i = 0; i < numMonsters; i++) {
+//		auto&& m = ms[i];
+//		m->x = (float)(i * 50);
+//		m->y = 0;
+//		g.ItemUpdate(m->idx, { m->x, m->y }, { m->w, m->h });
+//	}
+//
+//	auto& m = *ms[0];
+//	std::vector<int> nears;
+//	secs = xx::NowEpochSeconds();
+//	for (i = 0; i < 1000; i++) {
+//		g.ItemQueryNears(m.idx, nears);
+//	}
+//	std::cout << "============================================== Query " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+//	std::cout << "nears size() = " << nears.size() << std::endl;
+//
+//	std::cout << "g.Count() = " << g.Count() << std::endl;
+//	secs = xx::NowEpochSeconds();
+//	for (auto&& m : ms) {
+//		g.ItemRemoveAt(m->idx);
+//	}
+//	std::cout << "============================================== Remove " << numMonsters << " monsters. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+//	std::cout << "g.Count() = " << g.Count() << std::endl;
+//
+//	ms.clear();
+//	//g.Clear();
+//
+//	return 0;
+//}
 
 
 

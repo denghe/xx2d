@@ -101,6 +101,7 @@
     <ClInclude Include="..\xxlib\xx_ptr.h" />
     <ClInclude Include="..\xxlib\xx_typehelpers.h" />
     <ClInclude Include="Space2dIndex.h" />
+    <ClInclude Include="Space2dIndex2.h" />
     <ClInclude Include="TexturePackerReader.h" />
   </ItemGroup>
   <ItemGroup>
