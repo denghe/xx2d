@@ -343,13 +343,90 @@ namespace Space2dPointIndex {
 			return (int)out.size();
 		}
 
-		// 矩形向外扩散. 结果不是很正确. 阔一圈就放入 out. 直到数量足够, 最后根据距离排序，留下 limit 个
+		// 从 x,y 当前所在格子开始，向外圆形 扩散, 将 idx 塞入 irs, 塞够 limit 个停止扩散, 返回实际塞入个数
+		int ItemQueryNums(int const& limit, XYType const& x, XYType const& y, XYType const& r) {
+
+			int rIdx = x < 0 ? -1 : (int)(x / cellWH);
+			int cIdx = y < 0 ? -1 : (int)(y / cellWH);
+			if (!(rIdx >= 0 && cIdx >= 0 && rIdx < rowCount && cIdx < columnCount)) return 0;
+
+			irs.clear();
+
+			// 格坐标 判定用半径pow
+			XYType rr = (r + cellWH) * (r + cellWH);
+
+#define RR_RI_CI_CHECK_RANGE(ri, ci) ((rIdx - ri) * cellWH) * ((rIdx - ri) * cellWH) + ((cIdx - ci) * cellWH) * ((cIdx - ci) * cellWH) < rr
+
+			// 当前格
+			PushTo(rIdx, cIdx, irs);
+
+			// 开始扩散. 先上下横边 再 左右竖边
+			int jb, je, kb, ke;
+			for (int i = 1; i <= radius; i++) {
+
+				kb = std::max(cIdx - i, 0);
+				ke = std::min(cIdx + i, columnCount - 1);
+
+				// 上横
+				jb = rIdx - i;
+				if (jb >= 0) {
+					for (int k = kb; k <= ke; k++) {
+						//jb, k
+						if (RR_RI_CI_CHECK_RANGE(jb, k)) {
+							PushTo(jb, k, irs);
+						}
+					}
+				}
+
+				// 下横
+				je = rIdx + i;
+				if (je < rowCount) {
+					for (int k = kb; k <= ke; k++) {
+						if (RR_RI_CI_CHECK_RANGE(je, k)) {
+							PushTo(je, k, irs);
+						}
+					}
+				}
+
+				jb = std::max(jb + 1, 0);
+				je = std::min(je - 1, rowCount - 1);
+
+				// 左边
+				kb = cIdx - i;
+				if (kb >= 0) {
+					for (int j = jb; j <= je; j++) {
+						if (RR_RI_CI_CHECK_RANGE(j, kb)) {
+							PushTo(j, kb, irs);
+						}
+					}
+				}
+
+				// 右边
+				ke = cIdx + i;
+				if (ke < columnCount) {
+					for (int j = jb; j <= je; j++) {
+						if (RR_RI_CI_CHECK_RANGE(j, ke)) {
+							PushTo(j, ke, irs);
+						}
+					}
+				}
+
+				// 数量满足，退出扩散
+				if (irs.size() >= limit) break;
+			}
+
+#undef RR_RI_CI_CHECK_RANGE
+
+			return (int)irs.size();
+		}
+
+		// cell 向外圆形 扩散. 扩一圈就将区域内的 items 放入 irs. 直到数量足够, 最后根据距离排序，留下 limit 个
 		int ItemQueryNears(std::vector<int>& out, int limit, XYType const& x, XYType const& y, XYType const& r = XYType()) {
 			assert(limit > 0);
 			assert(r >= 0);
 
 			out.clear();
-			if (!ItemQueryNums(limit, x, y)) return 0;
+			if (!ItemQueryNums(limit, x, y, r)) return 0;
 
 			// 算距离 顺便过滤下
 			XYType rr = r * r;
@@ -425,68 +502,6 @@ namespace Space2dPointIndex {
 				}
 				c = o.next;
 			}
-		}
-
-		// 从 x,y 当前所在格子开始，向外 正方形( todo: 圆形 ) 扩散, 将 idx 塞入 irs, 返回个数
-		int ItemQueryNums(int limit, XYType const& x, XYType const& y) {
-
-			int rIdx = x < 0 ? -1 : (int)(x / cellWH);
-			int cIdx = y < 0 ? -1 : (int)(y / cellWH);
-			if (!(rIdx >= 0 && cIdx >= 0 && rIdx < rowCount && cIdx < columnCount)) return 0;
-
-			irs.clear();
-
-			// 当前格
-			PushTo(rIdx, cIdx, irs);
-
-			// 开始扩散. 先上下横边 再 左右竖边
-			int jb, je, kb, ke;
-			for (int i = 1; i <= radius; i++) {
-
-				kb = std::max(cIdx - i, 0);
-				ke = std::min(cIdx + i, columnCount - 1);
-
-				// 上横
-				jb = rIdx - i;
-				if (jb >= 0) {
-					for (int k = kb; k <= ke; k++) {
-						// todo: 用格子中心点坐标算距离? 如果超出就跳过? r 还得加上 cell 半径
-						PushTo(jb, k, irs);
-					}
-				}
-
-				// 下横
-				je = rIdx + i;
-				if (je < rowCount) {
-					for (int k = kb; k <= ke; k++) {
-						PushTo(je, k, irs);
-					}
-				}
-
-				jb = std::max(jb + 1, 0);
-				je = std::min(je - 1, rowCount - 1);
-
-				// 左边
-				kb = cIdx - i;
-				if (kb >= 0) {
-					for (int j = jb; j <= je; j++) {
-						PushTo(j, kb, irs);
-					}
-				}
-
-				// 右边
-				ke = cIdx + i;
-				if (ke < columnCount) {
-					for (int j = jb; j <= je; j++) {
-						PushTo(j, ke, irs);
-					}
-				}
-
-				// 数量满足，退出扩散
-				if (irs.size() >= limit) break;
-			}
-
-			return (int)irs.size();
 		}
 
 	};
