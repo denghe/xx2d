@@ -69,8 +69,11 @@ int main() {
 	for (i = 0; i < 100000000; i++) {
 		g.ItemQueryNears(ints, 2, m.x, m.y);
 	}
-	std::cout << "============================================== ItemQueryNears " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+	std::cout << "============================================== ItemQueryNears 2, mx, my = " << m.x << "," << m.y << " " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
 	std::cout << "ints size() = " << ints.size() << std::endl;
+	for (auto& idx : ints) {
+		std::cout << "x,y = " << ms[idx]->x << "," << ms[idx]->y << std::endl;
+	}
 
 	std::cout << "g.Count() = " << g.Count() << std::endl;
 	secs = xx::NowEpochSeconds();
