@@ -2,21 +2,22 @@
 #include "xx_typehelpers.h"
 #include "xx_ptr.h"
 
+using XYType = float; // int
 struct Monster {
-	float x, y;
+	XYType x, y;
 	int idx;
-	Monster(float x, float y) : x(x), y(y), idx(-1) {}
+	Monster(XYType x, XYType y) : x(x), y(y), idx(-1) {}
 };
 
 int main() {
 	int i;
 	int numMonsters = 10000;
-	Space2dPointIndex::Grid<xx::Weak<Monster>> g(100, 100, 5000, 5000, numMonsters);
+	Space2dPointIndex::Grid<xx::Weak<Monster>, XYType> g(100, 5000, 5000, numMonsters);
 
 	std::vector<xx::Shared<Monster>> ms;
 	ms.reserve(numMonsters);
 	for (i = 0; i < numMonsters; i++) {
-		ms.push_back(xx::MakeShared<Monster>(0.f, 0.f));
+		ms.push_back(xx::MakeShared<Monster>((XYType)0, (XYType)0));
 	}
 
 	auto secs = xx::NowEpochSeconds();
@@ -28,8 +29,8 @@ int main() {
 
 	secs = xx::NowEpochSeconds();
 	for (i = 0; i < 10000; i++) {
-		auto x = (float)(i * 50 - 1000);
-		auto y = (float)(i * 50 - 1000);
+		auto x = (XYType)(i * 50 - 1000);
+		auto y = (XYType)(i * 50 - 1000);
 		for (auto& m : ms) {
 			m->x = x;
 			m->y = y;
@@ -42,20 +43,34 @@ int main() {
 	// 分散位置
 	for (i = 0; i < numMonsters; i++) {
 		auto&& m = ms[i];
-		m->x = (float)(i * 50 - 1000);
-		m->y = (float)(i * 50 - 1000);
+		m->x = (XYType)(i * 50 - 1000);
+		m->y = (XYType)(i * 50 - 1000);
 		g.ItemUpdate(m->idx, m->x, m->y);
 	}
 	//g.Dump();
 
 	auto& m = *ms[22];
-	std::vector<int> nears;
+	std::vector<int> ints;
 	secs = xx::NowEpochSeconds();
 	for (i = 0; i < 100000000; i++) {
-		g.ItemQueryNears(m.idx, nears);
+		g.ItemQueryNeighbor(ints, m.x, m.y);
 	}
-	std::cout << "============================================== Query " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
-	std::cout << "nears size() = " << nears.size() << std::endl;
+	std::cout << "============================================== ItemQueryNeighbor " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+	std::cout << "ints size() = " << ints.size() << std::endl;
+
+	secs = xx::NowEpochSeconds();
+	for (i = 0; i < 100000000; i++) {
+		g.ItemQueryNeighborCircle(ints, m.x, m.y, 100.f);
+	}
+	std::cout << "============================================== ItemQueryNeighborCircle " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+	std::cout << "ints size() = " << ints.size() << std::endl;
+
+	secs = xx::NowEpochSeconds();
+	for (i = 0; i < 100000000; i++) {
+		g.ItemQueryNears(ints, 2, m.x, m.y);
+	}
+	std::cout << "============================================== ItemQueryNears " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+	std::cout << "ints size() = " << ints.size() << std::endl;
 
 	std::cout << "g.Count() = " << g.Count() << std::endl;
 	secs = xx::NowEpochSeconds();

@@ -2,6 +2,7 @@
 #include <cassert>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 // 格子空间 点坐标 索引系统
 // 针对 Cell 尺寸大于所有 Item 的情况, 将空间索引系统简化为 中心点 数据管理. Item 和 Cell 1对1, Cell 和 Item 1对多 不重复
@@ -11,17 +12,20 @@
 
 namespace Space2dPointIndex {
 
-	template<typename UD>
+	// todo: 支持设置 original 0,0 点所在格子 以方便使用
+
+	template<typename UD, typename XYType = float>
 	struct Grid {
 		struct Item {
-			//float x, y;
+			XYType x, y;
 			int prev, next;
 			int cellIdx;
 		};
 
-		float cellWidth, cellHeight;
+		XYType cellWH;
 		int rowCount;
 		int columnCount;
+		int radius;
 
 	protected:
 		int* cells;
@@ -35,14 +39,30 @@ namespace Space2dPointIndex {
 
 		std::vector<UD> udBuf;
 
+		// for calc
+		struct IR {
+			int i;
+			XYType r;
+			IR(int const& i) : i(i) {}
+		};
+		struct IRComparer {
+			Grid& self;
+			IRComparer(Grid& self) : self(self) {}
+			bool operator()(IR const& a, IR const& b) const { return a.r < b.r; }
+		} cmp;
+		std::vector<IR> irs;
+
+
 	public:
-		Grid(float const& cellWidth, float const& cellHeight, int const& rowCount, int const& columnCount, int const& cap)
-			: cellWidth(cellWidth)
-			, cellHeight(cellHeight)
+		Grid(XYType const& cellWH, int const& rowCount, int const& columnCount, int const& cap)
+			: cellWH(cellWH)
 			, rowCount(rowCount)
 			, columnCount(columnCount)
 			, itemBufCap(cap)
+			, cmp(*this)
 		{
+			radius = std::max(rowCount, columnCount) / 2 + 1;
+
 			cells = (int*)malloc(sizeof(int) * rowCount * columnCount);
 
 			itemBuf = (Item*)malloc(sizeof(Item) * cap);
@@ -58,7 +78,7 @@ namespace Space2dPointIndex {
 			if constexpr (!isCtor && !std::is_standard_layout_v<UD>) {
 				ForeachItemIndex([this](int const& idx) {
 					udBuf[idx] = UD();
-				});
+					});
 			}
 			memset((void*)cells, -1, sizeof(int) * rowCount * columnCount);
 			outside = -1;
@@ -73,7 +93,7 @@ namespace Space2dPointIndex {
 			free(itemBuf);
 		}
 
-		int ItemAdd(UD&& ud, float const& x, float const& y) {
+		int ItemAdd(UD&& ud, XYType const& x, XYType const& y) {
 			//assert(ud);
 			int idx;
 			if (freeItemCount) {
@@ -93,14 +113,14 @@ namespace Space2dPointIndex {
 
 			udBuf[idx] = std::forward<UD>(ud);
 			auto& o = itemBuf[idx];
-			//o.x = x;
-			//o.y = y;
+			o.x = x;
+			o.y = y;
 
 			int* c;
-			int rowIdx = x < 0 ? -1 : (int)(x / cellWidth);
-			int colIdx = y < 0 ? -1 : (int)(y / cellWidth);
-			if (rowIdx >= 0 && colIdx >= 0 && rowIdx < rowCount && colIdx < columnCount) {
-				o.cellIdx = rowIdx * columnCount + colIdx;
+			int rIdx = x < 0 ? -1 : (int)(x / cellWH);
+			int cIdx = y < 0 ? -1 : (int)(y / cellWH);
+			if (rIdx >= 0 && cIdx >= 0 && rIdx < rowCount && cIdx < columnCount) {
+				o.cellIdx = rIdx * columnCount + cIdx;
 				c = &cells[o.cellIdx];
 			}
 			else {
@@ -120,22 +140,22 @@ namespace Space2dPointIndex {
 			return idx;
 		}
 
-		bool ItemUpdate(int const& idx, float const& x, float const& y) {
+		bool ItemUpdate(int const& idx, XYType const& x, XYType const& y) {
 			assert(idx >= 0);
 			assert(idx < itemBufLen);
 			//assert(udBuf[idx].ud);
 
 			auto& o = itemBuf[idx];
 			//if (o.x == x && o.y == y) return o.cellIdx != -1;
-			//o.x = x;
-			//o.y = y;
+			o.x = x;
+			o.y = y;
 
 			// 计算出格子下标
-			int rowIdx = x < 0 ? -1 : (int)(x / cellWidth);
-			int colIdx = y < 0 ? -1 : (int)(y / cellWidth);
+			int rIdx = x < 0 ? -1 : (int)(x / cellWH);
+			int cIdx = y < 0 ? -1 : (int)(y / cellWH);
 			int cellIdx;
-			if (rowIdx >= 0 && colIdx >= 0 && rowIdx < rowCount && colIdx < columnCount) {
-				cellIdx = rowIdx * columnCount + colIdx;
+			if (rIdx >= 0 && cIdx >= 0 && rIdx < rowCount && cIdx < columnCount) {
+				cellIdx = rIdx * columnCount + cIdx;
 			}
 			else {
 				cellIdx = -1;
@@ -255,27 +275,162 @@ namespace Space2dPointIndex {
 			return itemBufLen - freeItemCount;
 		}
 
-		// 检索 item 覆盖到的格子的邻居 items idxs
-		int ItemQueryNears(int const& idx, std::vector<int>& out) {
-			assert(idx >= 0);
-			assert(idx < itemBufLen);
-			//assert(udBuf[idx].ud);
+		// 检索 x,y 所在格子 + 周围 8 格 的 items idxs
+		int ItemQueryNeighbor(std::vector<int>& out, XYType const& x, XYType const& y) {
 			out.clear();
-			auto& o = itemBuf[idx];
-			if (o.cellIdx == -1) return 0;
-			int c = cells[o.cellIdx];
-			while (c != -1) {
-				if (c != idx) {
-					out.push_back(c);
-				}
-				c = itemBuf[c].next;
+			// 计算出 x,y 所在 格子下标
+			int rIdx = x < 0 ? -1 : (int)(x / cellWH);
+			int cIdx = y < 0 ? -1 : (int)(y / cellWH);
+			if (!(rIdx >= 0 && cIdx >= 0 && rIdx < rowCount && cIdx < columnCount)) return 0;
+
+			PushTo(rIdx, cIdx, out);
+			if (cIdx)
+				PushTo(rIdx, cIdx - 1, out);
+			if (cIdx + 1 < columnCount)
+				PushTo(rIdx, cIdx + 1, out);
+
+			if (rIdx) {
+				PushTo(rIdx - 1, cIdx, out);
+				if (cIdx)
+					PushTo(rIdx - 1, cIdx - 1, out);
+				if (cIdx + 1 < columnCount)
+					PushTo(rIdx - 1, cIdx + 1, out);
 			}
+
+			if (rIdx + 1 < rowCount) {
+				PushTo(rIdx + 1, cIdx, out);
+				if (cIdx)
+					PushTo(rIdx + 1, cIdx - 1, out);
+				if (cIdx + 1 < columnCount)
+					PushTo(rIdx + 1, cIdx + 1, out);
+			}
+
 			return (int)out.size();
 		}
 
-		// todo: 按坐标, 距离检索某 圆 范围内的 items idxs
-		// todo: 检索指定 Rect 范围的 items idxs
-		// todo: 找离目标区域 最近的 item ? 得到范围内由近到远排列的 items list?
+		// 检索 item 半径 r 的圆覆盖到的格子的邻居 items idxs( 只将周围 8 格包含在内, r 不得大于 cell size )
+		int ItemQueryNeighborCircle(std::vector<int>& out, XYType const& x, XYType const& y, XYType const& r) {
+			assert(r > 0 && r <= cellWH);
+
+			out.clear();
+			// 计算出 x,y 所在 格子下标
+			int rIdx = x < 0 ? -1 : (int)(x / cellWH);
+			int cIdx = y < 0 ? -1 : (int)(y / cellWH);
+			if (!(rIdx >= 0 && cIdx >= 0 && rIdx < rowCount && cIdx < columnCount)) return 0;
+
+			PushTo(rIdx, cIdx, out, x, y, r);
+			if (cIdx)
+				PushTo(rIdx, cIdx - 1, out, x, y, r);
+			if (cIdx + 1 < columnCount)
+				PushTo(rIdx, cIdx + 1, out, x, y, r);
+
+			if (rIdx) {
+				PushTo(rIdx - 1, cIdx, out, x, y, r);
+				if (cIdx)
+					PushTo(rIdx - 1, cIdx - 1, out, x, y, r);
+				if (cIdx + 1 < columnCount)
+					PushTo(rIdx - 1, cIdx + 1, out, x, y, r);
+			}
+
+			if (rIdx + 1 < rowCount) {
+				PushTo(rIdx + 1, cIdx, out, x, y, r);
+				if (cIdx)
+					PushTo(rIdx + 1, cIdx - 1, out, x, y, r);
+				if (cIdx + 1 < columnCount)
+					PushTo(rIdx + 1, cIdx + 1, out, x, y, r);
+			}
+
+			return (int)out.size();
+		}
+
+		// todo: 更大的圆范围查找. 似乎需要一个枚举从当前 x,y 所在格子 圆形 向外扩散的 格子下标枚举器
+		// todo: ItemQueryNear 找到距离传入 x,y 最近的 item / items
+
+		// 先来个矩形向外扩散版. 结果不是很正确. 向外矩形扩散。阔一圈就放入 out. 直到数量足够, 最后根据距离排序，留下 n 个
+		int ItemQueryNears(std::vector<int>& out, int n, XYType const& x, XYType const& y, XYType const& r = XYType()) {
+			assert(r >= 0);
+
+			out.clear();
+			// todo
+			int rIdx = x < 0 ? -1 : (int)(x / cellWH);
+			int cIdx = y < 0 ? -1 : (int)(y / cellWH);
+			if (!(rIdx >= 0 && cIdx >= 0 && rIdx < rowCount && cIdx < columnCount)) return 0;
+
+			irs.clear();
+
+			// 当前格
+			PushTo(rIdx, cIdx, irs);
+
+			// 开始扩散. 先上下横边 再 左右竖边
+			int jb, je, kb, ke;
+			for (int i = 1; i <= radius; i++) {
+
+				kb = std::max(cIdx - i, 0);
+				ke = std::min(cIdx + i, columnCount - 1);
+
+				// 上横
+				jb = rIdx - i;
+				if (jb >= 0) {
+					for (int k = kb; k <= ke; k++) {
+						// todo: 用格子中心点坐标算距离? 如果超出就跳过? r 还得加上 cell 半径
+						PushTo(jb, k, irs);
+					}
+				}
+
+				// 下横
+				je = rIdx + i;
+				if (je < rowCount) {
+					for (int k = kb; k <= ke; k++) {
+						PushTo(je, k, irs);
+					}
+				}
+
+				jb = std::max(jb + 1, 0);
+				je = std::min(je - 1, rowCount - 1);
+
+				// 左边
+				kb = cIdx - i;
+				if (kb >= 0) {
+					for (int j = jb; j <= je; j++) {
+						PushTo(j, kb, irs);
+					}
+				}
+
+				// 右边
+				ke = cIdx + i;
+				if (ke < columnCount) {
+					for (int j = jb; j <= je; j++) {
+						PushTo(j, ke, irs);
+					}
+				}
+
+				// 数量满足，退出扩散
+				if (irs.size() >= n) break;
+			}
+
+			// 算距离 顺便过滤下
+			XYType rr = r * r;
+			for (int i = (int)irs.size() - 1; i >= 0; --i) {
+				auto& ir = irs[i];
+				auto& o = itemBuf[ir.i];
+				ir.r = (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y);
+				if (rr > 0 && ir.r > rr) {
+					irs[i] = irs.back();
+					irs.pop_back();
+				}
+			}
+
+			// 按距离排序( 从小到大 )
+			std::sort(irs.begin(), irs.end(), cmp);
+
+			n = std::min(n, (int)irs.size());
+			for (int i = 0; i < n; ++i) {
+				out.push_back(irs[i].i);
+			}
+
+			return (int)out.size();
+		}
+
 
 		void Dump() {
 			int c = Count();
@@ -289,9 +444,45 @@ namespace Space2dPointIndex {
 				int cIdx = o.cellIdx - rIdx * columnCount;
 				std::cout << "idx = " << idx /*<< ", x = " << o.x << ", y = " << o.y*/
 					<< ", rIdx = " << rIdx << ", cIdx = " << cIdx << std::endl;
-			});
+				});
 
 			std::cout << std::endl;
 		};
+
+	protected:
+
+#ifndef NDEBUG
+#define XX_FORCEINLINE
+#else
+#ifdef _MSC_VER
+#define XX_FORCEINLINE __forceinline
+#else
+#define XX_FORCEINLINE __attribute__((always_inline))
+#endif
+#endif
+
+		// 将一个 cell 下所有 items 压入 out
+		template<typename VT>
+		XX_FORCEINLINE void PushTo(int const& rIdx, int const& cIdx, VT& out) {
+			int c = cells[rIdx * columnCount + cIdx];
+			while (c != -1) {
+				out.emplace_back(c);
+				c = itemBuf[c].next;
+			}
+		}
+
+		// 将一个 cell 下所有 在 x,y,r 圆范围内的 items 压入 out
+		template<typename VT>
+		XX_FORCEINLINE void PushTo(int const& rIdx, int const& cIdx, VT& out, XYType const& x, XYType const& y, XYType const& r) {
+			int c = cells[rIdx * columnCount + cIdx];
+			XYType rr = r * r;
+			while (c != -1) {
+				auto& o = itemBuf[c];
+				if ((x - o.x) * (x - o.x) + (y - o.y) * (y - o.y) <= rr) {
+					out.emplace_back(c);
+				}
+				c = o.next;
+			}
+		}
 	};
 }
