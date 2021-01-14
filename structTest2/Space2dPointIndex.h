@@ -97,21 +97,15 @@ namespace Space2dPointIndex {
 			//o.y = y;
 
 			int* c;
-			if (x < 0 || y < 0) {
-				o.cellIdx = -1;
-				c = &outside;
+			int rowIdx = x < 0 ? -1 : (int)(x / cellWidth);
+			int colIdx = y < 0 ? -1 : (int)(y / cellWidth);
+			if (rowIdx >= 0 && colIdx >= 0 && rowIdx < rowCount && colIdx < columnCount) {
+				o.cellIdx = rowIdx * columnCount + colIdx;
+				c = &cells[o.cellIdx];
 			}
 			else {
-				int colIdx = (int)(x / cellWidth);
-				int rowIdx = (int)(y / cellHeight);
-				if (colIdx >= columnCount || rowIdx >= rowCount) {
-					o.cellIdx = -1;
-					c = &outside;
-				}
-				else {
-					o.cellIdx = rowIdx * columnCount + colIdx;
-					c = &cells[o.cellIdx];
-				}
+				o.cellIdx = -1;
+				c = &outside;
 			}
 
 			o.prev = -1;
@@ -137,17 +131,17 @@ namespace Space2dPointIndex {
 			//o.y = y;
 
 			// 计算出格子下标
-			int rowIdx = fasterfloor(x / cellWidth);
-			int colIdx = fasterfloor(y / cellHeight);
+			int rowIdx = x < 0 ? -1 : (int)(x / cellWidth);
+			int colIdx = y < 0 ? -1 : (int)(y / cellWidth);
 			int cellIdx;
-			if (rowIdx >= 0 && rowIdx < rowCount && colIdx >= 0 && colIdx < columnCount) {
+			if (rowIdx >= 0 && colIdx >= 0 && rowIdx < rowCount && colIdx < columnCount) {
 				cellIdx = rowIdx * columnCount + colIdx;
 			}
 			else {
 				cellIdx = -1;
 			}
 
-			// check
+			// 无变化就退出
 			if (o.cellIdx == cellIdx) return cellIdx != -1;
 
 			// 定位到 item 旧链入口
@@ -299,8 +293,5 @@ namespace Space2dPointIndex {
 
 			std::cout << std::endl;
 		};
-
-	protected:
-		int inline fasterfloor(float const& x) { return x < 0 ? (int)x == x ? (int)x : (int)x - 1 : (int)x; }
 	};
 }
