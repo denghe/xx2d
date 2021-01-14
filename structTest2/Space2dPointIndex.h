@@ -345,6 +345,7 @@ namespace Space2dPointIndex {
 
 		// 从 x,y 当前所在格子开始，向外圆形 扩散, 将 idx 塞入 irs, 塞够 limit 个停止扩散, 返回实际塞入个数
 		int ItemQueryNums(int const& limit, XYType const& x, XYType const& y, XYType const& r) {
+			assert(false);
 
 			int rIdx = x < 0 ? -1 : (int)(x / cellWH);
 			int cIdx = y < 0 ? -1 : (int)(y / cellWH);

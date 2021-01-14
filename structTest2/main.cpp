@@ -66,10 +66,10 @@ int main() {
 	std::cout << "ints size() = " << ints.size() << std::endl;
 
 	secs = xx::NowEpochSeconds();
-	for (i = 0; i < 100000000; i++) {
-		g.ItemQueryNears(ints, 2, m.x, m.y);
+	for (i = 0; i < 1000000; i++) {
+		g.ItemQueryNears(ints, 100, 1000, 1000, 10000);
 	}
-	std::cout << "============================================== ItemQueryNears 2, mx, my = " << m.x << "," << m.y << " " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
+	std::cout << "============================================== ItemQueryNears(100, 1000, 1000, 10000) " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
 	std::cout << "ints size() = " << ints.size() << std::endl;
 	for (auto& idx : ints) {
 		std::cout << "x,y = " << ms[idx]->x << "," << ms[idx]->y << std::endl;
