@@ -1,4 +1,4 @@
-﻿#include "Space2dIndex2.h"
+﻿#include "Space2dPointIndex.h"
 #include "xx_typehelpers.h"
 #include "xx_ptr.h"
 
@@ -11,7 +11,7 @@ struct Monster {
 int main() {
 	int i;
 	int numMonsters = 10000;
-	Space2dIndex2::Grid<xx::Weak<Monster>> g(100, 100, 5000, 5000, numMonsters);
+	Space2dPointIndex::Grid<xx::Weak<Monster>> g(100, 100, 5000, 5000, numMonsters);
 
 	std::vector<xx::Shared<Monster>> ms;
 	ms.reserve(numMonsters);

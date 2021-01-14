@@ -3,13 +3,13 @@
 #include <vector>
 #include <iostream>
 
-// 格子空间索引系统
+// 格子空间 点坐标 索引系统
 // 针对 Cell 尺寸大于所有 Item 的情况, 将空间索引系统简化为 中心点 数据管理. Item 和 Cell 1对1, Cell 和 Item 1对多 不重复
 // Cell 即 Item 链表头 ( 类似 hash map 的 bucket )
 // UD 和 Item 分离存储，下标一致, 确保内存集中分布提升查询效率
 // 如果真出现 Item 大于 Cell 尺寸的情况, 可以创建多套 Grid, 分级管理( 类似4叉树的感觉 ), 合并查询结果
 
-namespace Space2dIndex2 {
+namespace Space2dPointIndex {
 
 	template<typename UD>
 	struct Grid {

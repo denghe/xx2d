@@ -26,7 +26,7 @@
     </ClInclude>
     <ClInclude Include="TexturePackerReader.h" />
     <ClInclude Include="Space2dIndex.h" />
-    <ClInclude Include="Space2dIndex2.h" />
+    <ClInclude Include="Space2dPointIndex.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">
