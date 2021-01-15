@@ -39,15 +39,12 @@ namespace Space2dPointIndex {
 
 		std::vector<UD> udBuf;
 
-		// for calc
+		// for sort by r
 		struct IR {
 			int i;
 			XYType r;
-			IR(int const& i) : i(i) {}
 		};
 		struct IRComparer {
-			Grid& self;
-			IRComparer(Grid& self) : self(self) {}
 			bool operator()(IR const& a, IR const& b) const { return a.r < b.r; }
 		} cmp;
 		std::vector<IR> irs;
@@ -59,7 +56,6 @@ namespace Space2dPointIndex {
 			, rowCount(rowCount)
 			, columnCount(columnCount)
 			, itemBufCap(cap)
-			, cmp(*this)
 		{
 			radius = std::max(rowCount, columnCount) / 2 + 1;
 
