@@ -9,6 +9,7 @@ struct Monster {
 	Monster(XYType x, XYType y) : x(x), y(y), idx(-1) {}
 };
 
+
 int main() {
 	int i;
 	int numMonsters = 10000;
@@ -838,3 +839,22 @@ int main() {
 //		}
 //	};
 //}
+
+
+
+
+
+
+
+
+//template<typename T>
+//using 标准库的向量 = std::vector<T>;
+//enum class 牌 {
+//	b = 0,
+//	s = 10,
+//	w = 20
+//};
+//constexpr 牌 operator"" 筒(unsigned long long _Val) noexcept { return 牌(_Val + 0); }
+//constexpr 牌 operator"" 条(unsigned long long _Val) noexcept { return 牌(_Val + 10); }
+//constexpr 牌 operator"" 万(unsigned long long _Val) noexcept { return 牌(_Val + 20); }
+//	标准库的向量<牌> 甲的牌 = { 5筒, 3万 };
