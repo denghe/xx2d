@@ -24,10 +24,6 @@
     <ClInclude Include="..\xxlib\xx_file.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="TexturePackerReader.h" />
-    <ClInclude Include="Space2dIndex.h" />
-    <ClInclude Include="Space2dPointIndex.h" />
-    <ClInclude Include="LinkPool.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">

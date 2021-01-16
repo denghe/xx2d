@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include "LinkPool.h"
 
 // 格子空间 点坐标 索引系统
 // 针对 Cell 尺寸大于所有 Item 的情况, 将空间索引系统简化为 中心点 数据管理. Item 和 Cell 1对1, Cell 和 Item 1对多 不重复
@@ -31,13 +32,8 @@ namespace Space2dPointIndex {
 		int* cells;
 		int outside;
 
-		Item* itemBuf;
-		int itemBufLen;
-		int itemBufCap;
-		int freeItemHeader;
-		int freeItemCount;
-
-		std::vector<UD> udBuf;
+		LinkPool<Item> items;
+		std::vector<UD> uds;
 
 		// for sort by r
 		struct IR {
@@ -49,22 +45,18 @@ namespace Space2dPointIndex {
 		} cmp;
 		std::vector<IR> irs;
 
-
 	public:
 		Grid(XYType const& cellWH, int const& rowCount, int const& columnCount, int const& cap)
 			: cellWH(cellWH)
 			, rowCount(rowCount)
 			, columnCount(columnCount)
-			, itemBufCap(cap)
+			, items(cap)
 		{
 			radius = std::max(rowCount, columnCount) / 2 + 1;
 
 			cells = (int*)malloc(sizeof(int) * rowCount * columnCount);
 
-			itemBuf = (Item*)malloc(sizeof(Item) * cap);
-			itemBufCap = cap;
-
-			udBuf.resize(cap);
+			uds.resize(cap);
 
 			Clear<true>();
 		}
@@ -73,42 +65,28 @@ namespace Space2dPointIndex {
 		void Clear() {
 			if constexpr (!isCtor && !std::is_standard_layout_v<UD>) {
 				ForeachItemIndex([this](int const& idx) {
-					udBuf[idx] = UD();
+					uds[idx] = UD();
 					});
 			}
 			memset((void*)cells, -1, sizeof(int) * rowCount * columnCount);
 			outside = -1;
 
-			itemBufLen = 0;
-			freeItemHeader = -1;
-			freeItemCount = 0;
+			items.Clear();
 		}
 
 		~Grid() {
 			free(cells);
-			free(itemBuf);
 		}
 
 		int ItemAdd(UD&& ud, XYType const& x, XYType const& y) {
 			//assert(ud);
 			int idx;
-			if (freeItemCount) {
-				idx = freeItemHeader;
-				freeItemHeader = itemBuf[idx].next;
-				--freeItemCount;
-			}
-			else {
-				if (itemBufLen == itemBufCap) {
-					itemBufCap *= 2;
-					itemBuf = (Item*)realloc((void*)itemBuf, sizeof(Item) * itemBufCap);
-					udBuf.resize(itemBufCap);
-				}
-				idx = itemBufLen;
-				++itemBufLen;
+			if (auto&& cap = items.Alloc(idx)) {
+				uds.resize(cap);
 			}
 
-			udBuf[idx] = std::forward<UD>(ud);
-			auto& o = itemBuf[idx];
+			uds[idx] = std::forward<UD>(ud);
+			auto& o = items[idx];
 			o.x = x;
 			o.y = y;
 
@@ -127,11 +105,11 @@ namespace Space2dPointIndex {
 			o.prev = -1;
 			o.next = *c;
 			if (*c != -1) {
-				assert(itemBuf[*c].prev == -1);
-				itemBuf[*c].prev = idx;
+				assert(items[*c].prev == -1);
+				items[*c].prev = idx;
 			}
 			*c = idx;
-			assert(*c == -1 || itemBuf[*c].prev == -1);
+			assert(*c == -1 || items[*c].prev == -1);
 
 			return idx;
 		}
@@ -139,9 +117,9 @@ namespace Space2dPointIndex {
 		bool ItemUpdate(int const& idx, XYType const& x, XYType const& y) {
 			assert(idx >= 0);
 			assert(idx < itemBufLen);
-			//assert(udBuf[idx].ud);
+			//assert(uds[idx].ud);
 
-			auto& o = itemBuf[idx];
+			auto& o = items[idx];
 			//if (o.x == x && o.y == y) return o.cellIdx != -1;
 			o.x = x;
 			o.y = y;
@@ -168,19 +146,19 @@ namespace Space2dPointIndex {
 			else {
 				c = &outside;
 			}
-			assert(*c == -1 || itemBuf[*c].prev == -1);
+			assert(*c == -1 || items[*c].prev == -1);
 
 			// 从旧链移除
 			if (o.prev != -1) {
-				itemBuf[o.prev].next = o.next;
+				items[o.prev].next = o.next;
 			}
 			if (o.next != -1) {
-				itemBuf[o.next].prev = o.prev;
+				items[o.next].prev = o.prev;
 			}
 			if (*c == idx) {
 				*c = o.next;
 			}
-			assert(*c == -1 || itemBuf[*c].prev == -1);
+			assert(*c == -1 || items[*c].prev == -1);
 
 			// 定位到 item 新入口
 			if (cellIdx != -1) {
@@ -194,8 +172,8 @@ namespace Space2dPointIndex {
 			o.prev = -1;
 			o.next = *c;
 			if (*c != -1) {
-				assert(itemBuf[*c].prev == -1);
-				itemBuf[*c].prev = idx;
+				assert(items[*c].prev == -1);
+				items[*c].prev = idx;
 			}
 			*c = idx;
 			o.cellIdx = cellIdx;
@@ -205,8 +183,8 @@ namespace Space2dPointIndex {
 		void ItemRemoveAt(int const& idx) {
 			assert(idx >= 0);
 			assert(idx < itemBufLen);
-			//assert(itemBuf[idx].ud);
-			auto& o = itemBuf[idx];
+			//assert(items[idx].ud);
+			auto& o = items[idx];
 
 			// 定位到 item 链入口
 			int* c;
@@ -219,10 +197,10 @@ namespace Space2dPointIndex {
 
 			// 从链表移除
 			if (o.prev != -1) {
-				itemBuf[o.prev].next = o.next;
+				items[o.prev].next = o.next;
 			}
 			if (o.next != -1) {
-				itemBuf[o.next].prev = o.prev;
+				items[o.next].prev = o.prev;
 			}
 			if (*c == idx) {
 				*c = o.next;
@@ -230,19 +208,17 @@ namespace Space2dPointIndex {
 
 			// 重置用户数据
 			if constexpr (!std::is_standard_layout_v<UD>) {
-				udBuf[idx] = UD();
+				uds[idx] = UD();
 			}
 
-			// 放入 free 单链
-			o.next = freeItemHeader;
-			freeItemHeader = idx;
-			++freeItemCount;
+			// 释放
+			items.Free(idx);
 		}
 
 		UD& UDAt(int const& idx) const {
 			assert(idx >= 0);
 			assert(idx < itemBufLen);
-			return udBuf[idx];
+			return uds[idx];
 		}
 
 		// ForeachItemIndex([](int const& idx){  ctx.UDAt(idx)  }); 
@@ -254,7 +230,7 @@ namespace Space2dPointIndex {
 					int c = cells[i];
 					while (c != -1) {
 						f(c);
-						c = itemBuf[c].next;
+						c = items[c].next;
 					}
 				}
 			}
@@ -262,13 +238,14 @@ namespace Space2dPointIndex {
 				int c = outside;
 				while (c != -1) {
 					f(c);
-					c = itemBuf[c].next;
+					c = items[c].next;
 				}
 			}
 		}
 
 		int Count() const {
-			return itemBufLen - freeItemCount;
+			//return itemBufLen - freeItemCount;
+			return items.Count();
 		}
 
 		// 检索 x,y 所在格子 + 周围 8 格 的 items idxs
@@ -448,7 +425,7 @@ namespace Space2dPointIndex {
 			XYType rr = r * r;
 			for (int i = (int)irs.size() - 1; i >= 0; --i) {
 				auto& ir = irs[i];
-				auto& o = itemBuf[ir.i];
+				auto& o = items[ir.i];
 				ir.r = (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y);
 				if (rr > 0 && ir.r > rr) {
 					irs[i] = irs.back();
@@ -485,7 +462,7 @@ namespace Space2dPointIndex {
 			if (!c) return;
 
 			ForeachItemIndex([this](int const& idx) {
-				auto& o = itemBuf[idx];
+				auto& o = items[idx];
 				if (o.cellIdx == -1) return;
 				int rIdx = o.cellIdx / columnCount;
 				int cIdx = o.cellIdx - rIdx * columnCount;
@@ -514,7 +491,7 @@ namespace Space2dPointIndex {
 			int c = cells[rIdx * columnCount + cIdx];
 			while (c != -1) {
 				out.emplace_back(c);
-				c = itemBuf[c].next;
+				c = items[c].next;
 			}
 		}
 
@@ -524,7 +501,7 @@ namespace Space2dPointIndex {
 			int c = cells[rIdx * columnCount + cIdx];
 			XYType rr = r * r;
 			while (c != -1) {
-				auto& o = itemBuf[c];
+				auto& o = items[c];
 				if ((x - o.x) * (x - o.x) + (y - o.y) * (y - o.y) <= rr) {
 					out.emplace_back(c);
 				}
