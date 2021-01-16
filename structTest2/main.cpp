@@ -67,7 +67,7 @@ int main() {
 
 	secs = xx::NowEpochSeconds();
 	for (i = 0; i < 1000000; i++) {
-		g.ItemQueryNears(ints, 100, 1000, 1000, 10000);
+		g.ItemQueryNears(ints, 1, 1000, 1000, 10000);
 	}
 	std::cout << "============================================== ItemQueryNears(100, 1000, 1000, 10000) " << i << " times. elapsed seconds = " << xx::NowEpochSeconds(secs) << std::endl;
 	std::cout << "ints size() = " << ints.size() << std::endl;

@@ -341,8 +341,6 @@ namespace Space2dPointIndex {
 
 		// 从 x,y 当前所在格子开始，向外圆形 扩散, 将 idx 塞入 irs, 塞够 limit 个停止扩散, 返回实际塞入个数
 		int ItemQueryNums(int const& limit, XYType const& x, XYType const& y, XYType const& r) {
-			assert(false);
-
 			int rIdx = x < 0 ? -1 : (int)(x / cellWH);
 			int cIdx = y < 0 ? -1 : (int)(y / cellWH);
 			if (!(rIdx >= 0 && cIdx >= 0 && rIdx < rowCount && cIdx < columnCount)) return 0;
@@ -458,14 +456,26 @@ namespace Space2dPointIndex {
 				}
 			}
 
-			// 按距离排序( 从小到大 )
-			std::sort(irs.begin(), irs.end(), cmp);
-
-			limit = std::min(limit, (int)irs.size());
-			for (int i = 0; i < limit; ++i) {
-				out.push_back(irs[i].i);
+			if (limit == 1) {
+				if (int siz = (int)irs.size()) {
+					int n = 0;
+					for (int i = 1; i < siz; ++i) {
+						if (irs[n].r > irs[i].r) {
+							n = i;
+						}
+					}
+					out.push_back(irs[n].i);
+				}
 			}
+			else {
+				// 按距离排序( 从小到大 )
+				std::sort(irs.begin(), irs.end(), cmp);
 
+				limit = std::min(limit, (int)irs.size());
+				for (int i = 0; i < limit; ++i) {
+					out.push_back(irs[i].i);
+				}
+			}
 			return (int)out.size();
 		}
 
