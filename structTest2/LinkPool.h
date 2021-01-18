@@ -55,6 +55,9 @@ public:
 		header = -1;
 	}
 
+	PNType Len() const {
+		return len;
+	}
 	PNType Count() const {
 		return len - count;
 	}

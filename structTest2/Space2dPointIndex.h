@@ -116,7 +116,7 @@ namespace Space2dPointIndex {
 
 		bool ItemUpdate(int const& idx, XYType const& x, XYType const& y) {
 			assert(idx >= 0);
-			assert(idx < itemBufLen);
+			assert(idx < items.Len());
 			//assert(uds[idx].ud);
 
 			auto& o = items[idx];
@@ -182,7 +182,7 @@ namespace Space2dPointIndex {
 
 		void ItemRemoveAt(int const& idx) {
 			assert(idx >= 0);
-			assert(idx < itemBufLen);
+			assert(idx < items.Len());
 			//assert(items[idx].ud);
 			auto& o = items[idx];
 
@@ -217,7 +217,7 @@ namespace Space2dPointIndex {
 
 		UD& UDAt(int const& idx) const {
 			assert(idx >= 0);
-			assert(idx < itemBufLen);
+			assert(idx < items.Len());
 			return uds[idx];
 		}
 
