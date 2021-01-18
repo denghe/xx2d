@@ -2,8 +2,13 @@
 //#include <cstddef>	// offsetof
 #include <type_traits>
 
-// 链表节点池. 分配的是不会变化的 下标. 可指定 next 变量类型和偏移量. 当前 T 仅支持 pod 类型
+// 用来标识 LinkPool.buf 的成员类型 是否支持 realloc 扩容
+template<typename T, typename ENABLED = void> struct IsReallocable : std::false_type {};
+template<typename T> struct IsReallocable<T, std::enable_if_t<std::is_standard_layout_v<T> && std::is_trivial_v<T>>> : std::true_type {};
+template<typename T> constexpr bool IsReallocable_v = IsReallocable<T>::value;
 
+
+// 链表节点池. 分配的是不会变化的 下标. 可指定 next 变量类型和偏移量
 template<typename T, typename PNType = int, size_t nextOffset = 0>
 class LinkPool {
 	static_assert(std::is_standard_layout_v<T>);
@@ -23,6 +28,11 @@ public:
 	explicit LinkPool(PNType const& cap) : cap(cap) {
 		buf = (T*)malloc(sizeof(T) * cap);
 	}
+	~LinkPool() {
+		Clear();
+		free((void*)buf);
+		buf = nullptr;
+	}
 
 	// 分配一个下标到 idx. 如果产生了 resize 行为，将返回新的 cap
 	PNType Alloc(PNType& idx) {
@@ -35,7 +45,18 @@ public:
 		else {
 			if (len == cap) {
 				cap *= 2;
-				buf = (T*)realloc((void*)buf, sizeof(T) * cap);
+				if constexpr (IsReallocable_v<T>) {
+					buf = (T*)realloc((void*)buf, sizeof(T) * cap);
+				}
+				else {
+					T* newBuf = (T*)malloc(sizeof(T) * cap);
+					for (int i = 0; i < len; ++i) {
+						new(&newBuf[i]) T((T&&)buf[i]);
+						buf[i].~T();
+					}
+					free((void*)buf);
+					buf = newBuf;
+				}
 			}
 			idx = len;
 			++len;
@@ -44,12 +65,16 @@ public:
 	}
 
 	void Free(PNType const& idx) {
+		buf[idx].~T();
 		Next(buf[idx]) = header;
 		header = idx;
 		++count;
 	}
 
 	void Clear() {
+		for (int i = 0; i < len; ++i) {
+			buf[i].~T();
+		}
 		len = 0;
 		count = 0;
 		header = -1;
