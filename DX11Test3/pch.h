@@ -65,14 +65,11 @@
 #include "xx_data.h"
 #include "xx_file.h"
 
-namespace DX
-{
-    inline void ThrowIfFailed(HRESULT hr)
-    {
-        if (FAILED(hr))
-        {
-            // Set a breakpoint on this line to catch DirectX API errors
-            throw std::exception();
-        }
-    }
+namespace DX {
+	inline void ThrowIfFailed(HRESULT hr) {
+		if (FAILED(hr)) {
+			// Set a breakpoint on this line to catch DirectX API errors
+			throw std::exception();
+		}
+	}
 }
