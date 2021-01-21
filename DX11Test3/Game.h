@@ -66,6 +66,8 @@ public:
 	// Rendering loop timer.
 	DX::StepTimer                                   m_timer;
 
+	bool                                            m_fullScreen;
+
 	std::unique_ptr<DirectX::Keyboard>              m_keyboard;
 	DirectX::Keyboard::KeyboardStateTracker         m_keyboardTracker;
 	std::unique_ptr<DirectX::Mouse>                 m_mouse;
@@ -74,6 +76,4 @@ public:
 	float x = 0, y = 0, z = 0;
 
 	int counter = 0;
-
-	bool                                            m_fullScreen;
 };

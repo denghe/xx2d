@@ -88,6 +88,15 @@ void main() {
 		//ib = LoadIndexes(idxs.data(), idxs.size() * sizeof(GLushort));
 		glGenBuffers(1, &ib.handle);
 		assert(ib);
+		{
+			for (size_t i = 0; i < 10000; i++) {
+				GLushort b = i * 4;
+				idxs.insert(idxs.begin(), { (GLushort)(b + 0), (GLushort)(b + 1), (GLushort)(b + 2), (GLushort)(b + 2), (GLushort)(b + 3), (GLushort)(b + 0) });
+			}
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib); assert(!CheckGLError(__LINE__));
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)(idxs.size() * sizeof(GLushort)), idxs.data(), GL_STATIC_DRAW); assert(!CheckGLError(__LINE__));
+		}
+
 		t = LoadEtc2TextureFile(rootPath / "all.pkm");
 		assert(t);
 		return 0;
@@ -123,16 +132,10 @@ void main() {
 					o.color = c;
 					o.uv = { 0,1 };
 				}
-				{
-					idxs.insert(idxs.begin(), { 0, 1, 2, 2, 3, 0 });
-				}
 			}
 
 			glBindBuffer(GL_ARRAY_BUFFER, vb); assert(!CheckGLError(__LINE__));
 			glBufferData(GL_ARRAY_BUFFER, (GLsizei)(verts.size() * sizeof(XyzColorUv)), verts.data(), GL_STATIC_DRAW); assert(!CheckGLError(__LINE__));
-
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib); assert(!CheckGLError(__LINE__));
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizei)(idxs.size() * sizeof(GLushort)), idxs.data(), GL_STATIC_DRAW); assert(!CheckGLError(__LINE__));
 		}
 	}
 
