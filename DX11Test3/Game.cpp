@@ -212,7 +212,7 @@ void Game::Render() {
 	m_d3dContext->PSSetShaderResources(0, 1, &g_tex);
 	m_d3dContext->PSSetSamplers(0, 1, &g_ss);
 
-	m_d3dContext->DrawIndexed((UINT)g_idxs.size(), 0, 0);
+	m_d3dContext->DrawIndexed((UINT)(g_verts.size() / 4 * 6), 0, 0);
 
 	Present();
 }
