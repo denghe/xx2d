@@ -75,5 +75,5 @@ public:
 
 	float x = 0, y = 0, z = 0;
 
-	int counter = 0;
+	int64_t counter = 0;
 };

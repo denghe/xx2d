@@ -13,126 +13,36 @@ using Microsoft::WRL::ComPtr;
 
 
 
-
-struct SimpleVertex {
-	XMFLOAT3 Pos;
-	XMFLOAT2 Tex;
+// todo: 似乎这里可以不用携带 z, 可以移到 MvpColor 内？
+struct Vert {
+	XMFLOAT3 pos;
+	XMFLOAT2 uv;
 };
 
-struct CBNeverChanges {
-	XMMATRIX mView;
+struct MvpColor {
+	XMMATRIX mvp;
+	XMFLOAT4 color;
 };
 
-struct CBChangeOnResize {
-	XMMATRIX mProjection;
-};
+ID3D11VertexShader* g_vs = nullptr;
+ID3D11PixelShader* g_ps = nullptr;
+ID3D11InputLayout* g_il = nullptr;
 
-struct CBChangesEveryFrame {
-	XMMATRIX mWorld;
-	XMFLOAT4 vMeshColor;
-};
+ID3D11Buffer* g_bufMvpColor = nullptr;
+ID3D11ShaderResourceView* g_tex = nullptr;
+ID3D11SamplerState* g_ss = nullptr;
 
-ID3D11VertexShader* g_pVertexShader = nullptr;
-ID3D11PixelShader* g_pPixelShader = nullptr;
-ID3D11InputLayout* g_pVertexLayout = nullptr;
-ID3D11Buffer* g_pVertexBuffer = nullptr;
-ID3D11Buffer* g_pIndexBuffer = nullptr;
-ID3D11Buffer* g_pCBNeverChanges = nullptr;
-ID3D11Buffer* g_pCBChangeOnResize = nullptr;
-ID3D11Buffer* g_pCBChangesEveryFrame = nullptr;
-ID3D11ShaderResourceView* g_pTextureRV = nullptr;
-ID3D11SamplerState* g_pSamplerLinear = nullptr;
-XMMATRIX g_World;
-XMMATRIX g_View;
-XMMATRIX g_Projection;
-XMFLOAT4 g_vMeshColor(0.7f, 0.7f, 0.7f, 1.0f);
+// 因为 index 字节长度为 2, 故最大值约为 65536/4 = 16384
+// todo: 创建多个 g_bufVerts 以容纳更多顶点. 每帧 cleanup 后将要绘制的对象 idx 无脑追加到临时容器( 追加过程中可能分组，堆排序啥的? ), 最后copy 相关数据到显存( 动态合批 )
+size_t g_numVerts = 16384;
 
-std::string shaderCode = R"(
-//--------------------------------------------------------------------------------------
-// File: Tutorial07.fx
-//
-// Copyright (c) Microsoft Corporation. All rights reserved.
-//--------------------------------------------------------------------------------------
+ID3D11Buffer* g_bufVerts = nullptr;	// dynamic + cpu write
+std::vector<Vert> g_verts;
 
-//--------------------------------------------------------------------------------------
-// Constant Buffer Variables
-//--------------------------------------------------------------------------------------
-Texture2D txDiffuse : register( t0 );
-SamplerState samLinear : register( s0 );
+ID3D11Buffer* g_bufIdxs = nullptr;	// read only 复用
+std::vector<WORD> g_idxs;
 
-cbuffer cbNeverChanges : register( b0 )
-{
-    matrix View;
-};
-
-cbuffer cbChangeOnResize : register( b1 )
-{
-    matrix Projection;
-};
-
-cbuffer cbChangesEveryFrame : register( b2 )
-{
-    matrix World;
-    float4 vMeshColor;
-};
-
-
-//--------------------------------------------------------------------------------------
-struct VS_INPUT
-{
-    float4 Pos : POSITION;
-    float2 Tex : TEXCOORD0;
-};
-
-struct PS_INPUT
-{
-    float4 Pos : SV_POSITION;
-    float2 Tex : TEXCOORD0;
-};
-
-
-//--------------------------------------------------------------------------------------
-// Vertex Shader
-//--------------------------------------------------------------------------------------
-PS_INPUT VS( VS_INPUT input )
-{
-    PS_INPUT output = (PS_INPUT)0;
-    output.Pos = mul( input.Pos, World );
-    output.Pos = mul( output.Pos, View );
-    output.Pos = mul( output.Pos, Projection );
-    output.Tex = input.Tex;
-    
-    return output;
-}
-
-
-//--------------------------------------------------------------------------------------
-// Pixel Shader
-//--------------------------------------------------------------------------------------
-float4 PS( PS_INPUT input) : SV_Target
-{
-    return txDiffuse.Sample( samLinear, input.Tex ) * vMeshColor;
-}
-
-)";
-
-
-HRESULT CompileShader(std::string code, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut) {
-	HRESULT hr = S_OK;
-	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-#if defined( DEBUG ) || defined( _DEBUG )
-	dwShaderFlags |= D3DCOMPILE_DEBUG;
-#endif
-	ID3DBlob* pErrorBlob;
-	hr = D3DCompile(code.data(), code.size(), nullptr, nullptr, nullptr, szEntryPoint, szShaderModel,
-		dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
-	if (pErrorBlob) {
-		OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
-		pErrorBlob->Release();
-	}
-	return hr;
-}
-
+double fpsTimer = 0;
 
 
 Game::Game() noexcept :
@@ -178,11 +88,15 @@ void Game::Tick() {
 // Updates the world.
 void Game::Update(DX::StepTimer const& timer) {
 	float elapsedTime = float(timer.GetElapsedSeconds());
-
+	++counter;
 	if (!m_fullScreen) {
-		wchar_t buf[32];
-		wsprintf(buf, L"%d", ++counter);
-		SetWindowText(m_window, buf);
+		auto t = m_timer.GetTotalSeconds();
+		if (t > fpsTimer) {
+			fpsTimer = t + 1;
+			wchar_t buf[32];
+			wsprintf(buf, L"%d", int(counter / t));
+			SetWindowText(m_window, buf);
+		}
 	}
 
 	auto kb = m_keyboard->GetState();
@@ -259,37 +173,46 @@ void Game::Render() {
 
 	// TODO: Add your rendering code here.
 
-	auto&& t = (float)m_timer.GetTotalSeconds();
 
-	// Rotate cube around the origin
-	//g_World = XMMatrixRotationY(t);
-	g_World = XMMatrixRotationRollPitchYaw(x, y, z);
+	static XMVECTOR Eye = XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f);
+	static XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	static XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	static auto v = XMMatrixLookAtLH(Eye, At, Up);
+	static auto p = XMMatrixPerspectiveFovLH(XM_PIDIV4, m_outputWidth / (FLOAT)m_outputHeight, 0.01f, 100.0f);
+	static auto vp = v * p;
 
-	// Modify the color
-	g_vMeshColor.x = (sinf(t * 1.0f) + 1.0f) * 0.5f;
-	g_vMeshColor.y = (cosf(t * 3.0f) + 1.0f) * 0.5f;
-	g_vMeshColor.z = (sinf(t * 5.0f) + 1.0f) * 0.5f;
+	//auto&& t = (float)m_timer.GetTotalSeconds();
+	//auto m = XMMatrixRotationY(t);
 
-	//
-	// Update variables that change once per frame
-	//
-	CBChangesEveryFrame cb;
-	cb.mWorld = XMMatrixTranspose(g_World);
-	cb.vMeshColor = g_vMeshColor;
-	m_d3dContext->UpdateSubresource(g_pCBChangesEveryFrame, 0, nullptr, &cb, 0, 0);
+	MvpColor mc;
+	mc.mvp = XMMatrixTranspose(/*m * */vp);
+	mc.color = { 0.7f, 0.7f, 0.7f, 1.0f };
+	m_d3dContext->UpdateSubresource(g_bufMvpColor, 0, nullptr, &mc, 0, 0);
 
-	//
-	// Render the cube
-	//
-	m_d3dContext->VSSetShader(g_pVertexShader, nullptr, 0);
-	m_d3dContext->VSSetConstantBuffers(0, 1, &g_pCBNeverChanges);
-	m_d3dContext->VSSetConstantBuffers(1, 1, &g_pCBChangeOnResize);
-	m_d3dContext->VSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
-	m_d3dContext->PSSetShader(g_pPixelShader, nullptr, 0);
-	m_d3dContext->PSSetConstantBuffers(2, 1, &g_pCBChangesEveryFrame);
-	m_d3dContext->PSSetShaderResources(0, 1, &g_pTextureRV);
-	m_d3dContext->PSSetSamplers(0, 1, &g_pSamplerLinear);
-	m_d3dContext->DrawIndexed(36, 0, 0);
+
+	// 模拟填充 g_verts by Nodes
+	g_verts.clear();
+	for (size_t i = 0; i < g_numVerts; i++) {
+		g_verts.push_back({ { 0,0,0 }, { 0,0 } });
+		g_verts.push_back({ { 1,0,0 }, { 1,0 } });
+		g_verts.push_back({ { 1,1,0 }, { 1,1 } });
+		g_verts.push_back({ { 0,1,0 }, { 0,1 } });
+	}
+
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	m_d3dContext->Map(g_bufVerts, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	memcpy(d3dMappedResource.pData, g_verts.data(), sizeof(Vert) * g_verts.size());
+	m_d3dContext->Unmap(g_bufVerts, 0);
+
+	m_d3dContext->VSSetShader(g_vs, nullptr, 0);
+	m_d3dContext->VSSetConstantBuffers(0, 1, &g_bufMvpColor);
+
+	m_d3dContext->PSSetShader(g_ps, nullptr, 0);
+	m_d3dContext->PSSetConstantBuffers(0, 1, &g_bufMvpColor);
+	m_d3dContext->PSSetShaderResources(0, 1, &g_tex);
+	m_d3dContext->PSSetSamplers(0, 1, &g_ss);
+
+	m_d3dContext->DrawIndexed((UINT)g_idxs.size(), 0, 0);
 
 	Present();
 }
@@ -312,7 +235,7 @@ void Game::Present() {
 	// The first argument instructs DXGI to block until VSync, putting the application
 	// to sleep until the next VSync. This ensures we don't waste any cycles rendering
 	// frames that will never be displayed to the screen.
-	HRESULT hr = m_swapChain->Present(1, 0);
+	HRESULT hr = m_swapChain->Present(0, 0);
 
 	// If the device was reset we must completely reinitialize the renderer.
 	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
@@ -424,6 +347,28 @@ void Game::CreateDevice() {
 	// TODO: Initialize device dependent objects here (independent of window size).
 }
 
+
+
+
+
+
+HRESULT CompileShader(std::string code, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut) {
+	HRESULT hr = S_OK;
+	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#if defined( DEBUG ) || defined( _DEBUG )
+	dwShaderFlags |= D3DCOMPILE_DEBUG;
+#endif
+	ID3DBlob* pErrorBlob;
+	hr = D3DCompile(code.data(), code.size(), nullptr, nullptr, nullptr, szEntryPoint, szShaderModel,
+		dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
+	if (pErrorBlob) {
+		OutputDebugStringA((char*)pErrorBlob->GetBufferPointer());
+		pErrorBlob->Release();
+	}
+	return hr;
+}
+
+
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateResources() {
 	// Clear the previous window size specific context.
@@ -517,20 +462,60 @@ void Game::CreateResources() {
 
 	// Setup the viewport
 	D3D11_VIEWPORT vp;
+	ZeroMemory(&vp, sizeof(D3D11_VIEWPORT));
 	vp.Width = (FLOAT)m_outputWidth;
 	vp.Height = (FLOAT)m_outputHeight;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
+	//vp.MinDepth = 0.0f;
+	//vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
 	m_d3dContext->RSSetViewports(1, &vp);
+
+	static std::string shaderCode = R"(
+//--------------------------------------------------------------------------------------
+
+Texture2D t : register( t0 );
+SamplerState s : register( s0 );
+
+cbuffer cbChangesEveryFrame : register( b0 ) {
+    matrix mvp;
+    float4 color;
+};
+
+//--------------------------------------------------------------------------------------
+
+struct VS_INPUT {
+    float4 pos : POSITION;
+    float2 uv  : TEXCOORD0;
+};
+
+struct PS_INPUT {
+    float4 pos : SV_POSITION;
+    float2 uv  : TEXCOORD0;
+};
+
+//--------------------------------------------------------------------------------------
+
+PS_INPUT VS( VS_INPUT input ) {
+    PS_INPUT output = (PS_INPUT)0;
+    output.pos = mul( input.pos, mvp );
+    output.uv = input.uv;
+    return output;
+}
+
+//--------------------------------------------------------------------------------------
+
+float4 PS( PS_INPUT input) : SV_Target {
+    return t.Sample( s, input.uv ) * color;
+}
+)";
 
 	// Compile the vertex shader
 	ID3DBlob* pVSBlob = nullptr;
 	DX::ThrowIfFailed(CompileShader(shaderCode, "VS", "vs_4_0", &pVSBlob));
 
 	// Create the vertex shader
-	DX::ThrowIfFailed(m_d3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &g_pVertexShader));
+	DX::ThrowIfFailed(m_d3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &g_vs));
 
 	// Define the input layout
 	D3D11_INPUT_ELEMENT_DESC layout[] = {
@@ -540,120 +525,72 @@ void Game::CreateResources() {
 	UINT numElements = ARRAYSIZE(layout);
 
 	// Create the input layout
-	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
-		pVSBlob->GetBufferSize(), &g_pVertexLayout));
+	DX::ThrowIfFailed(m_d3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &g_il));
 	pVSBlob->Release();
 
 	// Set the input layout
-	m_d3dContext->IASetInputLayout(g_pVertexLayout);
+	m_d3dContext->IASetInputLayout(g_il);
 
 	// Compile the pixel shader
 	ID3DBlob* pPSBlob = nullptr;
 	DX::ThrowIfFailed(CompileShader(shaderCode, "PS", "ps_4_0", &pPSBlob));
 
 	// Create the pixel shader
-	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_pPixelShader));
+	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_ps));
 	pPSBlob->Release();
 
-	// Create vertex buffer
-	SimpleVertex vertices[] = {
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-
-		{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-
-		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
-
-		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-
-		{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
-	};
-
-	D3D11_BUFFER_DESC bd = {};
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(SimpleVertex) * 24;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = 0;
 	D3D11_SUBRESOURCE_DATA InitData = {};
-	InitData.pSysMem = vertices;
-	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, &InitData, &g_pVertexBuffer));
+
+	// Create vertex buffer
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DYNAMIC;
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	bd.ByteWidth = (UINT)(sizeof(Vert) * g_numVerts * 4);
+	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, nullptr, &g_bufVerts));
 
 	// Set vertex buffer
-	UINT stride = sizeof(SimpleVertex);
+	UINT stride = sizeof(Vert);
 	UINT offset = 0;
-	m_d3dContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
+	m_d3dContext->IASetVertexBuffers(0, 1, &g_bufVerts, &stride, &offset);
 
 	// Create index buffer
-	// Create vertex buffer
-	WORD indices[] = {
-		3,1,0,
-		2,1,3,
-
-		6,4,5,
-		7,4,6,
-
-		11,9,8,
-		10,9,11,
-
-		14,12,13,
-		15,12,14,
-
-		19,17,16,
-		18,17,19,
-
-		22,20,21,
-		23,20,22
-	};
-
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(WORD) * 36;
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags = 0;
-	InitData.pSysMem = indices;
-	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, &InitData, &g_pIndexBuffer));
+	if (g_idxs.empty()) {
+		for (size_t i = 0; i < g_numVerts; i++) {
+			auto b = i * 4;
+			g_idxs.insert(g_idxs.begin(), {
+				(uint16_t)(b + 0)
+				, (uint16_t)(b + 2)
+				, (uint16_t)(b + 1)
+				, (uint16_t)(b + 2)
+				, (uint16_t)(b + 0)
+				, (uint16_t)(b + 3)
+				});
+		}
+	}
+	bd.ByteWidth = (UINT)(sizeof(WORD) * g_idxs.size());
+	InitData.pSysMem = g_idxs.data();
+	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, &InitData, &g_bufIdxs));
 
 	// Set index buffer
-	m_d3dContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	m_d3dContext->IASetIndexBuffer(g_bufIdxs, DXGI_FORMAT_R16_UINT, 0);
 
 	// Set primitive topology
 	m_d3dContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Create the constant buffers
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(CBNeverChanges);
+	bd.ByteWidth = sizeof(MvpColor);
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = 0;
-	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, nullptr, &g_pCBNeverChanges));
-
-	bd.ByteWidth = sizeof(CBChangeOnResize);
-	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, nullptr, &g_pCBChangeOnResize));
-
-	bd.ByteWidth = sizeof(CBChangesEveryFrame);
-	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, nullptr, &g_pCBChangesEveryFrame));
+	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, nullptr, &g_bufMvpColor));
 
 	// Load the Texture
-	//DX::ThrowIfFailed(CreateDDSTextureFromFile(m_d3dDevice.Get(), L"2.dds", nullptr, &g_pTextureRV));
-	DX::ThrowIfFailed(CreateWICTextureFromFile(m_d3dDevice.Get(), m_d3dContext.Get(), L"seafloor.dds", nullptr, &g_pTextureRV));
-
+	//DX::ThrowIfFailed(CreateDDSTextureFromFile(m_d3dDevice.Get(), L"seafloor.dds", nullptr, &g_tex));
+	DX::ThrowIfFailed(CreateWICTextureFromFile(m_d3dDevice.Get(), m_d3dContext.Get(), L"seafloor.dds", nullptr, &g_tex));
 
 	// Create the sample state
 	D3D11_SAMPLER_DESC sampDesc = {};
@@ -664,42 +601,18 @@ void Game::CreateResources() {
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	DX::ThrowIfFailed(m_d3dDevice->CreateSamplerState(&sampDesc, &g_pSamplerLinear));
-
-	// Initialize the world matrices
-	g_World = XMMatrixIdentity();
-
-	// Initialize the view matrix
-	XMVECTOR Eye = XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f);
-	XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	g_View = XMMatrixLookAtLH(Eye, At, Up);
-
-	CBNeverChanges cbNeverChanges;
-	cbNeverChanges.mView = XMMatrixTranspose(g_View);
-	m_d3dContext->UpdateSubresource(g_pCBNeverChanges, 0, nullptr, &cbNeverChanges, 0, 0);
-
-	// Initialize the projection matrix
-	g_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV4, m_outputWidth / (FLOAT)m_outputHeight, 0.01f, 100.0f);
-	//auto r = m_outputWidth / (FLOAT)m_outputHeight * 5;
-	//g_Projection = XMMatrixOrthographicOffCenterLH(-r, r, -5, 5, 0, 100);
-
-	CBChangeOnResize cbChangesOnResize;
-	cbChangesOnResize.mProjection = XMMatrixTranspose(g_Projection);
-	m_d3dContext->UpdateSubresource(g_pCBChangeOnResize, 0, nullptr, &cbChangesOnResize, 0, 0);
+	DX::ThrowIfFailed(m_d3dDevice->CreateSamplerState(&sampDesc, &g_ss));
 }
 
 void Game::OnDeviceLost() {
-	if (g_pSamplerLinear) g_pSamplerLinear->Release();
-	if (g_pTextureRV) g_pTextureRV->Release();
-	if (g_pCBNeverChanges) g_pCBNeverChanges->Release();
-	if (g_pCBChangeOnResize) g_pCBChangeOnResize->Release();
-	if (g_pCBChangesEveryFrame) g_pCBChangesEveryFrame->Release();
-	if (g_pVertexBuffer) g_pVertexBuffer->Release();
-	if (g_pIndexBuffer) g_pIndexBuffer->Release();
-	if (g_pVertexLayout) g_pVertexLayout->Release();
-	if (g_pVertexShader) g_pVertexShader->Release();
-	if (g_pPixelShader) g_pPixelShader->Release();
+	if (g_ss) g_ss->Release();
+	if (g_tex) g_tex->Release();
+	if (g_bufMvpColor) g_bufMvpColor->Release();
+	if (g_bufVerts) g_bufVerts->Release();
+	if (g_bufIdxs) g_bufIdxs->Release();
+	if (g_il) g_il->Release();
+	if (g_vs) g_vs->Release();
+	if (g_ps) g_ps->Release();
 
 	// TODO: Add Direct3D resource cleanup here.
 

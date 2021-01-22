@@ -564,7 +564,6 @@ void Game::CreateResources()
     m_d3dContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
 
     // Create index buffer
-    // Create vertex buffer
     WORD indices[] =
     {
         3,1,0,
