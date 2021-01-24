@@ -24,6 +24,7 @@
     <ClInclude Include="..\xxlib\xx_file.h">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="LinkPool.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">
