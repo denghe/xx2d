@@ -26,6 +26,25 @@ using E = std::pair<LinkPool<W<T>>, int>;	// second: header
 
 std::tuple<E<A>, E<B>, E<C>> pool;
 
+using Item = std::array<int, 3>;
+
+std::vector<Item> items;
+
+
+template <class T, class Tuple>
+struct Index;
+
+template <class T, class... Types>
+struct Index<T, std::tuple<T, Types...>> {
+	static const std::size_t value = 0;
+};
+
+template <class T, class U, class... Types>
+struct Index<T, std::tuple<U, Types...>> {
+	static const std::size_t value = 1 + Index<T, std::tuple<Types...>>::value;
+};
+
+
 template<class Tuple, std::size_t N>
 struct PoolIniter {
 	static void Init(Tuple& in) {
