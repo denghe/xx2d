@@ -1,177 +1,165 @@
-﻿// todo: ECS思考: 用组合来替代继承？类似列存储？数据按需求分组聚合？
-
-#include "LinkPool.h"
+﻿#include <type_traits>
 #include <vector>
 #include <tuple>
+#include <string>
+#include <cassert>
 
-struct A {
-	int a;
-};
-struct B {
-	int b;
-};
-struct C {
-	int c;
-};
+// 模拟一下 ECS 的内存分布特性（ 按业务需求分组的 数据块 连续高密存放 )
+// 组合优先于继承, 拆分后最好只有数据, 没有函数
 
+/*********************************************************************/
+// 基础库代码
+
+// 每个数据分块继承这个 省掉公共代码
 template<typename T>
-struct W : T {
-	int prev;
-	int next;
-	int self;
+struct E {
+	E() = default;
+	E(E const&) = delete;
+	E& operator=(E const&) = delete;
+	E(E&&) = default;
+	E& operator=(E&&) = default;
+	int self = -1;
 };
 
+// 组合后的类的基础数据 int 包装, 便于 tuple 类型查找定位
 template<typename T>
-using E = std::pair<LinkPool<W<T>>, int>;	// second: header
-
-std::tuple<E<A>, E<B>, E<C>> pool;
-
-using Item = std::array<int, 3>;
-
-std::vector<Item> items;
-
-
-template <class T, class Tuple>
-struct Index;
-
-template <class T, class... Types>
-struct Index<T, std::tuple<T, Types...>> {
-	static const std::size_t value = 0;
+struct I {
+	int i;
+	operator int& () { return i; }
+	operator int const& () const { return i; }
 };
 
-template <class T, class U, class... Types>
-struct Index<T, std::tuple<U, Types...>> {
-	static const std::size_t value = 1 + Index<T, std::tuple<Types...>>::value;
+// 通用工具函数 判断 tuple 里是否存在某种数据类型
+
+template <typename T, typename Tuple> struct ContainsType;
+// c++11
+//template <typename T> struct ContainsType<T, std::tuple<>> : std::false_type {};
+//template <typename T, typename U, typename... Ts> struct ContainsType<T, std::tuple<U, Ts...>> : ContainsType<T, std::tuple<Ts...>> {};
+//template <typename T, typename... Ts> struct ContainsType<T, std::tuple<T, Ts...>> : std::true_type {};
+// c++17
+template <typename T, typename... Us> struct ContainsType<T, std::tuple<Us...>> : std::disjunction<std::is_same<T, Us>...> {};
+
+template <typename T, typename Tuple>
+constexpr bool TupleContainsType_v = ContainsType<T, Tuple>::type::value;
+
+/*********************************************************************/
+// 模拟生成物
+
+// 拆分后的数据块
+struct A : E<A> {
+	std::string name;
+};
+struct B : E<B> {
+	float x = 0, y = 0;
+};
+struct C : E<C> {
+	int hp = 0;
 };
 
+struct Env;
 
-template<class Tuple, std::size_t N>
-struct PoolIniter {
-	static void Init(Tuple& in) {
-		std::get<N - 1>(in).second = -1;
-		PoolIniter<Tuple, N - 1>::Init(in);
+// 排列组合
+using ABC = std::tuple<I<A>, I<B>, I<C>, Env*>;
+using AB = std::tuple<I<A>, I<B>, Env*>;
+using AC = std::tuple<I<A>, I<C>, Env*>;
+using BC = std::tuple<I<B>, I<C>, Env*>;
+
+struct Env {
+	std::tuple<
+		std::vector<A>, std::vector<B>, std::vector<C>,
+		std::vector<ABC>, std::vector<AB>, std::vector<AC>, std::vector<BC>
+	> data;
+	template<typename T> std::vector<T> const& Data() const { return std::get<std::vector<T>>(data); }
+	template<typename T> std::vector<T>& Data() { return std::get<std::vector<T>>(data); }
+
+	template<typename T>
+	void Create(int const& self, int& idx) {
+		auto& d = Data<T>();
+		idx = (int)d.size();
+		d.emplace_back().self = self;
+	}
+	template<typename T>
+	void Release(int const& idx, int const& self) {
+		auto& d = Data<T>();
+		assert(idx >= 0 && idx < d.size());
+		d[idx] = std::move(d.back());
+		d[idx].self = self;
+		d.pop_back();
+	}
+	template<typename O, typename T>
+	O& Ref(T& t) {
+		return Data<O>()[std::get<I<O>>(t)];
+	}
+	template<typename O, typename T>
+	O const& Ref(T const& t) const {
+		return Data<O>()[std::get<I<O>>(t)];
+	}
+
+	template<typename T>
+	T& Create() {
+		auto& d = Data<ABC>();
+		int self = (int)d.size();
+		auto& r = d.emplace_back();
+		if constexpr (TupleContainsType_v<I<A>, T>) { Create<A>(self, std::get<I<A>>(r)); }
+		if constexpr (TupleContainsType_v<I<B>, T>) { Create<B>(self, std::get<I<B>>(r)); }
+		if constexpr (TupleContainsType_v<I<C>, T>) { Create<C>(self, std::get<I<C>>(r)); }
+		std::get<Env*>(r) = this;
+		return r;
+	}
+
+	template<typename T>
+	void Release(int const& idx) {
+		auto& d = Data<ABC>();
+		assert(idx >= 0 && idx < (int)d.size());
+		auto& r = d[idx];
+		if constexpr (TupleContainsType_v<I<A>, T>) { Release<A>(std::get<I<A>>(r), idx); }
+		if constexpr (TupleContainsType_v<I<B>, T>) { Release<B>(std::get<I<B>>(r), idx); }
+		if constexpr (TupleContainsType_v<I<C>, T>) { Release<C>(std::get<I<C>>(r), idx); }
+		r = std::move(d.back());
+		d.pop_back();
 	}
 };
 
-template<class Tuple>
-struct PoolIniter<Tuple, 0> {
-	static void Init(Tuple& in) {
-		std::get<0>(in).second = -1;
-	}
-};
+/*********************************************************************/
+// 附加简单 dump 功能
 
-template<class Tuple>
-void PoolInit(Tuple& in) {
-	PoolIniter<Tuple, std::tuple_size<Tuple>::value>::Init(in);
+#include <iostream>
+
+template<typename T, typename ENABLED = std::enable_if_t<TupleContainsType_v<T, std::tuple<ABC, AB, AC, BC>>>>
+void Dump(std::ostream& os, T const& o) {
+	auto& env = *std::get<Env*>(o);
+	if constexpr (TupleContainsType_v<I<A>, T>) os << env.Ref<A>(o) << std::endl;
+	if constexpr (TupleContainsType_v<I<B>, T>) os << env.Ref<B>(o) << std::endl;
+	if constexpr (TupleContainsType_v<I<C>, T>) os << env.Ref<C>(o) << std::endl;
 }
 
-struct StaticPoolIniter {
-	StaticPoolIniter() {
-		PoolInit(pool);
-	}
-} __StaticPoolIniter;
+std::ostream& operator<<(std::ostream& os, A const& o) {
+	return os << "A.name = " << o.name;
+}
+std::ostream& operator<<(std::ostream& os, B const& o) {
+	return os << "B.x,y = " << o.x << " " << o.y;
+}
+std::ostream& operator<<(std::ostream& os, C const& o) {
+	return os << "C.hp = " << o.hp;
+}
+std::ostream& operator<<(std::ostream& os, ABC const& o) { Dump(os, o);	return os; }
+std::ostream& operator<<(std::ostream& os, AB const& o) { Dump(os, o);	return os; }
+std::ostream& operator<<(std::ostream& os, AC const& o) { Dump(os, o);	return os; }
+std::ostream& operator<<(std::ostream& os, BC const& o) { Dump(os, o);	return os; }
 
-template<typename T>
-struct Component {
-	int idx;
-	LinkPool<W<T>>& Pool() { return std::get<E<T>>(pool).first; }
-	int& Header() { return std::get<E<T>>(pool).second; }
-	W<T>& Node() { return Pool()[idx]; }
-	T& Data() { return (T&)Node(); }
-	operator T& () { return Data(); }
-	explicit Component() {
-		auto& p = Pool();
-		p.Alloc(idx);
-		auto& o = Node();
-		auto& h = Header();
-		o.prev = -1;
-		o.next = h;
-		if (h != -1) {
-			p[h].prev = idx;
-		}
-		h = idx;
-		//o.self = self;
-	}
-	~Component() {
-		auto& p = Pool();
-		auto& h = Header();
-		auto& o = Node();
-		if (o.prev != -1) {
-			p[o.prev].next = o.next;
-		}
-		if (o.next != -1) {
-			p[o.next].prev = o.prev;
-		}
-		if (h == idx) {
-			h = o.next;
-		}
-		p.Free(idx);
-	}
-};
 
-struct AB : Component<A>, Component<B> {
-	AB() {
-		// todo: get self's idx
-		this->Component<A>::Node().self = 0;
-		this->Component<B>::Node().self = 0;
-	}
-};
+
+/*********************************************************************/
+// 测试
 
 int main() {
-	//AB ab;
-	//ab.Component<A>::i = 1;
+	Env env;
+	auto& abc = env.Create<ABC>();
+	env.Ref<A>(abc).name = "asdf";
+	env.Ref<B>(abc).x = 1;
+	env.Ref<B>(abc).y = 2;
+	env.Ref<C>(abc).hp = 3;
+	std::cout << abc << std::endl;
+
 	return 0;
 }
-
-//template<size_t capA, size_t capB, size_t capC>
-//struct Env {
-//	Env() : as(capA), bs(capB), cs(capC) {}
-//	LinkPool<W<A>> as;
-//	int asHeader = -1;
-//	LinkPool<W<B>> bs;
-//	int bsHeader = -1;
-//	LinkPool<W<C>> cs;
-//	int csHeader = -1;
-//};
-//Env<10000, 10000, 10000> env;
-//
-//struct AB {
-//	int ia;
-//	A& a() { return env.as[ia]; }
-//	operator A&() { return a(); }
-//
-//	int ib;
-//	B& b() { return env.bs[ib]; }
-//	operator B& () { return b(); }
-//
-//	AB() {
-//		env.as.Alloc(ia);
-//		env.bs.Alloc(ib);
-//	}
-//	~AB() {
-//		env.as.Free(ia);
-//		env.bs.Free(ib);
-//	}
-//};
-//struct BC {
-//	int ib;
-//	B& b() { return env.bs[ib]; }
-//	operator B& () { return b(); }
-//
-//	int ic;
-//	C& c() { return env.cs[ic]; }
-//	operator C& () { return c(); }
-//
-//	BC() {
-//		env.bs.Alloc(ib);
-//		env.cs.Alloc(ic);
-//	}
-//	~BC() {
-//		env.bs.Free(ib);
-//		env.cs.Free(ic);
-//	}
-//};
-
-//struct World {
-//	std::vector<AB> abs;
-//};

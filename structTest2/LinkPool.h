@@ -1,17 +1,17 @@
 ﻿#include <cstring>	// malloc realloc
 //#include <cstddef>	// offsetof
+#include <cassert>
 #include <type_traits>
 
 // 用来标识 LinkPool.buf 的成员类型 是否支持 realloc 扩容
 template<typename T, typename ENABLED = void> struct IsReallocable : std::false_type {};
-template<typename T> struct IsReallocable<T, std::enable_if_t<std::is_standard_layout_v<T> && std::is_trivial_v<T>>> : std::true_type {};
+template<typename T> struct IsReallocable<T, std::enable_if_t<std::is_standard_layout_v<T>&& std::is_trivial_v<T>>> : std::true_type {};
 template<typename T> constexpr bool IsReallocable_v = IsReallocable<T>::value;
 
 
 // 链表节点池. 分配的是不会变化的 下标. 可指定 next 变量类型和偏移量
 template<typename T, typename PNType = int, size_t nextOffset = 0>
 class LinkPool {
-	static_assert(std::is_standard_layout_v<T>);
 	static_assert(sizeof(T) >= sizeof(int));
 	static_assert(sizeof(T) >= sizeof(int) + nextOffset);
 
@@ -25,7 +25,7 @@ class LinkPool {
 		return *(PNType*)((char*)&o + nextOffset);
 	}
 public:
-	explicit LinkPool(PNType const& cap) : cap(cap) {
+	explicit LinkPool(PNType const& cap = 16) : cap(cap) {
 		buf = (T*)malloc(sizeof(T) * cap);
 	}
 	~LinkPool() {
