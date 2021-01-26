@@ -102,8 +102,8 @@ struct Vectors {
 
 	template<typename T> std::vector<T> const& Get() const { return std::get<std::vector<T>>(vectors); }
 	template<typename T> std::vector<T>& Get() { return std::get<std::vector<T>>(vectors); }
-	template<typename T> std::vector<std::pair<int, int>> const& GetIdxs() const { return ownerss[TupleTypeIndex_v<T, Types>]; }
-	template<typename T> std::vector<std::pair<int, int>>& GetIdxs() { return ownerss[TupleTypeIndex_v<T, Types>]; }
+	template<typename T> std::vector<std::tuple<int, int, int*>> const& GetEx() const { return typeId_Idx_IdxAddrss[TupleTypeIndex_v<T, Types>]; }
+	template<typename T> std::vector<std::tuple<int, int, int*>>& GetEx() { return typeId_Idx_IdxAddrss[TupleTypeIndex_v<T, Types>]; }
 };
 
 // Item容器 tuple 套 LinkPool ( 确保分配出来的 idx 不变 )
@@ -127,18 +127,19 @@ struct Env {
 	template<typename T>
 	void CreateData(int const& typeId, int const& owner, int& idx) {
 		auto& s = slices.Get<T>();
-		auto& n = slices.GetIdxs<T>();
+		auto& n = slices.GetEx<T>();
 		idx = (int)s.size();
 		s.emplace_back();
-		n.emplace_back(typeId, owner);
+		n.emplace_back(typeId, owner, &idx);
 		assert(s.size() == n.size());
 	}
 	template<typename T>
 	void ReleaseData(int const& idx) {
 		auto& s = slices.Get<T>();
-		auto& n = slices.GetIdxs<T>();
+		auto& n = slices.GetEx<T>();
 		assert(idx >= 0 && idx < s.size());
 		s[idx] = std::move(s.back());
+		*std::get<int*>(n.back()) = idx;
 		n[idx] = n.back();
 		s.pop_back();
 		n.pop_back();
@@ -154,7 +155,6 @@ struct Env {
 		TryCreate<i + 1, Tp, T>(typeId, owner, r);
 	}
 
-	// todo: 交换删除的时候，针对最后一个元素，需要将 owner 那边的 idx 反向同步. 这就要求找个地方记录 int* 以方便修改
 	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t<i == std::tuple_size_v<Tp>> TryRelease(T const& r) {}
 	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t < i < std::tuple_size_v<Tp>> TryRelease(T const& r) {
 		using O = std::decay_t<decltype(std::get<i>(std::declval<Tp>()))>;
@@ -188,33 +188,28 @@ struct Env {
 		int idx;
 
 		~Shared() {
-			std::cout << "~Shared()" << std::endl;
 			Reset();
 		}
 		Shared() : env(nullptr), idx(-1) {
-			std::cout << "Shared()" << std::endl;
 		}
 		Shared(Env* const& env, int const& idx) : env(env), idx(idx) {
-			std::cout << "Shared(Env* const& env, int const& idx)" << std::endl;
 		}
 		Shared(Shared&& o) noexcept {
-			env = o.env; idx = o.idx; o.env = nullptr;
-			std::cout << "Shared(Shared&& o)" << std::endl;
+			env = o.env;
+			idx = o.idx;
+			o.env = nullptr;
 		}
 		Shared(Shared const& o) : env(o.env), idx(o.idx) {
-			std::cout << "Shared(Shared const& o)" << std::endl;
 			if (env) {
 				++env->RefItem<T>(idx).refCount;
 			}
 		}
 
 		Shared& operator=(Shared const& o) {
-			std::cout << "Shared& operator=(Shared const& o)" << std::endl;
 			Reset(o.env, o.idx);
 			return *this;
 		}
 		Shared& operator=(Shared&& o) {
-			std::cout << "Shared& operator=(Shared&& o)" << std::endl;
 			std::swap(env, o.env);
 			std::swap(idx, o.idx);
 			return *this;
@@ -338,7 +333,7 @@ struct Env {
 	template<typename Slice, typename F>
 	void ForeachSlices(F&& f) {
 		auto& s = slices.Get<Slice>();
-		auto& n = slices.GetIdxs<Slice>();
+		auto& n = slices.GetEx<Slice>();
 		auto siz = s.size();
 		for (size_t i = 0; i < siz; ++i) {
 			f(s[i], n[i]);
@@ -346,8 +341,14 @@ struct Env {
 	}
 };
 
+
+
+
+
 /*********************************************************************/
 // tests
+
+
 #include <chrono>
 
 // slices
@@ -370,16 +371,55 @@ using AC = O<A, C>;
 using BC = O<B, C>;
 
 using MyEnv = Env<Vectors<A, B, C>, LinkPools<ABC, AB, AC, BC>>;
+std::vector<MyEnv::Shared<ABC>> abcHolders;
+
+struct Foo {
+	std::array<char, 512> dummy;
+	std::string name;
+	float x, y;
+	int hp;
+};
+std::vector<Foo> foos;
+std::vector<std::shared_ptr<Foo>> fooPtrs;
 
 int main() {
 	MyEnv env;
-	{
-		std::vector<MyEnv::Shared<ABC>> abcHolders;
-		abcHolders.reserve(5);
-		abcHolders.push_back(env.CreateItem<ABC>());
-		abcHolders.push_back(env.CreateItem<ABC>());
-		std::cout << std::endl;
+
+	for (size_t i = 0; i < 100000; i++) {
+		auto& f = foos.emplace_back();
+		f.name = "name_" + std::to_string(i);
+		f.x = (float)i;
+		f.y = (float)i;
+		f.hp = (int)i;
+
+		fooPtrs.emplace_back(std::make_shared<Foo>(f));
+
+		auto&& abc = env.CreateItem<ABC>();
+		abc.RefSlice<A>().name = f.name;
+		abc.RefSlice<B>().x = f.x;
+		abc.RefSlice<B>().y = f.y;
+		abc.RefSlice<C>().hp = f.hp;
+		abcHolders.push_back(std::move(abc));
 	}
+
+	uint64_t totalHP = 0;
+	auto tp = std::chrono::system_clock::now();
+	for (size_t i = 0; i < 10000; i++) { for (auto& f : foos) { totalHP += f.hp; } }
+	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "for foos ms = " << ms << ", totalHP = " << totalHP << std::endl;
+
+	totalHP = 0;
+	tp = std::chrono::system_clock::now();
+	for (size_t i = 0; i < 10000; i++) { for (auto& f : fooPtrs) { totalHP += f->hp; } }
+	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "for fooPtrs ms = " << ms << ", totalHP = " << totalHP << std::endl;
+
+	totalHP = 0;
+	tp = std::chrono::system_clock::now();
+	for (size_t i = 0; i < 10000; i++) { env.ForeachSlices<C>([&](C& o, auto& owner) { totalHP += o.hp; }); }
+	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "env.ForeachSlices<C> ms = " << ms << ", totalHP = " << totalHP << std::endl;
+
 	return 0;
 }
 
@@ -390,11 +430,7 @@ int main() {
 
 
 
-
-
-
-
-
+//
 //#include <chrono>
 //
 //// slices
@@ -417,61 +453,18 @@ int main() {
 //using BC = O<B, C>;
 //
 //using MyEnv = Env<Vectors<A, B, C>, LinkPools<ABC, AB, AC, BC>>;
-//std::vector<MyEnv::Shared<ABC>> abcHolders;
-//
-//struct Foo {
-//	std::array<char, 512> dummy;
-//	std::string name;
-//	float x, y;
-//	int hp;
-//};
-//std::vector<Foo> foos;
-//std::vector<std::shared_ptr<Foo>> fooPtrs;
 //
 //int main() {
 //	MyEnv env;
-//
-//	for (size_t i = 0; i < 100000; i++) {
-//		auto& f = foos.emplace_back();
-//		f.name = "name_" + std::to_string(i);
-//		f.x = (float)i;
-//		f.y = (float)i;
-//		f.hp = (int)i;
-//
-//		fooPtrs.emplace_back(std::make_shared<Foo>(f));
-//
-//		auto&& abc = env.CreateItem<ABC>();
-//		abc.RefSlice<A>().name = f.name;
-//		abc.RefSlice<B>().x = f.x;
-//		abc.RefSlice<B>().y = f.y;
-//		abc.RefSlice<C>().hp = f.hp;
-//		abcHolders.push_back(std::move(abc));
+//	{
+//		std::vector<MyEnv::Shared<ABC>> abcHolders;
+//		abcHolders.reserve(5);
+//		abcHolders.push_back(env.CreateItem<ABC>());
+//		abcHolders.push_back(env.CreateItem<ABC>());
+//		std::cout << std::endl;
 //	}
-//
-//	uint64_t totalHP = 0;
-//	auto tp = std::chrono::system_clock::now();
-//	for (size_t i = 0; i < 10000; i++) { for (auto& f : foos) { totalHP += f.hp; } }
-//	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-//	std::cout << "for foos ms = " << ms << ", totalHP = " << totalHP << std::endl;
-//
-//	totalHP = 0;
-//	tp = std::chrono::system_clock::now();
-//	for (size_t i = 0; i < 10000; i++) { for (auto& f : fooPtrs) { totalHP += f->hp; } }
-//	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-//	std::cout << "for fooPtrs ms = " << ms << ", totalHP = " << totalHP << std::endl;
-//
-//	totalHP = 0;
-//	tp = std::chrono::system_clock::now();
-//	for (size_t i = 0; i < 10000; i++) { env.ForeachSlices<C>([&](C& o, auto& owner) { totalHP += o.hp; }); }
-//	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-//	std::cout << "env.ForeachSlices<C> ms = " << ms << ", totalHP = " << totalHP << std::endl;
-//
 //	return 0;
 //}
-
-
-
-
 
 
 
