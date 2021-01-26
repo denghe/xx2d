@@ -98,7 +98,7 @@ template<typename...TS>
 struct Vectors {
 	using Types = std::tuple<TS...>;
 	std::tuple<std::vector<TS>...> vectors;
-	std::array<std::vector<std::pair<int, int>>, sizeof...(TS)> ownerss;	// first: typeId( Items 的 Types 的第几个 )     second: index
+	std::array<std::vector<std::tuple<int, int, int*>>, sizeof...(TS)> typeId_Idx_IdxAddrss;
 
 	template<typename T> std::vector<T> const& Get() const { return std::get<std::vector<T>>(vectors); }
 	template<typename T> std::vector<T>& Get() { return std::get<std::vector<T>>(vectors); }
@@ -154,6 +154,7 @@ struct Env {
 		TryCreate<i + 1, Tp, T>(typeId, owner, r);
 	}
 
+	// todo: 交换删除的时候，针对最后一个元素，需要将 owner 那边的 idx 反向同步. 这就要求找个地方记录 int* 以方便修改
 	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t<i == std::tuple_size_v<Tp>> TryRelease(T const& r) {}
 	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t < i < std::tuple_size_v<Tp>> TryRelease(T const& r) {
 		using O = std::decay_t<decltype(std::get<i>(std::declval<Tp>()))>;
@@ -186,14 +187,38 @@ struct Env {
 		Env* env;
 		int idx;
 
-		~Shared() { Reset(); }
-		Shared() : env(nullptr), idx(-1) {}
-		Shared(Env* const& env, int const& idx) : env(env), idx(idx) {}
-		Shared(Shared&& o) noexcept { env = o.env; idx = o.idx; o.env = nullptr; o.idx = -1; }
-		Shared(Shared const& o) : env(o.env), idx(o.idx) { if (o.env) { ++o.env->RefItem<T>(o.idx).refCount; } }
+		~Shared() {
+			std::cout << "~Shared()" << std::endl;
+			Reset();
+		}
+		Shared() : env(nullptr), idx(-1) {
+			std::cout << "Shared()" << std::endl;
+		}
+		Shared(Env* const& env, int const& idx) : env(env), idx(idx) {
+			std::cout << "Shared(Env* const& env, int const& idx)" << std::endl;
+		}
+		Shared(Shared&& o) noexcept {
+			env = o.env; idx = o.idx; o.env = nullptr;
+			std::cout << "Shared(Shared&& o)" << std::endl;
+		}
+		Shared(Shared const& o) : env(o.env), idx(o.idx) {
+			std::cout << "Shared(Shared const& o)" << std::endl;
+			if (env) {
+				++env->RefItem<T>(idx).refCount;
+			}
+		}
 
-		Shared& operator=(Shared const& o) { Reset(o.env, o.idx); return *this; }
-		Shared& operator=(Shared&& o) { std::swap(env, o.env); std::swap(idx, o.idx); return *this; }
+		Shared& operator=(Shared const& o) {
+			std::cout << "Shared& operator=(Shared const& o)" << std::endl;
+			Reset(o.env, o.idx);
+			return *this;
+		}
+		Shared& operator=(Shared&& o) {
+			std::cout << "Shared& operator=(Shared&& o)" << std::endl;
+			std::swap(env, o.env);
+			std::swap(idx, o.idx);
+			return *this;
+		}
 
 		bool operator==(Shared const& o) const noexcept { return env == o.env && idx == o.idx; }
 		bool operator!=(Shared const& o) const noexcept { return env != o.env || idx != o.idx; }
@@ -323,10 +348,12 @@ struct Env {
 
 /*********************************************************************/
 // tests
+#include <chrono>
 
 // slices
 struct A {
 	SliceBaseCode(A);
+	std::array<char, 512> dummy;
 	std::string name;
 };
 struct B {
@@ -344,46 +371,15 @@ using BC = O<B, C>;
 
 using MyEnv = Env<Vectors<A, B, C>, LinkPools<ABC, AB, AC, BC>>;
 
-std::array<char const*, 4> itemTypes { "ABC", "AB", "AC", "BC" };
-
 int main() {
 	MyEnv env;
-
-	auto&& abc = env.CreateItem<ABC>();
-	abc.RefSlice<A>().name = "asdf";
-	abc.RefSlice<B>().x = 1;
-	abc.RefSlice<B>().y = 2;
-	abc.RefSlice<C>().hp = 3;
-
-	// 出括号后自杀
 	{
-		auto&& bc = env.CreateItem<BC>();
-		bc.RefSlice<B>().x = 1.2f;
-		bc.RefSlice<B>().y = 3.4f;
-		bc.RefSlice<C>().hp = 5;
+		std::vector<MyEnv::Shared<ABC>> abcHolders;
+		abcHolders.reserve(5);
+		abcHolders.push_back(env.CreateItem<ABC>());
+		abcHolders.push_back(env.CreateItem<ABC>());
+		std::cout << std::endl;
 	}
-
-	auto&& ac = env.CreateItem<AC>();
-	ac.RefSlice<A>().name = "qwerrrr";
-	ac.RefSlice<C>().hp = 7;
-
-	auto&& ac2 = env.CreateItem<AC>();
-	ac2.RefSlice<A>().name = "e";
-	ac2.RefSlice<C>().hp = 9;
-
-	env.ForeachSlices<A>([](A& o, auto& owner) {
-		std::cout << "owner: " << itemTypes[owner.first] << ", idx = " << owner.second << std::endl;
-		std::cout << "A::name = " << o.name << std::endl;
-		});
-	env.ForeachSlices<B>([](B& o, auto& owner) {
-		std::cout << "owner: " << itemTypes[owner.first] << ", idx = " << owner.second << std::endl;
-		std::cout << "B::x y = " << o.x << ", " << o.y << std::endl;
-		});
-	env.ForeachSlices<C>([](C& o, auto& owner) {
-		std::cout << "owner: " << itemTypes[owner.first] << ", idx = " << owner.second << std::endl;
-		std::cout << "C::hp = " << o.hp << std::endl;
-		});
-
 	return 0;
 }
 
@@ -397,6 +393,158 @@ int main() {
 
 
 
+
+
+//#include <chrono>
+//
+//// slices
+//struct A {
+//	SliceBaseCode(A);
+//	std::array<char, 512> dummy;
+//	std::string name;
+//};
+//struct B {
+//	float x, y;
+//};
+//struct C {
+//	int hp;
+//};
+//
+//// items
+//using ABC = O<A, B, C>;
+//using AB = O<A, B>;
+//using AC = O<A, C>;
+//using BC = O<B, C>;
+//
+//using MyEnv = Env<Vectors<A, B, C>, LinkPools<ABC, AB, AC, BC>>;
+//std::vector<MyEnv::Shared<ABC>> abcHolders;
+//
+//struct Foo {
+//	std::array<char, 512> dummy;
+//	std::string name;
+//	float x, y;
+//	int hp;
+//};
+//std::vector<Foo> foos;
+//std::vector<std::shared_ptr<Foo>> fooPtrs;
+//
+//int main() {
+//	MyEnv env;
+//
+//	for (size_t i = 0; i < 100000; i++) {
+//		auto& f = foos.emplace_back();
+//		f.name = "name_" + std::to_string(i);
+//		f.x = (float)i;
+//		f.y = (float)i;
+//		f.hp = (int)i;
+//
+//		fooPtrs.emplace_back(std::make_shared<Foo>(f));
+//
+//		auto&& abc = env.CreateItem<ABC>();
+//		abc.RefSlice<A>().name = f.name;
+//		abc.RefSlice<B>().x = f.x;
+//		abc.RefSlice<B>().y = f.y;
+//		abc.RefSlice<C>().hp = f.hp;
+//		abcHolders.push_back(std::move(abc));
+//	}
+//
+//	uint64_t totalHP = 0;
+//	auto tp = std::chrono::system_clock::now();
+//	for (size_t i = 0; i < 10000; i++) { for (auto& f : foos) { totalHP += f.hp; } }
+//	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+//	std::cout << "for foos ms = " << ms << ", totalHP = " << totalHP << std::endl;
+//
+//	totalHP = 0;
+//	tp = std::chrono::system_clock::now();
+//	for (size_t i = 0; i < 10000; i++) { for (auto& f : fooPtrs) { totalHP += f->hp; } }
+//	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+//	std::cout << "for fooPtrs ms = " << ms << ", totalHP = " << totalHP << std::endl;
+//
+//	totalHP = 0;
+//	tp = std::chrono::system_clock::now();
+//	for (size_t i = 0; i < 10000; i++) { env.ForeachSlices<C>([&](C& o, auto& owner) { totalHP += o.hp; }); }
+//	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+//	std::cout << "env.ForeachSlices<C> ms = " << ms << ", totalHP = " << totalHP << std::endl;
+//
+//	return 0;
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//// slices
+//struct A {
+//	SliceBaseCode(A);
+//	std::string name;
+//};
+//struct B {
+//	float x, y;
+//};
+//struct C {
+//	int hp;
+//};
+//
+//// items
+//using ABC = O<A, B, C>;
+//using AB = O<A, B>;
+//using AC = O<A, C>;
+//using BC = O<B, C>;
+//
+//using MyEnv = Env<Vectors<A, B, C>, LinkPools<ABC, AB, AC, BC>>;
+//
+//std::array<char const*, 4> itemTypes{ "ABC", "AB", "AC", "BC" };
+//
+//int main() {
+//	MyEnv env;
+//
+//	auto&& abc = env.CreateItem<ABC>();
+//	abc.RefSlice<A>().name = "asdf";
+//	abc.RefSlice<B>().x = 1;
+//	abc.RefSlice<B>().y = 2;
+//	abc.RefSlice<C>().hp = 3;
+//
+//	// 出括号后自杀
+//	{
+//		auto&& bc = env.CreateItem<BC>();
+//		bc.RefSlice<B>().x = 1.2f;
+//		bc.RefSlice<B>().y = 3.4f;
+//		bc.RefSlice<C>().hp = 5;
+//	}
+//
+//	auto&& ac = env.CreateItem<AC>();
+//	ac.RefSlice<A>().name = "qwerrrr";
+//	ac.RefSlice<C>().hp = 7;
+//
+//	auto&& ac2 = env.CreateItem<AC>();
+//	ac2.RefSlice<A>().name = "e";
+//	ac2.RefSlice<C>().hp = 9;
+//
+//	env.ForeachSlices<A>([](A& o, auto& owner) {
+//		std::cout << "owner: " << itemTypes[owner.first] << ", idx = " << owner.second << std::endl;
+//		std::cout << "A::name = " << o.name << std::endl;
+//		});
+//	env.ForeachSlices<B>([](B& o, auto& owner) {
+//		std::cout << "owner: " << itemTypes[owner.first] << ", idx = " << owner.second << std::endl;
+//		std::cout << "B::x y = " << o.x << ", " << o.y << std::endl;
+//		});
+//	env.ForeachSlices<C>([](C& o, auto& owner) {
+//		std::cout << "owner: " << itemTypes[owner.first] << ", idx = " << owner.second << std::endl;
+//		std::cout << "C::hp = " << o.hp << std::endl;
+//		});
+//
+//	return 0;
+//}
+//
 
 
 
