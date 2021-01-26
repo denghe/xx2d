@@ -18,7 +18,7 @@
 
 // 每个 拆分后的数据块 继承这个 省掉公共代码	// todo: 需要验证这样写之后 std::move 是否正确工作
 
-#define SliceDefaultCodes(T)		\
+#define SliceBaseCode(T)		\
 T() = default;						\
 T(T const&) = delete;				\
 T& operator=(T const&) = delete;	\
@@ -46,7 +46,9 @@ struct O {
 	O& operator=(O const&) = delete;
 	O(O&&) = default;
 	O& operator=(O&&) = default;
-	int idx, prev, next;
+
+	int next, prev;					// 入池后 前4字节( next ) 的值会被覆盖
+	uint32_t refCount, version;
 	std::tuple<I<TS>...> data;
 };
 
@@ -113,12 +115,9 @@ struct LinkPools {
 
 template<typename Slices, typename Items>
 struct Env {
+	/*********************************************************************/
 	// 拆分后的数据块 容器
 	Slices slices;
-	// Items 容器
-	Items items;
-	// 针对每种类型的 链表头
-	std::array<int, std::tuple_size_v<typename Items::Types>> headers;
 
 	template<typename T>
 	void CreateData(int const& owner, int& idx) {
@@ -127,11 +126,10 @@ struct Env {
 		d.emplace_back().owner = owner;
 	}
 	template<typename T>
-	void ReleaseData(int const& owner, int const& idx) {
+	void ReleaseData(int const& idx) {
 		auto& d = slices.Get<T>();
 		assert(idx >= 0 && idx < d.size());
 		d[idx] = std::move(d.back());
-		d[idx].owner = owner;
 		d.pop_back();
 	}
 
@@ -144,49 +142,139 @@ struct Env {
 		TryCreate<i + 1, Tp, T>(owner, r);
 	}
 
-	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t<i == std::tuple_size_v<Tp>> TryRelease(int const& owner, T const& r) {}
-	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t < i < std::tuple_size_v<Tp>> TryRelease(int const& owner, T const& r) {
+	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t<i == std::tuple_size_v<Tp>> TryRelease(T const& r) {}
+	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t < i < std::tuple_size_v<Tp>> TryRelease(T const& r) {
 		using O = std::decay_t<decltype(std::get<i>(std::declval<Tp>()))>;
 		if constexpr (TupleContainsType_v<I<O>, T>) {
-			ReleaseData<O>(owner, std::get<I<O>>(r));
+			ReleaseData<O>(std::get<I<O>>(r));
 		}
-		TryRelease<i + 1, Tp, T>(owner, r);
+		TryRelease<i + 1, Tp, T>(r);
 	}
+
+	/*********************************************************************/
+	// Items 容器
+	Items items;
+	// 用于版本号自增填充
+	uint32_t versionGen = 0;
+	// 针对每种类型的 链表头
+	std::array<int, std::tuple_size_v<typename Items::Types>> headers;
+
+	Env() {
+		headers.fill(-1);
+	}
+
+	template<typename T>
+	struct Shared {
+		using ElementType = T;
+		Env* env;
+		int idx;
+
+		~Shared() { Reset(); }
+		Shared() : env(nullptr), idx(-1) {}
+		Shared(Env* const& env, int const& idx) : env(env), idx(idx) {}
+		Shared(Shared&& o) noexcept { env = o.env; idx = o.idx; o.env = nullptr; o.idx = -1; }
+		Shared(Shared const& o) : env(o.env), idx(o.idx) { if (o.env) { ++o.env->RefItem<T>(o.idx).refCount; } }
+
+		Shared& operator=(Shared const& o) { Reset(o.env, o.idx); return *this; }
+		Shared& operator=(Shared&& o) { std::swap(env, o.env); std::swap(idx, o.idx); return *this; }
+
+		bool operator==(Shared const& o) const noexcept { return env == o.env && idx == o.idx; }
+		bool operator!=(Shared const& o) const noexcept { return env != o.env || idx != o.idx; }
+
+		//struct Weak<T> ToWeak() const noexcept;
+
+		T& Ref() {
+			assert(env);
+			return env->RefItem<T>(idx);
+		}
+		template<typename Slice>
+		Slice& RefSlice() {
+			assert(env);
+			return env->RefSlice<Slice>(Ref());
+		}
+
+		explicit operator bool() const noexcept { return env != nullptr; }
+		bool Empty() const noexcept { return env == nullptr; }
+		uint32_t refCount() const noexcept { if (!env) return 0; return env->RefItem(idx).refCount; }
+
+		void Reset() {
+			if (!env) return;
+			auto& o = Ref();
+			assert(o.refCount);
+			if (--o.refCount == 0) {
+				env->ReleaseItem<T>(idx);
+			}
+			env = nullptr;
+		}
+
+		void Reset(Env* const& env, int const& idx) {
+			if (this->env == env && this->idx = idx) return;
+			Reset();
+			if (env) {
+				this->env = env;
+				this->idx = idx;
+				auto& o = env->RefItem<T>(idx);
+				this->version = o.version;
+				++o.refCount;
+			}
+		}
+	};
 
 
 	template<typename T>
 	int& Header() {
 		return headers[TupleTypeIndex_v<T, typename Items::Types>];
 	}
-	// todo: store  header for foreach
 
 	template<typename T>
-	T& CreateItem() {
+	Shared<T> CreateItem() {
 		auto& d = items.Get<T>();
+		auto& h = Header<T>();
 		int idx;
 		d.Alloc(idx);
 		auto& r = d[idx];
 		TryCreate<0, typename decltype(slices)::Types>(idx, r.data);
-		r.idx = idx;
-		return r;
+		r.version = ++versionGen;
+		r.refCount = 1;
+		r.prev = -1;
+		if (h != -1) {
+			d[h].prev = idx;
+		}
+		r.next = h;
+		h = idx;
+		return Shared<T>(this, idx);
 	}
 
 	template<typename T>
 	void ReleaseItem(int const& idx) {
 		auto& d = items.Get<T>();
+		auto& h = Header<T>();
 		auto& r = d[idx];
-		TryRelease<0, typename decltype(slices)::Types>(idx, r.data);
+		assert(r.refCount == 0);
+		r.version = 0;
+		TryRelease<0, typename decltype(slices)::Types>(r.data);
+		if (h == idx) {
+			h = r.next;
+		}
+		else/* if (r.prev != -1)*/ {
+			d[r.prev].next = r.next;
+		}
+		if (r.next != -1) {
+			d[r.next].prev = r.prev;
+		}
 		d.Free(idx);
 	}
 
-	//template<typename Item>
-	//Item& RefItem(int const& idx) {
-	//	return items.Get<Item>()[idx];
-	//}
-	//template<typename Item>
-	//Item const& RefItem(int const& idx) const {
-	//	return items.Get<Item>()[idx];
-	//}
+	/*********************************************************************/
+
+	template<typename Item>
+	Item& RefItem(int const& idx) {
+		return items.Get<Item>()[idx];
+	}
+	template<typename Item>
+	Item const& RefItem(int const& idx) const {
+		return items.Get<Item>()[idx];
+	}
 
 	template<typename Slice, typename Item>
 	Slice& RefSlice(Item& o) {
@@ -198,20 +286,40 @@ struct Env {
 		auto&& idx = std::get<I<Slice>>(o.data);
 		return slices.Get<Slice>()[idx];
 	}
-};
 
+	template<typename Item, typename F>
+	void ForeachItems(F&& f) {
+		int h = Header<Item>();
+		while (h != -1) {
+			auto& o = RefItem<Item>(h);
+			h = o.next;
+			f(o);
+		}
+	}
+
+	template<typename Slice, typename F>
+	void ForeachSlices(F&& f) {
+		auto& d = slices.Get<Slice>();
+		for (auto& o : d) {
+			f(o);
+		}
+	}
+};
 
 /*********************************************************************/
 // tests
 
 // slices
-struct A { SliceDefaultCodes(A)
+struct A {
+	SliceBaseCode(A);
 	std::string name;
 };
-struct B { SliceDefaultCodes(B)
+struct B {
+	SliceBaseCode(B);
 	float x = 0, y = 0;
 };
-struct C { SliceDefaultCodes(C)
+struct C {
+	SliceBaseCode(C);
 	int hp = 0;
 };
 
@@ -223,76 +331,68 @@ using BC = O<B, C>;
 
 using MyEnv = Env<Vectors<A, B, C>, LinkPools<ABC, AB, AC, BC>>;
 
-// todo: 将每一种类型分别封装成智能指针?
-
-template<typename T>
-struct Base_r {
-	MyEnv& _env;
-	T& _item;
-	Base_r(MyEnv& env, T& item) : _env(env), _item(item) {}
-};
-
-#define A_r \
-std::string& name() { return _env.RefSlice<A>(_item).name; }				\
-std::string const& name() const { return _env.RefSlice<A>(_item).name; }
-
-#define B_r \
-float& x() { return _env.RefSlice<B>(_item).x; }							\
-float const& x() const { return _env.RefSlice<B>(_item).x; }				\
-float& y() { return _env.RefSlice<B>(_item).y; }							\
-float const& y() const { return _env.RefSlice<B>(_item).y; }
-
-#define C_r \
-int& hp() { return _env.RefSlice<C>(_item).hp; }							\
-int const& hp() const { return _env.RefSlice<C>(_item).hp; }
-
-struct ABC_r : Base_r<ABC> {
-	using Base_r<ABC>::Base_r;
-	A_r
-	B_r
-	C_r
-};
-
-struct Bar {
-	Bar() = default;
-	Bar(Bar const&) {
-		std::cout << "Bar const&" << std::endl;
-	}
-	Bar& operator=(Bar const&) {
-		std::cout << "=Bar const&" << std::endl;
-		return *this;
-	}
-	Bar(Bar&&) { 
-		std::cout << "Bar&&" << std::endl;
-	}
-	Bar& operator=(Bar&&) { 
-		std::cout << "=Bar&&" << std::endl;
-		return *this;
-	}
-};
-struct Foo { 
-	SliceDefaultCodes(Foo)
-	Bar bar;
-};
-
 int main() {
 	MyEnv env;
 	auto&& abc = env.CreateItem<ABC>();
-	ABC_r o(env, abc);
-	o.name() = "asdf";
-	o.x() = 1;
-	o.y() = 2;
-	o.hp() = 3;
-	
-	std::cout << "name = " << o.name() << " "
-		<< "x = " << o.x() << " "
-		<< "y = " << o.y() << " "
-		<< "hp = " << o.hp() << std::endl;
+	abc.RefSlice<A>().name = "asdf";
+	abc.RefSlice<B>().x = 1;
+	abc.RefSlice<B>().y = 2;
+	abc.RefSlice<C>().hp = 3;
 
+	env.ForeachSlices<A>([](A& o) {
+		std::cout << o.name << std::endl;
+		});
+	env.ForeachSlices<B>([](B& o) {
+		std::cout << o.x << "," << o.y << std::endl;
+		});
+	env.ForeachSlices<C>([](C& o) {
+		std::cout << o.hp << std::endl;
+		});
 
-	Foo f;
-	auto&& f2 = std::move(f);
-	Bar b1, b2;
-	b2 = std::move(b1);
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//struct Bar {
+//	Bar() = default;
+//	Bar(Bar const&) {
+//		std::cout << "Bar const&" << std::endl;
+//	}
+//	Bar& operator=(Bar const&) {
+//		std::cout << "=Bar const&" << std::endl;
+//		return *this;
+//	}
+//	Bar(Bar&&) { 
+//		std::cout << "Bar&&" << std::endl;
+//	}
+//	Bar& operator=(Bar&&) { 
+//		std::cout << "=Bar&&" << std::endl;
+//		return *this;
+//	}
+//};
+//struct Foo { 
+//	SliceBaseCode(Foo)
+//	Bar bar;
+//};
