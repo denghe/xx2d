@@ -16,15 +16,14 @@
 /*********************************************************************/
 // 基础库代码
 
-// 每个 拆分后的数据块 继承这个 省掉公共代码	// todo: 需要验证这样写之后 std::move 是否正确工作
+// 每个 非 pod 切片, 需包含这个宏, 确保 move 操作的高效（ 省打字 )
 
-#define SliceBaseCode(T)		\
+#define SliceBaseCode(T)			\
 T() = default;						\
 T(T const&) = delete;				\
 T& operator=(T const&) = delete;	\
 T(T&&) = default;					\
-T& operator=(T&&) = default;		\
-int owner = -1;
+T& operator=(T&&) = default;
 
 
 // 组合后的类的基础数据 int 包装, 便于 tuple 类型查找定位
@@ -47,8 +46,8 @@ struct O {
 	O(O&&) = default;
 	O& operator=(O&&) = default;
 
-	int next, prev;					// 入池后 前4字节( next ) 的值会被覆盖
-	uint32_t refCount, version;
+	int next, prev;					// next 布置在这里，让 LinkPool 入池后覆盖使用
+	uint32_t refCount, version;		// Shared 只关心 refCount. Weak 可能脏读 version ( 确保不被 LinkPool 覆盖 )
 	std::tuple<I<TS>...> data;
 };
 
@@ -93,15 +92,21 @@ template <typename T, typename Tuple>
 constexpr size_t TupleTypeIndex_v = TupleTypeIndex<T, Tuple>::value;
 
 
-// 类型列表转为 tuple vector 列表
+// 切片容器 tuple 套 vector
 
 template<typename...TS>
 struct Vectors {
 	using Types = std::tuple<TS...>;
 	std::tuple<std::vector<TS>...> vectors;
+	std::array<std::vector<std::pair<int, int>>, sizeof...(TS)> ownerss;	// first: typeId( Items 的 Types 的第几个 )     second: index
+
 	template<typename T> std::vector<T> const& Get() const { return std::get<std::vector<T>>(vectors); }
 	template<typename T> std::vector<T>& Get() { return std::get<std::vector<T>>(vectors); }
+	template<typename T> std::vector<std::pair<int, int>> const& GetIdxs() const { return ownerss[TupleTypeIndex_v<T, Types>]; }
+	template<typename T> std::vector<std::pair<int, int>>& GetIdxs() { return ownerss[TupleTypeIndex_v<T, Types>]; }
 };
+
+// Item容器 tuple 套 LinkPool ( 确保分配出来的 idx 不变 )
 
 template<typename...TS>
 struct LinkPools {
@@ -120,26 +125,33 @@ struct Env {
 	Slices slices;
 
 	template<typename T>
-	void CreateData(int const& owner, int& idx) {
-		auto& d = slices.Get<T>();
-		idx = (int)d.size();
-		d.emplace_back().owner = owner;
+	void CreateData(int const& typeId, int const& owner, int& idx) {
+		auto& s = slices.Get<T>();
+		auto& n = slices.GetIdxs<T>();
+		idx = (int)s.size();
+		s.emplace_back();
+		n.emplace_back(typeId, owner);
+		assert(s.size() == n.size());
 	}
 	template<typename T>
 	void ReleaseData(int const& idx) {
-		auto& d = slices.Get<T>();
-		assert(idx >= 0 && idx < d.size());
-		d[idx] = std::move(d.back());
-		d.pop_back();
+		auto& s = slices.Get<T>();
+		auto& n = slices.GetIdxs<T>();
+		assert(idx >= 0 && idx < s.size());
+		s[idx] = std::move(s.back());
+		n[idx] = n.back();
+		s.pop_back();
+		n.pop_back();
+		assert(s.size() == n.size());
 	}
 
-	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t<i == std::tuple_size_v<Tp>> TryCreate(int const& owner, T& r) {}
-	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t < i < std::tuple_size_v<Tp>> TryCreate(int const& owner, T& r) {
+	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t<i == std::tuple_size_v<Tp>> TryCreate(int const& typeId, int const& owner, T& r) {}
+	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t < i < std::tuple_size_v<Tp>> TryCreate(int const& typeId, int const& owner, T& r) {
 		using O = std::decay_t<decltype(std::get<i>(std::declval<Tp>()))>;
 		if constexpr (TupleContainsType_v<I<O>, T>) {
-			CreateData<O>(owner, std::get<I<O>>(r));
+			CreateData<O>(typeId, owner, std::get<I<O>>(r));
 		}
-		TryCreate<i + 1, Tp, T>(owner, r);
+		TryCreate<i + 1, Tp, T>(typeId, owner, r);
 	}
 
 	template<size_t i = 0, typename Tp, typename T>	std::enable_if_t<i == std::tuple_size_v<Tp>> TryRelease(T const& r) {}
@@ -229,17 +241,17 @@ struct Env {
 
 	template<typename T>
 	Shared<T> CreateItem() {
-		auto& d = items.Get<T>();
+		auto& s = items.Get<T>();
 		auto& h = Header<T>();
 		int idx;
-		d.Alloc(idx);
-		auto& r = d[idx];
-		TryCreate<0, typename decltype(slices)::Types>(idx, r.data);
+		s.Alloc(idx);
+		auto& r = s[idx];
+		TryCreate<0, typename decltype(slices)::Types>(TupleTypeIndex_v<T, typename Items::Types>, idx, r.data);
 		r.version = ++versionGen;
 		r.refCount = 1;
 		r.prev = -1;
 		if (h != -1) {
-			d[h].prev = idx;
+			s[h].prev = idx;
 		}
 		r.next = h;
 		h = idx;
@@ -248,9 +260,9 @@ struct Env {
 
 	template<typename T>
 	void ReleaseItem(int const& idx) {
-		auto& d = items.Get<T>();
+		auto& s = items.Get<T>();
 		auto& h = Header<T>();
-		auto& r = d[idx];
+		auto& r = s[idx];
 		assert(r.refCount == 0);
 		r.version = 0;
 		TryRelease<0, typename decltype(slices)::Types>(r.data);
@@ -258,12 +270,12 @@ struct Env {
 			h = r.next;
 		}
 		else/* if (r.prev != -1)*/ {
-			d[r.prev].next = r.next;
+			s[r.prev].next = r.next;
 		}
 		if (r.next != -1) {
-			d[r.next].prev = r.prev;
+			s[r.next].prev = r.prev;
 		}
-		d.Free(idx);
+		s.Free(idx);
 	}
 
 	/*********************************************************************/
@@ -300,9 +312,11 @@ struct Env {
 
 	template<typename Slice, typename F>
 	void ForeachSlices(F&& f) {
-		auto& d = slices.Get<Slice>();
-		for (auto& o : d) {
-			f(o);
+		auto& s = slices.Get<Slice>();
+		auto& n = slices.GetIdxs<Slice>();
+		auto siz = s.size();
+		for (size_t i = 0; i < siz; ++i) {
+			f(s[i], n[i]);
 		}
 	}
 };
@@ -316,12 +330,10 @@ struct A {
 	std::string name;
 };
 struct B {
-	SliceBaseCode(B);
-	float x = 0, y = 0;
+	float x, y;
 };
 struct C {
-	SliceBaseCode(C);
-	int hp = 0;
+	int hp;
 };
 
 // items
@@ -331,6 +343,8 @@ using AC = O<A, C>;
 using BC = O<B, C>;
 
 using MyEnv = Env<Vectors<A, B, C>, LinkPools<ABC, AB, AC, BC>>;
+
+std::array<char const*, 4> itemTypes { "ABC", "AB", "AC", "BC" };
 
 int main() {
 	MyEnv env;
@@ -353,14 +367,21 @@ int main() {
 	ac.RefSlice<A>().name = "qwerrrr";
 	ac.RefSlice<C>().hp = 7;
 
-	env.ForeachSlices<A>([](A& o) {
-		std::cout << o.name << std::endl;
+	auto&& ac2 = env.CreateItem<AC>();
+	ac2.RefSlice<A>().name = "e";
+	ac2.RefSlice<C>().hp = 9;
+
+	env.ForeachSlices<A>([](A& o, auto& owner) {
+		std::cout << "owner: " << itemTypes[owner.first] << ", idx = " << owner.second << std::endl;
+		std::cout << "A::name = " << o.name << std::endl;
 		});
-	env.ForeachSlices<B>([](B& o) {
-		std::cout << o.x << ", " << o.y << std::endl;
+	env.ForeachSlices<B>([](B& o, auto& owner) {
+		std::cout << "owner: " << itemTypes[owner.first] << ", idx = " << owner.second << std::endl;
+		std::cout << "B::x y = " << o.x << ", " << o.y << std::endl;
 		});
-	env.ForeachSlices<C>([](C& o) {
-		std::cout << o.hp << std::endl;
+	env.ForeachSlices<C>([](C& o, auto& owner) {
+		std::cout << "owner: " << itemTypes[owner.first] << ", idx = " << owner.second << std::endl;
+		std::cout << "C::hp = " << o.hp << std::endl;
 		});
 
 	return 0;
