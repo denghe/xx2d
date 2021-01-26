@@ -86,7 +86,7 @@ struct TupleTypeIndex<T, std::tuple<T, TS...>> {
 
 template <class T, class U, class... TS>
 struct TupleTypeIndex<T, std::tuple<U, TS...>> {
-	static const size_t value = 1 + Index<T, std::tuple<TS...>>::value;
+	static const size_t value = 1 + TupleTypeIndex<T, std::tuple<TS...>>::value;
 };
 
 template <typename T, typename Tuple>
@@ -159,6 +159,11 @@ struct Env {
 	// 针对每种类型的 链表头
 	std::array<int, std::tuple_size_v<typename Items::Types>> headers;
 
+	template<typename T>
+	int& Header() {
+		return headers[TupleTypeIndex_v<T, typename Items::Types>];
+	}
+
 	Env() {
 		headers.fill(-1);
 	}
@@ -220,11 +225,7 @@ struct Env {
 		}
 	};
 
-
-	template<typename T>
-	int& Header() {
-		return headers[TupleTypeIndex_v<T, typename Items::Types>];
-	}
+	// todo: Weak
 
 	template<typename T>
 	Shared<T> CreateItem() {
@@ -333,17 +334,30 @@ using MyEnv = Env<Vectors<A, B, C>, LinkPools<ABC, AB, AC, BC>>;
 
 int main() {
 	MyEnv env;
+
 	auto&& abc = env.CreateItem<ABC>();
 	abc.RefSlice<A>().name = "asdf";
 	abc.RefSlice<B>().x = 1;
 	abc.RefSlice<B>().y = 2;
 	abc.RefSlice<C>().hp = 3;
 
+	// 出括号后自杀
+	{
+		auto&& bc = env.CreateItem<BC>();
+		bc.RefSlice<B>().x = 1.2f;
+		bc.RefSlice<B>().y = 3.4f;
+		bc.RefSlice<C>().hp = 5;
+	}
+
+	auto&& ac = env.CreateItem<AC>();
+	ac.RefSlice<A>().name = "qwerrrr";
+	ac.RefSlice<C>().hp = 7;
+
 	env.ForeachSlices<A>([](A& o) {
 		std::cout << o.name << std::endl;
 		});
 	env.ForeachSlices<B>([](B& o) {
-		std::cout << o.x << "," << o.y << std::endl;
+		std::cout << o.x << ", " << o.y << std::endl;
 		});
 	env.ForeachSlices<C>([](C& o) {
 		std::cout << o.hp << std::endl;
