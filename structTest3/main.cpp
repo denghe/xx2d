@@ -65,7 +65,7 @@ void Test2() {
 		f.hp = (int)i;
 	}
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "insert foos ms = " << ms<< std::endl;
+	std::cout << "insert foos count = " << num << " ms = " << ms<< std::endl;
 
 	tp = std::chrono::system_clock::now();
 	for (size_t i = 0; i < num; i++) {
@@ -76,7 +76,7 @@ void Test2() {
 		f->hp = (int)i;
 	}
 	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "insert fooPtrs ms = " << ms << std::endl;
+	std::cout << "insert fooPtrs count = " << num << " ms = " << ms << std::endl;
 
 	tp = std::chrono::system_clock::now();
 	for (size_t i = 0; i < num; i++) {
@@ -87,24 +87,30 @@ void Test2() {
 		abc.Visit<C>().hp = (int)i;
 	}
 	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "insert abcHolders ms = " << ms << std::endl;
+	std::cout << "insert abcHolders count = " << num << " ms = " << ms << std::endl;
 
 	uint64_t totalHP = 0;
 	for (size_t i = 0; i < times; i++) { for (auto& f : foos) { totalHP += f.hp; } }
 	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "for foos ms = " << ms << ", totalHP = " << totalHP << std::endl;
+	std::cout << "for foos " << times << " times ms = " << ms << ", totalHP = " << totalHP << std::endl;
 
 	totalHP = 0;
 	tp = std::chrono::system_clock::now();
 	for (size_t i = 0; i < times; i++) { for (auto& f : fooPtrs) { totalHP += f->hp; } }
 	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "for fooPtrs ms = " << ms << ", totalHP = " << totalHP << std::endl;
+	std::cout << "for fooPtrs " << times << " times ms = " << ms << ", totalHP = " << totalHP << std::endl;
+
+	totalHP = 0;
+	tp = std::chrono::system_clock::now();
+	for (size_t i = 0; i < times; i++) { for (auto& f : abcHolders) { totalHP += f.Visit<C>().hp; } }
+	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "for abcHolders " << times << " times ms = " << ms << ", totalHP = " << totalHP << std::endl;
 
 	totalHP = 0;
 	tp = std::chrono::system_clock::now();
 	for (size_t i = 0; i < times; i++) { cp.ForeachSlices<C>([&](C& o, auto& owner) { totalHP += o.hp; }); }
 	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "cp.ForeachSlices<C> ms = " << ms << ", totalHP = " << totalHP << std::endl;
+	std::cout << "call cp.ForeachSlices<C> " << times << " times ms = " << ms << ", totalHP = " << totalHP << std::endl;
 }
 
 int main() {
