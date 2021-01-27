@@ -106,6 +106,18 @@ T& operator=(T&&) = default;
 		template<typename T> std::vector<T>& Get() { return std::get<std::vector<T>>(vectors); }
 		template<typename T> std::vector<std::tuple<int, int, int>> const& GetEx() const { return typeId_Idx_IdxAddrss[TupleTypeIndex_v<T, Types>]; }
 		template<typename T> std::vector<std::tuple<int, int, int>>& GetEx() { return typeId_Idx_IdxAddrss[TupleTypeIndex_v<T, Types>]; }
+
+		template<size_t i = 0>	std::enable_if_t<i == sizeof...(TS)> Reserve_(int const& cap) {}
+		template<size_t i = 0>	std::enable_if_t < i < sizeof...(TS)> Reserve_(int const& cap) {
+			std::get<i>(vectors).reserve(cap);
+			Reserve_<i + 1>(cap);
+		}
+		void Reserve(int const& cap) {
+			Reserve_(cap);
+			for (auto& v : typeId_Idx_IdxAddrss) {
+				v.reserve(cap);
+			}
+		}
 	};
 
 	// Combo 容器 tuple 套 LinkPool ( 确保分配出来的 idx 不变 )
@@ -137,6 +149,15 @@ T& operator=(T&&) = default;
 		}
 
 		int* GetInts(int const& typeId, int const& idx) { return getDataFuncs[typeId](linkpools, idx); }
+
+		template<size_t i = 0>	std::enable_if_t<i == sizeof...(TS)> Reserve_(int const& cap) {}
+		template<size_t i = 0>	std::enable_if_t < i < sizeof...(TS)> Reserve_(int const& cap) {
+			std::get<i>(linkpools).Reserve(cap);
+			Reserve_<i + 1>(cap);
+		}
+		void Reserve(int const& cap) {
+			Reserve_(cap);
+		}
 	};
 
 	template<typename SLICES_CONTAINER, typename COMBOS_CONTAINER>
@@ -158,6 +179,11 @@ T& operator=(T&&) = default;
 			headers.fill(-1);
 		}
 #endif
+
+		void Reserve(int const& cap) {
+			slices.Reserve(cap);
+			combos.Reserve(cap);
+		}
 
 		template<typename T>
 		void CreateData(int const& typeId, int const& owner, int const& offset, int& idx) {

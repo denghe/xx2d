@@ -47,18 +47,7 @@ namespace xx {
 			else {
 				if (len == cap) {
 					cap *= 2;
-					if constexpr (IsReallocable_v<T>) {
-						buf = (T*)realloc((void*)buf, sizeof(T) * cap);
-					}
-					else {
-						T* newBuf = (T*)malloc(sizeof(T) * cap);
-						for (int i = 0; i < len; ++i) {
-							new(&newBuf[i]) T((T&&)buf[i]);
-							buf[i].~T();
-						}
-						free((void*)buf);
-						buf = newBuf;
-					}
+					Reserve();
 				}
 				idx = len;
 				++len;
@@ -82,6 +71,12 @@ namespace xx {
 			header = -1;
 		}
 
+		void Reserve(PNType const& cap) {
+			if (this->cap <= cap) return;
+			this->cap = cap;
+			Reserve();
+		}
+
 		PNType Len() const {
 			return len;
 		}
@@ -96,6 +91,21 @@ namespace xx {
 		T const& operator[](PNType const& idx) const {
 			assert(idx >= 0 && idx < len);
 			return buf[idx];
+		}
+	protected:
+		void Reserve() {
+			if constexpr (IsReallocable_v<T>) {
+				buf = (T*)realloc((void*)buf, sizeof(T) * cap);
+			}
+			else {
+				T* newBuf = (T*)malloc(sizeof(T) * cap);
+				for (int i = 0; i < len; ++i) {
+					new(&newBuf[i]) T((T&&)buf[i]);
+					buf[i].~T();
+				}
+				free((void*)buf);
+				buf = newBuf;
+			}
 		}
 	};
 

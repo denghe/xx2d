@@ -49,11 +49,12 @@ void Test2() {
 	CP cp;
 	std::vector<CP::Shared<ABC>> abcHolders;
 
-	size_t num = 1000000;
-	size_t times = 1000;
+	int num = 1000000;
+	int times = 1000;
 
 	foos.reserve(num);
 	fooPtrs.reserve(num);
+	cp.Reserve(num);
 	abcHolders.reserve(num);
 
 	auto tp = std::chrono::system_clock::now();
