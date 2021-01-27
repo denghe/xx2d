@@ -19,11 +19,11 @@ namespace xx {
 
 // 每个 非 pod 切片, 需包含这个宏, 确保 move 操作的高效（ 省打字 )
 
-#define XX_SLICE_BACE_CODE(T)		\
-T() = default;						\
-T(T const&) = delete;				\
-T& operator=(T const&) = delete;	\
-T(T&&) = default;					\
+#define XX_MOVEONLY_STRUCT_BASE_CODE(T)	\
+T() = default;							\
+T(T const&) = delete;					\
+T& operator=(T const&) = delete;		\
+T(T&&) = default;						\
 T& operator=(T&&) = default;
 
 
@@ -37,20 +37,16 @@ T& operator=(T&&) = default;
 	};
 
 
-	// 组合体( tuple index 容器使用 ). 可 using / typedef 来定义类型 以方便使用
+	// 组合体( tuple index 容器使用 ). 可 using / typedef 来定义类型 以方便使用. 也可以派生
 
 	template<typename...TS>
 	struct Combo {
-		Combo() = default;
-		Combo(Combo const&) = delete;
-		Combo& operator=(Combo const&) = delete;
-		Combo(Combo&&) = default;
-		Combo& operator=(Combo&&) = default;
+		XX_MOVEONLY_STRUCT_BASE_CODE(Combo);
 #if XX_COMBO_POOL_ENABLE_FOREACH_COMBOS
-		int next, prev;					// next 布置在这里，让 LinkPool 入池后覆盖使用
+		int _next_, _prev_;							// _next_ 布置在这里，让 LinkPool 入池后覆盖使用
 #endif
-		uint32_t refCount, version;		// Shared 只关心 refCount. Weak 可能脏读 version ( 确保不被 LinkPool 覆盖 )
-		std::tuple<Index<TS>...> data;
+		uint32_t _refCount_, _version_;				// Shared 只关心 _refCount_. Weak 可能脏读 _version_ ( 确保不被 LinkPool 覆盖 )
+		std::tuple<Index<TS>...> _sliceIndexs_;
 	};
 
 
@@ -138,7 +134,7 @@ T& operator=(T&&) = default;
 
 		template<typename T>
 		static int* GetInts(std::tuple<LinkPool<TS>...>& lps, int const& idx) {
-			return (int*)&std::get<LinkPool<T>>(lps)[idx].data;
+			return (int*)&std::get<LinkPool<T>>(lps)[idx]._sliceIndexs_;
 		}
 
 		template<size_t i = 0>	std::enable_if_t<i == sizeof...(TS)> FillGetIntsFuncs() {}
@@ -204,7 +200,7 @@ T& operator=(T&&) = default;
 				auto ints = combos.GetInts(std::get<0>(p), std::get<1>(p));
 				ints[std::get<2>(p)] = idx;
 			}
-			n[idx] = n.back();
+			n[idx] = std::move(n.back());
 			n.pop_back();
 			s[idx] = std::move(s.back());
 			s.pop_back();
@@ -252,7 +248,7 @@ T& operator=(T&&) = default;
 			}
 			Shared(Shared const& o) : cp(o.cp), idx(o.idx) {
 				if (cp) {
-					++cp->RefCombo<T>(idx).refCount;
+					++cp->RefCombo<T>(idx)._refCount_;
 				}
 			}
 
@@ -275,15 +271,20 @@ T& operator=(T&&) = default;
 				return cp->RefSlice<Slice>(cp->RefCombo<T>(idx));
 			}
 
+			T* const& operator->() const noexcept {
+				assert(cp);
+				return &cp->RefCombo<T>(idx);
+			}
+
 			explicit operator bool() const noexcept { return cp != nullptr; }
 			bool Empty() const noexcept { return cp == nullptr; }
-			uint32_t refCount() const noexcept { if (!cp) return 0; return cp->RefCombo(idx).refCount; }
+			uint32_t _refCount_() const noexcept { if (!cp) return 0; return cp->RefCombo(idx)._refCount_; }
 
 			void Reset() {
 				if (!cp) return;
 				auto& o = cp->RefCombo<T>(idx);
-				assert(o.refCount);
-				if (--o.refCount == 0) {
+				assert(o._refCount_);
+				if (--o._refCount_ == 0) {
 					cp->ReleaseCombo<T>(idx);
 				}
 				cp = nullptr;
@@ -296,8 +297,8 @@ T& operator=(T&&) = default;
 					this->cp = cp;
 					this->idx = idx;
 					auto& o = cp->RefCombo<T>(idx);
-					this->version = o.version;
-					++o.refCount;
+					this->_version_ = o._version_;
+					++o._refCount_;
 				}
 			}
 		};
@@ -307,37 +308,37 @@ T& operator=(T&&) = default;
 			using ElementType = T;
 			ComboPool* cp;
 			int idx;
-			uint32_t version;
+			uint32_t _version_;
 
-			Weak() : cp(nullptr), idx(-1), version(0) {
+			Weak() : cp(nullptr), idx(-1), _version_(0) {
 			}
-			Weak(ComboPool* const& cp, int const& idx, uint32_t const& version) : cp(cp), idx(idx), version(version) {
+			Weak(ComboPool* const& cp, int const& idx, uint32_t const& _version_) : cp(cp), idx(idx), _version_(_version_) {
 			}
 			Weak(Weak&& o) noexcept {
 				cp = o.cp;
 				idx = o.idx;
-				version = o.version;
+				_version_ = o._version_;
 				o.cp = nullptr;
 			}
-			Weak(Weak const& o) : cp(o.cp), idx(o.idx), version(o.version) {
+			Weak(Weak const& o) : cp(o.cp), idx(o.idx), _version_(o._version_) {
 			}
 
 			Weak& operator=(Weak const& o) {
 				cp = o.cp;
 				idx = o.idx;
-				version = o.version;
+				_version_ = o._version_;
 				return *this;
 			}
 			Weak& operator=(Weak&& o) {
 				cp = o.cp;
 				idx = o.idx;
-				version = o.version;
+				_version_ = o._version_;
 				o.cp = nullptr;
 				return *this;
 			}
 
-			bool operator==(Weak const& o) const noexcept { return cp == o.cp && idx == o.idx && version == o.version; }
-			bool operator!=(Weak const& o) const noexcept { return cp != o.cp || idx != o.idx || version != o.version; }
+			bool operator==(Weak const& o) const noexcept { return cp == o.cp && idx == o.idx && _version_ == o._version_; }
+			bool operator!=(Weak const& o) const noexcept { return cp != o.cp || idx != o.idx || _version_ != o._version_; }
 
 
 			Weak& operator=(Shared<T> const& o) {
@@ -350,7 +351,7 @@ T& operator=(T&&) = default;
 			}
 
 			explicit operator bool() const noexcept {
-				return cp && cp->RefCombo<T>(idx).version == version;
+				return cp && cp->RefCombo<T>(idx)._version_ == _version_;
 			}
 
 			void Reset() {
@@ -360,15 +361,15 @@ T& operator=(T&&) = default;
 			void Reset(Shared<T> const& s) {
 				if (cp = s.cp) {
 					idx = s.idx;
-					version = cp->RefCombo<T>(idx).version;
+					_version_ = cp->RefCombo<T>(idx)._version_;
 				}
 			}
 
 			Shared<T> Lock() const {
 				if (!cp) return {};
 				auto& o = cp->RefCombo<T>(idx);
-				if (o.version != version) return {};
-				++o.refCount;
+				if (o._version_ != _version_) return {};
+				++o._refCount_;
 				return { cp, idx };
 			}
 		};
@@ -380,18 +381,18 @@ T& operator=(T&&) = default;
 		Shared<T> CreateCombo() {
 			auto& s = combos.Get<T>();
 			int idx;
-			s.Alloc(idx);
+			s.New(idx);
 			auto& r = s[idx];
-			TryCreate<0, typename SLICES_CONTAINER::Types>(TupleTypeIndex_v<T, typename COMBOS_CONTAINER::Types>, idx, r.data);
-			r.version = ++versionGen;
-			r.refCount = 1;
+			TryCreate<0, typename SLICES_CONTAINER::Types>(TupleTypeIndex_v<T, typename COMBOS_CONTAINER::Types>, idx, r._sliceIndexs_);
+			r._version_ = ++versionGen;
+			r._refCount_ = 1;
 #if XX_COMBO_POOL_ENABLE_FOREACH_COMBOS
 			auto& h = Header<T>();
-			r.prev = -1;
+			r._prev_ = -1;
 			if (h != -1) {
-				s[h].prev = idx;
+				s[h]._prev_ = idx;
 			}
-			r.next = h;
+			r._next_ = h;
 			h = idx;
 #endif
 			return Shared<T>(this, idx);
@@ -401,22 +402,22 @@ T& operator=(T&&) = default;
 		void ReleaseCombo(int const& idx) {
 			auto& s = combos.Get<T>();
 			auto& r = s[idx];
-			assert(r.refCount == 0);
-			r.version = 0;
-			TryRelease<0, typename SLICES_CONTAINER::Types>(r.data);
+			assert(r._refCount_ == 0);
+			r._version_ = 0;
+			TryRelease<0, typename SLICES_CONTAINER::Types>(r._sliceIndexs_);
 #if XX_COMBO_POOL_ENABLE_FOREACH_COMBOS
 			auto& h = Header<T>();
 			if (h == idx) {
-				h = r.next;
+				h = r._next_;
 			}
-			else/* if (r.prev != -1)*/ {
-				s[r.prev].next = r.next;
+			else/* if (r._prev_ != -1)*/ {
+				s[r._prev_]._next_ = r._next_;
 			}
-			if (r.next != -1) {
-				s[r.next].prev = r.prev;
+			if (r._next_ != -1) {
+				s[r._next_]._prev_ = r._prev_;
 		}
 #endif
-			s.Free(idx);
+			s.Delete(idx);
 	}
 
 
@@ -431,12 +432,12 @@ T& operator=(T&&) = default;
 
 		template<typename Slice, typename Combo>
 		Slice& RefSlice(Combo& o) {
-			auto&& idx = std::get<Index<Slice>>(o.data);
+			auto&& idx = std::get<Index<Slice>>(o._sliceIndexs_);
 			return slices.Get<Slice>()[idx];
 		}
 		template<typename Slice, typename Combo>
 		Slice const& RefSlice(Combo const& o) const {
-			auto&& idx = std::get<Index<Slice>>(o.data);
+			auto&& idx = std::get<Index<Slice>>(o._sliceIndexs_);
 			return slices.Get<Slice>()[idx];
 		}
 
@@ -446,7 +447,7 @@ T& operator=(T&&) = default;
 			int h = Header<Combo>();
 			while (h != -1) {
 				auto& o = RefCombo<Combo>(h);
-				h = o.next;
+				h = o._next_;
 				f(o);
 		}
 }

@@ -36,7 +36,7 @@ namespace xx {
 			buf = nullptr;
 		}
 
-		// 分配一个下标到 idx. 如果产生了 resize 行为，将返回新的 cap
+		// 分配一个下标到 idx. 如果产生了 resize 行为，将返回新的 cap. 注意：通常接下来需要 new (&pool[idx]) T( ..... )
 		PNType Alloc(PNType& idx) {
 			if (count) {
 				idx = header;
@@ -55,11 +55,25 @@ namespace xx {
 			}
 		}
 
+		// 释放一个下标。注意：通常需要先 buf[idx].~T() 析构
 		void Free(PNType const& idx) {
-			buf[idx].~T();
 			Next(buf[idx]) = header;
 			header = idx;
 			++count;
+		}
+
+		// 分配一个下标到 idx 并 placement new T
+		template<typename...Args>
+		PNType New(PNType& idx, Args&&...args) {
+			auto r = Alloc(idx);
+			new (&buf[idx]) T(std::forward<Args>(args)...);
+			return r;
+		}
+
+		// 析构 buf[idx] 并释放下标
+		void Delete(PNType const& idx) {
+			buf[idx].~T();
+			Free(idx);
 		}
 
 		void Clear() {
