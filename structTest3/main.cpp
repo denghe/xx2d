@@ -81,10 +81,10 @@ void Test2() {
 	tp = std::chrono::system_clock::now();
 	for (size_t i = 0; i < num; i++) {
 		auto&& abc = abcHolders.emplace_back(cp.CreateCombo<ABC>());
-		abc.RefSlice<A>().name = "name_" + std::to_string(i);
-		abc.RefSlice<B>().x = (float)i;
-		abc.RefSlice<B>().y = (float)i;
-		abc.RefSlice<C>().hp = (int)i;
+		abc.Visit<A>().name = "name_" + std::to_string(i);
+		abc.Visit<B>().x = (float)i;
+		abc.Visit<B>().y = (float)i;
+		abc.Visit<C>().hp = (int)i;
 	}
 	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
 	std::cout << "insert abcHolders ms = " << ms << std::endl;

@@ -243,14 +243,10 @@ T& operator=(T&&) = default;
 			bool operator==(Shared const& o) const noexcept { return cp == o.cp && idx == o.idx; }
 			bool operator!=(Shared const& o) const noexcept { return cp != o.cp || idx != o.idx; }
 
-			T& Ref() {
-				assert(cp);
-				return cp->RefCombo<T>(idx);
-			}
 			template<typename Slice>
-			Slice& RefSlice() {
+			Slice& Visit() {
 				assert(cp);
-				return cp->RefSlice<Slice>(Ref());
+				return cp->RefSlice<Slice>(cp->RefCombo<T>(idx));
 			}
 
 			explicit operator bool() const noexcept { return cp != nullptr; }
@@ -259,7 +255,7 @@ T& operator=(T&&) = default;
 
 			void Reset() {
 				if (!cp) return;
-				auto& o = Ref();
+				auto& o = cp->RefCombo<T>(idx);
 				assert(o.refCount);
 				if (--o.refCount == 0) {
 					cp->ReleaseCombo<T>(idx);
