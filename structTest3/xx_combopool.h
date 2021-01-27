@@ -7,17 +7,24 @@ namespace xx {
 	// 模拟一下 ECS 的内存分布特性（ 按业务需求分组的 数据块 连续高密存放 )
 	// 组合优先于继承, 拆分后最好只有数据, 没有函数
 
+	// todo: 增加 排序，堆排，折半find 等功能？
+
 	/*********************************************************************/
 	// 基础库代码
 
-	// 每个 非 pod 切片, 需包含这个宏, 确保 move 操作的高效（ 省打字 )
+	// 是否启用 combo 对象的双向链表( 可直接遍历 ). 通常会有自己的容器，用不到这个特性
 
-	#define XX_SLICE_BACE_CODE(T)		\
-	T() = default;						\
-	T(T const&) = delete;				\
-	T& operator=(T const&) = delete;	\
-	T(T&&) = default;					\
-	T& operator=(T&&) = default;
+#define XX_COMBO_POOL_ENABLE_FOREACH_COMBOS 0
+
+
+// 每个 非 pod 切片, 需包含这个宏, 确保 move 操作的高效（ 省打字 )
+
+#define XX_SLICE_BACE_CODE(T)		\
+T() = default;						\
+T(T const&) = delete;				\
+T& operator=(T const&) = delete;	\
+T(T&&) = default;					\
+T& operator=(T&&) = default;
 
 
 	// 组合后的类的基础数据 int 包装, 便于 tuple 类型查找定位
@@ -39,8 +46,9 @@ namespace xx {
 		Combo& operator=(Combo const&) = delete;
 		Combo(Combo&&) = default;
 		Combo& operator=(Combo&&) = default;
-
+#if XX_COMBO_POOL_ENABLE_FOREACH_COMBOS
 		int next, prev;					// next 布置在这里，让 LinkPool 入池后覆盖使用
+#endif
 		uint32_t refCount, version;		// Shared 只关心 refCount. Weak 可能脏读 version ( 确保不被 LinkPool 覆盖 )
 		std::tuple<Index<TS>...> data;
 	};
@@ -92,12 +100,12 @@ namespace xx {
 	struct SlicesContainer {
 		using Types = std::tuple<TS...>;
 		std::tuple<std::vector<TS>...> vectors;
-		std::array<std::vector<std::tuple<int, int, int*>>, sizeof...(TS)> typeId_Idx_IdxAddrss;
+		std::array<std::vector<std::tuple<int, int, int>>, sizeof...(TS)> typeId_Idx_IdxAddrss;	// typeId, idx, int address offset
 
 		template<typename T> std::vector<T> const& Get() const { return std::get<std::vector<T>>(vectors); }
 		template<typename T> std::vector<T>& Get() { return std::get<std::vector<T>>(vectors); }
-		template<typename T> std::vector<std::tuple<int, int, int*>> const& GetEx() const { return typeId_Idx_IdxAddrss[TupleTypeIndex_v<T, Types>]; }
-		template<typename T> std::vector<std::tuple<int, int, int*>>& GetEx() { return typeId_Idx_IdxAddrss[TupleTypeIndex_v<T, Types>]; }
+		template<typename T> std::vector<std::tuple<int, int, int>> const& GetEx() const { return typeId_Idx_IdxAddrss[TupleTypeIndex_v<T, Types>]; }
+		template<typename T> std::vector<std::tuple<int, int, int>>& GetEx() { return typeId_Idx_IdxAddrss[TupleTypeIndex_v<T, Types>]; }
 	};
 
 	// Combo 容器 tuple 套 LinkPool ( 确保分配出来的 idx 不变 )
@@ -108,6 +116,27 @@ namespace xx {
 		std::tuple<LinkPool<TS>...> linkpools;
 		template<typename T> LinkPool<T> const& Get() const { return std::get<LinkPool<T>>(linkpools); }
 		template<typename T> LinkPool<T>& Get() { return std::get<LinkPool<T>>(linkpools); }
+
+		typedef int*(*GetIntsFunc)(std::tuple<LinkPool<TS>...>&, int const&);
+		std::array<GetIntsFunc, sizeof...(TS)> getDataFuncs;
+
+		CombosContainer() {
+			FillGetIntsFuncs();
+		}
+
+		template<typename T>
+		static int* GetInts(std::tuple<LinkPool<TS>...>& lps, int const& idx) {
+			return (int*)&std::get<LinkPool<T>>(lps)[idx].data;
+		}
+
+		template<size_t i = 0>	std::enable_if_t<i == sizeof...(TS)> FillGetIntsFuncs() {}
+		template<size_t i = 0>	std::enable_if_t< i < sizeof...(TS)> FillGetIntsFuncs() {
+			using T = std::decay_t<decltype(std::get<i>(std::declval<Types>()))>;
+			getDataFuncs[i] = GetInts<T>;
+			FillGetIntsFuncs<i + 1>();
+		}
+
+		int* GetInts(int const& typeId, int const& idx) { return getDataFuncs[typeId](linkpools, idx); }
 	};
 
 	template<typename SLICES_CONTAINER, typename COMBOS_CONTAINER>
@@ -118,16 +147,25 @@ namespace xx {
 		COMBOS_CONTAINER combos;
 		// 用于版本号自增填充
 		uint32_t versionGen = 0;
+#if XX_COMBO_POOL_ENABLE_FOREACH_COMBOS
 		// 针对每种 combo 的 链表头, 方便分类遍历
 		std::array<int, std::tuple_size_v<typename COMBOS_CONTAINER::Types>> headers;
+		template<typename T>
+		int& Header() {
+			return headers[TupleTypeIndex_v<T, typename COMBOS_CONTAINER::Types>];
+		}
+		ComboPool() {
+			headers.fill(-1);
+		}
+#endif
 
 		template<typename T>
-		void CreateData(int const& typeId, int const& owner, int& idx) {
+		void CreateData(int const& typeId, int const& owner, int const& offset, int& idx) {
 			auto& s = slices.Get<T>();
 			auto& n = slices.GetEx<T>();
 			idx = (int)s.size();
 			s.emplace_back();
-			n.emplace_back(typeId, owner, &idx);
+			n.emplace_back(typeId, owner, offset);
 			assert(s.size() == n.size());
 		}
 		template<typename T>
@@ -135,11 +173,15 @@ namespace xx {
 			auto& s = slices.Get<T>();
 			auto& n = slices.GetEx<T>();
 			assert(idx >= 0 && idx < s.size());
-			s[idx] = std::move(s.back());
-			*std::get<int*>(n.back()) = idx;
+			{
+				auto& p = n.back();
+				auto ints = combos.GetInts(std::get<0>(p), std::get<1>(p));
+				ints[std::get<2>(p)] = idx;
+			}
 			n[idx] = n.back();
-			s.pop_back();
 			n.pop_back();
+			s[idx] = std::move(s.back());
+			s.pop_back();
 			assert(s.size() == n.size());
 		}
 
@@ -147,7 +189,7 @@ namespace xx {
 		template<size_t i = 0, typename Tp, typename T>	std::enable_if_t < i < std::tuple_size_v<Tp>> TryCreate(int const& typeId, int const& owner, T& r) {
 			using O = std::decay_t<decltype(std::get<i>(std::declval<Tp>()))>;
 			if constexpr (TupleContainsType_v<Index<O>, T>) {
-				CreateData<O>(typeId, owner, std::get<Index<O>>(r));
+				CreateData<O>(typeId, owner, TupleTypeIndex_v<Index<O>, T>, std::get<Index<O>>(r));
 			}
 			TryCreate<i + 1, Tp, T>(typeId, owner, r);
 		}
@@ -163,15 +205,6 @@ namespace xx {
 
 
 
-
-		template<typename T>
-		int& Header() {
-			return headers[TupleTypeIndex_v<T, typename COMBOS_CONTAINER::Types>];
-		}
-
-		ComboPool() {
-			headers.fill(-1);
-		}
 
 		template<typename T>
 		struct Shared {
@@ -210,8 +243,6 @@ namespace xx {
 			bool operator==(Shared const& o) const noexcept { return cp == o.cp && idx == o.idx; }
 			bool operator!=(Shared const& o) const noexcept { return cp != o.cp || idx != o.idx; }
 
-			//struct Weak<T> ToWeak() const noexcept;
-
 			T& Ref() {
 				assert(cp);
 				return cp->RefCombo<T>(idx);
@@ -249,35 +280,110 @@ namespace xx {
 			}
 		};
 
-		// todo: Weak
+		template<typename T>
+		struct Weak {
+			using ElementType = T;
+			ComboPool* cp;
+			int idx;
+			uint32_t version;
+
+			Weak() : cp(nullptr), idx(-1), version(0) {
+			}
+			Weak(ComboPool* const& cp, int const& idx, uint32_t const& version) : cp(cp), idx(idx), version(version) {
+			}
+			Weak(Weak&& o) noexcept {
+				cp = o.cp;
+				idx = o.idx;
+				version = o.version;
+				o.cp = nullptr;
+			}
+			Weak(Weak const& o) : cp(o.cp), idx(o.idx), version(o.version) {
+			}
+
+			Weak& operator=(Weak const& o) {
+				cp = o.cp;
+				idx = o.idx;
+				version = o.version;
+				return *this;
+			}
+			Weak& operator=(Weak&& o) {
+				cp = o.cp;
+				idx = o.idx;
+				version = o.version;
+				o.cp = nullptr;
+				return *this;
+			}
+
+			bool operator==(Weak const& o) const noexcept { return cp == o.cp && idx == o.idx && version == o.version; }
+			bool operator!=(Weak const& o) const noexcept { return cp != o.cp || idx != o.idx || version != o.version; }
+
+
+			Weak& operator=(Shared<T> const& o) {
+				Reset(o);
+				return *this;
+			}
+
+			Weak(Shared<T> const& o) {
+				Reset(o);
+			}
+
+			explicit operator bool() const noexcept {
+				return cp && cp->RefCombo<T>(idx).version == version;
+			}
+
+			void Reset() {
+				cp = nullptr;
+			}
+
+			void Reset(Shared<T> const& s) {
+				if (cp = s.cp) {
+					idx = s.idx;
+					version = cp->RefCombo<T>(idx).version;
+				}
+			}
+
+			Shared<T> Lock() const {
+				if (!cp) return {};
+				auto& o = cp->RefCombo<T>(idx);
+				if (o.version != version) return {};
+				++o.refCount;
+				return { cp, idx };
+			}
+		};
+
+
+
 
 		template<typename T>
 		Shared<T> CreateCombo() {
 			auto& s = combos.Get<T>();
-			auto& h = Header<T>();
 			int idx;
 			s.Alloc(idx);
 			auto& r = s[idx];
 			TryCreate<0, typename SLICES_CONTAINER::Types>(TupleTypeIndex_v<T, typename COMBOS_CONTAINER::Types>, idx, r.data);
 			r.version = ++versionGen;
 			r.refCount = 1;
+#if XX_COMBO_POOL_ENABLE_FOREACH_COMBOS
+			auto& h = Header<T>();
 			r.prev = -1;
 			if (h != -1) {
 				s[h].prev = idx;
 			}
 			r.next = h;
 			h = idx;
+#endif
 			return Shared<T>(this, idx);
 		}
 
 		template<typename T>
 		void ReleaseCombo(int const& idx) {
 			auto& s = combos.Get<T>();
-			auto& h = Header<T>();
 			auto& r = s[idx];
 			assert(r.refCount == 0);
 			r.version = 0;
 			TryRelease<0, typename SLICES_CONTAINER::Types>(r.data);
+#if XX_COMBO_POOL_ENABLE_FOREACH_COMBOS
+			auto& h = Header<T>();
 			if (h == idx) {
 				h = r.next;
 			}
@@ -286,9 +392,10 @@ namespace xx {
 			}
 			if (r.next != -1) {
 				s[r.next].prev = r.prev;
-			}
-			s.Free(idx);
 		}
+#endif
+			s.Free(idx);
+	}
 
 
 		template<typename Combo>
@@ -311,6 +418,7 @@ namespace xx {
 			return slices.Get<Slice>()[idx];
 		}
 
+#if XX_COMBO_POOL_ENABLE_FOREACH_COMBOS
 		template<typename Combo, typename F>
 		void ForeachCombos(F&& f) {
 			int h = Header<Combo>();
@@ -318,8 +426,9 @@ namespace xx {
 				auto& o = RefCombo<Combo>(h);
 				h = o.next;
 				f(o);
-			}
 		}
+}
+#endif
 
 		template<typename Slice, typename F>
 		void ForeachSlices(F&& f) {

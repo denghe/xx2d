@@ -23,7 +23,6 @@ using AC = xx::Combo<A, C>;
 using BC = xx::Combo<B, C>;
 
 using CP = xx::ComboPool<xx::SlicesContainer<A, B, C>, xx::CombosContainer<ABC, AB, AC, BC>>;
-std::vector<CP::Shared<ABC>> abcHolders;
 
 struct Foo {
 	std::array<char, 512> dummy;
@@ -31,11 +30,12 @@ struct Foo {
 	float x, y;
 	int hp;
 };
-std::vector<Foo> foos;
-std::vector<std::shared_ptr<Foo>> fooPtrs;
 
-int main() {
+void Test2() {
 	CP cp;
+	std::vector<CP::Shared<ABC>> abcHolders;
+	std::vector<Foo> foos;
+	std::vector<std::shared_ptr<Foo>> fooPtrs;
 
 	for (size_t i = 0; i < 100000; i++) {
 		auto& f = foos.emplace_back();
@@ -55,21 +55,37 @@ int main() {
 	}
 	uint64_t totalHP = 0;
 	auto tp = std::chrono::system_clock::now();
-	for (size_t i = 0; i < 10000; i++) { for (auto& f : foos) { totalHP += f.hp; } }
+	for (size_t i = 0; i < 1000; i++) { for (auto& f : foos) { totalHP += f.hp; } }
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
 	std::cout << "for foos ms = " << ms << ", totalHP = " << totalHP << std::endl;
 
 	totalHP = 0;
 	tp = std::chrono::system_clock::now();
-	for (size_t i = 0; i < 10000; i++) { for (auto& f : fooPtrs) { totalHP += f->hp; } }
+	for (size_t i = 0; i < 1000; i++) { for (auto& f : fooPtrs) { totalHP += f->hp; } }
 	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
 	std::cout << "for fooPtrs ms = " << ms << ", totalHP = " << totalHP << std::endl;
 
 	totalHP = 0;
 	tp = std::chrono::system_clock::now();
-	for (size_t i = 0; i < 10000; i++) { cp.ForeachSlices<C>([&](C& o, auto& owner) { totalHP += o.hp; }); }
+	for (size_t i = 0; i < 1000; i++) { cp.ForeachSlices<C>([&](C& o, auto& owner) { totalHP += o.hp; }); }
 	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
 	std::cout << "cp.ForeachSlices<C> ms = " << ms << ", totalHP = " << totalHP << std::endl;
+}
 
+void Test1() {
+	CP cp;
+	std::vector<CP::Shared<ABC>> abcShareds;
+	std::vector<CP::Weak<ABC>> abcWeaks;
+	auto w = abcWeaks.emplace_back(abcShareds.emplace_back(cp.CreateCombo<ABC>()));
+	std::cout << (bool)w << std::endl;
+	abcWeaks.clear();
+	std::cout << (bool)w << std::endl;
+	abcShareds.clear();
+	std::cout << (bool)w << std::endl;
+}
+
+int main() {
+	Test1();
+	Test2();
 	return 0;
 }
