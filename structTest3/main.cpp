@@ -31,47 +31,6 @@ struct Foo {
 	int hp;
 };
 
-void Test2() {
-	CP cp;
-	std::vector<CP::Shared<ABC>> abcHolders;
-	std::vector<Foo> foos;
-	std::vector<std::shared_ptr<Foo>> fooPtrs;
-
-	for (size_t i = 0; i < 100000; i++) {
-		auto& f = foos.emplace_back();
-		f.name = "name_" + std::to_string(i);
-		f.x = (float)i;
-		f.y = (float)i;
-		f.hp = (int)i;
-
-		fooPtrs.emplace_back(std::make_shared<Foo>(f));
-
-		auto&& abc = cp.CreateCombo<ABC>();
-		abc.RefSlice<A>().name = f.name;
-		abc.RefSlice<B>().x = f.x;
-		abc.RefSlice<B>().y = f.y;
-		abc.RefSlice<C>().hp = f.hp;
-		abcHolders.push_back(std::move(abc));
-	}
-	uint64_t totalHP = 0;
-	auto tp = std::chrono::system_clock::now();
-	for (size_t i = 0; i < 1000; i++) { for (auto& f : foos) { totalHP += f.hp; } }
-	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "for foos ms = " << ms << ", totalHP = " << totalHP << std::endl;
-
-	totalHP = 0;
-	tp = std::chrono::system_clock::now();
-	for (size_t i = 0; i < 1000; i++) { for (auto& f : fooPtrs) { totalHP += f->hp; } }
-	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "for fooPtrs ms = " << ms << ", totalHP = " << totalHP << std::endl;
-
-	totalHP = 0;
-	tp = std::chrono::system_clock::now();
-	for (size_t i = 0; i < 1000; i++) { cp.ForeachSlices<C>([&](C& o, auto& owner) { totalHP += o.hp; }); }
-	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "cp.ForeachSlices<C> ms = " << ms << ", totalHP = " << totalHP << std::endl;
-}
-
 void Test1() {
 	CP cp;
 	std::vector<CP::Shared<ABC>> abcShareds;
@@ -82,6 +41,70 @@ void Test1() {
 	std::cout << (bool)w << std::endl;
 	abcShareds.clear();
 	std::cout << (bool)w << std::endl;
+}
+
+void Test2() {
+	std::vector<Foo> foos;
+	std::vector<std::shared_ptr<Foo>> fooPtrs;
+	CP cp;
+	std::vector<CP::Shared<ABC>> abcHolders;
+
+	size_t num = 1000000;
+	size_t times = 1000;
+
+	foos.reserve(num);
+	fooPtrs.reserve(num);
+	abcHolders.reserve(num);
+
+	auto tp = std::chrono::system_clock::now();
+	for (size_t i = 0; i < num; i++) {
+		auto& f = foos.emplace_back();
+		f.name = "name_" + std::to_string(i);
+		f.x = (float)i;
+		f.y = (float)i;
+		f.hp = (int)i;
+	}
+	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "insert foos ms = " << ms<< std::endl;
+
+	tp = std::chrono::system_clock::now();
+	for (size_t i = 0; i < num; i++) {
+		auto& f = fooPtrs.emplace_back(std::make_shared<Foo>());
+		f->name = "name_" + std::to_string(i);
+		f->x = (float)i;
+		f->y = (float)i;
+		f->hp = (int)i;
+	}
+	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "insert fooPtrs ms = " << ms << std::endl;
+
+	tp = std::chrono::system_clock::now();
+	for (size_t i = 0; i < num; i++) {
+		auto&& abc = abcHolders.emplace_back(cp.CreateCombo<ABC>());
+		abc.RefSlice<A>().name = "name_" + std::to_string(i);
+		abc.RefSlice<B>().x = (float)i;
+		abc.RefSlice<B>().y = (float)i;
+		abc.RefSlice<C>().hp = (int)i;
+	}
+	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "insert abcHolders ms = " << ms << std::endl;
+
+	uint64_t totalHP = 0;
+	for (size_t i = 0; i < times; i++) { for (auto& f : foos) { totalHP += f.hp; } }
+	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "for foos ms = " << ms << ", totalHP = " << totalHP << std::endl;
+
+	totalHP = 0;
+	tp = std::chrono::system_clock::now();
+	for (size_t i = 0; i < times; i++) { for (auto& f : fooPtrs) { totalHP += f->hp; } }
+	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "for fooPtrs ms = " << ms << ", totalHP = " << totalHP << std::endl;
+
+	totalHP = 0;
+	tp = std::chrono::system_clock::now();
+	for (size_t i = 0; i < times; i++) { cp.ForeachSlices<C>([&](C& o, auto& owner) { totalHP += o.hp; }); }
+	ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+	std::cout << "cp.ForeachSlices<C> ms = " << ms << ", totalHP = " << totalHP << std::endl;
 }
 
 int main() {
