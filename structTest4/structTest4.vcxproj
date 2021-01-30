@@ -12,9 +12,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{8369DDBC-1234-4444-5566-D68F5FA593F2}</ProjectGuid>
+    <ProjectGuid>{8369DDBC-1234-4444-5566-D68F5FA57777}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>structTest3</RootNamespace>
+    <RootNamespace>structTest4</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -102,6 +102,12 @@
     <ClInclude Include="..\xxlib\xx_obj.h" />
     <ClInclude Include="..\xxlib\xx_ptr.h" />
     <ClInclude Include="..\xxlib\xx_typehelpers.h" />
+    <ClInclude Include="ajson.hpp" />
+    <ClInclude Include="xx_data.h" />
+    <ClInclude Include="xx_fixeddata.h" />
+    <ClInclude Include="xx_fixeddata_w.h" />
+    <ClInclude Include="xx_logger.h" />
+    <ClInclude Include="xx_math.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis" />

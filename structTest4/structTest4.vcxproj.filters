@@ -24,12 +24,18 @@
     <ClInclude Include="..\xxlib\xx_file.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\xxlib\xx_combopool.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
     <ClInclude Include="..\xxlib\xx_linkpool.h">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\xxlib\xx_combopool.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xx_fixeddata.h" />
+    <ClInclude Include="xx_fixeddata_w.h" />
+    <ClInclude Include="xx_logger.h" />
+    <ClInclude Include="ajson.hpp" />
+    <ClInclude Include="xx_data.h" />
+    <ClInclude Include="xx_math.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">

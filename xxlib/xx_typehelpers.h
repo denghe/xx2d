@@ -26,6 +26,20 @@
 #include <iostream>
 #include <filesystem>
 #include <thread>
+#include <atomic>
+#ifdef _WIN32
+#define NOMINMAX
+#define NODRAWTEXT
+#define NOGDI
+#define NOBITMAP
+#define NOMCX
+#define NOSERVICE
+#define NOHELP
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#else
+#include <unistd.h>	// for usleep
+#endif
 
 
 #ifndef NDEBUG
@@ -837,8 +851,8 @@ namespace xx {
 */
 
 
-	/************************************************************************************/
-	// TypeName_v
+/************************************************************************************/
+// TypeName_v
 
 	namespace Detail {
 		template<typename... T>
@@ -927,6 +941,36 @@ auto __cdecl xx::Detail::NameOf<
 		};
 		return ScopeGuard(std::forward<F>(f));
 	}
+
+
+
+
+	class Mutex {
+		std::atomic_flag flag = ATOMIC_FLAG_INIT;
+	public:
+		XX_FORCEINLINE void Lock() {
+			while (flag.test_and_set(std::memory_order_acquire)) {
+#ifdef _WIN32
+				Sleep(1);    // std::this_thread::yield()  // std::this_thread::sleep_for(std::chrono::microseconds(1));
+#else
+				usleep(1);
+#endif
+			}
+		}
+		XX_FORCEINLINE void Unlock() {
+			flag.clear(std::memory_order_release);
+		}
+	};
+
+	struct LockGuard {
+		Mutex& mtx;
+		LockGuard(Mutex& mtx) : mtx(mtx) {
+			mtx.Lock();
+		}
+		~LockGuard() {
+			mtx.Unlock();
+		}
+	};
 
 
 
