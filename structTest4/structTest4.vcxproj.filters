@@ -36,6 +36,8 @@
     <ClInclude Include="ajson.hpp" />
     <ClInclude Include="xx_data.h" />
     <ClInclude Include="xx_math.h" />
+    <ClInclude Include="readerwriterqueue.h" />
+    <ClInclude Include="atomicops.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">

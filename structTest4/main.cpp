@@ -1,27 +1,63 @@
-﻿//#define XX_LOG_USE_XX_MUTEX
-#include "xx_logger.h"
+﻿#include "readerwriterqueue.h"
+#include <thread>
+#include <iostream>
+#include <chrono>
+#include <string>
+#include <string_view>
+//#include <vector>
 
 int main() {
-	__xxLogger.cfg.outputConsole = false;
-	for (size_t i = 0; i < 100000; i++) {
-		LOG_INFO(i);
-	}
-	auto tp = std::chrono::system_clock::now();
-	std::vector<std::thread> threads;
-	for (int i = 0; i < 16; ++i) {
-		threads.emplace_back([] {
-			for (size_t i = 0; i < 1000000; i++) {
-				LOG_INFO(i);
+	moodycamel::ReaderWriterQueue<std::string> q(10000000);
+	std::thread t1([&] {
+		auto tp = std::chrono::system_clock::now();
+		for (int i = 1; i <= 10000000; i++) {
+			if (!q.enqueue(std::to_string(i))) throw - 1;
+		}
+		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+		std::cout << "write finished. ms = " << ms << std::endl;
+		});
+	std::thread t2([&] {
+		auto tp = std::chrono::system_clock::now();
+		std::string v;
+		while (true) {
+			if (q.try_dequeue(v)) {
+				if (v == "10000000") break;
 			}
-			}
-		);
-	}
-	for (auto& t : threads) t.join();
-
-	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
-	std::cout << "ms = " << ms << std::endl;
-	return 0;
+		}
+		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+		std::cout << " ms = " << ms << std::endl;
+		});
+	t1.join();
+	t2.join();
 }
+
+
+
+
+////#define XX_LOG_USE_XX_MUTEX
+//#include "xx_logger.h"
+//
+//int main() {
+//	__xxLogger.cfg.outputConsole = false;
+//	for (size_t i = 0; i < 100000; i++) {
+//		LOG_INFO(i);
+//	}
+//	auto tp = std::chrono::system_clock::now();
+//	std::vector<std::thread> threads;
+//	for (int i = 0; i < 40; ++i) {
+//		threads.emplace_back([] {
+//			for (size_t i = 0; i < 100000; i++) {
+//				LOG_INFO(i);
+//			}
+//			}
+//		);
+//	}
+//	for (auto& t : threads) t.join();
+//
+//	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
+//	std::cout << "ms = " << ms << std::endl;
+//	return 0;
+//}
 
 
 
