@@ -17,6 +17,7 @@ png -> webm 期望效果:
 
 需求2:
 	运行时逐帧解码利用 shader 将 yuva 加工为 rgba, render to texture 再利用
+	方案2: 用另存png的手段直接构造出贴图, 不走 shader
 
 扩展需求:
 	小图片是否可以在 2048x2048 | 4096x4096 等区间内运行时排布入内，得到类似 texture packer 的打包序列帧贴图? 从而减少 draw call?
@@ -25,6 +26,27 @@ png -> webm 期望效果:
 #include "ebml_parser.h"
 #include "xx_data.h"
 #include "xx_file.h"
+
+#define SVPNG_LINKAGE inline
+#define SVPNG_OUTPUT xx::Data& d
+#define SVPNG_PUT(u) d.WriteFixed((uint8_t)(u));
+#include "svpng.inc"
+
+#include "libyuv.h"
+#include "vpx_decoder.h"
+#include "vp8dx.h"
+
+
+inline int Yuva2RgbaPng(std::filesystem::path const& fn
+	, uint32_t const& w, uint32_t const& h
+	, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData
+	, uint32_t const& yaStride, uint32_t const& uvStride);
+
+inline int Yuva2RgbaPng2(std::filesystem::path const& fn
+	, uint32_t const& w, uint32_t const& h
+	, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData
+	, uint32_t const& yaStride, uint32_t const& uvStride);
+
 
 // 整个存档文件的数据映射. 直接序列化
 struct Webm {
@@ -56,6 +78,7 @@ struct Webm {
 	uint32_t count = 0;
 
 	// todo: 可能还有别的附加信息存储. 例如 中心点坐标, 显示缩放比
+	// todo: 动画信息? 多少帧到多少帧 定义为一个动画? 每帧的显示延迟设定? 时间轴?
 
 	Webm() = default;
 	Webm(Webm const&) = delete;
@@ -111,69 +134,136 @@ struct Webm {
 		aBufLen = lens[idx + 1];
 		return 0;
 	}
-};
 
-// 从 .webm 读出数据并填充到 wm. 成功返回 0
-inline int ReadWebm(Webm& wm, std::filesystem::path const& path) {
-	wm.Clear();
 
-	// 读文件
-	std::unique_ptr<uint8_t[]> data;
-	size_t dataLen;
-	if (auto && r = xx::ReadAllBytes(path, data, dataLen)) return r;
+	// 从 .xxmv 读出数据并填充到 wm. 成功返回 0
+	inline int LoadFromXxmv(std::filesystem::path const& path) {
+		this->Clear();
 
-	// 开始解析 ebml 头
-	auto&& ebml = parse_ebml_file(std::move(data), dataLen/*, 1*/);
-	auto&& segment = ebml.FindChildById(EbmlElementId::Segment);
-
-	// 提取 播放总时长
-	auto&& info = segment->FindChildById(EbmlElementId::Info);
-	auto&& duration = info->FindChildById(EbmlElementId::Duration);
-	wm.duration = (float)std::stod(duration->value());
-
-	// 提取 编码方式
-	auto&& tracks = segment->FindChildById(EbmlElementId::Tracks);
-	auto&& trackEntry = tracks->FindChildById(EbmlElementId::TrackEntry);
-	auto&& codecId = trackEntry->FindChildById(EbmlElementId::CodecID);
-	wm.codecId = codecId->value() == "V_VP8" ? 0 : 1;
-
-	// 提取 宽高
-	auto&& video = trackEntry->FindChildById(EbmlElementId::Video);
-	auto&& pixelWidth = video->FindChildById(EbmlElementId::PixelWidth);
-	wm.width = std::stoi(pixelWidth->value());
-	auto&& pixelHeight = video->FindChildById(EbmlElementId::PixelHeight);
-	wm.height = std::stoi(pixelHeight->value());
-
-	// 判断 是否带 alpha 通道
-	auto&& _alphaMode = video->FindChildById(EbmlElementId::AlphaMode);
-	wm.hasAlpha = _alphaMode->value() == "1" ? 1 : 0;
-
-	std::vector<int> frames;
-	uint32_t frameNumber = 0;
-
-	std::list<EbmlElement>::const_iterator clusterOwner;
-	if (wm.codecId == 0) {
-		clusterOwner = segment;
-	}
-	else {
-		auto&& tags = segment->FindChildById(EbmlElementId::Tags);
-		auto&& tag = tags->FindChildById(EbmlElementId::Tag);
-		clusterOwner = tag->FindChildById(EbmlElementId::Targets);
+		xx::Data d;
+		if (int r = xx::ReadAllBytes(path, d)) return r;
+		if (int r = d.ReadFixed(codecId)) return r;
+		if (int r = d.ReadFixed(hasAlpha)) return r;
+		if (int r = d.ReadFixed(width)) return r;
+		if (int r = d.ReadFixed(height)) return r;
+		if (int r = d.ReadFixed(duration)) return r;
+		uint32_t siz;
+		if (int r = d.ReadFixed(siz)) return r;
+		lens.resize(siz);
+		if (int r = d.ReadBuf(lens.data(), lens.size() * sizeof(uint32_t))) return r;
+		if (int r = d.ReadFixed(siz)) return r;
+		data.Resize(siz);
+		if (int r = d.ReadBuf(data.buf, data.len)) return r;
+		return Init();
 	}
 
-	auto&& cluster = clusterOwner->FindChildById(EbmlElementId::Cluster);
-	while (cluster != clusterOwner->children().cend()) {
-		auto timecode = cluster->FindChildById(EbmlElementId::Timecode);
-		auto clusterPts = std::stoi(timecode->value());
+	inline int SaveToXxmv(std::filesystem::path const& path) {
+		xx::Data d;
+		d.WriteFixed(codecId);
+		d.WriteFixed(hasAlpha);
+		d.WriteFixed(width);
+		d.WriteFixed(height);
+		d.WriteFixed(duration);
+		d.WriteFixed((uint32_t)lens.size());
+		d.WriteBuf(lens.data(), lens.size() * sizeof(uint32_t));
+		d.WriteFixed((uint32_t)data.len);
+		d.WriteBuf(data.buf, data.len);
+		return xx::WriteAllBytes(path, d);
+	}
 
-		if (wm.hasAlpha) {
-			auto&& blockGroup = cluster->FindChildById(EbmlElementId::BlockGroup);
-			while (blockGroup != cluster->children().cend()) {
-				{
-					// get yuv data + size
-					auto&& block = blockGroup->FindChildById(EbmlElementId::Block);
-					auto&& data = block->data();
-					auto&& size = block->size();
+	// 从 .webm 读出数据并填充到 wm. 成功返回 0
+	inline int LoadFromWebm(std::filesystem::path const& path) {
+		this->Clear();
+
+		// 读文件
+		std::unique_ptr<uint8_t[]> data;
+		size_t dataLen;
+		if (auto&& r = xx::ReadAllBytes(path, data, dataLen)) return r;
+
+		// 开始解析 ebml 头
+		auto&& ebml = parse_ebml_file(std::move(data), dataLen/*, 1*/);
+		auto&& segment = ebml.FindChildById(EbmlElementId::Segment);
+
+		// 提取 播放总时长
+		auto&& info = segment->FindChildById(EbmlElementId::Info);
+		auto&& duration = info->FindChildById(EbmlElementId::Duration);
+		this->duration = (float)std::stod(duration->value());
+
+		// 提取 编码方式
+		auto&& tracks = segment->FindChildById(EbmlElementId::Tracks);
+		auto&& trackEntry = tracks->FindChildById(EbmlElementId::TrackEntry);
+		auto&& codecId = trackEntry->FindChildById(EbmlElementId::CodecID);
+		this->codecId = codecId->value() == "V_VP8" ? 0 : 1;
+
+		// 提取 宽高
+		auto&& video = trackEntry->FindChildById(EbmlElementId::Video);
+		auto&& pixelWidth = video->FindChildById(EbmlElementId::PixelWidth);
+		this->width = std::stoi(pixelWidth->value());
+		auto&& pixelHeight = video->FindChildById(EbmlElementId::PixelHeight);
+		this->height = std::stoi(pixelHeight->value());
+
+		// 判断 是否带 alpha 通道
+		auto&& _alphaMode = video->FindChildById(EbmlElementId::AlphaMode);
+		this->hasAlpha = _alphaMode->value() == "1" ? 1 : 0;
+
+		std::vector<int> frames;
+		uint32_t frameNumber = 0;
+
+		std::list<EbmlElement>::const_iterator clusterOwner;
+		if (this->codecId == 0) {
+			clusterOwner = segment;
+		}
+		else {
+			auto&& tags = segment->FindChildById(EbmlElementId::Tags);
+			auto&& tag = tags->FindChildById(EbmlElementId::Tag);
+			clusterOwner = tag->FindChildById(EbmlElementId::Targets);
+		}
+
+		auto&& cluster = clusterOwner->FindChildById(EbmlElementId::Cluster);
+		while (cluster != clusterOwner->children().cend()) {
+			auto timecode = cluster->FindChildById(EbmlElementId::Timecode);
+			auto clusterPts = std::stoi(timecode->value());
+
+			if (this->hasAlpha) {
+				auto&& blockGroup = cluster->FindChildById(EbmlElementId::BlockGroup);
+				while (blockGroup != cluster->children().cend()) {
+					{
+						// get yuv data + size
+						auto&& block = blockGroup->FindChildById(EbmlElementId::Block);
+						auto&& data = block->data();
+						auto&& size = block->size();
+
+						// fix yuv data + size
+						size_t track_number_size_length;
+						(void)get_ebml_element_size(data, size, track_number_size_length);
+						data = data + track_number_size_length + 3;
+						size = size - track_number_size_length - 3;
+
+						this->lens.push_back((uint32_t)size);
+						this->data.WriteBuf(data, size);
+					}
+					{
+						// get a data + size
+						auto&& blockAdditions = blockGroup->FindChildById(EbmlElementId::BlockAdditions);
+						auto&& blockMore = blockAdditions->FindChildById(EbmlElementId::BlockMore);
+						auto&& blockAdditional = blockMore->FindChildById(EbmlElementId::BlockAdditional);
+						auto&& data_alpha = blockAdditional->data();
+						auto&& size_alpha = (uint32_t)blockAdditional->size();
+
+						this->lens.push_back((uint32_t)size_alpha);
+						this->data.WriteBuf(data_alpha, size_alpha);
+					}
+
+					// next
+					blockGroup = cluster->FindNextChildById(++blockGroup, EbmlElementId::BlockGroup);
+					++frameNumber;
+				}
+			}
+			else {
+				auto&& simpleBlock = cluster->FindChildById(EbmlElementId::SimpleBlock);
+				while (simpleBlock != cluster->children().cend()) {
+					auto&& data = simpleBlock->data();
+					auto&& size = simpleBlock->size();
 
 					// fix yuv data + size
 					size_t track_number_size_length;
@@ -181,78 +271,81 @@ inline int ReadWebm(Webm& wm, std::filesystem::path const& path) {
 					data = data + track_number_size_length + 3;
 					size = size - track_number_size_length - 3;
 
-					wm.lens.push_back((uint32_t)size);
-					wm.data.WriteBuf(data, size);
-				}
-				{
-					// get a data + size
-					auto&& blockAdditions = blockGroup->FindChildById(EbmlElementId::BlockAdditions);
-					auto&& blockMore = blockAdditions->FindChildById(EbmlElementId::BlockMore);
-					auto&& blockAdditional = blockMore->FindChildById(EbmlElementId::BlockAdditional);
-					auto&& data_alpha = blockAdditional->data();
-					auto&& size_alpha = (uint32_t)blockAdditional->size();
+					this->lens.push_back((uint32_t)size);
+					this->data.WriteBuf(data, size);
 
-					wm.lens.push_back((uint32_t)size_alpha);
-					wm.data.WriteBuf(data_alpha, size_alpha);
+					// next
+					simpleBlock = cluster->FindNextChildById(++simpleBlock, EbmlElementId::BlockGroup);
+					++frameNumber;
 				}
+			}
 
-				// next
-				blockGroup = cluster->FindNextChildById(++blockGroup, EbmlElementId::BlockGroup);
-				++frameNumber;
+			cluster = clusterOwner->FindNextChildById(++cluster, EbmlElementId::Cluster);
+		}
+
+		if (auto&& r = this->Init()) return r;
+		return 0;
+	}
+
+	inline int SaveToPngs() {
+		vpx_codec_ctx_t ctx;
+		vpx_codec_dec_cfg_t cfg{ 1, this->width, this->height };
+		auto&& iface = this->codecId ? vpx_codec_vp9_dx() : vpx_codec_vp8_dx();
+		if (auto&& r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return r;	// because VPX_CODEC_OK == 0
+
+		uint8_t const* rgbBuf = nullptr, * aBuf = nullptr;
+		uint32_t rgbBufLen = 0, aBufLen = 0;
+
+		if (this->hasAlpha) {
+			vpx_codec_ctx_t ctxAlpha;
+			if (auto&& r = vpx_codec_dec_init(&ctxAlpha, iface, &cfg, 0)) return r;
+
+			for (uint32_t i = 0; i < this->count; ++i) {
+				if (auto&& r = this->GetFrameBuf(i, rgbBuf, rgbBufLen, aBuf, aBufLen)) return r;
+
+				if (auto&& r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
+				if (auto&& r = vpx_codec_decode(&ctxAlpha, aBuf, aBufLen, nullptr, 0)) return r;
+
+				vpx_codec_iter_t iterator = nullptr;
+				auto&& imgRGB = vpx_codec_get_frame(&ctx, &iterator);
+				if (!imgRGB || imgRGB->fmt != VPX_IMG_FMT_I420) return -1;
+				if (imgRGB->stride[1] != imgRGB->stride[2]) return -2;
+
+				iterator = nullptr;
+				auto&& imgA = vpx_codec_get_frame(&ctxAlpha, &iterator);
+				if (!imgA || imgA->fmt != VPX_IMG_FMT_I420) return -3;
+				if (imgA->stride[0] != imgRGB->stride[0]) return -4;
+
+				auto&& fn = std::string("a") + std::to_string(i) + ".png";
+				if (auto&& r = Yuva2RgbaPng2(fn, this->width, this->height
+					, imgRGB->planes[0], imgRGB->planes[1], imgRGB->planes[2], imgA->planes[0]
+					, imgRGB->stride[0], imgRGB->stride[1])) return r;
 			}
 		}
 		else {
-			auto&& simpleBlock = cluster->FindChildById(EbmlElementId::SimpleBlock);
-			while (simpleBlock != cluster->children().cend()) {
-				auto&& data = simpleBlock->data();
-				auto&& size = simpleBlock->size();
+			for (uint32_t i = 0; i < this->count; ++i) {
+				if (auto&& r = this->GetFrameBuf(i, rgbBuf, rgbBufLen)) return r;
 
-				// fix yuv data + size
-				size_t track_number_size_length;
-				(void)get_ebml_element_size(data, size, track_number_size_length);
-				data = data + track_number_size_length + 3;
-				size = size - track_number_size_length - 3;
+				if (auto&& r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
 
-				wm.lens.push_back((uint32_t)size);
-				wm.data.WriteBuf(data, size);
+				vpx_codec_iter_t iterator = nullptr;
+				auto&& imgRGB = vpx_codec_get_frame(&ctx, &iterator);
+				if (!imgRGB || imgRGB->fmt != VPX_IMG_FMT_I420) return -1;
+				if (imgRGB->stride[1] != imgRGB->stride[2]) return -2;
 
-				// next
-				simpleBlock = cluster->FindNextChildById(++simpleBlock, EbmlElementId::BlockGroup);
-				++frameNumber;
+				auto&& fn = std::string("a") + std::to_string(i) + ".png";
+				if (auto&& r = Yuva2RgbaPng2(fn, this->width, this->height
+					, imgRGB->planes[0], imgRGB->planes[1], imgRGB->planes[2], nullptr
+					, imgRGB->stride[0], imgRGB->stride[1])) return r;
+
 			}
 		}
 
-		cluster = clusterOwner->FindNextChildById(++cluster, EbmlElementId::Cluster);
+		return 0;
 	}
 
-	if (auto && r = wm.Init()) return r;
-	return 0;
-}
+};
 
-// 从 .xxmv 读出数据并填充到 wm. 成功返回 0
-inline int ReadXxmv(Webm& wm, std::filesystem::path const& path) {
-	xx::Data d;
-	xx::ReadAllBytes(path, d);
-	//if (int r = bb.Read(out.codecId, out.hasAlpha, out.width, out.height, out.duration, out.lens, out.data)) return r;
-	//return out.Init();
-	//return bb.Read(wm);
-	return 0;
-}
-
-inline int WriteXxmv(Webm const& wm, std::filesystem::path const& path) {
-	//xx::BBuffer bb;
-	//bb.Write(wm);
-	//bb.Write(in.codecId, in.hasAlpha, in.width, in.height, in.duration, in.lens, in.data);
-	//return xx::WriteAllBytes("a.xxmv", bb);
-	return 0;
-}
-
-#define SVPNG_LINKAGE inline
-#define SVPNG_OUTPUT xx::Data& d
-#define SVPNG_PUT(u) d.WriteFixed((uint8_t)(u));
-#include "svpng.inc"
-
-#include "libyuv.h"
 
 inline int Yuva2RgbaPng(std::filesystem::path const& fn
 	, uint32_t const& w, uint32_t const& h
@@ -313,85 +406,22 @@ inline int Yuva2RgbaPng2(std::filesystem::path const& fn
 	std::vector<uint8_t> bytes;
 	bytes.resize(w * h * 4);
 
-	if(auto&& r = libyuv::I420AlphaToARGB(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0)) return r;
+	if (auto&& r = libyuv::I420AlphaToARGB(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0)) return r;
 
 	xx::Data d;
 	svpng(d, w, h, bytes.data(), 1);
 	return xx::WriteAllBytes(fn, d);
 }
 
-#include "vpx_decoder.h"
-#include "vp8dx.h"
-
-inline int Xxmv2Pngs(Webm& wm) {
-	vpx_codec_ctx_t ctx;
-	vpx_codec_dec_cfg_t cfg{ 1, wm.width, wm.height };
-	auto&& iface = wm.codecId ? vpx_codec_vp9_dx() : vpx_codec_vp8_dx();
-	if (auto && r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return r;	// because VPX_CODEC_OK == 0
-
-	uint8_t const *rgbBuf = nullptr, *aBuf = nullptr;
-	uint32_t rgbBufLen = 0, aBufLen = 0;
-
-	if (wm.hasAlpha) {
-		vpx_codec_ctx_t ctxAlpha;
-		if (auto && r = vpx_codec_dec_init(&ctxAlpha, iface, &cfg, 0)) return r;
-
-		for (uint32_t i = 0; i < wm.count; ++i) {
-			if (auto && r = wm.GetFrameBuf(i, rgbBuf, rgbBufLen, aBuf, aBufLen)) return r;
-
-			if (auto && r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
-			if (auto && r = vpx_codec_decode(&ctxAlpha, aBuf, aBufLen, nullptr, 0)) return r;
-
-			vpx_codec_iter_t iterator = nullptr;
-			auto&& imgRGB = vpx_codec_get_frame(&ctx, &iterator);
-			if (!imgRGB || imgRGB->fmt != VPX_IMG_FMT_I420) return -1;
-			if (imgRGB->stride[1] != imgRGB->stride[2]) return -2;
-
-			iterator = nullptr;
-			auto&& imgA = vpx_codec_get_frame(&ctxAlpha, &iterator);
-			if (!imgA || imgA->fmt != VPX_IMG_FMT_I420) return -3;
-			if (imgA->stride[0] != imgRGB->stride[0]) return -4;
-
-			auto&& fn = std::string("a") + std::to_string(i) + ".png";
-			if (auto && r = Yuva2RgbaPng2(fn, wm.width, wm.height
-				, imgRGB->planes[0], imgRGB->planes[1], imgRGB->planes[2], imgA->planes[0]
-				, imgRGB->stride[0], imgRGB->stride[1])) return r;
-		}
-	}
-	else {
-		for (uint32_t i = 0; i < wm.count; ++i) {
-			if (auto && r = wm.GetFrameBuf(i, rgbBuf, rgbBufLen)) return r;
-
-			if (auto && r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
-
-			vpx_codec_iter_t iterator = nullptr;
-			auto&& imgRGB = vpx_codec_get_frame(&ctx, &iterator);
-			if (!imgRGB || imgRGB->fmt != VPX_IMG_FMT_I420) return -1;
-			if (imgRGB->stride[1] != imgRGB->stride[2]) return -2;
-
-			auto&& fn = std::string("a") + std::to_string(i) + ".png";
-			if (auto && r = Yuva2RgbaPng2(fn, wm.width, wm.height
-				, imgRGB->planes[0], imgRGB->planes[1], imgRGB->planes[2], nullptr
-				, imgRGB->stride[0], imgRGB->stride[1])) return r;
-
-		}
-	}
-
-	return 0;
-}
-
 int main(int argc, char* argv[]) {
-	(void)argc;
-	(void)argv;
+	(void)argc;	(void)argv;
 
 	Webm wm;
-	if (auto && r = ReadWebm(wm, "a.webm")) return r;
-	if (auto && r = WriteXxmv(wm, "a.xxmv")) return r;
+	if (auto&& r = wm.LoadFromWebm("a.webm")) return r;
+	if (auto&& r = wm.SaveToXxmv("a.xxmv")) return r;
 
-	wm.Clear();
-	if (auto && r = ReadXxmv(wm, "a.xxmv")) return r;
-
-	if (auto && r = Xxmv2Pngs(wm)) return r;
+	if (auto&& r = wm.LoadFromXxmv("a.xxmv")) return r;
+	if (auto&& r = wm.SaveToPngs()) return r;
 
 	std::cout << "done." << std::endl;
 	return 0;

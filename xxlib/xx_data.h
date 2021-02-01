@@ -214,7 +214,7 @@ namespace xx {
 
 		// 读指定长度 buf 到 tar. 返回非 0 则读取失败
 		// 用之前需要自己初始化 offset
-		XX_FORCEINLINE int ReadBuf(char* const& tar, size_t const& siz) {
+		XX_FORCEINLINE int ReadBuf(void* const& tar, size_t const& siz) {
 			if (offset + siz > len) return __LINE__;
 			memcpy(tar, buf + offset, siz);
 			offset += siz;
