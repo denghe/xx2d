@@ -444,6 +444,9 @@ struct Webm {
 		if (x || y) {
 			return RgbaSaveToPng(path / (prefix + std::to_string(z) + ".png"), (uint8_t*)space.data(), sw, (y + 1) * height);
 		}
+
+		// todo: 同步生成 .plist
+
 		return 0;
 	}
 };
