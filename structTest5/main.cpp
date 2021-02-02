@@ -277,14 +277,14 @@ struct Webm {
 	}
 
 	// 每帧画面另存为 png 文件。
-	inline int SaveToPngs(std::string const& prefix, std::filesystem::path const& path) {
+	inline int SaveToPngs(std::filesystem::path const& path, std::string const& prefix) {
 		uint32_t i = 0;
 		return ForeachFrame([&](std::vector<uint8_t> const& bytes)->int {
 			auto&& fn = path / (prefix + std::to_string(i) + ".png");
-			if (int r = RgbaSaveToPng(fn, bytes, this->width, this->height)) return r;
+			if (int r = RgbaSaveToPng(fn, bytes.data(), this->width, this->height)) return r;
 			++i;
 			return 0;
-		});
+			});
 	}
 
 	// f = [](std::vector<uint8_t> const& bytes)->int { ... }
@@ -398,14 +398,56 @@ struct Webm {
 #endif
 	}
 
-	inline static int RgbaSaveToPng(std::filesystem::path const& fn, std::vector<uint8_t> const& bytes, uint32_t const& w, uint32_t const& h) {
+	inline static int RgbaSaveToPng(std::filesystem::path const& fn, uint8_t const* const& bytes, uint32_t const& w, uint32_t const& h) {
 		xx::Data d;
-		svpng(d, w, h, bytes.data(), 1);
+		svpng(d, w, h, bytes, 1);
 		return xx::WriteAllBytes(fn, d);
 	}
+
+	// 将 srcPos(小图) 绘制 到 dstPos(大图) 的 x,y (bmp左上角). 因为是图片打包用途，故必须确保 space 装得下, 没有边缘问题
+	// 先计算第一行第一个像素 要从 space 的哪个下标 开始填, 每次填 bw 长, 填完后 下标 += sw 填 bh 次
+	inline static void Draw(uint32_t* dstPos, uint32_t const& sw, uint32_t const& sh
+		, uint32_t* srcPos, uint32_t const& bw, uint32_t const& bh, uint32_t const& x, uint32_t const& y) {
+		assert(x >= 0 && y >= 0 && x + bw < sw&& y + bh < sh);
+		dstPos += sw * y + x;
+		auto dstPosEnd = dstPos + sw * bh;
+		auto copyLen = bw * sizeof(uint32_t);
+		for (; dstPos < dstPosEnd; dstPos += sw) {
+			memcpy(dstPos, srcPos, copyLen);
+			srcPos += bw;
+		}
+	}
+
+	// 将所有帧的图打包存为 N 张 png 大图( 类似 texture packer ). 文件名为 path / prefix + 0,1,2,... + .png
+	// todo: 填完的最后一张图 似乎可以缩减体积? 否则文件体积巨大
+	// todo: 像素级查找 包围盒 并得到实际尺寸? 然后弄个 矩形填充算法？
+	inline int SaveToPackedPngs(std::filesystem::path const& path, std::string const& prefix, uint32_t const& sw = 2048, uint32_t const& sh = 2048) {
+		std::vector<uint32_t> space;
+		space.resize(sw * sh);
+		int numRows = sh / height;
+		int numCols = sw / width;
+		int x = 0, y = 0, z = 0;
+		int r = ForeachFrame([&](std::vector<uint8_t> const& bytes)->int {
+			Draw(space.data(), sw, sh, (uint32_t*)bytes.data(), width, height, x * width, y * height);
+			++x;
+			if (x == numCols) {
+				x = 0;
+				++y;
+			}
+			if (y == numRows) {
+				y = 0;
+				RgbaSaveToPng(path / (prefix + std::to_string(z++) + ".png"), (uint8_t*)space.data(), sw, sh);
+				memset(space.data(), 0, space.size() * sizeof(uint32_t));
+			}
+			return 0;
+			});
+		if (r) return r;
+		if (y) {
+			return RgbaSaveToPng(path / (prefix + std::to_string(z) + ".png"), (uint8_t*)space.data(), sw, sh);
+		}
+		return 0;
+	}
 };
-
-
 
 int main(int argc, char* argv[]) {
 	(void)argc;	(void)argv;
@@ -415,7 +457,8 @@ int main(int argc, char* argv[]) {
 	if (int r = wm.SaveToXxmv("res/a.xxmv")) return r;
 
 	if (int r = wm.LoadFromXxmv("res/a.xxmv")) return r;
-	if (int r = wm.SaveToPngs("a", "res/")) return r;
+	//if (int r = wm.SaveToPngs("res/", "a")) return r;
+	if (int r = wm.SaveToPackedPngs("res/", "a", 4096, 4096)) return r;
 
 	std::cout << "done." << std::endl;
 	return 0;
