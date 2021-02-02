@@ -37,18 +37,7 @@ png -> webm 期望效果:
 #include "vp8dx.h"
 
 
-inline int Yuva2RgbaPng(std::filesystem::path const& fn
-	, uint32_t const& w, uint32_t const& h
-	, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData
-	, uint32_t const& yaStride, uint32_t const& uvStride);
-
-inline int Yuva2RgbaPng2(std::filesystem::path const& fn
-	, uint32_t const& w, uint32_t const& h
-	, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData
-	, uint32_t const& yaStride, uint32_t const& uvStride);
-
-
-// 整个存档文件的数据映射. 直接序列化
+// webm 解析后的容易使用的存储形态
 struct Webm {
 	// 0: vp8;	1: vp9
 	uint8_t codecId = 0;
@@ -178,7 +167,7 @@ struct Webm {
 		// 读文件
 		std::unique_ptr<uint8_t[]> data;
 		size_t dataLen;
-		if (auto&& r = xx::ReadAllBytes(path, data, dataLen)) return r;
+		if (int r = xx::ReadAllBytes(path, data, dataLen)) return r;
 
 		// 开始解析 ebml 头
 		auto&& ebml = parse_ebml_file(std::move(data), dataLen/*, 1*/);
@@ -283,28 +272,42 @@ struct Webm {
 			cluster = clusterOwner->FindNextChildById(++cluster, EbmlElementId::Cluster);
 		}
 
-		if (auto&& r = this->Init()) return r;
+		if (int r = this->Init()) return r;
 		return 0;
 	}
 
-	inline int SaveToPngs() {
+	// 每帧画面另存为 png 文件。
+	inline int SaveToPngs(std::string const& prefix, std::filesystem::path const& path) {
+		uint32_t i = 0;
+		return ForeachFrame([&](std::vector<uint8_t> const& bytes)->int {
+			auto&& fn = path / (prefix + std::to_string(i) + ".png");
+			if (int r = RgbaSaveToPng(fn, bytes, this->width, this->height)) return r;
+			++i;
+			return 0;
+		});
+	}
+
+	// f = [](std::vector<uint8_t> const& bytes)->int { ... }
+	template<typename F>
+	inline int ForeachFrame(F&& f) {
 		vpx_codec_ctx_t ctx;
 		vpx_codec_dec_cfg_t cfg{ 1, this->width, this->height };
 		auto&& iface = this->codecId ? vpx_codec_vp9_dx() : vpx_codec_vp8_dx();
-		if (auto&& r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return r;	// because VPX_CODEC_OK == 0
+		if (int r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return r;	// because VPX_CODEC_OK == 0
 
 		uint8_t const* rgbBuf = nullptr, * aBuf = nullptr;
 		uint32_t rgbBufLen = 0, aBufLen = 0;
+		std::vector<uint8_t> bytes;
 
 		if (this->hasAlpha) {
 			vpx_codec_ctx_t ctxAlpha;
-			if (auto&& r = vpx_codec_dec_init(&ctxAlpha, iface, &cfg, 0)) return r;
+			if (int r = vpx_codec_dec_init(&ctxAlpha, iface, &cfg, 0)) return r;
 
 			for (uint32_t i = 0; i < this->count; ++i) {
-				if (auto&& r = this->GetFrameBuf(i, rgbBuf, rgbBufLen, aBuf, aBufLen)) return r;
+				if (int r = this->GetFrameBuf(i, rgbBuf, rgbBufLen, aBuf, aBufLen)) return r;
 
-				if (auto&& r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
-				if (auto&& r = vpx_codec_decode(&ctxAlpha, aBuf, aBufLen, nullptr, 0)) return r;
+				if (int r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
+				if (int r = vpx_codec_decode(&ctxAlpha, aBuf, aBufLen, nullptr, 0)) return r;
 
 				vpx_codec_iter_t iterator = nullptr;
 				auto&& imgRGB = vpx_codec_get_frame(&ctx, &iterator);
@@ -316,112 +319,103 @@ struct Webm {
 				if (!imgA || imgA->fmt != VPX_IMG_FMT_I420) return -3;
 				if (imgA->stride[0] != imgRGB->stride[0]) return -4;
 
-				auto&& fn = std::string("a") + std::to_string(i) + ".png";
-				if (auto&& r = Yuva2RgbaPng2(fn, this->width, this->height
+				if (int r = Yuva2Rgba(bytes, this->width, this->height
 					, imgRGB->planes[0], imgRGB->planes[1], imgRGB->planes[2], imgA->planes[0]
 					, imgRGB->stride[0], imgRGB->stride[1])) return r;
+				if (int r = f(bytes)) return r;
 			}
 		}
 		else {
 			for (uint32_t i = 0; i < this->count; ++i) {
-				if (auto&& r = this->GetFrameBuf(i, rgbBuf, rgbBufLen)) return r;
+				if (int r = this->GetFrameBuf(i, rgbBuf, rgbBufLen)) return r;
 
-				if (auto&& r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
+				if (int r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
 
 				vpx_codec_iter_t iterator = nullptr;
 				auto&& imgRGB = vpx_codec_get_frame(&ctx, &iterator);
 				if (!imgRGB || imgRGB->fmt != VPX_IMG_FMT_I420) return -1;
 				if (imgRGB->stride[1] != imgRGB->stride[2]) return -2;
 
-				auto&& fn = std::string("a") + std::to_string(i) + ".png";
-				if (auto&& r = Yuva2RgbaPng2(fn, this->width, this->height
+				if (int r = Yuva2Rgba(bytes, this->width, this->height
 					, imgRGB->planes[0], imgRGB->planes[1], imgRGB->planes[2], nullptr
 					, imgRGB->stride[0], imgRGB->stride[1])) return r;
-
+				if (int r = f(bytes)) return r;
 			}
 		}
 
 		return 0;
 	}
 
+	inline static int Yuva2Rgba(std::vector<uint8_t>& bytes
+		, uint32_t const& w, uint32_t const& h
+		, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData
+		, uint32_t const& yaStride, uint32_t const& uvStride) {
+
+#ifdef LIBYUV_API
+		// 这个 windows x64 下大约快 20+ 倍
+		bytes.resize(w * h * 4);
+		return libyuv::I420AlphaToARGB(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0);
+#else
+		// 这段代码逻辑可写入 shader
+		bytes.clear();
+		bytes.reserve(w * h * 4);
+
+		// 产生像素坐标
+		for (uint32_t _h = 0; _h < h; ++_h) {
+			for (uint32_t _w = 0; _w < w; ++_w) {
+				// 根据坐标结合具体宽高跨距算下标. uv 每个像素对应 ya 4个像素
+				auto&& yaIdx = yaStride * _h + _w;
+				auto&& uvIdx = uvStride * (_h / 2) + _w / 2;
+
+				// 得到 yuv 原始数据, byte -> float
+				auto&& y = yData[yaIdx] / 255.0f;
+				auto&& u = uData[uvIdx] / 255.0f;
+				auto&& v = vData[uvIdx] / 255.0f;
+
+				// 进一步修正
+				y = 1.1643f * (y - 0.0625f);
+				u = u - 0.5f;
+				v = v - 0.5f;
+
+				// 算出 rgb( float 版 )
+				auto&& r = y + 1.5958f * v;
+				auto&& g = y - 0.39173f * u - 0.81290f * v;
+				auto&& b = y + 2.017f * u;
+
+				// 裁剪为 0 ~ 1
+				if (r > 1.0f) r = 1.0f; else if (r < 0.0f) r = 0.0f;
+				if (g > 1.0f) g = 1.0f; else if (g < 0.0f) g = 0.0f;
+				if (b > 1.0f) b = 1.0f; else if (b < 0.0f) b = 0.0f;
+
+				// 存起来
+				bytes.push_back((uint8_t)(b * 255));
+				bytes.push_back((uint8_t)(g * 255));
+				bytes.push_back((uint8_t)(r * 255));
+				bytes.push_back(aData ? aData[yaIdx] : (uint8_t)0);
+			}
+		}
+		return 0;
+#endif
+	}
+
+	inline static int RgbaSaveToPng(std::filesystem::path const& fn, std::vector<uint8_t> const& bytes, uint32_t const& w, uint32_t const& h) {
+		xx::Data d;
+		svpng(d, w, h, bytes.data(), 1);
+		return xx::WriteAllBytes(fn, d);
+	}
 };
 
 
-inline int Yuva2RgbaPng(std::filesystem::path const& fn
-	, uint32_t const& w, uint32_t const& h
-	, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData
-	, uint32_t const& yaStride, uint32_t const& uvStride) {
-
-	// 数据容器
-	std::vector<uint8_t> bytes;
-	bytes.reserve(w * h * 4);
-
-	// 产生像素坐标
-	for (uint32_t _h = 0; _h < h; ++_h) {
-		for (uint32_t _w = 0; _w < w; ++_w) {
-			// 根据坐标结合具体宽高跨距算下标. uv 每个像素对应 ya 4个像素
-			auto&& yaIdx = yaStride * _h + _w;
-			auto&& uvIdx = uvStride * (_h / 2) + _w / 2;
-
-			// 得到 yuv 原始数据, byte -> float
-			auto&& y = yData[yaIdx] / 255.0f;
-			auto&& u = uData[uvIdx] / 255.0f;
-			auto&& v = vData[uvIdx] / 255.0f;
-
-			// 进一步修正
-			y = 1.1643f * (y - 0.0625f);
-			u = u - 0.5f;
-			v = v - 0.5f;
-
-			// 算出 rgb( float 版 )
-			auto&& r = y + 1.5958f * v;
-			auto&& g = y - 0.39173f * u - 0.81290f * v;
-			auto&& b = y + 2.017f * u;
-
-			// 裁剪为 0 ~ 1
-			if (r > 1.0f) r = 1.0f; else if (r < 0.0f) r = 0.0f;
-			if (g > 1.0f) g = 1.0f; else if (g < 0.0f) g = 0.0f;
-			if (b > 1.0f) b = 1.0f; else if (b < 0.0f) b = 0.0f;
-
-			// 存起来
-			bytes.push_back((uint8_t)(b * 255));
-			bytes.push_back((uint8_t)(g * 255));
-			bytes.push_back((uint8_t)(r * 255));
-			bytes.push_back(aData ? aData[yaIdx] : (uint8_t)0);
-		}
-	}
-
-	// 存为非压缩png
-	xx::Data d;
-	svpng(d, w, h, bytes.data(), 1);
-	return xx::WriteAllBytes(fn, d);
-}
-
-// 这个 windows x64 下大约快 20+ 倍
-inline int Yuva2RgbaPng2(std::filesystem::path const& fn
-	, uint32_t const& w, uint32_t const& h
-	, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData
-	, uint32_t const& yaStride, uint32_t const& uvStride) {
-
-	std::vector<uint8_t> bytes;
-	bytes.resize(w * h * 4);
-
-	if (auto&& r = libyuv::I420AlphaToARGB(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0)) return r;
-
-	xx::Data d;
-	svpng(d, w, h, bytes.data(), 1);
-	return xx::WriteAllBytes(fn, d);
-}
 
 int main(int argc, char* argv[]) {
 	(void)argc;	(void)argv;
 
 	Webm wm;
-	if (auto&& r = wm.LoadFromWebm("a.webm")) return r;
-	if (auto&& r = wm.SaveToXxmv("a.xxmv")) return r;
+	if (int r = wm.LoadFromWebm("res/a.webm")) return r;
+	if (int r = wm.SaveToXxmv("res/a.xxmv")) return r;
 
-	if (auto&& r = wm.LoadFromXxmv("a.xxmv")) return r;
-	if (auto&& r = wm.SaveToPngs()) return r;
+	if (int r = wm.LoadFromXxmv("res/a.xxmv")) return r;
+	if (int r = wm.SaveToPngs("a", "res/")) return r;
 
 	std::cout << "done." << std::endl;
 	return 0;
