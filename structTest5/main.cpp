@@ -419,7 +419,6 @@ struct Webm {
 	}
 
 	// 将所有帧的图打包存为 N 张 png 大图( 类似 texture packer ). 文件名为 path / prefix + 0,1,2,... + .png
-	// todo: 填完的最后一张图 似乎可以缩减体积? 否则文件体积巨大
 	// todo: 像素级查找 包围盒 并得到实际尺寸? 然后弄个 矩形填充算法？
 	inline int SaveToPackedPngs(std::filesystem::path const& path, std::string const& prefix, uint32_t const& sw = 2048, uint32_t const& sh = 2048) {
 		std::vector<uint32_t> space;
@@ -442,8 +441,8 @@ struct Webm {
 			return 0;
 			});
 		if (r) return r;
-		if (y) {
-			return RgbaSaveToPng(path / (prefix + std::to_string(z) + ".png"), (uint8_t*)space.data(), sw, sh);
+		if (x || y) {
+			return RgbaSaveToPng(path / (prefix + std::to_string(z) + ".png"), (uint8_t*)space.data(), sw, (y + 1) * height);
 		}
 		return 0;
 	}
