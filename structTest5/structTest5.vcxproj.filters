@@ -31,6 +31,7 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="ebml_parser.h" />
+    <ClInclude Include="xx_webm.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">

@@ -109,6 +109,7 @@
     <ClInclude Include="..\xxlib\xx_ptr.h" />
     <ClInclude Include="..\xxlib\xx_typehelpers.h" />
     <ClInclude Include="ebml_parser.h" />
+    <ClInclude Include="xx_webm.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis" />
