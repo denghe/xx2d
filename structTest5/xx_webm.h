@@ -3,24 +3,21 @@
 #endif
 
 /*
-转码命令行:
+usage example:
+
+	xx::Webm wm;
+	if (int r = wm.LoadFromWebm("res/a.webm")) return r;		// load a.webm file, parse ebml info, store data
+	if (int r = wm.SaveToXxmv("res/a.xxmv")) return r;			// write xxmv header + data to file
+
+	if (int r = wm.LoadFromXxmv("res/a.xxmv")) return r;		// load a.xxmv file, save info & data
+	if (int r = wm.SaveToPngs("res/", "a")) return r;			// write every frame to a0.png, a1.png, a2.png .... files
+
+	if (int r = wm.SaveToPackedPngs("res/", "a")) return r;		// texture packer likely. write all frame to a?.png + a?.plist
+
+	// todo: runtime export to cocos plist dict + texture
+
+pics -> webm command line:
 	./ffmpeg -f image2 -framerate 60 -i "??????(%d).png" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 1000K -speed 0 ??????.webm
-
-转码命令行作用:
-	将一连串 png 转为 码率为 1000K( 看情况调整或不填 ) 的 每秒 60 帧 ( 按实际情况来 ) 的带 alpha 的 webm 视频
-
-png -> webm 期望效果:
-	文件体积缩小至 1/10 左右, 运行时部分贴图内存节省一大半, 可用于动画对象个数不多, draw call 不敏感的情景
-
-需求1:
-	为便于运行时加载 & 解码, 需要将 转码命令行产生的 webm, 转为自己的文件格式
-
-需求2:
-	运行时逐帧解码利用 shader 将 yuva 加工为 rgba, render to texture 再利用
-	方案2: 用另存png的手段直接构造出贴图, 不走 shader
-
-扩展需求:
-	小图片是否可以在 2048x2048 | 4096x4096 等区间内运行时排布入内，得到类似 texture packer 的打包序列帧贴图? 从而减少 draw call?
 */
 
 #include "ebml_parser.h"
