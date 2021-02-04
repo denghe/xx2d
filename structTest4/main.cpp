@@ -1,6 +1,9 @@
 ﻿#include <iostream>
 #include <chrono>
 #include <vector>
+#include <thread>
+
+#define PERFORMANCE_TEST
 
 struct PositionRadius_ {
 	float x, y, r;
@@ -13,7 +16,6 @@ struct Monster : PositionRadius_ {
 struct Cannon : PositionRadius_ {
 	int power;
 	int nextShootFrameNumber;
-	float shootRange;
 };
 
 struct Bullet : PositionRadius_ {
@@ -40,18 +42,28 @@ struct Scene {
 		}
 		for (int i = 0; i < 20; ++i) {
 			auto& c = cannons.emplace_back();
-			c.x = 1000;
-			c.y = 0;
-			c.r = 10;
+			c.x = i * 10.f;
+			c.y = 20;
+			c.r = 100;
 			c.power = 50;
 			c.nextShootFrameNumber = 0;
-			c.shootRange = 100;
 		}
 	}
 
 	template<typename A, typename B>
 	bool HitCheck(A const& a, B const& b) {
 		return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) < (a.r + b.r) * (a.r + b.r);
+	}
+
+	template<typename Point1, typename Point2>
+	void GetXYInc(Point1 const& from, Point2 const& to, float const& speed, float& xInc, float& yInc) noexcept {
+		if (from.x == to.x && from.y == to.y) {
+			xInc = yInc = 0;
+			return;
+		}
+		auto a = atan2f(to.y - from.y, to.x - from.x);
+		xInc = speed * cosf(a);
+		yInc = speed * sinf(a);
 	}
 
 	void Update() {
@@ -85,9 +97,10 @@ struct Scene {
 		// 怪物移动
 		for (auto& m : monsters) {
 			m.x += 1;
-			if (m.x >= 2000) m.x = 0;
+			if (m.x >= 200) m.x = 0;
 		}
 
+#ifdef PERFORMANCE_TEST
 		// 判断如果怪数量少了，就补
 		for (int i = totalNumMonsters - (int)monsters.size(); i > 0; --i) {
 			auto& o = monsters.emplace_back();
@@ -96,6 +109,7 @@ struct Scene {
 			o.r = 10;
 			o.hp = 300;
 		}
+#endif
 
 		// 判断是否有怪在射程内 且自己 cd 时间到了, 就发射 bullet
 		for (auto& c : cannons) {
@@ -106,10 +120,9 @@ struct Scene {
 					b.x = c.x;
 					b.y = c.y;
 					b.r = 5;
-					b.xInc = -1;	// cos?
-					b.yInc = 0;		// sin?
+					GetXYInc(b, m, 5, b.xInc, b.yInc);	// todo: 取提前量??
 					b.damage = c.power;
-					b.timeoutFrameNumber = frameNumber + 100;
+					b.timeoutFrameNumber = frameNumber + 20;		// 多少帧内没命中怪的话子弹就自杀
 
 					c.nextShootFrameNumber = frameNumber + 10;		// 设置射击 cd
 					break;
@@ -117,10 +130,12 @@ struct Scene {
 			}
 		}
 
-		//std::cout << "frameNumber = " << frameNumber
-		//	<< ", monsters.size() = " << monsters.size()
-		//	<< ", cannons.size() = " << cannons.size()
-		//	<< ", bullets.size() = " << bullets.size() << std::endl;
+#ifndef PERFORMANCE_TEST
+		std::cout << "frameNumber = " << frameNumber
+			<< ", monsters.size() = " << monsters.size()
+			//<< ", cannons.size() = " << cannons.size()
+			<< ", bullets.size() = " << bullets.size() << std::endl;
+#endif
 	}
 };
 
@@ -132,6 +147,9 @@ int main() {
 	auto tp = std::chrono::system_clock::now();
 	for (int i = 0; i < num; ++i) {
 		scene.Update();
+#ifndef PERFORMANCE_TEST
+		std::this_thread::sleep_for(std::chrono::milliseconds(16));
+#endif
 	}
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count();
 	std::cout << "update " << num << " times. ms = " << ms << std::endl;
