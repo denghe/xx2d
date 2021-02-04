@@ -2,27 +2,78 @@
 #include <chrono>
 #include <vector>
 #include <thread>
+#include <memory>
+#include <functional>
+#include <array>
 
-#define PERFORMANCE_TEST
+// tower defence simulate
 
-struct PositionRadius_ {
-	float x, y, r;
+#define MOVE_ONLY_STRUCT_CODE(T) \
+T() = default; \
+T(T const&) = delete; \
+T& operator=(T const&) = delete; \
+T(T&&) = default; \
+T& operator=(T&&) = default;
+
+struct Mover {
+	float x, y, r;				// 坐标，半径
+	//std::array<char, 500> dummy;// 模拟各种上下文废料
 };
 
-struct Monster : PositionRadius_ {
-	int hp;
+struct Scene;
+struct Bullet;
+struct Monster : Mover {
+	MOVE_ONLY_STRUCT_CODE(Monster);
+	int hp;						// 血量
+
+	void OnCreate(Scene& s, float const& x, float const& y);
+	void OnHitEffect(Scene& s, Bullet& b);
+	void OnMove(Scene& s);
+	void OnDestroy(Scene& s);
 };
 
-struct Cannon : PositionRadius_ {
-	int power;
-	int nextShootFrameNumber;
+struct Cannon : Mover {			// r : 警戒范围
+	MOVE_ONLY_STRUCT_CODE(Cannon);
+	float pipeLen;				// 炮管长度( 子弹从炮口开始飞行 )
+	float bulletRadius;			// 射出的子弹半径
+	float bulletSpeed;			// 射出的子弹飞行速度( 每帧距离 )
+	int bulletDamage;			// 射出的子弹威力值
+	int bulletLife;				// 射出的子弹能存活多少帧
+	int shootDelay;				// 发射延迟
+	int nextShootFrameNumber;	// 下次可发射的帧编号
+
+	void OnCreate(Scene& s, float const& x, float const& y);
+	void OnUpdate(Scene& s);
+	void OnDestroy(Scene& s);
 };
 
-struct Bullet : PositionRadius_ {
-	float xInc, yInc;
-	int damage;			// copy from cannon's power
-	int timeoutFrameNumber;
+struct Bullet : Mover {
+	MOVE_ONLY_STRUCT_CODE(Bullet);
+	float xInc, yInc;			// 每帧 x,y 移动增量
+	int damage;
+	int timeoutFrameNumber;		// 子弹失效帧编号
+
+	void OnCreate(Scene& s, Cannon& c, Monster& m, int const& frameNumber);
+	void OnMove(Scene& s);
+	void OnDestroy(Scene& s);
 };
+
+
+template<typename A, typename B>
+bool HitCheck(A const& a, B const& b) {
+	return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) < (a.r + b.r) * (a.r + b.r);
+}
+
+template<typename A, typename B>
+void GetXYInc(A const& from, B const& to, float const& speed, float& xInc, float& yInc) noexcept {
+	if (from.x == to.x && from.y == to.y) {
+		xInc = yInc = 0;
+		return;
+	}
+	auto a = atan2f(to.y - from.y, to.x - from.x);
+	xInc = speed * cosf(a);
+	yInc = speed * sinf(a);
+}
 
 struct Scene {
 	std::vector<Monster> monsters;
@@ -34,37 +85,13 @@ struct Scene {
 
 	void Init() {
 		for (int i = 0; i < totalNumMonsters; ++i) {
-			auto& o = monsters.emplace_back();
-			o.x = 0;
-			o.y = 0;
-			o.r = 10;
-			o.hp = 300;
+			monsters.emplace_back().OnCreate(*this, 0.f, 0.f);
 		}
 		for (int i = 0; i < 20; ++i) {
-			auto& c = cannons.emplace_back();
-			c.x = i * 10.f;
-			c.y = 20;
-			c.r = 100;
-			c.power = 50;
-			c.nextShootFrameNumber = 0;
+			cannons.emplace_back().OnCreate(*this, i * 10.f, 20.f);
 		}
 	}
 
-	template<typename A, typename B>
-	bool HitCheck(A const& a, B const& b) {
-		return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) < (a.r + b.r) * (a.r + b.r);
-	}
-
-	template<typename Point1, typename Point2>
-	void GetXYInc(Point1 const& from, Point2 const& to, float const& speed, float& xInc, float& yInc) noexcept {
-		if (from.x == to.x && from.y == to.y) {
-			xInc = yInc = 0;
-			return;
-		}
-		auto a = atan2f(to.y - from.y, to.x - from.x);
-		xInc = speed * cosf(a);
-		yInc = speed * sinf(a);
-	}
 
 	void Update() {
 		++frameNumber;
@@ -73,7 +100,8 @@ struct Scene {
 		for (int i = (int)bullets.size() - 1; i >= 0; --i) {
 			auto& b = bullets[i];
 			if (b.timeoutFrameNumber <= frameNumber) {
-				b = bullets.back();
+				b.OnDestroy(*this);
+				b = std::move(bullets.back());
 				bullets.pop_back();
 				continue;
 			}
@@ -82,55 +110,51 @@ struct Scene {
 			for (int j = (int)monsters.size() - 1; j >= 0; --j) {
 				auto& m = monsters[j];
 				if (HitCheck(b, m)) {
+					m.OnHitEffect(*this, b);
 					m.hp -= b.damage;
-					b = bullets.back();
+					b.OnDestroy(*this);
+					b = std::move(bullets.back());
 					bullets.pop_back();
 					if (m.hp <= 0) {
-						m = monsters.back();
+						m.OnDestroy(*this);
+						m = std::move(monsters.back());
 						monsters.pop_back();
 					}
-					break;
+					goto LabEnd;
 				}
 			}
+			b.OnMove(*this);
+		LabEnd:;
 		}
 
 		// 怪物移动
 		for (auto& m : monsters) {
 			m.x += 1;
 			if (m.x >= 200) m.x = 0;
+			m.OnMove(*this);
 		}
 
-#ifdef PERFORMANCE_TEST
+#ifdef NDEBUG
 		// 判断如果怪数量少了，就补
 		for (int i = totalNumMonsters - (int)monsters.size(); i > 0; --i) {
-			auto& o = monsters.emplace_back();
-			o.x = 0;
-			o.y = 0;
-			o.r = 10;
-			o.hp = 300;
+			monsters.emplace_back().OnCreate(*this, 0, 0);
 		}
 #endif
 
 		// 判断是否有怪在射程内 且自己 cd 时间到了, 就发射 bullet
 		for (auto& c : cannons) {
+			c.OnUpdate(*this);
 			if (c.nextShootFrameNumber > frameNumber) continue;
 			for (auto& m : monsters) {
 				if (HitCheck(c, m)) {
-					auto& b = bullets.emplace_back();
-					b.x = c.x;
-					b.y = c.y;
-					b.r = 5;
-					GetXYInc(b, m, 5, b.xInc, b.yInc);	// todo: 取提前量??
-					b.damage = c.power;
-					b.timeoutFrameNumber = frameNumber + 20;		// 多少帧内没命中怪的话子弹就自杀
-
-					c.nextShootFrameNumber = frameNumber + 10;		// 设置射击 cd
+					bullets.emplace_back().OnCreate(*this, c, m, frameNumber);
+					c.nextShootFrameNumber = frameNumber + c.shootDelay;	// 设置射击 cd
 					break;
 				}
 			}
 		}
 
-#ifndef PERFORMANCE_TEST
+#ifndef NDEBUG
 		std::cout << "frameNumber = " << frameNumber
 			<< ", monsters.size() = " << monsters.size()
 			//<< ", cannons.size() = " << cannons.size()
@@ -138,6 +162,60 @@ struct Scene {
 #endif
 	}
 };
+
+inline void Monster::OnCreate(Scene& s, float const& x, float const& y) {
+	this->x = x;
+	this->y = y;
+	this->r = 10.f;
+	this->hp = 300;
+	// draw?
+}
+inline void Monster::OnHitEffect(Scene& s, Bullet& b) {
+	// play -hp effect?
+}
+inline void Monster::OnMove(Scene& s) {
+	// update draw?
+}
+inline void Monster::OnDestroy(Scene& s) {
+	// clear draw?
+}
+
+
+inline void Cannon::OnCreate(Scene& s, float const& x, float const& y) {
+	this->x = x;
+	this->y = y;
+	this->r = 100.f;
+	this->pipeLen = 5.f;
+	this->bulletRadius = 5.f;
+	this->bulletSpeed = 5.f;
+	this->bulletDamage = 50;
+	this->bulletLife = 30;
+	this->shootDelay = 6;
+	this->nextShootFrameNumber = 0;
+}
+inline void Cannon::OnUpdate(Scene& s) {
+	// update draw?
+}
+inline void Cannon::OnDestroy(Scene& s) {
+	// clear draw?
+}
+
+
+inline void Bullet::OnCreate(Scene& s, Cannon& c, Monster& m, int const& frameNumber) {
+	GetXYInc(c, m, c.bulletSpeed, this->xInc, this->yInc);		// 得到 x,y 每帧增量
+	this->x = c.x + this->xInc / c.bulletSpeed * c.pipeLen;		// 将子弹坐标初始化到炮口位置
+	this->y = c.y + this->yInc / c.bulletSpeed * c.pipeLen;
+	this->r = c.bulletRadius;									// 设置子弹半径
+	this->damage = c.bulletDamage;								// 设置子弹威力
+	this->timeoutFrameNumber = frameNumber + c.bulletLife;		// 多少帧内没命中怪的话子弹就自杀
+	// draw?
+}
+inline void Bullet::OnMove(Scene& s) {
+	// update draw?
+}
+inline void Bullet::OnDestroy(Scene& s) {
+	// clear draw?
+}
 
 int main() {
 	Scene scene;
@@ -147,7 +225,7 @@ int main() {
 	auto tp = std::chrono::system_clock::now();
 	for (int i = 0; i < num; ++i) {
 		scene.Update();
-#ifndef PERFORMANCE_TEST
+#ifndef NDEBUG
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 #endif
 	}
