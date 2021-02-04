@@ -238,7 +238,7 @@ struct Scene {
 			<< ", bullets.size() = " << bullets.size() << std::endl;
 #endif
 	}
-	};
+};
 
 inline void Monster::OnCreate(Scene& s, float const& x, float const& y) {
 	this->x = this->x_ = x;
@@ -310,7 +310,7 @@ int main() {
 	std::cout << "update " << num << " times. ms = " << ms << std::endl;
 
 	return 0;
-	}
+}
 
 
 
