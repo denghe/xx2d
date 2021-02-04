@@ -378,14 +378,21 @@ T& operator=(T&&) = default;
 
 
 		template<typename T>
-		Shared<T> CreateCombo() {
+		Shared<T> CreateComboShared() {
+			int idx = CreateCombo<T>();
+			++combos.Get<T>()[idx]._refCount_;
+			return Shared<T>(this, idx);
+		}
+
+		template<typename T>
+		int CreateCombo() {
 			auto& s = combos.Get<T>();
 			int idx;
 			s.New(idx);
 			auto& r = s[idx];
 			TryCreate<0, typename SLICES_CONTAINER::Types>(TupleTypeIndex_v<T, typename COMBOS_CONTAINER::Types>, idx, r._sliceIndexs_);
 			r._version_ = ++versionGen;
-			r._refCount_ = 1;
+			r._refCount_ = 0;
 #if XX_COMBO_POOL_ENABLE_FOREACH_COMBOS
 			auto& h = Header<T>();
 			r._prev_ = -1;
@@ -395,7 +402,7 @@ T& operator=(T&&) = default;
 			r._next_ = h;
 			h = idx;
 #endif
-			return Shared<T>(this, idx);
+			return idx;
 		}
 
 		template<typename T>

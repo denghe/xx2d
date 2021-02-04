@@ -45,7 +45,7 @@ using CP = xx::ComboPool<xx::SlicesContainer<A, B, C>, xx::CombosContainer<ABC, 
 void Test1() {
 	CP cp;
 	std::vector<CP::Shared<ABC>> abcShareds;
-	CP::Weak<ABC> w = abcShareds.emplace_back(cp.CreateCombo<ABC>());
+	CP::Weak<ABC> w = abcShareds.emplace_back(cp.CreateComboShared<ABC>());
 	std::cout << (bool)w << std::endl;
 	abcShareds.clear();
 	std::cout << (bool)w << std::endl;
@@ -90,7 +90,7 @@ void Test2() {
 
 	tp = std::chrono::system_clock::now();
 	for (size_t i = 0; i < num; i++) {
-		auto&& abc = abcHolders.emplace_back(cp.CreateCombo<ABC>());
+		auto&& abc = abcHolders.emplace_back(cp.CreateComboShared<ABC>());
 		abc.Visit<A>().name = "name_" + std::to_string(i);
 		abc.Visit<B>().x = (float)i;
 		abc.Visit<B>().y = (float)i;
@@ -137,7 +137,7 @@ void Test3() {
 
 	auto tp = std::chrono::system_clock::now();
 	for (size_t i = 0; i < num; i++) {
-		auto&& e = eHolders.emplace_back(cp.CreateCombo<E>());
+		auto&& e = eHolders.emplace_back(cp.CreateComboShared<E>());
 		e->name = "name_" + std::to_string(i);
 		e->x = (float)i;
 		e->y = (float)i;
