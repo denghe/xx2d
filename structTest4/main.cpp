@@ -5,6 +5,8 @@
 #include <memory>
 #include <functional>
 #include <array>
+#include "xx_ptr.h"
+#include "Space2dPointIndex.h"
 
 // tower defence simulate
 
@@ -20,6 +22,7 @@ struct Bullet;
 struct Monster {
 	MOVE_ONLY_STRUCT_CODE(Monster);
 	float x, y, r;				// 坐标，半径
+	float x_, y_;				// 上一帧的数据
 	int hp;						// 血量
 	std::array<char, 64> dummy; // 模拟各种上下文废料
 
@@ -39,6 +42,7 @@ struct Cannon {
 	int bulletLife;				// 射出的子弹能存活多少帧
 	int shootDelay;				// 发射延迟
 	int nextShootFrameNumber;	// 下次可发射的帧编号
+	xx::Weak<Monster> target;	// 当前目标( 优先锁定第一个出现在警戒半径里的. 后锁定正在远离自己最远的 )
 	std::array<char, 64> dummy; // 模拟各种上下文废料
 
 	void OnCreate(Scene& s, float const& x, float const& y);
@@ -61,8 +65,16 @@ struct Bullet {
 
 
 template<typename A, typename B>
+float CalcXXYY(A const& a, B const& b) {
+	return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+}
+template<typename A, typename B>
+float CalcRR(A const& a, B const& b) {
+	return (a.r + b.r) * (a.r + b.r);
+}
+template<typename A, typename B>
 bool HitCheck(A const& a, B const& b) {
-	return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) < (a.r + b.r) * (a.r + b.r);
+	return CalcXXYY(a, b) < CalcRR(a, b);
 }
 
 template<typename A, typename B>
@@ -77,20 +89,66 @@ void GetXYInc(A const& from, B const& to, float const& speed, float& xInc, float
 }
 
 struct Scene {
-	std::vector<Monster> monsters;
+	const int totalNumMonsters = 100;
+	std::vector<xx::Shared<Monster>> monsters;
 	std::vector<Cannon> cannons;
 	std::vector<Bullet> bullets;
 	int frameNumber = 0;
 
-	const int totalNumMonsters = 100;
-
 	void Init() {
 		for (int i = 0; i < totalNumMonsters; ++i) {
-			monsters.emplace_back().OnCreate(*this, 0.f, 0.f);
+			monsters.emplace_back().Emplace()->OnCreate(*this, i * 1.f, 0.f);
 		}
 		for (int i = 0; i < 20; ++i) {
 			cannons.emplace_back().OnCreate(*this, i * 10.f, 20.f);
 		}
+	}
+
+	// 找出所有能命中的怪当中 离得最近的( 子弹碰撞判断逻辑 )
+	int FindNearestMonster(Bullet& o) {
+		int idx = -1;
+		float minXXYY = 9999999;
+		for (int siz = (int)monsters.size(), j = 0; j < siz; ++j) {
+			auto& m = monsters[j];
+			auto xxyy = CalcXXYY(o, *m);
+			auto rr = CalcRR(o, *m);
+			if (xxyy < rr && minXXYY >xxyy) {
+				minXXYY = xxyy;
+				idx = j;
+			}
+		}
+		return idx;
+	}
+
+	// 找出所有能命中的怪当中 最应该攻击的( 优先打正在远离的最远的. 否则打最近的 )( 炮台逻辑 )
+	int FindTargetMonster(Cannon& o) {
+		int minIdx = -1;
+		float minXXYY = 9999999;
+		int maxIdx = -1;
+		float maxXXYY = 0;
+		for (int siz = (int)monsters.size(), j = 0; j < siz; ++j) {
+			auto& m = monsters[j];
+			auto xxyy = CalcXXYY(o, *m);
+			auto rr = CalcRR(o, *m);
+			if (xxyy < rr) {
+				auto xxyy_ = (o.x - m->x_) * (o.x - m->x_) + (o.y - m->y_) * (o.y - m->y_);
+				// 如果怪 上一个坐标 离自己更近: 正在远离
+				if (xxyy > xxyy_) {
+					if (maxXXYY < xxyy) {
+						maxXXYY = xxyy;
+						maxIdx = j;
+					}
+				}
+				else {
+					if (minXXYY > xxyy) {
+						minXXYY = xxyy;
+						minIdx = j;
+					}
+				}
+			}
+		}
+		if (maxIdx != -1) return maxIdx;
+		return minIdx;
 	}
 
 
@@ -108,37 +166,38 @@ struct Scene {
 			}
 			b.x += b.xInc;
 			b.y += b.yInc;
-			for (int j = (int)monsters.size() - 1; j >= 0; --j) {
-				auto& m = monsters[j];
-				if (HitCheck(b, m)) {
-					m.OnHitEffect(*this, b);
-					m.hp -= b.damage;
-					b.OnDestroy(*this);
-					b = std::move(bullets.back());
-					bullets.pop_back();
-					if (m.hp <= 0) {
-						m.OnDestroy(*this);
-						m = std::move(monsters.back());
-						monsters.pop_back();
-					}
-					goto LabEnd;
+
+			// 找出所有能命中的怪当中 离得最近的
+			int idx = FindNearestMonster(b);
+			if (idx != -1) {
+				auto& m = monsters[idx];
+				m->OnHitEffect(*this, b);
+				m->hp -= b.damage;
+				b.OnDestroy(*this);
+				b = std::move(bullets.back());
+				bullets.pop_back();
+				if (m->hp <= 0) {
+					m->OnDestroy(*this);
+					m = std::move(monsters.back());
+					monsters.pop_back();
 				}
 			}
-			b.OnMove(*this);
-		LabEnd:;
+			else {
+				b.OnMove(*this);
+			}
 		}
 
 		// 怪物移动
 		for (auto& m : monsters) {
-			m.x += 1;
-			if (m.x >= 200) m.x = 0;
-			m.OnMove(*this);
+			m->x += 1;
+			if (m->x >= 200) m->x = 0;
+			m->OnMove(*this);
 		}
 
 #ifdef NDEBUG
 		// 判断如果怪数量少了，就补
 		for (int i = totalNumMonsters - (int)monsters.size(); i > 0; --i) {
-			monsters.emplace_back().OnCreate(*this, 0, 0);
+			monsters.emplace_back().Emplace()->OnCreate(*this, 0.f, 0.f);
 		}
 #endif
 
@@ -146,13 +205,30 @@ struct Scene {
 		for (auto& c : cannons) {
 			c.OnUpdate(*this);
 			if (c.nextShootFrameNumber > frameNumber) continue;
-			for (auto& m : monsters) {
-				if (HitCheck(c, m)) {
-					bullets.emplace_back().OnCreate(*this, c, m, frameNumber);
+			// 判断 target 是否已出范围. 有效 & 未出范围 继续攻击
+			if (auto m = c.target.Lock()) {
+				if (HitCheck(c, *m)) {
+					bullets.emplace_back().OnCreate(*this, c, *m, frameNumber);	// 发射子弹
+					c.nextShootFrameNumber = frameNumber + c.shootDelay;	// 设置射击 cd
+				}
+			}
+			// 如果已出 则重新选.  优先选正在远离自己的最远的
+			else {
+				int idx = FindTargetMonster(c);
+				if (idx != -1) {
+					auto& m = monsters[idx];
+					c.target = m;
+					bullets.emplace_back().OnCreate(*this, c, *m, frameNumber);	// 发射子弹
 					c.nextShootFrameNumber = frameNumber + c.shootDelay;	// 设置射击 cd
 					break;
 				}
 			}
+		}
+
+		// 怪物移动
+		for (auto& m : monsters) {
+			m->x_ = m->x;
+			m->y_ = m->y;
 		}
 
 #ifndef NDEBUG
@@ -162,11 +238,11 @@ struct Scene {
 			<< ", bullets.size() = " << bullets.size() << std::endl;
 #endif
 	}
-};
+	};
 
 inline void Monster::OnCreate(Scene& s, float const& x, float const& y) {
-	this->x = x;
-	this->y = y;
+	this->x = this->x_ = x;
+	this->y = this->y_ = y;
 	this->r = 10.f;
 	this->hp = 300;
 	// draw?
@@ -234,7 +310,7 @@ int main() {
 	std::cout << "update " << num << " times. ms = " << ms << std::endl;
 
 	return 0;
-}
+	}
 
 
 

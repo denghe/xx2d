@@ -105,6 +105,7 @@
     <ClInclude Include="ajson.hpp" />
     <ClInclude Include="atomicops.h" />
     <ClInclude Include="readerwriterqueue.h" />
+    <ClInclude Include="Space2dPointIndex.h" />
     <ClInclude Include="xx_data.h" />
     <ClInclude Include="xx_fixeddata.h" />
     <ClInclude Include="xx_fixeddata_w.h" />

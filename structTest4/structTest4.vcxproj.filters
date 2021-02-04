@@ -38,6 +38,7 @@
     <ClInclude Include="xx_math.h" />
     <ClInclude Include="readerwriterqueue.h" />
     <ClInclude Include="atomicops.h" />
+    <ClInclude Include="Space2dPointIndex.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">
