@@ -15,16 +15,13 @@ T& operator=(T const&) = delete; \
 T(T&&) = default; \
 T& operator=(T&&) = default;
 
-struct Mover {
-	float x, y, r;				// 坐标，半径
-	//std::array<char, 500> dummy;// 模拟各种上下文废料
-};
-
 struct Scene;
 struct Bullet;
-struct Monster : Mover {
+struct Monster {
 	MOVE_ONLY_STRUCT_CODE(Monster);
+	float x, y, r;				// 坐标，半径
 	int hp;						// 血量
+	std::array<char, 64> dummy; // 模拟各种上下文废料
 
 	void OnCreate(Scene& s, float const& x, float const& y);
 	void OnHitEffect(Scene& s, Bullet& b);
@@ -32,8 +29,9 @@ struct Monster : Mover {
 	void OnDestroy(Scene& s);
 };
 
-struct Cannon : Mover {			// r : 警戒范围
+struct Cannon {
 	MOVE_ONLY_STRUCT_CODE(Cannon);
+	float x, y, r;				// 坐标，警戒半径
 	float pipeLen;				// 炮管长度( 子弹从炮口开始飞行 )
 	float bulletRadius;			// 射出的子弹半径
 	float bulletSpeed;			// 射出的子弹飞行速度( 每帧距离 )
@@ -41,17 +39,20 @@ struct Cannon : Mover {			// r : 警戒范围
 	int bulletLife;				// 射出的子弹能存活多少帧
 	int shootDelay;				// 发射延迟
 	int nextShootFrameNumber;	// 下次可发射的帧编号
+	std::array<char, 64> dummy; // 模拟各种上下文废料
 
 	void OnCreate(Scene& s, float const& x, float const& y);
 	void OnUpdate(Scene& s);
 	void OnDestroy(Scene& s);
 };
 
-struct Bullet : Mover {
+struct Bullet {
 	MOVE_ONLY_STRUCT_CODE(Bullet);
+	float x, y, r;				// 坐标，半径
 	float xInc, yInc;			// 每帧 x,y 移动增量
 	int damage;
 	int timeoutFrameNumber;		// 子弹失效帧编号
+	std::array<char, 64> dummy; // 模拟各种上下文废料
 
 	void OnCreate(Scene& s, Cannon& c, Monster& m, int const& frameNumber);
 	void OnMove(Scene& s);
