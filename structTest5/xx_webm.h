@@ -1,8 +1,4 @@
-﻿#ifdef _MSC_VER
-#pragma execution_character_set("utf-8")
-#endif
-
-/*
+﻿/*
 功能：
 	webm 每一帧图展开为 *.png, 或存为 plist 图集, 或直接加载到 cocos 显存 & sprite frame cache
 
