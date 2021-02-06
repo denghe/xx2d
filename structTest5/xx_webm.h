@@ -3,7 +3,31 @@
 #endif
 
 /*
-usage example:
+功能：
+	webm 每一帧图展开为 *.png, 或存为 plist 图集, 或直接加载到 cocos 显存 & sprite frame cache
+
+用法流程:
+	1. 准备好 ????? (%d).png 散图, 序号连贯
+	2. ffmpeg 打包成 webm
+	3. 用本类 另存为 xxmv
+
+	4. 实际使用中, 直接加载 xxmv
+
+webm 打包命令行:
+	./ffmpeg -f image2 -framerate 60 -i "??????(%d).png" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 1000K -speed 0 ??????.webm
+
+注意:
+	%d 文件名数字，不可以 中断，从 1 开始
+	60 可以改
+	-b:v 1000K 可以删可以改，从而生成不同体积 webm，可自行斟酌
+	-speed 0 可以删可以改
+
+注意2:
+	图片内容尽量紧凑，边缘不要留太多空格区域，否则会狂吃显存，并降低渲染性能。		// todo: 在 webm -> xxmv 这一步中，可以扫描每一帧图片的实际内容包围盒, 后续生成图集时可优化密集度
+
+
+
+代码示例:
 
 	xx::Webm wm;
 	if (int r = wm.LoadFromWebm("res/a.webm")) return r;		// load a.webm file, parse ebml info, store data
@@ -14,10 +38,7 @@ usage example:
 
 	if (int r = wm.SaveToPackedPngs("res/", "a")) return r;		// texture packer likely. write all frame to a?.png + a?.plist
 
-	// todo: runtime export to cocos plist dict + texture
-
-pics -> webm command line:
-	./ffmpeg -f image2 -framerate 60 -i "??????(%d).png" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 1000K -speed 0 ??????.webm
+	r = wm.FillToSpriteFrameCache("a");							// cocos2d load plist to sprite frame cache
 */
 
 #include "ebml_parser.h"
