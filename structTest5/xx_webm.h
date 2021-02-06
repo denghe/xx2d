@@ -33,6 +33,10 @@ pics -> webm command line:
 #include "vpx_decoder.h"
 #include "vp8dx.h"
 
+#ifdef CC_TARGET_PLATFORM
+#include "cocos2d.h"
+#endif
+
 namespace xx {
 	// webm 解析后的容易使用的存储形态
 	struct Webm {
@@ -125,8 +129,8 @@ namespace xx {
 		// 从 .xxmv 读出数据并填充到 wm. 成功返回 0
 		inline int LoadFromXxmv(std::filesystem::path const& path) {
 			this->Clear();
-
 			xx::Data d;
+			// todo: verify version number?
 			if (int r = xx::ReadAllBytes(path, d)) return r;
 			if (int r = d.ReadFixed(codecId)) return r;
 			if (int r = d.ReadFixed(hasAlpha)) return r;
@@ -135,9 +139,11 @@ namespace xx {
 			if (int r = d.ReadFixed(duration)) return r;
 			uint32_t siz;
 			if (int r = d.ReadFixed(siz)) return r;
+			if (d.offset + siz * sizeof(uint32_t) > d.len) return __LINE__;
 			lens.resize(siz);
-			if (int r = d.ReadBuf(lens.data(), lens.size() * sizeof(uint32_t))) return r;
+			if (int r = d.ReadBuf(lens.data(), siz * sizeof(uint32_t))) return r;
 			if (int r = d.ReadFixed(siz)) return r;
+			if (d.offset + siz > d.len) return __LINE__;
 			data.Resize(siz);
 			if (int r = d.ReadBuf(data.buf, data.len)) return r;
 			return Init();
@@ -145,6 +151,7 @@ namespace xx {
 
 		inline int SaveToXxmv(std::filesystem::path const& path) {
 			xx::Data d;
+			// todo: write version number?
 			d.WriteFixed(codecId);
 			d.WriteFixed(hasAlpha);
 			d.WriteFixed(width);
@@ -526,6 +533,59 @@ namespace xx {
 
 			return 0;
 		}
+
+#ifdef CC_TARGET_PLATFORM
+		inline static int FillToSpriteFrameCache(std::string const& plistData, uint8_t const* const& buf, int const& width, int const& height) {
+			auto img = new cocos2d::Image();
+			if (!img) return -1;
+			if (!img->initWithRawData(buf, width * height * 4, width, height, 32, false)) return -2;
+			auto t = new cocos2d::Texture2D();
+			if (!t) return -3;
+			if (!t->initWithImage(img)) return -4;
+			cocos2d::SpriteFrameCache::getInstance()->addSpriteFramesWithFileContent(plistData, t);
+		}
+		inline int FillToSpriteFrameCache(std::string const& prefix, std::string itemPrefix = ""/* prefix + " (" */, std::string const& itemSuffix = ").png", int itemBeginNum = 1, uint32_t const& sw = 4096, uint32_t const& sh = 4096) {
+			auto sfc = cocos2d::SpriteFrameCache::getInstance();
+			if (sfc->getSpriteFrameByName(itemPrefix + std::to_string(itemBeginNum) + itemSuffix)) return 0;
+
+			if (itemPrefix.empty()) {
+				itemPrefix = prefix + " (";
+			}
+			PListMaker pm;
+			pm.Begin();
+			std::vector<uint32_t> space;
+			space.resize(sw * sh);
+			int numRows = sh / height;
+			int numCols = sw / width;
+			int x = 0, y = 0, z = 0;
+			int r = ForeachFrame([&](std::vector<uint8_t> const& bytes)->int {
+				Draw(space.data(), sw, sh, (uint32_t*)bytes.data(), width, height, x * width, y * height);
+				pm.Append(itemPrefix + std::to_string(itemBeginNum) + itemSuffix, width, height, x * width, y * height);
+				++itemBeginNum;
+				++x;
+				if (x == numCols) {
+					x = 0;
+					++y;
+				}
+				if (y == numRows) {
+					y = 0;
+					pm.End(prefix + std::to_string(z) + ".png", sw, sh);
+					if (int r = FillToSpriteFrameCache(pm.data, (uint8_t*)space.data(), sw, sh)) return r;
+					pm.Begin();
+					++z;
+					memset(space.data(), 0, space.size() * sizeof(uint32_t));
+				}
+				return 0;
+				});
+			if (r) return r;
+			if (x || y) {
+				pm.End(prefix + std::to_string(z) + ".png", sw, sh);
+				return FillToSpriteFrameCache(pm.data, (uint8_t*)space.data(), sw, sh);
+			}
+
+			return 0;
+		}
+#endif
 	};
 }
 
