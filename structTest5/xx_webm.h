@@ -287,7 +287,7 @@ namespace xx {
 				if (int r = RgbaSaveToPng(fn, bytes.data(), this->width, this->height)) return __LINE__;
 				++i;
 				return 0;
-			});
+				});
 		}
 
 		// f = [](std::vector<uint8_t> const& bytes)->int { ... }
@@ -355,9 +355,14 @@ namespace xx {
 			, uint32_t const& yaStride, uint32_t const& uvStride) {
 
 #ifdef LIBYUV_API
-			// 这个 windows x64 下大约快 20+ 倍
 			bytes.resize(w * h * 4);
-			return libyuv::I420AlphaToARGB(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0);
+			if (int r = libyuv::I420AlphaToARGB(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0)) return __LINE__;
+			// 红蓝交换
+			auto p = bytes.data();
+			for (int i = 0; i < w * h * 4; i += 4) {
+				std::swap(p[i + 0], p[i + 2]);
+			}
+			return 0;
 #else
 			// 这段代码逻辑可写入 shader
 			bytes.clear();
@@ -391,9 +396,9 @@ namespace xx {
 					if (b > 1.0f) b = 1.0f; else if (b < 0.0f) b = 0.0f;
 
 					// 存起来
-					bytes.push_back((uint8_t)(b * 255));
-					bytes.push_back((uint8_t)(g * 255));
 					bytes.push_back((uint8_t)(r * 255));
+					bytes.push_back((uint8_t)(g * 255));
+					bytes.push_back((uint8_t)(b * 255));
 					bytes.push_back(aData ? aData[yaIdx] : (uint8_t)0);
 				}
 			}
