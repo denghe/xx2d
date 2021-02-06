@@ -90,7 +90,7 @@ namespace xx {
 				bufs[i] = (uint8_t*)baseBuf;
 				baseBuf += lens[i];
 			}
-			if (baseBuf != data.buf + data.len) return -1;
+			if (baseBuf != data.buf + data.len) return __LINE__;
 			return 0;
 		}
 
@@ -107,16 +107,16 @@ namespace xx {
 		}
 
 		inline int GetFrameBuf(uint32_t const& idx, uint8_t const*& rgbBuf, uint32_t& rgbBufLen) {
-			if (hasAlpha) return -1;
-			if (idx >= count) return -2;
+			if (hasAlpha) return __LINE__;
+			if (idx >= count) return __LINE__;
 			rgbBuf = bufs[idx];
 			rgbBufLen = lens[idx];
 			return 0;
 		}
 
 		inline int GetFrameBuf(uint32_t idx, uint8_t const*& rgbBuf, uint32_t& rgbBufLen, uint8_t const*& aBuf, uint32_t& aBufLen) {
-			if (!hasAlpha) return -1;
-			if (idx >= count) return -2;
+			if (!hasAlpha) return __LINE__;
+			if (idx >= count) return __LINE__;
 			idx *= 2;
 			rgbBuf = bufs[idx];
 			aBuf = bufs[idx + 1];
@@ -131,21 +131,21 @@ namespace xx {
 			this->Clear();
 			xx::Data d;
 			// todo: verify version number?
-			if (int r = xx::ReadAllBytes(path, d)) return r;
-			if (int r = d.ReadFixed(codecId)) return r;
-			if (int r = d.ReadFixed(hasAlpha)) return r;
-			if (int r = d.ReadFixed(width)) return r;
-			if (int r = d.ReadFixed(height)) return r;
-			if (int r = d.ReadFixed(duration)) return r;
+			if (int r = xx::ReadAllBytes(path, d)) return __LINE__;
+			if (int r = d.ReadFixed(codecId)) return __LINE__;
+			if (int r = d.ReadFixed(hasAlpha)) return __LINE__;
+			if (int r = d.ReadFixed(width)) return __LINE__;
+			if (int r = d.ReadFixed(height)) return __LINE__;
+			if (int r = d.ReadFixed(duration)) return __LINE__;
 			uint32_t siz;
 			if (int r = d.ReadFixed(siz)) return r;
 			if (d.offset + siz * sizeof(uint32_t) > d.len) return __LINE__;
 			lens.resize(siz);
-			if (int r = d.ReadBuf(lens.data(), siz * sizeof(uint32_t))) return r;
-			if (int r = d.ReadFixed(siz)) return r;
+			if (int r = d.ReadBuf(lens.data(), siz * sizeof(uint32_t))) return __LINE__;
+			if (int r = d.ReadFixed(siz)) return __LINE__;
 			if (d.offset + siz > d.len) return __LINE__;
 			data.Resize(siz);
-			if (int r = d.ReadBuf(data.buf, data.len)) return r;
+			if (int r = d.ReadBuf(data.buf, data.len)) return __LINE__;
 			return Init();
 		}
 
@@ -171,7 +171,7 @@ namespace xx {
 			// 读文件
 			std::unique_ptr<uint8_t[]> data;
 			size_t dataLen;
-			if (int r = xx::ReadAllBytes(path, data, dataLen)) return r;
+			if (int r = xx::ReadAllBytes(path, data, dataLen)) return __LINE__;
 
 			// 开始解析 ebml 头
 			auto&& ebml = parse_ebml_file(std::move(data), dataLen/*, 1*/);
@@ -276,8 +276,7 @@ namespace xx {
 				cluster = clusterOwner->FindNextChildById(++cluster, EbmlElementId::Cluster);
 			}
 
-			if (int r = this->Init()) return r;
-			return 0;
+			return Init();
 		}
 
 		// 每帧画面另存为 png 文件。
@@ -285,10 +284,10 @@ namespace xx {
 			uint32_t i = 0;
 			return ForeachFrame([&](std::vector<uint8_t> const& bytes)->int {
 				auto&& fn = path / (prefix + std::to_string(i) + ".png");
-				if (int r = RgbaSaveToPng(fn, bytes.data(), this->width, this->height)) return r;
+				if (int r = RgbaSaveToPng(fn, bytes.data(), this->width, this->height)) return __LINE__;
 				++i;
 				return 0;
-				});
+			});
 		}
 
 		// f = [](std::vector<uint8_t> const& bytes)->int { ... }
@@ -297,7 +296,7 @@ namespace xx {
 			vpx_codec_ctx_t ctx;
 			vpx_codec_dec_cfg_t cfg{ 1, this->width, this->height };
 			auto&& iface = this->codecId ? vpx_codec_vp9_dx() : vpx_codec_vp8_dx();
-			if (int r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return r;	// because VPX_CODEC_OK == 0
+			if (int r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return __LINE__;	// because VPX_CODEC_OK == 0
 
 			uint8_t const* rgbBuf = nullptr, * aBuf = nullptr;
 			uint32_t rgbBufLen = 0, aBufLen = 0;
@@ -305,27 +304,27 @@ namespace xx {
 
 			if (this->hasAlpha) {
 				vpx_codec_ctx_t ctxAlpha;
-				if (int r = vpx_codec_dec_init(&ctxAlpha, iface, &cfg, 0)) return r;
+				if (int r = vpx_codec_dec_init(&ctxAlpha, iface, &cfg, 0)) return __LINE__;
 
 				for (uint32_t i = 0; i < this->count; ++i) {
 					if (int r = this->GetFrameBuf(i, rgbBuf, rgbBufLen, aBuf, aBufLen)) return r;
 
-					if (int r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
-					if (int r = vpx_codec_decode(&ctxAlpha, aBuf, aBufLen, nullptr, 0)) return r;
+					if (int r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return __LINE__;
+					if (int r = vpx_codec_decode(&ctxAlpha, aBuf, aBufLen, nullptr, 0)) return __LINE__;
 
 					vpx_codec_iter_t iterator = nullptr;
 					auto&& imgRGB = vpx_codec_get_frame(&ctx, &iterator);
-					if (!imgRGB || imgRGB->fmt != VPX_IMG_FMT_I420) return -1;
-					if (imgRGB->stride[1] != imgRGB->stride[2]) return -2;
+					if (!imgRGB || imgRGB->fmt != VPX_IMG_FMT_I420) return __LINE__;
+					if (imgRGB->stride[1] != imgRGB->stride[2]) return __LINE__;
 
 					iterator = nullptr;
 					auto&& imgA = vpx_codec_get_frame(&ctxAlpha, &iterator);
-					if (!imgA || imgA->fmt != VPX_IMG_FMT_I420) return -3;
-					if (imgA->stride[0] != imgRGB->stride[0]) return -4;
+					if (!imgA || imgA->fmt != VPX_IMG_FMT_I420) return __LINE__;
+					if (imgA->stride[0] != imgRGB->stride[0]) return __LINE__;
 
 					if (int r = Yuva2Rgba(bytes, this->width, this->height
 						, imgRGB->planes[0], imgRGB->planes[1], imgRGB->planes[2], imgA->planes[0]
-						, imgRGB->stride[0], imgRGB->stride[1])) return r;
+						, imgRGB->stride[0], imgRGB->stride[1])) return __LINE__;
 					if (int r = f(bytes)) return r;
 				}
 			}
@@ -333,16 +332,16 @@ namespace xx {
 				for (uint32_t i = 0; i < this->count; ++i) {
 					if (int r = this->GetFrameBuf(i, rgbBuf, rgbBufLen)) return r;
 
-					if (int r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return r;
+					if (int r = vpx_codec_decode(&ctx, rgbBuf, rgbBufLen, nullptr, 0)) return __LINE__;
 
 					vpx_codec_iter_t iterator = nullptr;
 					auto&& imgRGB = vpx_codec_get_frame(&ctx, &iterator);
-					if (!imgRGB || imgRGB->fmt != VPX_IMG_FMT_I420) return -1;
-					if (imgRGB->stride[1] != imgRGB->stride[2]) return -2;
+					if (!imgRGB || imgRGB->fmt != VPX_IMG_FMT_I420) return __LINE__;
+					if (imgRGB->stride[1] != imgRGB->stride[2]) return __LINE__;
 
 					if (int r = Yuva2Rgba(bytes, this->width, this->height
 						, imgRGB->planes[0], imgRGB->planes[1], imgRGB->planes[2], nullptr
-						, imgRGB->stride[0], imgRGB->stride[1])) return r;
+						, imgRGB->stride[0], imgRGB->stride[1])) return __LINE__;
 					if (int r = f(bytes)) return r;
 				}
 			}
@@ -537,12 +536,13 @@ namespace xx {
 #ifdef CC_TARGET_PLATFORM
 		inline static int FillToSpriteFrameCache(std::string const& plistData, uint8_t const* const& buf, int const& width, int const& height) {
 			auto img = new cocos2d::Image();
-			if (!img) return -1;
-			if (!img->initWithRawData(buf, width * height * 4, width, height, 32, false)) return -2;
+			if (!img) return __LINE__;
+			if (!img->initWithRawData(buf, width * height * 4, width, height, 32, false)) return __LINE__;
 			auto t = new cocos2d::Texture2D();
-			if (!t) return -3;
-			if (!t->initWithImage(img)) return -4;
+			if (!t) return __LINE__;
+			if (!t->initWithImage(img)) return __LINE__;
 			cocos2d::SpriteFrameCache::getInstance()->addSpriteFramesWithFileContent(plistData, t);
+			return 0;
 		}
 		inline int FillToSpriteFrameCache(std::string const& prefix, std::string itemPrefix = ""/* prefix + " (" */, std::string const& itemSuffix = ").png", int itemBeginNum = 1, uint32_t const& sw = 4096, uint32_t const& sh = 4096) {
 			auto sfc = cocos2d::SpriteFrameCache::getInstance();
