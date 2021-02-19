@@ -19,7 +19,7 @@ webm 打包命令行:
 	-speed 0 可以删可以改
 
 注意2:
-	图片内容尽量紧凑，边缘不要留太多空格区域，否则会狂吃显存，并降低渲染性能。		// todo: 在 webm -> xxmv 这一步中，可以扫描每一帧图片的实际内容包围盒, 后续生成图集时可优化密集度
+	图片内容尽量紧凑，边缘不要留太多空格区域，否则会狂吃显存，并降低渲染性能。
 
 
 
@@ -37,6 +37,8 @@ webm 打包命令行:
 	r = wm.FillToSpriteFrameCache("a");							// cocos2d load plist to sprite frame cache
 */
 
+// todo: 在 webm -> xxmv 这一步中，可以扫描每一帧图片的实际内容包围盒, 找出最大值? 后续生成图集时可优化密度
+// 进一步的, xxmv 每一帧存储 图片尺寸, 实际尺寸, 以便于构造 plist 的时候还原
 
 // todo: 针对 cocos 加载 plist 的性能优化? 跳过 plist 构造 & 解析? 直接生成最终 sprite frame ?
 
