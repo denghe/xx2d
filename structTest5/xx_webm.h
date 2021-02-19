@@ -37,6 +37,10 @@ webm 打包命令行:
 	r = wm.FillToSpriteFrameCache("a");							// cocos2d load plist to sprite frame cache
 */
 
+
+// todo: 针对 cocos 加载 plist 的性能优化? 跳过 plist 构造 & 解析? 直接生成最终 sprite frame ?
+
+
 #include "ebml_parser.h"
 #include "xx_data.h"
 #include "xx_file.h"
@@ -313,7 +317,10 @@ namespace xx {
 			vpx_codec_ctx_t ctx;
 			vpx_codec_dec_cfg_t cfg{ 1, this->width, this->height };
 			auto&& iface = this->codecId ? vpx_codec_vp9_dx() : vpx_codec_vp8_dx();
-			if (int r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return __LINE__;	// because VPX_CODEC_OK == 0
+			if (int r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return __LINE__;	// VPX_CODEC_OK == 0
+			auto sgCtx = MakeScopeGuard([&] {
+				vpx_codec_destroy(&ctx);
+				});
 
 			uint8_t const* rgbBuf = nullptr, * aBuf = nullptr;
 			uint32_t rgbBufLen = 0, aBufLen = 0;
@@ -322,6 +329,9 @@ namespace xx {
 			if (this->hasAlpha) {
 				vpx_codec_ctx_t ctxAlpha;
 				if (int r = vpx_codec_dec_init(&ctxAlpha, iface, &cfg, 0)) return __LINE__;
+				auto sgCtxAlpha = MakeScopeGuard([&] {
+					vpx_codec_destroy(&ctxAlpha);
+					});
 
 				for (uint32_t i = 0; i < this->count; ++i) {
 					if (int r = this->GetFrameBuf(i, rgbBuf, rgbBufLen, aBuf, aBufLen)) return r;
@@ -559,9 +569,11 @@ namespace xx {
 		inline static int FillToSpriteFrameCache(std::string const& plistData, uint8_t const* const& buf, int const& width, int const& height) {
 			auto img = new cocos2d::Image();
 			if (!img) return __LINE__;
+			auto sgImg = MakeScopeGuard([&] { delete img; });
 			if (!img->initWithRawData(buf, width * height * 4, width, height, 32, false)) return __LINE__;
 			auto t = new cocos2d::Texture2D();
 			if (!t) return __LINE__;
+			auto sgT = MakeScopeGuard([&] { t->release(); });
 			if (!t->initWithImage(img)) return __LINE__;
 			cocos2d::SpriteFrameCache::getInstance()->addSpriteFramesWithFileContent(plistData, t);
 			return 0;
