@@ -1,60 +1,26 @@
 ﻿/*
 功能：
-	webm 每一帧图展开为 *.png, 或存为 plist 图集, 或直接加载到 cocos 显存 & sprite frame cache
-
-用法流程:
-	1. 准备好 ????? (%d).png 散图, 序号连贯
-	2. ffmpeg 打包成 webm
-	3. 用本类 另存为 xxmv
-
-	4. 实际使用中, 直接加载 xxmv  ( 例如 cocos 下使用 xx_xxmv_cocos.h )
-
-webm 打包命令行:
-	./ffmpeg -f image2 -framerate 60 -i "??????(%d).png" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 1000K -speed 0 ??????.webm
-
-注意:
-	%d 文件名数字，不可以 中断，从 1 开始
-	60 可以改
-	-b:v 1000K 可以删可以改，从而生成不同体积 webm，可自行斟酌
-	-speed 0 可以删可以改
-
-注意2:
-	图片内容尽量紧凑，边缘不要留太多空格区域，否则会狂吃显存，并降低渲染性能。
-
-
+	针对 cocos, 提供加载 .xxmv 文件到 sprite frame cache 的能力
 
 代码示例:
-
-	xx::Webm wm;
-	if (int r = wm.LoadFromWebm("res/a.webm")) return r;		// load a.webm file, parse ebml info, store data
-	if (int r = wm.SaveToXxmv("res/a.xxmv")) return r;			// write xxmv header + data to file
-
-	if (int r = wm.LoadFromXxmv("res/a.xxmv")) return r;		// load a.xxmv file, save info & data
-	if (int r = wm.SaveToPngs("res/", "a")) return r;			// write every frame to a0.png, a1.png, a2.png .... files
-
-	if (int r = wm.SaveToPackedPngs("res/", "a")) return r;		// texture packer likely. write all frame to a?.png + a?.plist
+	xx::XxmvCocos mv;	// 可公用
+	...
+	mv.LoadFromXxmv("res/a.xxmv");		// 可判断返回值了解操作是否成功
+	mv.FillToSpriteFrameCache("xxxx");
 */
 
-// todo: 在 webm -> xxmv 这一步中，可以扫描每一帧图片的实际内容包围盒, 找出最大值? 后续生成图集时可优化密度
-// 进一步的, xxmv 每一帧存储 图片尺寸, 实际尺寸, 以便于构造 plist 的时候还原
+// todo: 跳过 plist 构造 & 解析? 直接生成最终 sprite frame ?
 
 
-#include "ebml_parser.h"
-#include "xx_data.h"
-#include "xx_file.h"
-
-#define SVPNG_LINKAGE inline
-#define SVPNG_OUTPUT xx::Data& d
-#define SVPNG_PUT(u) d.WriteFixed((uint8_t)(u));
-#include "svpng.inc"
-
-#include "libyuv.h"
-#include "vpx_decoder.h"
+#include "cocos2d.h"
 #include "vp8dx.h"
+#include "vpx_decoder.h"
+#include "libyuv.h"
+#include "xx_data.h"
 
 namespace xx {
-	// webm 解析后的容易使用的存储形态
-	struct Webm {
+	// xxmv 解析后的容易使用的存储形态
+	struct XxmvCocos {
 		// 0: vp8;	1: vp9
 		uint8_t codecId = 0;
 
@@ -74,7 +40,7 @@ namespace xx {
 		std::vector<uint32_t> lens;
 
 		// 所有帧数据依次排列
-		xx::Data data;
+		Data data;
 
 		// 所有帧 rgb / a 数据块指针( 后期填充 )
 		std::vector<uint8_t*> bufs;
@@ -85,16 +51,17 @@ namespace xx {
 		// todo: 可能还有别的附加信息存储. 例如 中心点坐标, 显示缩放比
 		// todo: 动画信息? 多少帧到多少帧 定义为一个动画? 每帧的显示延迟设定? 时间轴?
 
-		Webm() = default;
-		Webm(Webm const&) = delete;
-		Webm(Webm&&) = default;
-		Webm& operator=(Webm const&) = delete;
-		Webm& operator=(Webm&&) = default;
+		XxmvCocos() = default;
+		XxmvCocos(XxmvCocos const&) = delete;
+		XxmvCocos(XxmvCocos&&) = default;
+		XxmvCocos& operator=(XxmvCocos const&) = delete;
+		XxmvCocos& operator=(XxmvCocos&&) = default;
 
 		inline operator bool() {
 			return count != 0;
 		}
 
+	protected:
 		// 填充基础数据或反序列化后继续 填充 bufs, count
 		inline int Init() {
 			count = (uint32_t)(hasAlpha ? lens.size() / 2 : lens.size());
@@ -140,13 +107,22 @@ namespace xx {
 			return 0;
 		}
 
-
+	public:
 		// 从 .xxmv 读出数据并填充到 wm. 成功返回 0
-		inline int LoadFromXxmv(std::filesystem::path const& path) {
+		inline int LoadFromXxmv(std::string const& path) {
 			this->Clear();
+			auto fs = cocos2d::FileUtils::getInstance();
+			auto tmp = fs->getDataFromFile(path);
+			if (tmp.isNull()) return __LINE__;
+			// 借用一下 xx::Data 壳子方便反序列化
 			xx::Data d;
+			d.buf = (char*)tmp.getBytes();
+			d.len = tmp.getSize();
+			auto sgD = xx::MakeScopeGuard([&] {
+				d.buf = nullptr;
+				d.len = 0;
+			});
 			// todo: verify version number?
-			if (int r = xx::ReadAllBytes(path, d)) return __LINE__;
 			if (int r = d.ReadFixed(codecId)) return __LINE__;
 			if (int r = d.ReadFixed(hasAlpha)) return __LINE__;
 			if (int r = d.ReadFixed(width)) return __LINE__;
@@ -162,147 +138,6 @@ namespace xx {
 			data.Resize(siz);
 			if (int r = d.ReadBuf(data.buf, data.len)) return __LINE__;
 			return Init();
-		}
-
-		inline int SaveToXxmv(std::filesystem::path const& path) {
-			xx::Data d;
-			// todo: write version number?
-			d.WriteFixed(codecId);
-			d.WriteFixed(hasAlpha);
-			d.WriteFixed(width);
-			d.WriteFixed(height);
-			d.WriteFixed(duration);
-			d.WriteFixed((uint32_t)lens.size());
-			d.WriteBuf(lens.data(), lens.size() * sizeof(uint32_t));
-			d.WriteFixed((uint32_t)data.len);
-			d.WriteBuf(data.buf, data.len);
-			return xx::WriteAllBytes(path, d);
-		}
-
-		// 从 .webm 读出数据并填充到 wm. 成功返回 0
-		inline int LoadFromWebm(std::filesystem::path const& path) {
-			this->Clear();
-
-			// 读文件
-			std::unique_ptr<uint8_t[]> data;
-			size_t dataLen;
-			if (int r = xx::ReadAllBytes(path, data, dataLen)) return __LINE__;
-
-			// 开始解析 ebml 头
-			auto&& ebml = parse_ebml_file(std::move(data), dataLen/*, 1*/);
-			auto&& segment = ebml.FindChildById(EbmlElementId::Segment);
-
-			// 提取 播放总时长
-			auto&& info = segment->FindChildById(EbmlElementId::Info);
-			auto&& duration = info->FindChildById(EbmlElementId::Duration);
-			this->duration = (float)std::stod(duration->value());
-
-			// 提取 编码方式
-			auto&& tracks = segment->FindChildById(EbmlElementId::Tracks);
-			auto&& trackEntry = tracks->FindChildById(EbmlElementId::TrackEntry);
-			auto&& codecId = trackEntry->FindChildById(EbmlElementId::CodecID);
-			this->codecId = codecId->value() == "V_VP8" ? 0 : 1;
-
-			// 提取 宽高
-			auto&& video = trackEntry->FindChildById(EbmlElementId::Video);
-			auto&& pixelWidth = video->FindChildById(EbmlElementId::PixelWidth);
-			this->width = std::stoi(pixelWidth->value());
-			auto&& pixelHeight = video->FindChildById(EbmlElementId::PixelHeight);
-			this->height = std::stoi(pixelHeight->value());
-
-			// 判断 是否带 alpha 通道
-			auto&& _alphaMode = video->FindChildById(EbmlElementId::AlphaMode);
-			this->hasAlpha = _alphaMode->value() == "1" ? 1 : 0;
-
-			std::vector<int> frames;
-			uint32_t frameNumber = 0;
-
-			std::list<EbmlElement>::const_iterator clusterOwner;
-			if (this->codecId == 0) {
-				clusterOwner = segment;
-			}
-			else {
-				auto&& tags = segment->FindChildById(EbmlElementId::Tags);
-				auto&& tag = tags->FindChildById(EbmlElementId::Tag);
-				clusterOwner = tag->FindChildById(EbmlElementId::Targets);
-			}
-
-			auto&& cluster = clusterOwner->FindChildById(EbmlElementId::Cluster);
-			while (cluster != clusterOwner->children().cend()) {
-				auto timecode = cluster->FindChildById(EbmlElementId::Timecode);
-				auto clusterPts = std::stoi(timecode->value());
-
-				if (this->hasAlpha) {
-					auto&& blockGroup = cluster->FindChildById(EbmlElementId::BlockGroup);
-					while (blockGroup != cluster->children().cend()) {
-						{
-							// get yuv data + size
-							auto&& block = blockGroup->FindChildById(EbmlElementId::Block);
-							auto&& data = block->data();
-							auto&& size = block->size();
-
-							// fix yuv data + size
-							size_t track_number_size_length;
-							(void)get_ebml_element_size(data, size, track_number_size_length);
-							data = data + track_number_size_length + 3;
-							size = size - track_number_size_length - 3;
-
-							this->lens.push_back((uint32_t)size);
-							this->data.WriteBuf(data, size);
-						}
-						{
-							// get a data + size
-							auto&& blockAdditions = blockGroup->FindChildById(EbmlElementId::BlockAdditions);
-							auto&& blockMore = blockAdditions->FindChildById(EbmlElementId::BlockMore);
-							auto&& blockAdditional = blockMore->FindChildById(EbmlElementId::BlockAdditional);
-							auto&& data_alpha = blockAdditional->data();
-							auto&& size_alpha = (uint32_t)blockAdditional->size();
-
-							this->lens.push_back((uint32_t)size_alpha);
-							this->data.WriteBuf(data_alpha, size_alpha);
-						}
-
-						// next
-						blockGroup = cluster->FindNextChildById(++blockGroup, EbmlElementId::BlockGroup);
-						++frameNumber;
-					}
-				}
-				else {
-					auto&& simpleBlock = cluster->FindChildById(EbmlElementId::SimpleBlock);
-					while (simpleBlock != cluster->children().cend()) {
-						auto&& data = simpleBlock->data();
-						auto&& size = simpleBlock->size();
-
-						// fix yuv data + size
-						size_t track_number_size_length;
-						(void)get_ebml_element_size(data, size, track_number_size_length);
-						data = data + track_number_size_length + 3;
-						size = size - track_number_size_length - 3;
-
-						this->lens.push_back((uint32_t)size);
-						this->data.WriteBuf(data, size);
-
-						// next
-						simpleBlock = cluster->FindNextChildById(++simpleBlock, EbmlElementId::BlockGroup);
-						++frameNumber;
-					}
-				}
-
-				cluster = clusterOwner->FindNextChildById(++cluster, EbmlElementId::Cluster);
-			}
-
-			return Init();
-		}
-
-		// 每帧画面另存为 png 文件。
-		inline int SaveToPngs(std::filesystem::path const& path, std::string const& prefix) {
-			uint32_t i = 0;
-			return ForeachFrame([&](std::vector<uint8_t> const& bytes)->int {
-				auto&& fn = path / (prefix + std::to_string(i) + ".png");
-				if (int r = RgbaSaveToPng(fn, bytes.data(), this->width, this->height)) return __LINE__;
-				++i;
-				return 0;
-				});
 		}
 
 		// f = [](std::vector<uint8_t> const& bytes)->int { ... }
@@ -427,12 +262,6 @@ namespace xx {
 #endif
 		}
 
-		inline static int RgbaSaveToPng(std::filesystem::path const& fn, uint8_t const* const& bytes, uint32_t const& w, uint32_t const& h) {
-			xx::Data d;
-			svpng(d, w, h, bytes, 1);
-			return xx::WriteAllBytes(fn, d);
-		}
-
 		// 将 srcPos(小图) 绘制 到 dstPos(大图) 的 x,y (bmp左上角). 因为是图片打包用途，故必须确保 space 装得下, 没有边缘问题
 		// 先计算第一行第一个像素 要从 space 的哪个下标 开始填, 每次填 bw 长, 填完后 下标 += sw 填 bh 次
 		inline static void Draw(uint32_t* dstPos, uint32_t const& sw, uint32_t const& sh
@@ -512,16 +341,25 @@ namespace xx {
 )";
 				return *this;
 			}
-
-			PListMaker& SaveToFile(std::filesystem::path const& fn) {
-				xx::WriteAllBytes(fn, data.data(), data.size());
-				return *this;
-			}
 		};
 
-		// 将所有帧的图打包存为 N 张 png 大图( 类似 texture packer ). 文件名为 path / prefix + 0,1,2,... + .png
-		// todo: 像素级查找 包围盒 并得到实际尺寸? 然后弄个 矩形填充算法？
-		inline int SaveToPackedPngs(std::filesystem::path const& path, std::string const& prefix, std::string itemPrefix = ""/* prefix + " (" */, std::string const& itemSuffix = ").png", int itemBeginNum = 1, uint32_t const& sw = 4096, uint32_t const& sh = 4096) {
+		inline static int FillToSpriteFrameCache(std::string const& plistData, uint8_t const* const& buf, int const& width, int const& height) {
+			auto img = new cocos2d::Image();
+			if (!img) return __LINE__;
+			auto sgImg = MakeScopeGuard([&] { delete img; });
+			if (!img->initWithRawData(buf, width * height * 4, width, height, 32, false)) return __LINE__;
+			auto t = new cocos2d::Texture2D();
+			if (!t) return __LINE__;
+			auto sgT = MakeScopeGuard([&] { t->release(); });
+			if (!t->initWithImage(img)) return __LINE__;
+			cocos2d::SpriteFrameCache::getInstance()->addSpriteFramesWithFileContent(plistData, t);
+			return 0;
+		}
+
+		inline int FillToSpriteFrameCache(std::string const& prefix, std::string itemPrefix = ""/* prefix + " (" */, std::string const& itemSuffix = ").png", int itemBeginNum = 1, uint32_t const& sw = 4096, uint32_t const& sh = 4096) {
+			auto sfc = cocos2d::SpriteFrameCache::getInstance();
+			if (sfc->getSpriteFrameByName(itemPrefix + std::to_string(itemBeginNum) + itemSuffix)) return 0;
+
 			if (itemPrefix.empty()) {
 				itemPrefix = prefix + " (";
 			}
@@ -543,8 +381,9 @@ namespace xx {
 				}
 				if (y == numRows) {
 					y = 0;
-					pm.End(prefix + std::to_string(z), sw, sh).SaveToFile(path / (prefix + std::to_string(z) + ".plist")).Begin();
-					RgbaSaveToPng(path / (prefix + std::to_string(z) + ".png"), (uint8_t*)space.data(), sw, sh);
+					pm.End(prefix + std::to_string(z) + ".png", sw, sh);
+					if (int r = FillToSpriteFrameCache(pm.data, (uint8_t*)space.data(), sw, sh)) return r;
+					pm.Begin();
 					++z;
 					memset(space.data(), 0, space.size() * sizeof(uint32_t));
 				}
@@ -552,45 +391,11 @@ namespace xx {
 				});
 			if (r) return r;
 			if (x || y) {
-				pm.End(prefix + std::to_string(z) + ".png", sw, sh).SaveToFile(path / (prefix + std::to_string(z) + ".plist"));
-				return RgbaSaveToPng(path / (prefix + std::to_string(z) + ".png"), (uint8_t*)space.data(), sw, (y + 1) * height);
+				pm.End(prefix + std::to_string(z) + ".png", sw, sh);
+				return FillToSpriteFrameCache(pm.data, (uint8_t*)space.data(), sw, sh);
 			}
 
 			return 0;
 		}
-
 	};
 }
-
-
-//
-//std::string FloatToString(float const& v) {
-//	std::string s(15, '\0');
-//	s.resize(sprintf(s.data(), "%g", v));
-//	return s;
-//}
-//PListMaker& Append(std::string_view const& name
-//	, float const& soX, float const& soY	/* spriteOffset */
-//	, int const& ssW, int const& ssH		/* spriteSize */
-//	, int const& sssW, int const& sssH		/* spriteSourceSize */
-//	, int const& trX, int const& trY, int const& trW, int const& trH		/* textureRect */
-//	/*, bool const& textureRotated*/
-//) {
-//	data += std::string(R"(
-//            <key>)") + std::string(name) + R"(</key>
-//            <dict>
-//                <key>aliases</key>
-//                <array/>
-//                <key>spriteOffset</key>
-//                <string>{)" + FloatToString(soX) + "," + FloatToString(soY) + R"(}</string>
-//                <key>spriteSize</key>
-//                <string>{)" + std::to_string(ssW) + "," + std::to_string(ssH) + R"(}</string>
-//                <key>spriteSourceSize</key>
-//                <string>{)" + std::to_string(sssW) + "," + std::to_string(sssH) + R"(}</string>
-//                <key>textureRect</key>
-//				<string>{{)" + std::to_string(trX) + "," + std::to_string(trY) + "},{" + std::to_string(trW) + "," + std::to_string(trH) + R"(}}</string>
-//                <key>textureRotated</key>
-//                <false/>
-//            </dict>)";
-//	return *this;
-//}
