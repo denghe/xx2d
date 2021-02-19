@@ -11,18 +11,16 @@
 
 // todo: 跳过 plist 构造 & 解析? 直接生成最终 sprite frame ?
 
-// todo: 加载过程的 cocos2d::Data 直接保留下来用? 避免 memcpy?
-
 
 #include "cocos2d.h"
 #include "vp8dx.h"
 #include "vpx_decoder.h"
 #include "libyuv.h"
-#include "xx_data.h"
 
 namespace xx {
 	// xxmv 解析后的容易使用的存储形态
 	struct XxmvCocos {
+
 		// 文件数据容器
 		cocos2d::Data fileData;
 
@@ -101,46 +99,70 @@ namespace xx {
 		}
 
 	public:
-		// 从 .xxmv 读出数据并填充到 wm. 成功返回 0
+		// 从 .xxmv 读出数据. 成功返回 0 (	不兼容大尾机器 )
 		inline int LoadFromXxmv(std::string const& path) {
 			this->Clear();
 			auto fs = cocos2d::FileUtils::getInstance();
 			fileData = fs->getDataFromFile(path);
 			if (fileData.isNull()) return __LINE__;
 
-			xx::Data d;		// 借用一下 xx::Data 反序列化
-			d.buf = (char*)fileData.getBytes();
-			d.len = fileData.getSize();
-			auto sgD = xx::MakeScopeGuard([&] {
-				d.buf = nullptr;
-				d.len = 0;
-				});
+			auto p = fileData.getBytes();
+			auto len = fileData.getSize();
+			auto pe = p + len;
 
 			// todo: verify version number & data?
-			if (int r = d.ReadFixed(codecId)) return __LINE__;
-			if (int r = d.ReadFixed(hasAlpha)) return __LINE__;
-			if (int r = d.ReadFixed(width)) return __LINE__;
-			if (int r = d.ReadFixed(height)) return __LINE__;
-			if (int r = d.ReadFixed(duration)) return __LINE__;
+			if (p + 14 > pe) return __LINE__;
+			codecId = p[0];
+			hasAlpha = p[1];
+			width = p[2] + (p[3] << 8);
+			height = p[4] + (p[5] << 8);
+			memcpy(&duration, p + 6, 4);
 			uint32_t siz;
-			if (int r = d.ReadFixed(siz)) return r;
-			if (d.offset + siz * sizeof(uint32_t) > d.len) return __LINE__;
-			lens.resize(siz);
-			if (int r = d.ReadBuf(lens.data(), siz * sizeof(uint32_t))) return __LINE__;
-			if (int r = d.ReadFixed(siz)) return __LINE__;
-			if (d.offset + siz > d.len) return __LINE__;
+			memcpy(&siz, p + 10, 4);
+			p += 14;
 
-			data = (uint8_t*)d.buf + d.offset;
-			count = (uint32_t)(hasAlpha ? lens.size() / 2 : lens.size());
+			if (p + siz * 4 > pe) return __LINE__;
+			lens.resize(siz);
+			memcpy(lens.data(), p, siz * 4);
+			p += siz * 4;
+
+			if (p + 4 > pe) return __LINE__;
+			memcpy(&siz, p, 4);
+			p += 4;
+
+			if (p + siz > pe) return __LINE__;
+			data = p;
+
+			count = (uint32_t)(hasAlpha ? siz / 2 : siz);
 			bufs.resize(lens.size());
-			auto p = data;
 			for (int i = 0; i < lens.size(); ++i) {
 				bufs[i] = p;
 				p += lens[i];
 			}
-			if ((char*)p != d.buf + d.len) return __LINE__;
+			if (p != pe) return __LINE__;
 			return 0;
 		}
+
+		template<class F>
+		inline static auto MakeScopeGuard(F&& f) noexcept {
+			struct ScopeGuard {
+				F f;
+				bool cancel;
+
+				explicit ScopeGuard(F&& f) noexcept : f(std::move(f)), cancel(false) {}
+
+				~ScopeGuard() noexcept { if (!cancel) { f(); } }
+
+				inline void Cancel() noexcept { cancel = true; }
+
+				inline void operator()(bool cancel = false) {
+					f();
+					this->cancel = cancel;
+				}
+			};
+			return ScopeGuard(std::forward<F>(f));
+		}
+
 
 		// f = [](std::vector<uint8_t> const& bytes)->int { ... }
 		template<typename F>
