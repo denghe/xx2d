@@ -11,6 +11,8 @@
 
 // todo: 跳过 plist 构造 & 解析? 直接生成最终 sprite frame ?
 
+// todo: 加载过程的 cocos2d::Data 直接保留下来用? 避免 memcpy?
+
 
 #include "cocos2d.h"
 #include "vp8dx.h"
@@ -21,6 +23,9 @@
 namespace xx {
 	// xxmv 解析后的容易使用的存储形态
 	struct XxmvCocos {
+		// 文件数据容器
+		cocos2d::Data fileData;
+
 		// 0: vp8;	1: vp9
 		uint8_t codecId = 0;
 
@@ -39,8 +44,9 @@ namespace xx {
 		// 所有帧数据长度集合( hasAlpha 则为 rgb / a 交替长度集合 )
 		std::vector<uint32_t> lens;
 
-		// 所有帧数据依次排列
-		Data data;
+
+		// 指向 依次排列的所有帧数据 的数据区( 后期填充 )
+		uint8_t* data = nullptr;
 
 		// 所有帧 rgb / a 数据块指针( 后期填充 )
 		std::vector<uint8_t*> bufs;
@@ -62,28 +68,15 @@ namespace xx {
 		}
 
 	protected:
-		// 填充基础数据或反序列化后继续 填充 bufs, count
-		inline int Init() {
-			count = (uint32_t)(hasAlpha ? lens.size() / 2 : lens.size());
-
-			bufs.resize(lens.size());
-			auto baseBuf = data.buf;
-			for (int i = 0; i < lens.size(); ++i) {
-				bufs[i] = (uint8_t*)baseBuf;
-				baseBuf += lens[i];
-			}
-			if (baseBuf != data.buf + data.len) return __LINE__;
-			return 0;
-		}
-
 		inline void Clear() {
+			fileData.clear();
 			codecId = 0;
 			hasAlpha = 0;
 			width = 0;
 			height = 0;
 			duration = 0;
 			lens.clear();
-			data.Clear();
+			data = nullptr;
 			bufs.clear();
 			count = 0;
 		}
@@ -112,17 +105,18 @@ namespace xx {
 		inline int LoadFromXxmv(std::string const& path) {
 			this->Clear();
 			auto fs = cocos2d::FileUtils::getInstance();
-			auto tmp = fs->getDataFromFile(path);
-			if (tmp.isNull()) return __LINE__;
-			// 借用一下 xx::Data 壳子方便反序列化
-			xx::Data d;
-			d.buf = (char*)tmp.getBytes();
-			d.len = tmp.getSize();
+			fileData = fs->getDataFromFile(path);
+			if (fileData.isNull()) return __LINE__;
+
+			xx::Data d;		// 借用一下 xx::Data 反序列化
+			d.buf = (char*)fileData.getBytes();
+			d.len = fileData.getSize();
 			auto sgD = xx::MakeScopeGuard([&] {
 				d.buf = nullptr;
 				d.len = 0;
-			});
-			// todo: verify version number?
+				});
+
+			// todo: verify version number & data?
 			if (int r = d.ReadFixed(codecId)) return __LINE__;
 			if (int r = d.ReadFixed(hasAlpha)) return __LINE__;
 			if (int r = d.ReadFixed(width)) return __LINE__;
@@ -135,9 +129,17 @@ namespace xx {
 			if (int r = d.ReadBuf(lens.data(), siz * sizeof(uint32_t))) return __LINE__;
 			if (int r = d.ReadFixed(siz)) return __LINE__;
 			if (d.offset + siz > d.len) return __LINE__;
-			data.Resize(siz);
-			if (int r = d.ReadBuf(data.buf, data.len)) return __LINE__;
-			return Init();
+
+			data = (uint8_t*)d.buf + d.offset;
+			count = (uint32_t)(hasAlpha ? lens.size() / 2 : lens.size());
+			bufs.resize(lens.size());
+			auto p = data;
+			for (int i = 0; i < lens.size(); ++i) {
+				bufs[i] = p;
+				p += lens[i];
+			}
+			if ((char*)p != d.buf + d.len) return __LINE__;
+			return 0;
 		}
 
 		// f = [](std::vector<uint8_t> const& bytes)->int { ... }
