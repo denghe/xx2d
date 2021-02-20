@@ -11,6 +11,8 @@
 
 // todo: 跳过 plist 构造 & 解析? 直接生成最终 sprite frame ?
 
+// todo: 为进一步提升加载性能，以及增加易用性，线程池并行加载？
+
 
 #include "cocos2d.h"
 #include "vp8dx.h"
@@ -112,14 +114,25 @@ namespace xx {
 
 			// todo: verify version number & data?
 			if (p + 14 > pe) return __LINE__;
-			codecId = p[0];
-			hasAlpha = p[1];
-			width = p[2] + (p[3] << 8);
-			height = p[4] + (p[5] << 8);
-			memcpy(&duration, p + 6, 4);
+			codecId = *p;
+			p += 1;
+
+			hasAlpha = *p;
+			p += 1;
+
+			width = *p + (p[1] << 8);
+			p += 2;
+
+			height = *p + (p[1] << 8);
+			p += 2;
+
+			memcpy(&duration, p, 4);
+			p += 4;
+
 			uint32_t siz;
-			memcpy(&siz, p + 10, 4);
-			p += 14;
+			memcpy(&siz, p, 4);
+			count = (uint32_t)(hasAlpha ? siz / 2 : siz);
+			p += 4;
 
 			if (p + siz * 4 > pe) return __LINE__;
 			lens.resize(siz);
@@ -133,7 +146,6 @@ namespace xx {
 			if (p + siz > pe) return __LINE__;
 			data = p;
 
-			count = (uint32_t)(hasAlpha ? siz / 2 : siz);
 			bufs.resize(lens.size());
 			for (int i = 0; i < lens.size(); ++i) {
 				bufs[i] = p;
