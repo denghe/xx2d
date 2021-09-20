@@ -2,38 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="..\glad\glad.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="xxlib">
-      <UniqueIdentifier>{e722cbb7-e937-4351-993f-01d0343c0234}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="gltest1.hpp" />
-    <ClInclude Include="gltest2.hpp" />
-    <ClInclude Include="gltest3.hpp" />
-    <ClInclude Include="gltest4.hpp" />
-    <ClInclude Include="glmanager.hpp" />
-    <ClInclude Include="..\xxlib\xx_data.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_obj.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_ptr.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_typehelpers.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_typename_islambda.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_chrono.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="esMatrix.h" />
-    <ClInclude Include="gltest5.hpp" />
+    <ClCompile Include="..\glad_glcore33\glad.c" />
   </ItemGroup>
 </Project>

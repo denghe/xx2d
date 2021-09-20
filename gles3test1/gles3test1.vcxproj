@@ -57,7 +57,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)xxlib\;$(SolutionDir)deps\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)glad_glcore33\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
@@ -78,7 +78,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)xxlib\;$(SolutionDir)deps\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)glad_glcore33\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
@@ -94,23 +94,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\glad\glad.c" />
+    <ClCompile Include="..\glad_glcore33\glad.c" />
     <ClCompile Include="main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\xxlib\xx_chrono.h" />
-    <ClInclude Include="..\xxlib\xx_data.h" />
-    <ClInclude Include="..\xxlib\xx_obj.h" />
-    <ClInclude Include="..\xxlib\xx_ptr.h" />
-    <ClInclude Include="..\xxlib\xx_typehelpers.h" />
-    <ClInclude Include="..\xxlib\xx_typename_islambda.h" />
-    <ClInclude Include="esMatrix.h" />
-    <ClInclude Include="glmanager.hpp" />
-    <ClInclude Include="gltest1.hpp" />
-    <ClInclude Include="gltest2.hpp" />
-    <ClInclude Include="gltest3.hpp" />
-    <ClInclude Include="gltest4.hpp" />
-    <ClInclude Include="gltest5.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
