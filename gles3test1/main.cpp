@@ -76,7 +76,7 @@ GLuint create_shader(GLenum type, const char* glsl_source)
 GLuint init_demo_program()
 {
     const char* vertex_shader_source =
-        "#version 330 core\n"
+        "#version 300 es\n"
         "\n"
         "uniform vec4 u_projection;\n"
         "in vec4 in_offset_texcoord;\n"
@@ -105,7 +105,8 @@ GLuint init_demo_program()
     const GLuint vertex_shader = create_shader(GL_VERTEX_SHADER, vertex_shader_source);
 
     const char* fragment_shader_source =
-        "#version 330 core\n"
+        "#version 300 es\n"
+        "precision mediump float;\n"
         "\n"
         "uniform sampler2D u_sampler;\n"
         "in vec2 v_texcoord;\n"
@@ -233,7 +234,7 @@ public:
     void draw();
 
 private:
-    static constexpr int BUFFER_COUNT = 3;
+    static constexpr int BUFFER_COUNT = 1;
 
     GLuint m_quad_count;
     int m_current_position;
@@ -256,7 +257,7 @@ void DemoQuadsIA::init(GLuint program, GLuint quad_count)
     glBindVertexArray(m_vao);
 
     glGenBuffers(BUFFER_COUNT, m_vbo_per_instance);
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < BUFFER_COUNT; ++i)
     {
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo_per_instance[i]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(QuadData_center_scale_rotate) * quad_count, nullptr, GL_STREAM_DRAW);

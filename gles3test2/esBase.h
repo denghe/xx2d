@@ -8,7 +8,7 @@
 namespace xx::es {
 
 	enum class GLResTypes {
-		shader, program, buffer, texture
+		shader, program, vertexss, buffer, texture
 	};
 
 	template<GLResTypes T, typename UD = GLsizei>
@@ -45,6 +45,7 @@ namespace xx::es {
 			if (handle) {
 				if constexpr (T == GLResTypes::shader) { glDeleteShader(handle); }
 				if constexpr (T == GLResTypes::program) { glDeleteProgram(handle); }
+				if constexpr (T == GLResTypes::vertexss) { glDeleteVertexArrays(1, &handle); }
 				if constexpr (T == GLResTypes::buffer) { glDeleteBuffers(1, &handle); }
 				if constexpr (T == GLResTypes::texture) { glDeleteTextures(1, &handle); }
 				handle = 0;
@@ -57,6 +58,7 @@ namespace xx::es {
 
 	using Shader = GLRes<GLResTypes::shader>;
 	using Program = GLRes<GLResTypes::program>;
+	using VertexArrays = GLRes<GLResTypes::vertexss>;
 	using Buffer = GLRes<GLResTypes::buffer>;
 	using Texture = GLRes<GLResTypes::texture, std::pair<GLsizei, GLsizei>>;
 
@@ -223,7 +225,8 @@ namespace xx::es {
 		inline void ShowFpsInTitle() {
 			if (lastTime > fpsTimer) {
 				fpsTimer = lastTime + 0.5;
-				glfwSetWindowTitle(wnd, (title + std::to_string((double)numFrames / (lastTime - beginTime))).c_str());
+				//glfwSetWindowTitle(wnd, (title + std::to_string((double)numFrames / (lastTime - beginTime))).c_str());
+				std::cout << (title + std::to_string((double)numFrames / (lastTime - beginTime))).c_str() << std::endl;
 			}
 		}
 
@@ -340,34 +343,34 @@ namespace xx::es {
 			return program;
 		}
 
-		// target: GL_ARRAY_BUFFER, GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, or GL_UNIFORM_BUFFER. 
-		// usage:  GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY. 
-		inline Buffer LoadBuffer(GLenum const& target, void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
-			GLuint vbo = 0;
-			// 申请
-			glGenBuffers(1, &vbo);
-			if (!vbo) { CheckGLError(__LINE__); return 0; }
-			auto sgVbo = MakeScopeGuard([&] { glDeleteVertexArrays(1, &vbo); });
+		//// target: GL_ARRAY_BUFFER, GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, or GL_UNIFORM_BUFFER. 
+		//// usage:  GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY. 
+		//inline Buffer LoadBuffer(GLenum const& target, void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		//	GLuint vbo = 0;
+		//	// 申请
+		//	glGenBuffers(1, &vbo);
+		//	if (!vbo) { CheckGLError(__LINE__); return 0; }
+		//	auto sgVbo = MakeScopeGuard([&] { glDeleteVertexArrays(1, &vbo); });
 
-			// 类型绑定
-			glBindBuffer(target, vbo);
-			if (auto e = CheckGLError(__LINE__)) return 0;
+		//	// 类型绑定
+		//	glBindBuffer(target, vbo);
+		//	if (auto e = CheckGLError(__LINE__)) return 0;
 
-			// 数据填充
-			glBufferData(target, len, data, usage);
-			if (auto e = CheckGLError(__LINE__)) return 0;
+		//	// 数据填充
+		//	glBufferData(target, len, data, usage);
+		//	if (auto e = CheckGLError(__LINE__)) return 0;
 
-			glBindBuffer(target, 0);
-			sgVbo.Cancel();
-			return vbo;
-		}
+		//	glBindBuffer(target, 0);
+		//	sgVbo.Cancel();
+		//	return vbo;
+		//}
 
-		inline Buffer LoadVertices(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
-			return LoadBuffer(GL_ARRAY_BUFFER, data, len, usage);
-		}
-		inline Buffer LoadIndexes(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
-			return LoadBuffer(GL_ELEMENT_ARRAY_BUFFER, data, len, usage);
-		}
+		//inline Buffer LoadVertices(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		//	return LoadBuffer(GL_ARRAY_BUFFER, data, len, usage);
+		//}
+		//inline Buffer LoadIndexes(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		//	return LoadBuffer(GL_ELEMENT_ARRAY_BUFFER, data, len, usage);
+		//}
 
 
 		// 加载 etc2 压缩纹理数据. 返回 0 表示出错
