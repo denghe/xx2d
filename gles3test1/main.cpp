@@ -358,6 +358,7 @@ int main(void)
     }
 
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(0);
     gladLoadGL();
 
     const char* gl_version = (const char*)glGetString(GL_VERSION);
