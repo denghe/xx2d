@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "xx_ptr.h"
-#include "xx_file.h"
+#include <xx_helpers.h>
+#include <xx_file.h>
 #include "glew/glew.h"
 #include "glfw/glfw3.h"
 #include "esMatrix.h"
@@ -16,7 +16,7 @@ namespace xx::es {
 		GLuint handle{};
 		UD ud{};
 
-		XX_FORCEINLINE operator GLuint const& () const { return handle; }
+		XX_FORCE_INLINE operator GLuint const& () const { return handle; }
 
 		GLRes() = default;
 		GLRes(GLRes const&) = delete;
@@ -37,11 +37,11 @@ namespace xx::es {
 		bool operator==(GLuint const& o) { return handle == o; }
 		bool operator!=(GLuint const& o) { return handle != o; }
 
-		XX_FORCEINLINE void operator=(GLuint const& h) {
+		XX_FORCE_INLINE void operator=(GLuint const& h) {
 			Reset();
 			handle = h;
 		}
-		XX_FORCEINLINE void Reset() {
+		XX_FORCE_INLINE void Reset() {
 			if (handle) {
 				if constexpr (T == GLResTypes::shader) { glDeleteShader(handle); }
 				if constexpr (T == GLResTypes::program) { glDeleteProgram(handle); }
@@ -225,8 +225,7 @@ namespace xx::es {
 		inline void ShowFpsInTitle() {
 			if (lastTime > fpsTimer) {
 				fpsTimer = lastTime + 0.5;
-				//glfwSetWindowTitle(wnd, (title + std::to_string((double)numFrames / (lastTime - beginTime))).c_str());
-				std::cout << (title + std::to_string((double)numFrames / (lastTime - beginTime))).c_str() << std::endl;
+				glfwSetWindowTitle(wnd, (title + std::to_string((double)numFrames / (lastTime - beginTime))).c_str());
 			}
 		}
 
