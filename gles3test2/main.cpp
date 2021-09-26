@@ -21,14 +21,13 @@ void check_gl_error_at(const char* file, int line, const char* func) {
 
 static_assert(sizeof(GLfloat) == sizeof(float));
 
-// 矩阵
-// todo: 内存按 xx 字节对齐?
-using Mat = std::array<float, 16>;
+// 2d变换矩阵
+using Mat = std::array<float, 3*3>;
 
 // 每个矩形的 实例上下文
 // todo: anchor point support?
 struct QuadInstance {
-	// mvp
+	// mvp( 3 * 3 )
 	Mat mat;
 
 	// 坐标
@@ -45,18 +44,15 @@ struct QuadInstance {
 	float textureRectHeight;
 
 	// 混淆色
-	float colorR;
-	float colorG;
-	float colorB;
-	float colorA;
-
+	uint8_t colorR;
+	uint8_t colorG;
+	uint8_t colorB;
+	uint8_t colorA;
 	// 缩放
 	float scaleX;
 	float scaleY;
 	// 围绕z轴的旋转角度
 	float angleZ;
-	// 占位
-	float unused;
 };
 
 // 所有矩形共享的 顶点结构
@@ -82,11 +78,11 @@ inline static const QuadIndex quadIndexs[6] = {
 inline static decltype(auto) vsSrc = R"--(#version 300 es
 in vec4 in_index;
 
-in mat4 in_mat;
+in mat3 in_mat;
 in vec4 in_posXYZtextureIndex;
 in vec4 in_texRect;
 in vec4 in_colorRGBA;
-in vec4 in_scaleXYangleZU;
+in vec3 in_scaleXYangleZ;
 
 out vec3 v_texcoord;
 out vec4 v_color;
@@ -99,8 +95,8 @@ void main() {
 	float z = in_posXYZtextureIndex.z;
 	float texidx = in_posXYZtextureIndex.w;
 
-    vec2 scale = in_scaleXYangleZU.xy;
-    float rotate = in_scaleXYangleZU.z;
+    vec2 scale = in_scaleXYangleZ.xy;
+    float rotate = in_scaleXYangleZ.z;
 
     float cos_theta = cos(rotate);
     float sin_theta = sin(rotate);
@@ -110,7 +106,7 @@ void main() {
        dot(v1, vec2(cos_theta, sin_theta)),
        dot(v1, vec2(-sin_theta, cos_theta))
     );
-    vec4 v3 = in_mat * vec4((v2 + center), z, 1.0);
+    vec3 v3 = in_mat * vec3(v2 + center, 1.0);
 
 	v_texcoord = vec3(in_texRect.x + texcoord.x * in_texRect.z, in_texRect.y + texcoord.y * in_texRect.w, texidx);
 	v_color = in_colorRGBA;
@@ -146,7 +142,7 @@ struct Game : xx::es::Context<Game> {
 	xx::es::VertexArrays vao;
 	xx::es::Buffer vbo1, vbo2;
 	xx::es::Texture tex;
-	GLuint u_sampler{}, in_index{}, in_mat{}, in_posXYZtextureIndex{}, in_texRect{}, in_colorRGBA{}, in_scaleXYangleZU{};
+	GLuint u_sampler{}, in_index{}, in_mat{}, in_posXYZtextureIndex{}, in_texRect{}, in_colorRGBA{}, in_scaleXYangleZ{};
 
 	// 个数上限. Run 前可改
 	GLuint m_max_quad_count = 1000000;
@@ -361,28 +357,25 @@ void Game::Init(int const& w, int const& h, GLuint const& n, bool vsync) {
 }
 
 void Game::Update() {
-	scene->Update();
+	//scene->Update();
 }
 
-inline void CreateOrthographicOffCenter(float const& left, float const& right, float const& bottom, float const& top, float const& zNearPlane, float const& zFarPlane, Mat& dst) {
+inline void CreateOrthographicOffCenter(float const& left, float const& right, float const& bottom, float const& top, Mat& dst) {
 	assert(right != left);
 	assert(top != bottom);
-	assert(zFarPlane != zNearPlane);
 
 	dst.fill(0);
 	dst[0] = 2 / (right - left);
-	dst[5] = 2 / (top - bottom);
-	dst[10] = 2 / (zNearPlane - zFarPlane);
+	dst[4] = 2 / (top - bottom);
 
-	dst[12] = (left + right) / (left - right);
-	dst[13] = (top + bottom) / (bottom - top);
-	dst[14] = (zNearPlane + zFarPlane) / (zNearPlane - zFarPlane);
-	dst[15] = 1;
+	dst[6] = (left + right) / (left - right);
+	dst[7] = (top + bottom) / (bottom - top);
+	dst[8] = 1;
 }
 
 int Game::GLInit() {
 	// fill matrix
-	CreateOrthographicOffCenter(0, (float)width, 0, (float)height, -1024, 1024, matProj);
+	CreateOrthographicOffCenter(0, (float)width, 0, (float)height, matProj);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -403,7 +396,7 @@ int Game::GLInit() {
 	in_posXYZtextureIndex = glGetAttribLocation(ps, "in_posXYZtextureIndex");
 	in_texRect = glGetAttribLocation(ps, "in_texRect");
 	in_colorRGBA = glGetAttribLocation(ps, "in_colorRGBA");
-	in_scaleXYangleZU = glGetAttribLocation(ps, "in_scaleXYangleZU");
+	in_scaleXYangleZ = glGetAttribLocation(ps, "in_scaleXYangleZ");
 
 	// tex
 	tex = LoadEtc2TextureFile(rootPath / "b.pkm");
@@ -461,7 +454,7 @@ void Game::Draw() {
 			GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
 		auto foos = scene->objs.data();
 #ifdef NDEBUG
-#pragma omp parallel for
+//#pragma omp parallel for
 #endif
 		for (int i = 0; i < numQuads; ++i) {
 			auto& b = buf[i];
@@ -479,10 +472,10 @@ void Game::Draw() {
 			b.textureRectWidth = 1.f;
 			b.textureRectHeight = 1.f;
 
-			b.colorR = b.posX / w;
-			b.colorG = b.colorR;
-			b.colorB = b.posY / h;
-			b.colorA = 1.f;
+			b.colorR = 255;
+			b.colorG = 255;
+			b.colorB = 255;
+			b.colorA = 255;
 
 			b.scaleX = (15.f / GameLogic::fooRadius) * f.radius;
 			b.scaleY = b.scaleX;
@@ -492,20 +485,16 @@ void Game::Draw() {
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 	check_gl_error();
 
-	//glVertexAttribPointer(in_mat, 16, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, mat));
 	{
-		glVertexAttribPointer(in_mat + 0, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, mat));
-		glVertexAttribPointer(in_mat + 1, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)(offsetof(QuadInstance, mat) + sizeof(float) * 4));
-		glVertexAttribPointer(in_mat + 2, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)(offsetof(QuadInstance, mat) + sizeof(float) * 8));
-		glVertexAttribPointer(in_mat + 3, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)(offsetof(QuadInstance, mat) + sizeof(float) * 12));
+		glVertexAttribPointer(in_mat + 0, 3, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, mat));
+		glVertexAttribPointer(in_mat + 1, 3, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)(offsetof(QuadInstance, mat) + sizeof(float) * 3));
+		glVertexAttribPointer(in_mat + 2, 3, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)(offsetof(QuadInstance, mat) + sizeof(float) * 6));
 		glVertexAttribDivisor(in_mat + 0, 1);
 		glVertexAttribDivisor(in_mat + 1, 1);
 		glVertexAttribDivisor(in_mat + 2, 1);
-		glVertexAttribDivisor(in_mat + 3, 1);
 		glEnableVertexAttribArray(in_mat + 0);
 		glEnableVertexAttribArray(in_mat + 1);
 		glEnableVertexAttribArray(in_mat + 2);
-		glEnableVertexAttribArray(in_mat + 3);
 	}
 	check_gl_error();
 
@@ -519,14 +508,14 @@ void Game::Draw() {
 	glEnableVertexAttribArray(in_texRect);
 	check_gl_error();
 
-	glVertexAttribPointer(in_colorRGBA, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, colorR));
+	glVertexAttribPointer(in_colorRGBA, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, colorR));
 	glVertexAttribDivisor(in_colorRGBA, 1);
 	glEnableVertexAttribArray(in_colorRGBA);
 	check_gl_error();
 
-	glVertexAttribPointer(in_scaleXYangleZU, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, scaleX));
-	glVertexAttribDivisor(in_scaleXYangleZU, 1);
-	glEnableVertexAttribArray(in_scaleXYangleZU);
+	glVertexAttribPointer(in_scaleXYangleZ, 3, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, scaleX));
+	glVertexAttribDivisor(in_scaleXYangleZ, 1);
+	glEnableVertexAttribArray(in_scaleXYangleZ);
 	check_gl_error();
 
 	glDrawArraysInstanced(GL_TRIANGLES, 0, _countof(quadIndexs), numQuads);
@@ -542,7 +531,7 @@ int main() {
 #endif
 
 	Game g;
-	g.Init(1920, 1080, 200000, false);
+	g.Init(1920, 1080, 1000000, false);
 	if (int r = g.Run()) {
 		std::cout << "g.Run() r = " << r << ", lastErrorNumber = " << g.lastErrorNumber << ", lastErrorMessage = " << g.lastErrorMessage << std::endl;
 	}
