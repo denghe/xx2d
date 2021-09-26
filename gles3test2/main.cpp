@@ -1,5 +1,7 @@
 ﻿#include "esBase.h"
+#ifdef NDEBUG
 #include <omp.h>
+#endif
 #include <thread>
 #include <xx_ptr.h>
 
@@ -17,33 +19,56 @@ void check_gl_error_at(const char* file, int line, const char* func) {
 #define check_gl_error() ((void)0)
 #endif
 
-struct QuadData_center_scale_rotate_uvrect_color {
-	GLfloat x;
-	GLfloat y;
-	GLfloat scale;
-	GLfloat rotate;
+static_assert(sizeof(GLfloat) == sizeof(float));
 
-	// 值范围 0~1 的图块定位信息. 加载时用 图块坐标&宽高 分别除以 整个贴图宽高得到
-	GLfloat rx;
-	GLfloat ry;
-	GLfloat rw;
-	GLfloat rh;
+// 矩阵
+// todo: 内存按 xx 字节对齐?
+using Mat = std::array<float, 16>;
 
-	// 颜色
-	GLfloat cr;
-	GLfloat cg;
-	GLfloat cb;
-	GLfloat ca;
+// 每个矩形的 实例上下文
+// todo: anchor point support?
+struct QuadInstance {
+	// mvp
+	Mat mat;
+
+	// 坐标
+	float posX;
+	float posY;
+	float posZ;
+	// 贴图数组下标
+	float textureIndex;
+
+	// 图块范围 0 ~ 1 值域
+	float textureRectX;
+	float textureRectY;
+	float textureRectWidth;
+	float textureRectHeight;
+
+	// 混淆色
+	float colorR;
+	float colorG;
+	float colorB;
+	float colorA;
+
+	// 缩放
+	float scaleX;
+	float scaleY;
+	// 围绕z轴的旋转角度
+	float angleZ;
+	// 占位
+	float unused;
 };
 
-struct QuadData_offset_texcoord {
-	GLfloat x;
-	GLfloat y;
-	GLfloat u;
-	GLfloat v;
+// 所有矩形共享的 顶点结构
+struct QuadIndex {
+	float x;
+	float y;
+	float u;
+	float v;
 };
 
-inline static const QuadData_offset_texcoord offset_and_texcoord[6] = {
+// 6个顶点数据
+inline static const QuadIndex quadIndexs[6] = {
 { -0.5f, -0.5f, 0.0f, 0.0f },
 { 0.5f, -0.5f, 1.0f, 0.0f },
 { 0.5f, 0.5f, 1.0f, 1.0f },
@@ -53,6 +78,62 @@ inline static const QuadData_offset_texcoord offset_and_texcoord[6] = {
 { -0.5f, -0.5f, 0.0f, 0.0f },
 };
 
+// 和上面 quad 结构配合的 shader代码
+inline static decltype(auto) vsSrc = R"--(#version 300 es
+in vec4 in_index;
+
+in mat4 in_mat;
+in vec4 in_posXYZtextureIndex;
+in vec4 in_texRect;
+in vec4 in_colorRGBA;
+in vec4 in_scaleXYangleZU;
+
+out vec3 v_texcoord;
+out vec4 v_color;
+
+void main() {
+    vec2 offset = in_index.xy;
+    vec2 texcoord = in_index.zw;
+
+    vec2 center = in_posXYZtextureIndex.xy;
+	float z = in_posXYZtextureIndex.z;
+	float texidx = in_posXYZtextureIndex.w;
+
+    vec2 scale = in_scaleXYangleZU.xy;
+    float rotate = in_scaleXYangleZU.z;
+
+    float cos_theta = cos(rotate);
+    float sin_theta = sin(rotate);
+
+    vec2 v1 = vec2(offset.x * scale.x, offset.y * scale.y);
+    vec2 v2 = vec2(
+       dot(v1, vec2(cos_theta, sin_theta)),
+       dot(v1, vec2(-sin_theta, cos_theta))
+    );
+    vec4 v3 = in_mat * vec4((v2 + center), z, 1.0);
+
+	v_texcoord = vec3(in_texRect.x + texcoord.x * in_texRect.z, in_texRect.y + texcoord.y * in_texRect.w, texidx);
+	v_color = in_colorRGBA;
+    gl_Position = vec4(v3.x, v3.y, z, 1.0);
+}
+)--";
+
+// todo: 贴图数组
+inline static decltype(auto) fsSrc = R"--(#version 300 es
+precision mediump float;
+
+uniform sampler2D u_sampler;
+
+in vec3 v_texcoord;
+in vec4 v_color;
+
+out vec4 out_color;
+
+void main() {
+	out_color = texture(u_sampler, v_texcoord.xy) * v_color;
+}
+)--";
+
 namespace GameLogic {
 	struct Scene;
 }
@@ -60,69 +141,20 @@ namespace GameLogic {
 struct Game : xx::es::Context<Game> {
 	static Game& Instance() { return *(Game*)instance; }
 
-	inline static decltype(auto) vsSrc = R"--(#version 300 es
-uniform vec4 u_projection;
-
-in vec4 in_offset_texcoord;
-
-in vec4 in_center_scale_rotate;
-in vec4 in_rect;
-in vec4 in_color;
-
-out vec2 v_texcoord;
-out vec4 v_color;
-
-void main() {
-    vec2 offset = in_offset_texcoord.xy;
-    vec2 texcoord = in_offset_texcoord.zw;
-    vec2 center = in_center_scale_rotate.xy;
-    float scale = in_center_scale_rotate.z;
-    float rotate = in_center_scale_rotate.w;
-
-    float cos_theta = cos(rotate);
-    float sin_theta = sin(rotate);
-    vec2 v1 = offset * scale;
-    vec2 v2 = vec2(
-       dot(v1, vec2(cos_theta, sin_theta)),
-       dot(v1, vec2(-sin_theta, cos_theta))
-       );
-    vec2 v3 = (v2 + center) * u_projection.xy + u_projection.zw;
-
-	v_texcoord = vec2(in_rect.x + texcoord.x * in_rect.z, in_rect.y + texcoord.y * in_rect.w);
-	v_color = in_color;
-    gl_Position = vec4(v3.x, v3.y, 0.0, 1.0);
-}
-)--";
-
-	inline static decltype(auto) fsSrc = R"--(#version 300 es
-precision mediump float;
-
-uniform sampler2D u_sampler;
-
-in vec2 v_texcoord;
-in vec4 v_color;
-
-out vec4 out_color;
-
-void main() {
-	out_color = texture(u_sampler, v_texcoord) * v_color;
-}
-)--";
-	// 用这种写法 可以不开 blend. 但是会有黑边
-	//vec4 c = texture(u_sampler, v_texcoord);
-	//if (c.a < 0.01) discard;
-	//out_color = c;
-
-
 	xx::es::Shader vs, fs;
 	xx::es::Program ps;
 	xx::es::VertexArrays vao;
 	xx::es::Buffer vbo1, vbo2;
 	xx::es::Texture tex;
-	GLuint u_projection{}, u_sampler{}, in_offset_texcoord{}, in_center_scale_rotate{}, in_rect{}, in_color{};
+	GLuint u_sampler{}, in_index{}, in_mat{}, in_posXYZtextureIndex{}, in_texRect{}, in_colorRGBA{}, in_scaleXYangleZU{};
 
 	// 个数上限. Run 前可改
 	GLuint m_max_quad_count = 1000000;
+
+	// projection 矩阵( 在 GLInit 中初始化 )
+	Mat matProj;
+
+	// todo: 贴图下标分配器
 
 	// 逻辑场景
 	xx::Shared<GameLogic::Scene> scene;
@@ -169,7 +201,6 @@ namespace GameLogic {
 	static const int fooRadius = 50;
 	static const int fooSpeed = 5;
 	static const int fooFindNeighborLimit = 20;	// 9格范围内通常能容纳的个数
-
 
 	struct Scene;
 	struct Foo {
@@ -228,7 +259,9 @@ namespace GameLogic {
 			count = 0;
 			auto siz = objs.size();
 			// 这里先简化，没有删除行为。否则就要记录到线程安全队列，事后批量删除
+#ifdef NDEBUG
 #pragma omp parallel for
+#endif
 			for (int i = 0; i < siz; ++i) {
 				objs[i].Update(this);
 			}
@@ -331,7 +364,26 @@ void Game::Update() {
 	scene->Update();
 }
 
+inline void CreateOrthographicOffCenter(float const& left, float const& right, float const& bottom, float const& top, float const& zNearPlane, float const& zFarPlane, Mat& dst) {
+	assert(right != left);
+	assert(top != bottom);
+	assert(zFarPlane != zNearPlane);
+
+	dst.fill(0);
+	dst[0] = 2 / (right - left);
+	dst[5] = 2 / (top - bottom);
+	dst[10] = 2 / (zNearPlane - zFarPlane);
+
+	dst[12] = (left + right) / (left - right);
+	dst[13] = (top + bottom) / (bottom - top);
+	dst[14] = (zNearPlane + zFarPlane) / (zNearPlane - zFarPlane);
+	dst[15] = 1;
+}
+
 int Game::GLInit() {
+	// fill matrix
+	CreateOrthographicOffCenter(0, (float)width, 0, (float)height, -1024, 1024, matProj);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -345,12 +397,13 @@ int Game::GLInit() {
 	ps = LinkProgram(vs, fs); if (!ps) return __LINE__;
 
 	// ps args idxs
-	u_projection = glGetUniformLocation(ps, "u_projection");
 	u_sampler = glGetUniformLocation(ps, "u_sampler");
-	in_offset_texcoord = glGetAttribLocation(ps, "in_offset_texcoord");
-	in_center_scale_rotate = glGetAttribLocation(ps, "in_center_scale_rotate");
-	in_rect = glGetAttribLocation(ps, "in_rect");
-	in_color = glGetAttribLocation(ps, "in_color");
+	in_index = glGetAttribLocation(ps, "in_index");
+	in_mat = glGetAttribLocation(ps, "in_mat");
+	in_posXYZtextureIndex = glGetAttribLocation(ps, "in_posXYZtextureIndex");
+	in_texRect = glGetAttribLocation(ps, "in_texRect");
+	in_colorRGBA = glGetAttribLocation(ps, "in_colorRGBA");
+	in_scaleXYangleZU = glGetAttribLocation(ps, "in_scaleXYangleZU");
 
 	// tex
 	tex = LoadEtc2TextureFile(rootPath / "b.pkm");
@@ -363,7 +416,7 @@ int Game::GLInit() {
 		glGenBuffers(1, &vbo1.handle);
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, vbo1);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(QuadData_center_scale_rotate_uvrect_color) * m_max_quad_count, nullptr, GL_STREAM_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(QuadInstance) * m_max_quad_count, nullptr, GL_STREAM_DRAW);
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -371,7 +424,7 @@ int Game::GLInit() {
 		glGenBuffers(1, &vbo2.handle);
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, vbo2);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(offset_and_texcoord), offset_and_texcoord, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(quadIndexs), quadIndexs, GL_STATIC_DRAW);
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
@@ -385,68 +438,108 @@ void Game::Draw() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(ps);
-	glUniform4f(u_projection, 2.0f / width, 2.0f / height, -1.0f, -1.0f);
+	//glUniform4f(u_projection, 2.0f / width, 2.0f / height, -1.0f, -1.0f);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glUniform1i(u_sampler, 0);
+	check_gl_error();
 
 	glBindVertexArray(vao);
+	check_gl_error();
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo2);
-	glVertexAttribPointer(in_offset_texcoord, 4, GL_FLOAT, GL_FALSE, sizeof(QuadData_offset_texcoord), 0);
-	glEnableVertexAttribArray(in_offset_texcoord);
+	glVertexAttribPointer(in_index, 4, GL_FLOAT, GL_FALSE, sizeof(QuadIndex), 0);
+	glEnableVertexAttribArray(in_index);
+	check_gl_error();
 
 	auto numQuads = (GLsizei)scene->objs.size();
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo1);
 	{
-		auto buf = (QuadData_center_scale_rotate_uvrect_color*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(QuadData_center_scale_rotate_uvrect_color) * numQuads,
+		auto buf = (QuadInstance*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(QuadInstance) * numQuads,
 			GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
 		auto foos = scene->objs.data();
+#ifdef NDEBUG
 #pragma omp parallel for
+#endif
 		for (int i = 0; i < numQuads; ++i) {
 			auto& b = buf[i];
 			auto const& f = foos[i];
-			b.x = f.xy.x * 0.1225f;
-			b.y = f.xy.y * 0.1225f;
-			b.scale = (15.f / GameLogic::fooRadius) * f.radius;
-			b.rotate = 0;
 
-			b.rx = 0;
-			b.ry = 0;
-			b.rw = 1.f;
-			b.rh = 1.f;
+			b.mat = matProj;
 
-			b.cr = b.x / w;
-			b.cg = b.x / w;
-			b.cb = b.y / h;
-			b.ca = 1.f;
+			b.posX = f.xy.x * 0.1225f;
+			b.posY = f.xy.y * 0.1225f;
+			b.posZ = 0;
+			b.textureIndex = 0;	// todo
+
+			b.textureRectX = 0;
+			b.textureRectY = 0;
+			b.textureRectWidth = 1.f;
+			b.textureRectHeight = 1.f;
+
+			b.colorR = b.posX / w;
+			b.colorG = b.colorR;
+			b.colorB = b.posY / h;
+			b.colorA = 1.f;
+
+			b.scaleX = (15.f / GameLogic::fooRadius) * f.radius;
+			b.scaleY = b.scaleX;
+			b.angleZ = 0;
 		}
 	}
 	glUnmapBuffer(GL_ARRAY_BUFFER);
+	check_gl_error();
 
-	glVertexAttribPointer(in_center_scale_rotate, 4, GL_FLOAT, GL_FALSE, sizeof(QuadData_center_scale_rotate_uvrect_color), (GLvoid*)offsetof(QuadData_center_scale_rotate_uvrect_color, x));
-	glVertexAttribDivisor(in_center_scale_rotate, 1);
-	glEnableVertexAttribArray(in_center_scale_rotate);
+	//glVertexAttribPointer(in_mat, 16, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, mat));
+	{
+		glVertexAttribPointer(in_mat + 0, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, mat));
+		glVertexAttribPointer(in_mat + 1, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)(offsetof(QuadInstance, mat) + sizeof(float) * 4));
+		glVertexAttribPointer(in_mat + 2, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)(offsetof(QuadInstance, mat) + sizeof(float) * 8));
+		glVertexAttribPointer(in_mat + 3, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)(offsetof(QuadInstance, mat) + sizeof(float) * 12));
+		glVertexAttribDivisor(in_mat + 0, 1);
+		glVertexAttribDivisor(in_mat + 1, 1);
+		glVertexAttribDivisor(in_mat + 2, 1);
+		glVertexAttribDivisor(in_mat + 3, 1);
+		glEnableVertexAttribArray(in_mat + 0);
+		glEnableVertexAttribArray(in_mat + 1);
+		glEnableVertexAttribArray(in_mat + 2);
+		glEnableVertexAttribArray(in_mat + 3);
+	}
+	check_gl_error();
 
-	glVertexAttribPointer(in_rect, 4, GL_FLOAT, GL_FALSE, sizeof(QuadData_center_scale_rotate_uvrect_color), (GLvoid*)offsetof(QuadData_center_scale_rotate_uvrect_color, rx));
-	glVertexAttribDivisor(in_rect, 1);
-	glEnableVertexAttribArray(in_rect);
+	glVertexAttribPointer(in_posXYZtextureIndex, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, posX));
+	glVertexAttribDivisor(in_posXYZtextureIndex, 1);
+	glEnableVertexAttribArray(in_posXYZtextureIndex);
+	check_gl_error();
 
-	glVertexAttribPointer(in_color, 4, GL_FLOAT, GL_FALSE, sizeof(QuadData_center_scale_rotate_uvrect_color), (GLvoid*)offsetof(QuadData_center_scale_rotate_uvrect_color, cr));
-	glVertexAttribDivisor(in_color, 1);
-	glEnableVertexAttribArray(in_color);
+	glVertexAttribPointer(in_texRect, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, textureRectX));
+	glVertexAttribDivisor(in_texRect, 1);
+	glEnableVertexAttribArray(in_texRect);
+	check_gl_error();
 
-	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, numQuads);
+	glVertexAttribPointer(in_colorRGBA, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, colorR));
+	glVertexAttribDivisor(in_colorRGBA, 1);
+	glEnableVertexAttribArray(in_colorRGBA);
+	check_gl_error();
+
+	glVertexAttribPointer(in_scaleXYangleZU, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstance), (GLvoid*)offsetof(QuadInstance, scaleX));
+	glVertexAttribDivisor(in_scaleXYangleZU, 1);
+	glEnableVertexAttribArray(in_scaleXYangleZU);
+	check_gl_error();
+
+	glDrawArraysInstanced(GL_TRIANGLES, 0, _countof(quadIndexs), numQuads);
 	check_gl_error();
 }
 
 int main() {
+#ifdef NDEBUG
 	// 拿一半的 cpu 跑物理( 对于超线程 cpu 来说这样挺好 )
 	auto numThreads = std::thread::hardware_concurrency();
 	omp_set_num_threads(numThreads / 2);
 	omp_set_dynamic(0);
+#endif
 
 	Game g;
 	g.Init(1920, 1080, 200000, false);

@@ -173,7 +173,6 @@ void Game::Render() {
 
 	// TODO: Add your rendering code here.
 
-
 	static XMVECTOR Eye = XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f);
 	static XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	static XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -376,6 +375,7 @@ void Game::CreateResources() {
 	m_d3dContext->OMSetRenderTargets(_countof(nullViews), nullViews, nullptr);
 	m_renderTargetView.Reset();
 	m_depthStencilView.Reset();
+	m_blendState.Reset();
 	m_d3dContext->Flush();
 
 	const UINT backBufferWidth = static_cast<UINT>(m_outputWidth);
@@ -590,7 +590,7 @@ float4 PS( PS_INPUT input) : SV_Target {
 
 	// Load the Texture
 	//DX::ThrowIfFailed(CreateDDSTextureFromFile(m_d3dDevice.Get(), L"seafloor.dds", nullptr, &g_tex));
-	DX::ThrowIfFailed(CreateWICTextureFromFile(m_d3dDevice.Get(), m_d3dContext.Get(), L"seafloor.dds", nullptr, &g_tex));
+	DX::ThrowIfFailed(CreateWICTextureFromFile(m_d3dDevice.Get(), m_d3dContext.Get(), L"../res/b.png", nullptr, &g_tex));
 
 	// Create the sample state
 	D3D11_SAMPLER_DESC sampDesc = {};
@@ -602,6 +602,22 @@ float4 PS( PS_INPUT input) : SV_Target {
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	DX::ThrowIfFailed(m_d3dDevice->CreateSamplerState(&sampDesc, &g_ss));
+
+	// Create blend state
+	D3D11_BLEND_DESC blendStateDescription = {};
+	blendStateDescription.RenderTarget[0].BlendEnable = TRUE;
+	blendStateDescription.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blendStateDescription.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blendStateDescription.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendStateDescription.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendStateDescription.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blendStateDescription.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendStateDescription.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	DX::ThrowIfFailed(m_d3dDevice->CreateBlendState(&blendStateDescription, &m_blendState));
+
+	// Set defalt blend state for alpha display
+	float blendFactor[] = { 0.f,0.f,0.f,0.f };
+	m_d3dContext->OMSetBlendState(m_blendState.Get(), blendFactor, 0xffffffff);
 }
 
 void Game::OnDeviceLost() {
@@ -616,6 +632,7 @@ void Game::OnDeviceLost() {
 
 	// TODO: Add Direct3D resource cleanup here.
 
+	m_blendState.Reset();
 	m_depthStencilView.Reset();
 	m_renderTargetView.Reset();
 	m_swapChain.Reset();
