@@ -16,7 +16,7 @@ namespace xx::es {
 		GLuint handle{};
 		UD ud{};
 
-		XX_FORCE_INLINE operator GLuint const& () const { return handle; }
+		operator GLuint const& () const { return handle; }
 
 		GLRes() = default;
 		GLRes(GLRes const&) = delete;
@@ -37,11 +37,11 @@ namespace xx::es {
 		bool operator==(GLuint const& o) { return handle == o; }
 		bool operator!=(GLuint const& o) { return handle != o; }
 
-		XX_FORCE_INLINE void operator=(GLuint const& h) {
+		void operator=(GLuint const& h) {
 			Reset();
 			handle = h;
 		}
-		XX_FORCE_INLINE void Reset() {
+		void Reset() {
 			if (handle) {
 				if constexpr (T == GLResTypes::shader) { glDeleteShader(handle); }
 				if constexpr (T == GLResTypes::program) { glDeleteProgram(handle); }
@@ -98,36 +98,36 @@ namespace xx::es {
 		uint64_t numFrames = 0;
 		double fpsTimer = 0;
 
-		inline void onGLFWError(int num, const char* msg) {
+		void onGLFWError(int num, const char* msg) {
 			lastErrorNumber = num;
 			lastErrorMessage = msg;
 		}
-		inline void onMouseButtonCallback(int button, int action, int modify) {
+		void onMouseButtonCallback(int button, int action, int modify) {
 			//std::cout << button << " " << action << " " << modify << std::endl;
 		}
-		inline void onCursorPosCallback(double x, double y) {
+		void onCursorPosCallback(double x, double y) {
 			//std::cout << x << " " << y << std::endl;
 		}
-		inline void onScrollCallback(double x, double y) {
+		void onScrollCallback(double x, double y) {
 			//std::cout << x << " " << y << std::endl;
 		}
-		inline void onKeyCallback(int key, int scancode, int action, int mods) {
+		void onKeyCallback(int key, int scancode, int action, int mods) {
 			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 				glfwSetWindowShouldClose(wnd, GLFW_TRUE);
 			}
 		}
-		inline void onCharCallback(unsigned int character) {}
-		inline void onWindowPosCallback(int x, int y) {}
-		inline void onFramebufferSizeCallback(int w, int h) {
+		void onCharCallback(unsigned int character) {}
+		void onWindowPosCallback(int x, int y) {}
+		void onFramebufferSizeCallback(int w, int h) {
 			width = w;
 			height = h;
 		}
-		inline void onWindowSizeCallback(int w, int h) {
+		void onWindowSizeCallback(int w, int h) {
 			width = w;
 			height = h;
 		}
-		inline void onWindowIconifyCallback(int iconified) {}
-		inline void onWindowFocusCallback(int focused) {}
+		void onWindowIconifyCallback(int iconified) {}
+		void onWindowFocusCallback(int focused) {}
 
 		Context() {
 			instance = this;
@@ -136,7 +136,7 @@ namespace xx::es {
 			instance = nullptr;
 		}
 
-		inline int Run() {
+		int Run() {
 			/************************************************************************************************/
 			// 初始化窗口容器
 
@@ -222,7 +222,7 @@ namespace xx::es {
 		}
 
 
-		inline void ShowFpsInTitle() {
+		void ShowFpsInTitle() {
 			if (lastTime > fpsTimer) {
 				fpsTimer = lastTime + 0.5;
 				glfwSetWindowTitle(wnd, (title + std::to_string((double)numFrames / (lastTime - beginTime))).c_str());
@@ -244,7 +244,7 @@ namespace xx::es {
 		std::vector<GLint> codeLens;
 
 		// 加载 shader 代码段. 返回 0 代表出错
-		inline Shader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
+		Shader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
 			// 前置检查
 			if (!codes_.size() || !(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER)) {
 				lastErrorNumber = __LINE__;
@@ -295,15 +295,15 @@ namespace xx::es {
 			return shader;
 		}
 
-		inline Shader LoadVertexShader(std::initializer_list<std::string_view>&& codes_) {
+		Shader LoadVertexShader(std::initializer_list<std::string_view>&& codes_) {
 			return LoadShader(GL_VERTEX_SHADER, std::move(codes_));
 		}
-		inline Shader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_) {
+		Shader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_) {
 			return LoadShader(GL_FRAGMENT_SHADER, std::move(codes_));
 		}
 
 		// 用 vs fs 链接出 program. 返回 0 表示失败
-		inline Program LinkProgram(GLuint const& vs, GLuint const& fs) {
+		Program LinkProgram(GLuint const& vs, GLuint const& fs) {
 			// 创建一个 program. 返回 0 表示失败
 			auto program = glCreateProgram();
 			if (!program) { CheckGLError(__LINE__); return 0; }
@@ -344,7 +344,7 @@ namespace xx::es {
 
 		//// target: GL_ARRAY_BUFFER, GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, or GL_UNIFORM_BUFFER. 
 		//// usage:  GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY, GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, or GL_DYNAMIC_COPY. 
-		//inline Buffer LoadBuffer(GLenum const& target, void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		//Buffer LoadBuffer(GLenum const& target, void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
 		//	GLuint vbo = 0;
 		//	// 申请
 		//	glGenBuffers(1, &vbo);
@@ -364,16 +364,16 @@ namespace xx::es {
 		//	return vbo;
 		//}
 
-		//inline Buffer LoadVertices(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		//Buffer LoadVertices(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
 		//	return LoadBuffer(GL_ARRAY_BUFFER, data, len, usage);
 		//}
-		//inline Buffer LoadIndexes(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
+		//Buffer LoadIndexes(void const* const& data, GLsizeiptr const& len, GLenum const& usage = GL_STATIC_DRAW) {
 		//	return LoadBuffer(GL_ELEMENT_ARRAY_BUFFER, data, len, usage);
 		//}
 
 
 		// 加载 etc2 压缩纹理数据. 返回 0 表示出错
-		inline Texture LoadEtc2TextureData(void* const& data, GLsizei const& len, GLsizei const& width, GLsizei const& height, bool const& hasAlpha = true) {
+		Texture LoadEtc2TextureData(void* const& data, GLsizei const& len, GLsizei const& width, GLsizei const& height, bool const& hasAlpha = true) {
 			GLuint t = 0;
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glGenTextures(1, &t);
@@ -397,7 +397,7 @@ namespace xx::es {
 
 		// 加载 文件头部以 "PKM 20" 或 "«KTX 11»" 打头的压缩纹理数据文件
 		// 支持加载 zip 压缩后的 pkm 或 ktx 文件。头部为 50 4B 03 04 "PK.."，里面只可以有 1 个不带路径的数据文件  ( todo )
-		inline Texture LoadEtc2TextureFile(std::filesystem::path const& fp) {
+		Texture LoadEtc2TextureFile(std::filesystem::path const& fp) {
 			xx::Data d;
 			if (int r = xx::ReadAllBytes(fp, d)) {
 				lastErrorNumber = __LINE__;

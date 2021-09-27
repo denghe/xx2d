@@ -34,7 +34,8 @@ ID3D11SamplerState* g_ss = nullptr;
 
 // 因为 index 字节长度为 2, 故最大值约为 65536/4 = 16384
 // todo: 创建多个 g_bufVerts 以容纳更多顶点. 每帧 cleanup 后将要绘制的对象 idx 无脑追加到临时容器( 追加过程中可能分组，堆排序啥的? ), 最后copy 相关数据到显存( 动态合批 )
-size_t g_numVerts = 16384;
+//size_t g_numVerts = 16384;
+size_t g_numVerts = 10000;
 
 ID3D11Buffer* g_bufVerts = nullptr;	// dynamic + cpu write
 std::vector<Vert> g_verts;
@@ -173,12 +174,13 @@ void Game::Render() {
 
 	// TODO: Add your rendering code here.
 
-	static XMVECTOR Eye = XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f);
-	static XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	static XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	static auto v = XMMatrixLookAtLH(Eye, At, Up);
-	static auto p = XMMatrixPerspectiveFovLH(XM_PIDIV4, m_outputWidth / (FLOAT)m_outputHeight, 0.01f, 100.0f);
-	static auto vp = v * p;
+	//static XMVECTOR Eye = XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f);
+	//static XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	//static XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	//static auto v = XMMatrixLookAtLH(Eye, At, Up);
+	//static auto p = XMMatrixPerspectiveFovLH(XM_PIDIV4, m_outputWidth / (FLOAT)m_outputHeight, 0.01f, 100.0f);
+	//static auto vp = v * p;
+	static auto vp = XMMatrixOrthographicLH(m_outputWidth, m_outputHeight, -1024, 1024);
 
 	//auto&& t = (float)m_timer.GetTotalSeconds();
 	//auto m = XMMatrixRotationY(t);
@@ -188,14 +190,15 @@ void Game::Render() {
 	mc.color = { 0.7f, 0.7f, 0.7f, 1.0f };
 	m_d3dContext->UpdateSubresource(g_bufMvpColor, 0, nullptr, &mc, 0, 0);
 
+	const int tw = 128, th = 128;
 
 	// 模拟填充 g_verts by Nodes
 	g_verts.clear();
 	for (size_t i = 0; i < g_numVerts; i++) {
 		g_verts.push_back({ { 0,0,0 }, { 0,0 } });
-		g_verts.push_back({ { 1,0,0 }, { 1,0 } });
-		g_verts.push_back({ { 1,1,0 }, { 1,1 } });
-		g_verts.push_back({ { 0,1,0 }, { 0,1 } });
+		g_verts.push_back({ { tw,0,0 }, { 1,0 } });
+		g_verts.push_back({ { tw,th,0 }, { 1,1 } });
+		g_verts.push_back({ { 0,th,0 }, { 0,1 } });
 	}
 
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -279,8 +282,8 @@ void Game::OnWindowSizeChanged(int width, int height) {
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const noexcept {
 	// TODO: Change to desired default window size (note minimum size is 320x200).
-	width = 1280;
-	height = 720;
+	width = 1920;
+	height = 1080;
 }
 
 // These are the resources that depend on the device.
