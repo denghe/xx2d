@@ -577,14 +577,11 @@ struct QuadData_offset_texcoord {
 	uint16_t y;
 };
 
-inline static const QuadData_offset_texcoord offset_and_texcoord[6] = {
+inline static const QuadData_offset_texcoord offset_and_texcoord[4] = {
 { 0, 0 },
+{ 0, 65535 },
 { 65535, 0 },
 { 65535, 65535 },
-
-{ 65535, 65535 },
-{ 0, 65535 },
-{ 0, 0 },
 };
 
 struct Game : xx::es::Context<Game> {
@@ -732,7 +729,7 @@ void main() {
 		glVertexAttribDivisor(in_scale_rotate, 1);
 		glEnableVertexAttribArray(in_scale_rotate);
 
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (GLsizei)quads.size());
+		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, _countof(offset_and_texcoord), (GLsizei)quads.size());
 		check_gl_error();
 	}
 
@@ -750,7 +747,7 @@ void main() {
 		for (auto& q : quads) {
 			q.x = random_of_range(0, w);
 			q.y = random_of_range(0, h);
-			q.scale = 128;
+			q.scale = 64;// 128;
 			q.rotate = 0;
 		}
 	}
@@ -758,7 +755,7 @@ void main() {
 
 int main() {
 	Game g;
-	g.Init(1920, 1080, 10000/*00*/, false);
+	g.Init(1920, 1080, 1000000, false);
 	if (int r = g.Run()) {
 		std::cout << "g.Run() r = " << r << ", lastErrorNumber = " << g.lastErrorNumber << ", lastErrorMessage = " << g.lastErrorMessage << std::endl;
 	}

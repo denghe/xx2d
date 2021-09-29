@@ -12,33 +12,51 @@ using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
 
+//struct QuadData_center_scale_rotate {
+//	int16_t x;
+//	int16_t y;
+//	int16_t scale;
+//	int16_t rotate;
+//};
+//std::vector<QuadData_center_scale_rotate> quads;
 
-// todo: 似乎这里可以不用携带 z, 可以移到 MvpColor 内？
-struct Vert {
-	XMFLOAT3 pos;
-	XMFLOAT2 uv;
+struct QuadData_vert {
+	uint16_t x;
+	uint16_t y;
+};
+QuadData_vert verts[4] = {
+{ 0, 0 },
+{ 0, 65535 },
+{ 65535, 0 },
+{ 65535, 65535 },
 };
 
-struct MvpColor {
-	XMMATRIX mvp;
-	XMFLOAT4 color;
+struct QuadData_center_scale_rotate {
+	XMFLOAT4 csr;
 };
+std::vector<QuadData_center_scale_rotate> quads;
+
+//struct QuadData_vert {
+//	XMFLOAT2 uv;
+//};
+//QuadData_vert verts[4] = {
+//XMFLOAT2{ 0, 0 },
+//XMFLOAT2{ 0, 1 },
+//XMFLOAT2{ 1, 0 },
+//XMFLOAT2{ 1, 1 },
+//};
 
 ID3D11VertexShader* g_vs = nullptr;
 ID3D11PixelShader* g_ps = nullptr;
 ID3D11InputLayout* g_il = nullptr;
 
-ID3D11Buffer* g_bufMvpColor = nullptr;
 ID3D11ShaderResourceView* g_tex = nullptr;
 ID3D11SamplerState* g_ss = nullptr;
 
-size_t g_numVerts = 100000;
+ID3D11Buffer* g_bufInstances = nullptr;	// dynamic + cpu write
+ID3D11Buffer* g_bufVerts = nullptr;		// read only 复用
+ID3D11Buffer* g_bufProj = nullptr;		// read only 复用
 
-ID3D11Buffer* g_bufVerts = nullptr;	// dynamic + cpu write
-std::vector<Vert> g_verts;
-
-ID3D11Buffer* g_bufIdxs = nullptr;	// read only 复用
-std::vector<DWORD> g_idxs;
 
 double fpsTimer = 0;
 
@@ -72,6 +90,23 @@ void Game::Initialize(HWND window, int width, int height) {
 	m_timer.SetFixedTimeStep(true);
 	m_timer.SetTargetElapsedSeconds(1.0 / 60);
 	*/
+
+	auto random_of_range = [](float min, float max) {
+		return min + (max - min) * (float(rand()) / RAND_MAX);
+	};
+
+	int n = 1000000;
+	quads.resize(n);
+	for (auto& q : quads) {
+		q.csr.x = random_of_range(0, width);
+		q.csr.y = random_of_range(0, height);
+		q.csr.z = 128;
+		q.csr.w = 0;
+		//q.x = random_of_range(0, width);
+		//q.y = random_of_range(0, height);
+		//q.scale = 128;
+		//q.rotate = 0;
+	}
 }
 
 // Executes the basic game loop.
@@ -104,29 +139,6 @@ void Game::Update(DX::StepTimer const& timer) {
 		ExitGame();
 	}
 
-	if (kb.Up || kb.W) {
-		y += elapsedTime;
-	}
-
-	if (kb.Down || kb.S) {
-		y -= elapsedTime;
-	}
-
-	if (kb.Left || kb.A) {
-		x += elapsedTime;
-	}
-
-	if (kb.Right || kb.D) {
-		x -= elapsedTime;
-	}
-
-	if (m_keyboardTracker.pressed.Space) {
-		x += 1;
-		y += 1;
-	}
-
-
-
 
 	auto m = m_mouse->GetState();
 	//if (!m_mouse->IsConnected()) ...
@@ -147,16 +159,6 @@ void Game::Update(DX::StepTimer const& timer) {
 		m_mouse->SetMode(Mouse::MODE_ABSOLUTE); // system cursor is visible 
 	}
 
-	//if (m.xButton1)
-	//{
-	//    m_mouse->ResetScrollWheelValue
-	//}
-	//if (m.xButton2)
-	//{
-	//}
-
-
-
 	// TODO: Add your game logic here.
 	elapsedTime;
 }
@@ -171,49 +173,30 @@ void Game::Render() {
 
 	// TODO: Add your rendering code here.
 
-	//static XMVECTOR Eye = XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f);
-	//static XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	//static XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	//static auto v = XMMatrixLookAtLH(Eye, At, Up);
-	//static auto p = XMMatrixPerspectiveFovLH(XM_PIDIV4, m_outputWidth / (FLOAT)m_outputHeight, 0.01f, 100.0f);
-	//static auto vp = v * p;
-	static auto vp = XMMatrixOrthographicLH(m_outputWidth, m_outputHeight, -1024, 1024);
-
-	//auto&& t = (float)m_timer.GetTotalSeconds();
-	//auto m = XMMatrixRotationY(t);
-
-	MvpColor mc;
-	mc.mvp = XMMatrixTranspose(/*m * */vp);
-	mc.color = { 0.7f, 0.7f, 0.7f, 1.0f };
-	m_d3dContext->UpdateSubresource(g_bufMvpColor, 0, nullptr, &mc, 0, 0);
-
-	const int tw = 128, th = 128;
-	//const int tw = 64, th = 64;
-
-	// 模拟填充 g_verts by Nodes
-	g_verts.clear();
-	g_verts.reserve(g_numVerts * 4);
-	for (size_t i = 0; i < g_numVerts; i++) {
-		g_verts.push_back({ { 0,0,0 }, { 0,0 } });
-		g_verts.push_back({ { tw,0,0 }, { 1,0 } });
-		g_verts.push_back({ { tw,th,0 }, { 1,1 } });
-		g_verts.push_back({ { 0,th,0 }, { 0,1 } });
-	}
-
+	// fill global buf( u_projection )
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	m_d3dContext->Map(g_bufVerts, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	memcpy(d3dMappedResource.pData, g_verts.data(), sizeof(Vert) * g_verts.size());
-	m_d3dContext->Unmap(g_bufVerts, 0);
+	m_d3dContext->Map(g_bufProj, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	{
+		auto& d = *(XMFLOAT4*)d3dMappedResource.pData;
+		d.x = 2.0f / m_outputWidth;
+		d.y = 2.0f / m_outputHeight;
+		d.z = 0.5f;//-1.0f;
+		d.w = -1.0f;
+	}
+	m_d3dContext->Unmap(g_bufProj, 0);
 
-	m_d3dContext->VSSetShader(g_vs, nullptr, 0);
-	m_d3dContext->VSSetConstantBuffers(0, 1, &g_bufMvpColor);
+	// fill instance buf
+	m_d3dContext->Map(g_bufInstances, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	memcpy(d3dMappedResource.pData, quads.data(), sizeof(QuadData_center_scale_rotate) * quads.size());
+	m_d3dContext->Unmap(g_bufInstances, 0);
 
-	m_d3dContext->PSSetShader(g_ps, nullptr, 0);
-	m_d3dContext->PSSetConstantBuffers(0, 1, &g_bufMvpColor);
+	m_d3dContext->VSSetConstantBuffers(0, 1, &g_bufProj);
 	m_d3dContext->PSSetShaderResources(0, 1, &g_tex);
 	m_d3dContext->PSSetSamplers(0, 1, &g_ss);
 
-	m_d3dContext->DrawIndexed((UINT)(g_verts.size() / 4 * 6), 0, 0);
+	m_d3dContext->VSSetShader(g_vs, nullptr, 0);
+	m_d3dContext->PSSetShader(g_ps, nullptr, 0);
+	m_d3dContext->DrawInstanced(_countof(verts), (UINT)quads.size(), 0, 0);
 
 	Present();
 }
@@ -467,48 +450,53 @@ void Game::CreateResources() {
 	ZeroMemory(&vp, sizeof(D3D11_VIEWPORT));
 	vp.Width = (FLOAT)m_outputWidth;
 	vp.Height = (FLOAT)m_outputHeight;
-	//vp.MinDepth = 0.0f;
-	//vp.MaxDepth = 1.0f;
+	//vp.MinDepth = 0;
+	//vp.MaxDepth = 1;
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
 	m_d3dContext->RSSetViewports(1, &vp);
 
 	static std::string shaderCode = R"(
-//--------------------------------------------------------------------------------------
-
-Texture2D t : register( t0 );
-SamplerState s : register( s0 );
-
-cbuffer cbChangesEveryFrame : register( b0 ) {
-    matrix mvp;
-    float4 color;
+Texture2D t : register(t0);
+SamplerState s : register(s0);
+cbuffer BufProj : register(b0) {
+	float4 u_projection;
 };
 
-//--------------------------------------------------------------------------------------
-
 struct VS_INPUT {
-    float4 pos : POSITION;
-    float2 uv  : TEXCOORD0;
+	float2 vert					: TEXCOORD0;
+	float4 center_scale_rotate	: TEXCOORD1;
 };
 
 struct PS_INPUT {
-    float4 pos : SV_POSITION;
-    float2 uv  : TEXCOORD0;
+	float4 pos		: SV_POSITION;
+	float2 texcoord : TEXCOORD0;
 };
 
-//--------------------------------------------------------------------------------------
+PS_INPUT VS( VS_INPUT i ) {
+	PS_INPUT o;
+    float2 offset = float2(i.vert.x - 0.5, i.vert.y - 0.5);
+    float2 texcoord = i.vert;
+    float2 center = i.center_scale_rotate.xy;
+    float scale = i.center_scale_rotate.z;
+    float rotate = i.center_scale_rotate.w;
 
-PS_INPUT VS( VS_INPUT input ) {
-    PS_INPUT output = (PS_INPUT)0;
-    output.pos = mul( input.pos, mvp );
-    output.uv = input.uv;
-    return output;
+    float cos_theta = cos(rotate);
+    float sin_theta = sin(rotate);
+    float2 v1 = offset * scale;
+    float2 v2 = float2(
+       dot(v1, float2(cos_theta, sin_theta)),
+       dot(v1, float2(-sin_theta, cos_theta))
+    );
+    float2 v3 = (v2 + center) * u_projection.xy + u_projection.zw;
+
+    o.texcoord = texcoord;
+    o.pos = float4(v3.x, v3.y, 0.0, 1.0);
+	return o;
 }
 
-//--------------------------------------------------------------------------------------
-
-float4 PS( PS_INPUT input) : SV_Target {
-    return t.Sample( s, input.uv ) * color;
+float4 PS( PS_INPUT i ) : SV_Target {
+	return t.Sample(s, i.texcoord);
 }
 )";
 
@@ -521,8 +509,8 @@ float4 PS( PS_INPUT input) : SV_Target {
 
 	// Define the input layout
 	D3D11_INPUT_ELEMENT_DESC layout[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R16G16_UNORM, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
 	};
 	UINT numElements = ARRAYSIZE(layout);
 
@@ -541,59 +529,55 @@ float4 PS( PS_INPUT input) : SV_Target {
 	DX::ThrowIfFailed(m_d3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_ps));
 	pPSBlob->Release();
 
-	D3D11_SUBRESOURCE_DATA InitData = {};
-
-	// Create vertex buffer
+	// Prepare
 	D3D11_BUFFER_DESC bd = {};
+
+	// Create instance buffer
 	bd.Usage = D3D11_USAGE_DYNAMIC;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bd.ByteWidth = (UINT)(sizeof(Vert) * g_numVerts * 4);
-	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, nullptr, &g_bufVerts));
+	bd.MiscFlags = 0;
+	bd.StructureByteStride = 0;
+	bd.ByteWidth = sizeof(QuadData_center_scale_rotate) * 5000000;
+	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, nullptr, &g_bufInstances));
 
-	// Set vertex buffer
-	UINT stride = sizeof(Vert);
-	UINT offset = 0;
-	m_d3dContext->IASetVertexBuffers(0, 1, &g_bufVerts, &stride, &offset);
+	// Create const buffer ( float4 u_projection )
+	bd.Usage = D3D11_USAGE_DYNAMIC;
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	bd.MiscFlags = 0;
+	bd.StructureByteStride = 0;
+	bd.ByteWidth = sizeof(XMFLOAT4);
+	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, nullptr, &g_bufProj));
 
-	// Create index buffer
+	// Create vertex buffer & fill
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
-	if (g_idxs.empty()) {
-		g_idxs.reserve(g_numVerts * 6);
-		for (size_t i = 0; i < g_numVerts; i++) {
-			auto b = i * 4;
-			g_idxs.insert(g_idxs.begin(), {
-				(DWORD)(b + 0)
-				, (DWORD)(b + 2)
-				, (DWORD)(b + 1)
-				, (DWORD)(b + 2)
-				, (DWORD)(b + 0)
-				, (DWORD)(b + 3)
-				});
-		}
-	}
-	bd.ByteWidth = (UINT)(sizeof(DWORD) * g_idxs.size());
-	InitData.pSysMem = g_idxs.data();
-	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, &InitData, &g_bufIdxs));
+	bd.MiscFlags = 0;
+	bd.StructureByteStride = 0;
+	bd.ByteWidth = sizeof(verts);
+	D3D11_SUBRESOURCE_DATA InitData = {};
+	InitData.pSysMem = verts;
+	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, &InitData, &g_bufVerts));
 
-	// Set index buffer
-	m_d3dContext->IASetIndexBuffer(g_bufIdxs, DXGI_FORMAT_R32_UINT, 0);
+	// Set buffers
+	unsigned int strides[2];
+	unsigned int offsets[2];
+	ID3D11Buffer* bufferPointers[2];
+	strides[0] = sizeof(QuadData_vert);
+	strides[1] = sizeof(QuadData_center_scale_rotate);
+	offsets[0] = 0;
+	offsets[1] = 0;
+	bufferPointers[0] = g_bufVerts;
+	bufferPointers[1] = g_bufInstances;
+	m_d3dContext->IASetVertexBuffers(0, 2, bufferPointers, strides, offsets);
 
 	// Set primitive topology
-	m_d3dContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// Create the constant buffers
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(MvpColor);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = 0;
-	DX::ThrowIfFailed(m_d3dDevice->CreateBuffer(&bd, nullptr, &g_bufMvpColor));
+	m_d3dContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	// Load the Texture
-	//DX::ThrowIfFailed(CreateDDSTextureFromFile(m_d3dDevice.Get(), L"seafloor.dds", nullptr, &g_tex));
-	DX::ThrowIfFailed(CreateWICTextureFromFile(m_d3dDevice.Get(), m_d3dContext.Get(), L"../res/b.png", nullptr, &g_tex));
+	DX::ThrowIfFailed(CreateWICTextureFromFile(m_d3dDevice.Get(), m_d3dContext.Get(), L"../../res/b.png", nullptr, &g_tex));
 
 	// Create the sample state
 	D3D11_SAMPLER_DESC sampDesc = {};
@@ -626,9 +610,9 @@ float4 PS( PS_INPUT input) : SV_Target {
 void Game::OnDeviceLost() {
 	if (g_ss) g_ss->Release();
 	if (g_tex) g_tex->Release();
-	if (g_bufMvpColor) g_bufMvpColor->Release();
+	if (g_bufProj) g_bufProj->Release();
+	if (g_bufInstances) g_bufInstances->Release();
 	if (g_bufVerts) g_bufVerts->Release();
-	if (g_bufIdxs) g_bufIdxs->Release();
 	if (g_il) g_il->Release();
 	if (g_vs) g_vs->Release();
 	if (g_ps) g_ps->Release();
