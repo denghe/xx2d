@@ -1,4 +1,5 @@
 ﻿#include "AppDelegate.h"
+#include <iostream>
 
 int main() {
 	gAppDelegate.Emplace();

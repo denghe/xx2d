@@ -1,4 +1,8 @@
 ﻿#pragma once
+#include <xx_string.h>
+#include <xx_macro_ext.h>
+#include <thread>
+
 #include "Ref.h"
 #include "Signal.h"
 #include "SceneTree.h"

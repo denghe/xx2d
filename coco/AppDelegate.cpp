@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "AppDelegate.h"
+#include <filesystem>
+#include <iostream>
 
 AppDelegate::AppDelegate() {
 	_resourceRootPath = std::filesystem::current_path() / "res";

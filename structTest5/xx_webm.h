@@ -380,7 +380,7 @@ namespace xx {
 			if (int r = libyuv::I420AlphaToARGB(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0)) return __LINE__;
 			// 红蓝交换
 			auto p = bytes.data();
-			for (int i = 0; i < w * h * 4; i += 4) {
+			for (uint32_t i = 0; i < w * h * 4; i += 4) {
 				std::swap(p[i + 0], p[i + 2]);
 			}
 			return 0;

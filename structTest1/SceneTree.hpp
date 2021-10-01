@@ -51,7 +51,7 @@ inline int SceneTree::MainLoop(int const& delayMS) {
 
 template<typename T, typename Name, typename ...Args, class>
 xx::Shared<T> SceneTree::CreateNode(Name&& name, Args&&...args) {
-	auto r = xx::MakeShared<T>(this, std::forward<Args>(args)...);
+	auto r = xx::Make<T>(this, std::forward<Args>(args)...);
 	r->name = std::forward<Name>(name);
 	r.header()->ud = &TypeInfoMappings<T>::typeInfo;
 	if constexpr (AutoEnableProcess<T>) {

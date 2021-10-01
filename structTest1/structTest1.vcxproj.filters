@@ -4,29 +4,11 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="xxlib">
-      <UniqueIdentifier>{e722cbb7-e937-4351-993f-01d0343c0234}</UniqueIdentifier>
-    </Filter>
     <Filter Include="bak">
       <UniqueIdentifier>{8dd1c71c-221f-4ea4-8def-9e149f664ea5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\xxlib\xx_data.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_obj.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_ptr.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_typehelpers.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_file.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
     <ClInclude Include="string_text_view.hpp">
       <Filter>bak</Filter>
     </ClInclude>
@@ -48,10 +30,5 @@
     <Text Include="bak.txt">
       <Filter>bak</Filter>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="..\xxlib\xx.natvis">
-      <Filter>xxlib</Filter>
-    </Natvis>
   </ItemGroup>
 </Project>

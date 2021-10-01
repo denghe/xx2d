@@ -23,7 +23,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "xx_typehelpers.h"
+#include <xx_helpers.h>
 
 using namespace DirectX;
 

@@ -484,21 +484,21 @@ namespace xx {
 
 		protected:
 
-#ifndef XX_FORCEINLINE
+#ifndef XX_FORCE_INLINE
 #ifndef NDEBUG
-#define XX_FORCEINLINE
+#define XX_FORCE_INLINE
 #else
 #ifdef _MSC_VER
-#define XX_FORCEINLINE __forceinline
+#define XX_FORCE_INLINE __forceinline
 #else
-#define XX_FORCEINLINE __attribute__((always_inline))
+#define XX_FORCE_INLINE __attribute__((always_inline))
 #endif
 #endif
 #endif
 
 			// 将一个 cell 下所有 items 压入 out
 			template<typename VT>
-			XX_FORCEINLINE void PushTo(int const& rIdx, int const& cIdx, VT& out) {
+			XX_FORCE_INLINE void PushTo(int const& rIdx, int const& cIdx, VT& out) {
 				int c = cells[rIdx * columnCount + cIdx];
 				while (c != -1) {
 					out.emplace_back(c);
@@ -508,7 +508,7 @@ namespace xx {
 
 			// 将一个 cell 下所有 在 x,y,r 圆范围内的 items 压入 out
 			template<typename VT>
-			XX_FORCEINLINE void PushTo(int const& rIdx, int const& cIdx, VT& out, XYType const& x, XYType const& y, XYType const& r) {
+			XX_FORCE_INLINE void PushTo(int const& rIdx, int const& cIdx, VT& out, XYType const& x, XYType const& y, XYType const& r) {
 				int c = cells[rIdx * columnCount + cIdx];
 				XYType rr = r * r;
 				while (c != -1) {

@@ -153,12 +153,12 @@ void main() {
 		return 0;
 	}
 
-	XX_FORCEINLINE void Update() {
+	XX_FORCE_INLINE void Update() {
 		ShowFpsInTitle();
 		n->Update();
 	}
 
-	XX_FORCEINLINE void Draw() {
+	XX_FORCE_INLINE void Draw() {
 		glClear(GL_COLOR_BUFFER_BIT);
 		n->Draw(projectionMatrix);
 		assert(!CheckGLError(__LINE__));
@@ -556,7 +556,7 @@ inline Matrix Scale(float const& xScale, float const& yScale, float const& zScal
 //		return 0;
 //	}
 //
-//	XX_FORCEINLINE void Update() {
+//	XX_FORCE_INLINE void Update() {
 //		ShowFpsInTitle();
 //
 //		if (verts.empty()) {
@@ -593,7 +593,7 @@ inline Matrix Scale(float const& xScale, float const& yScale, float const& zScal
 //		}
 //	}
 //
-//	XX_FORCEINLINE void Draw() {
+//	XX_FORCE_INLINE void Draw() {
 //		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //
 //		glUseProgram(ps); check_gl_error();

@@ -27,8 +27,7 @@
 #include "glew/glew.h"
 #include "glfw/glfw3.h"
 
-#include "xx_typehelpers.h"
-#include "xx_ptr.h"
+#include <xx_ptr.h>
 
 
 #define _USE_MATH_DEFINES

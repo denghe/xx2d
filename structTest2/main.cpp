@@ -1,5 +1,4 @@
 ﻿#include "Space2dPointIndex.h"
-#include "xx_typehelpers.h"
 #include "xx_ptr.h"
 
 using XYType = float; // int
@@ -18,7 +17,7 @@ int main() {
 	std::vector<xx::Shared<Monster>> ms;
 	ms.reserve(numMonsters);
 	for (i = 0; i < numMonsters; i++) {
-		ms.push_back(xx::MakeShared<Monster>((XYType)0, (XYType)0));
+		ms.push_back(xx::Make<Monster>((XYType)0, (XYType)0));
 	}
 
 	auto secs = xx::NowEpochSeconds();

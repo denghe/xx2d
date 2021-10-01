@@ -13,3 +13,10 @@ struct Ref {
 	template<typename U = T>
 	xx::Shared<U> SharedFromThis() const;
 };
+
+namespace xx {
+	template<typename T>
+	struct PtrHeaderSwitcher<T, std::enable_if_t< XX_IsTemplateOf(Ref, T)::value >> {
+		using type = PtrHeader;
+	};
+}

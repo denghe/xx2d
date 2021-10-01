@@ -17,7 +17,6 @@
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 
-#include "xx_typehelpers.h"
 #include "xx_ptr.h"
 
 #define _USE_MATH_DEFINES

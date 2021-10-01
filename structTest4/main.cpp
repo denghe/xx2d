@@ -413,14 +413,14 @@ int main() {
 //
 //#ifndef NDEBUG
 //#define XX_NOINLINE
-//#define XX_FORCEINLINE
+//#define XX_FORCE_INLINE
 //#else
 //#ifdef _MSC_VER
 //#define XX_NOINLINE __declspec(noinline)
-//#define XX_FORCEINLINE __forceinline
+//#define XX_FORCE_INLINE __forceinline
 //#else
 //#define XX_NOINLINE __attribute__((noinline))
-//#define XX_FORCEINLINE __attribute__((always_inline))
+//#define XX_FORCE_INLINE __attribute__((always_inline))
 //#endif
 //#endif
 //#define XX_INLINE inline
@@ -428,10 +428,10 @@ int main() {
 //class Mutex {
 //	std::atomic_flag flag = ATOMIC_FLAG_INIT;
 //public:
-//	XX_FORCEINLINE void lock() {
+//	XX_FORCE_INLINE void lock() {
 //		while (flag.test_and_set(std::memory_order_acquire)) Sleep(1);    // std::this_thread::yield()  // std::this_thread::sleep_for(std::chrono::microseconds(1));
 //	}
-//	XX_FORCEINLINE void unlock() {
+//	XX_FORCE_INLINE void unlock() {
 //		flag.clear(std::memory_order_release);
 //	}
 //};

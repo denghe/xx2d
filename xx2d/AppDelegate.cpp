@@ -1,4 +1,6 @@
 ﻿#include "AppDelegate.h"
+#include <iostream>
+#include <filesystem>
 
 AppDelegate::AppDelegate() {
 	resRootPath = std::filesystem::current_path() / "res";

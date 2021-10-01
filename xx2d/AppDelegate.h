@@ -7,6 +7,7 @@
 //#include "glad/glad.h"
 #include "Structs.h"
 #include <stack>
+#include <filesystem>
 
 struct AppDelegate {
 	AppDelegate(AppDelegate const&) = delete;

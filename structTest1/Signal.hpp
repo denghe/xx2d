@@ -8,12 +8,12 @@ inline Signal::Signal(Name&& name, Args&&... args) {
 
 
 template<std::size_t I, typename... Tp>
-XX_FORCEINLINE std::enable_if_t<I == sizeof...(Tp), int> Signal::FillTuple_(std::tuple<Tp...>& t) const {
+XX_FORCE_INLINE std::enable_if_t<I == sizeof...(Tp), int> Signal::FillTuple_(std::tuple<Tp...>& t) const {
 	return 0;
 }
 
 template<std::size_t I, typename... Tp>
-XX_FORCEINLINE std::enable_if_t < I < sizeof...(Tp), int> Signal::FillTuple_(std::tuple<Tp...>& t) const {
+XX_FORCE_INLINE std::enable_if_t < I < sizeof...(Tp), int> Signal::FillTuple_(std::tuple<Tp...>& t) const {
 	auto& a = std::get<I>(t);
 	typedef std::tuple_element_t<I, std::tuple<Tp...>> AT;
 	auto& b = args[I];

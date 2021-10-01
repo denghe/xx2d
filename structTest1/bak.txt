@@ -33,12 +33,12 @@ struct Node {
 	Node& operator=(Node const&) = delete;
 
 	template<typename T = Node>
-	XX_FORCEINLINE xx::Weak<T> WeakFromThis() const {
+	XX_FORCE_INLINE xx::Weak<T> WeakFromThis() const {
 		auto h = (xx::PtrHeader*)this - 1;
 		return *((xx::Weak<T>*) & h);
 	}
 	template<typename T = Node>
-	XX_FORCEINLINE xx::Shared<T> SharedFromThis() const {
+	XX_FORCE_INLINE xx::Shared<T> SharedFromThis() const {
 		return WeakFromThis<T>().Lock();
 	}
 
