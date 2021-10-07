@@ -1,0 +1,6 @@
+{
+  "refs": [],
+  "name": "tiledmap",
+  "files": [ "tm.cs" ],
+  "outdir_cpp": "cpp"
+}

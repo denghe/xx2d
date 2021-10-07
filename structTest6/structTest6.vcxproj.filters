@@ -2,5 +2,16 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="..\tiledmap\cpp\tiledmap.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\tiledmap\cpp\tiledmap.cpp.inc" />
+    <None Include="..\tiledmap\cpp\tiledmap.h.inc" />
+    <None Include="..\tiledmap\cpp\tiledmap_.h.inc" />
+    <None Include="..\tiledmap\tm.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\tiledmap\cpp\tiledmap.h" />
+    <ClInclude Include="..\tiledmap\cpp\tiledmap_ajson.h" />
   </ItemGroup>
 </Project>
