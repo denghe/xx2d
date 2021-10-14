@@ -1,7 +1,14 @@
 ﻿#pragma once
 
+
 #include "glmanager.hpp"
 #include "esMatrix.h"
+#include <DirectXMath.h>
+using namespace DirectX;
+#include <memory>
+#ifdef NDEBUG
+#include <omp.h>
+#endif
 
 inline int esGenCube(float scale, GLfloat** vertices, GLfloat** normals,
 	GLfloat** texCoords, GLuint** indices)
@@ -150,7 +157,7 @@ inline int esGenCube(float scale, GLfloat** vertices, GLfloat** normals,
 #define random rand
 #endif
 
-#define NUM_INSTANCES   100
+#define NUM_INSTANCES   1000000
 #define POSITION_LOC    0
 #define COLOR_LOC       1
 #define MVP_LOC         2
@@ -192,7 +199,7 @@ void main()
 
 	int       numIndices;
 
-	GLfloat   angle[NUM_INSTANCES];
+	std::unique_ptr<GLfloat[]>   angle = std::unique_ptr<GLfloat[]>(new GLfloat[NUM_INSTANCES]);
 
 
 	GLTest4()
@@ -207,7 +214,7 @@ void main()
 		GLfloat* positions;
 		GLuint* indices;
 
-		numIndices = esGenCube(0.1f, &positions, NULL, NULL, &indices);
+		numIndices = esGenCube(0.01f, &positions, NULL, NULL, &indices);
 
 		// Index buffer object
 		glGenBuffers(1, &indicesIBO);
@@ -224,7 +231,7 @@ void main()
 
 		// Random color for each instance
 		{
-			GLubyte colors[NUM_INSTANCES][4];
+			std::unique_ptr<GLubyte[][4]> colors(new GLubyte[NUM_INSTANCES][4]);
 			int instance;
 
 			srandom(0);
@@ -239,7 +246,7 @@ void main()
 
 			glGenBuffers(1, &colorVBO);
 			glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
-			glBufferData(GL_ARRAY_BUFFER, NUM_INSTANCES * 4, colors, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, NUM_INSTANCES * 4, (void*)colors.get(), GL_STATIC_DRAW);
 		}
 
 		// Allocate storage to store MVP per instance
@@ -254,7 +261,7 @@ void main()
 
 			glGenBuffers(1, &mvpVBO);
 			glBindBuffer(GL_ARRAY_BUFFER, mvpVBO);
-			glBufferData(GL_ARRAY_BUFFER, NUM_INSTANCES * sizeof(ESMatrix), NULL, GL_DYNAMIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, NUM_INSTANCES * sizeof(XMMATRIX), NULL, GL_DYNAMIC_DRAW);
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -263,8 +270,8 @@ void main()
 
 	inline void Update(int const& width, int const& height, float deltaTime) noexcept
 	{
-		ESMatrix* matrixBuf;
-		ESMatrix perspective;
+		XMMATRIX* matrixBuf;
+		XMMATRIX perspective;
 		float    aspect;
 		int      instance = 0;
 		int      numRows;
@@ -275,29 +282,31 @@ void main()
 		aspect = (GLfloat)width / (GLfloat)height;
 
 		// Generate a perspective matrix with a 60 degree FOV
-		esMatrixLoadIdentity(&perspective);
+		esMatrixLoadIdentity((ESMatrix*)&perspective);
 		//esPerspective(&perspective, 60.0f, aspect, 1.0f, 20.0f);
-		esOrtho(&perspective, -aspect, aspect, -1, 1, -10, 10);
+		esOrtho((ESMatrix*)&perspective, -aspect, aspect, -1, 1, -10, 10);
 
 
 		glBindBuffer(GL_ARRAY_BUFFER, mvpVBO);
-		matrixBuf = (ESMatrix*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(ESMatrix) * NUM_INSTANCES, GL_MAP_WRITE_BIT);
+		matrixBuf = (XMMATRIX*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(XMMATRIX) * NUM_INSTANCES, GL_MAP_WRITE_BIT);
 
 		// Compute a per-instance MVP that translates and rotates each instance differnetly
 		numRows = (int)sqrtf(NUM_INSTANCES);
 		numColumns = numRows;
 
+		#pragma omp parallel for
 		for (instance = 0; instance < NUM_INSTANCES; instance++)
 		{
-			ESMatrix modelview;
+			XMMATRIX modelview;
 			float translateX = ((float)(instance % numRows) / (float)numRows) * 2.0f - 1.0f;
 			float translateY = ((float)(instance / numColumns) / (float)numColumns) * 2.0f - 1.0f;
 
 			// Generate a model view matrix to rotate/translate the cube
-			esMatrixLoadIdentity(&modelview);
+			//esMatrixLoadIdentity((ESMatrix*)&modelview);
 
 			// Per-instance translation
-			esTranslate(&modelview, translateX, translateY, -2.0f);
+			//esTranslate((ESMatrix*)&modelview, translateX, translateY, -2.0f);
+			modelview = XMMatrixTranslation(translateX, translateY, -2.0f);
 
 			// Compute a rotation angle based on time to rotate the cube
 			angle[instance] += (deltaTime * 40.0f);
@@ -308,11 +317,67 @@ void main()
 			}
 
 			// Rotate the cube
-			esRotate(&modelview, angle[instance], 1.0, 0.0, 1.0);
+			//esRotate((ESMatrix*)&modelview, angle[instance], 1.0, 0.0, 1.0);
+
+			//{
+			//	GLfloat a = angle[instance], x = 1.0f, y = 0.0f, z = 1.0f;
+			//	GLfloat sinAngle, cosAngle;
+			//	GLfloat mag = sqrtf(x * x + y * y + z * z);
+
+			//	//sinAngle = sinf(a * PI / 180.0f);
+			//	//cosAngle = cosf(a * PI / 180.0f);
+			//	XMScalarSinCos(&sinAngle, &cosAngle, a);
+
+			//	if (mag > 0.0f) {
+			//		GLfloat xx, yy, zz, xy, yz, zx, xs, ys, zs;
+			//		GLfloat oneMinusCos;
+			//		XMMATRIX rotMat_;
+			//		ESMatrix& rotMat = *(ESMatrix*)&rotMat_;
+
+			//		x /= mag;
+			//		y /= mag;
+			//		z /= mag;
+
+			//		xx = x * x;
+			//		yy = y * y;
+			//		zz = z * z;
+			//		xy = x * y;
+			//		yz = y * z;
+			//		zx = z * x;
+			//		xs = x * sinAngle;
+			//		ys = y * sinAngle;
+			//		zs = z * sinAngle;
+			//		oneMinusCos = 1.0f - cosAngle;
+
+			//		rotMat.m[0][0] = (oneMinusCos * xx) + cosAngle;
+			//		rotMat.m[0][1] = (oneMinusCos * xy) - zs;
+			//		rotMat.m[0][2] = (oneMinusCos * zx) + ys;
+			//		rotMat.m[0][3] = 0.0F;
+			//			   
+			//		rotMat.m[1][0] = (oneMinusCos * xy) + zs;
+			//		rotMat.m[1][1] = (oneMinusCos * yy) + cosAngle;
+			//		rotMat.m[1][2] = (oneMinusCos * yz) - xs;
+			//		rotMat.m[1][3] = 0.0F;
+			//			   
+			//		rotMat.m[2][0] = (oneMinusCos * zx) - ys;
+			//		rotMat.m[2][1] = (oneMinusCos * yz) + xs;
+			//		rotMat.m[2][2] = (oneMinusCos * zz) + cosAngle;
+			//		rotMat.m[2][3] = 0.0F;
+			//			   
+			//		rotMat.m[3][0] = 0.0F;
+			//		rotMat.m[3][1] = 0.0F;
+			//		rotMat.m[3][2] = 0.0F;
+			//		rotMat.m[3][3] = 1.0F;
+
+			//		modelview = XMMatrixMultiply(rotMat_, modelview);
+			//	}
+			//}
+
 
 			// Compute the final MVP by multiplying the
 			// modevleiw and perspective matrices together
-			esMatrixMultiply(&matrixBuf[instance], &modelview, &perspective);
+			//esMatrixMultiply((ESMatrix*)&matrixBuf[instance], (ESMatrix*)&modelview, (ESMatrix*)&perspective);
+			matrixBuf[instance] = XMMatrixMultiply(modelview, perspective);
 		}
 
 		glUnmapBuffer(GL_ARRAY_BUFFER);
@@ -340,10 +405,10 @@ void main()
 		glBindBuffer(GL_ARRAY_BUFFER, mvpVBO);
 
 		// Load each matrix row of the MVP.  Each row gets an increasing attribute location.
-		glVertexAttribPointer(MVP_LOC + 0, 4, GL_FLOAT, GL_FALSE, sizeof(ESMatrix), (const void*)NULL);
-		glVertexAttribPointer(MVP_LOC + 1, 4, GL_FLOAT, GL_FALSE, sizeof(ESMatrix), (const void*)(sizeof(GLfloat) * 4));
-		glVertexAttribPointer(MVP_LOC + 2, 4, GL_FLOAT, GL_FALSE, sizeof(ESMatrix), (const void*)(sizeof(GLfloat) * 8));
-		glVertexAttribPointer(MVP_LOC + 3, 4, GL_FLOAT, GL_FALSE, sizeof(ESMatrix), (const void*)(sizeof(GLfloat) * 12));
+		glVertexAttribPointer(MVP_LOC + 0, 4, GL_FLOAT, GL_FALSE, sizeof(XMMATRIX), (const void*)NULL);
+		glVertexAttribPointer(MVP_LOC + 1, 4, GL_FLOAT, GL_FALSE, sizeof(XMMATRIX), (const void*)(sizeof(GLfloat) * 4));
+		glVertexAttribPointer(MVP_LOC + 2, 4, GL_FLOAT, GL_FALSE, sizeof(XMMATRIX), (const void*)(sizeof(GLfloat) * 8));
+		glVertexAttribPointer(MVP_LOC + 3, 4, GL_FLOAT, GL_FALSE, sizeof(XMMATRIX), (const void*)(sizeof(GLfloat) * 12));
 		glEnableVertexAttribArray(MVP_LOC + 0);
 		glEnableVertexAttribArray(MVP_LOC + 1);
 		glEnableVertexAttribArray(MVP_LOC + 2);
