@@ -629,8 +629,8 @@ void main() {
     float rotate = in_scale_rotate_i.z;
 	float i = in_scale_rotate_i.w;
 
-    float cos_theta = cos(rotate);
-    float sin_theta = sin(rotate);
+    float cos_theta = cos(rotate / 3.14159265359);
+    float sin_theta = sin(rotate / 3.14159265359);
     vec2 v1 = vec2(offset.x * scale.x, offset.y * scale.y);
     vec2 v2 = vec2(
        dot(v1, vec2(cos_theta, sin_theta)),
