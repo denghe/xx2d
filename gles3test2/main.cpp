@@ -570,7 +570,13 @@ void check_gl_error_at(const char* file, int line, const char* func) {
 // 具体到策划案，粒子 或 单Quad 就足够表达 的游戏对象（例如 tiled map 地形，小体积怪，子弹啥的），可以获得巨大利好
 // 如果 children 层级较多，则瀑布更新代价很大( 主要消耗的是 cpu )
 
-struct QuadData_center_scale_rotate_color {
+
+// 一篇参考文章
+// https://blog.csdn.net/weixin_33850918/article/details/112239289
+// 每次传递 3x3 matrix 的前 6 个值 + color + textureIndex & Rect
+// 传输流量要大一点，计算压力在 cpu. 但是瀑布计算比较简单.
+
+struct QuadData_center_color_scale_rotate_tex {
 	float x;
 	float y;
 	float z;
@@ -666,7 +672,7 @@ void main() {
 	GLuint m_max_quad_count = 5000000;
 
 	// logic data. 通过 Init ( 个数 ) 填充
-	std::vector<QuadData_center_scale_rotate_color> quads;
+	std::vector<QuadData_center_color_scale_rotate_tex> quads;
 
 	inline int GLInit() {
 		glEnable(GL_BLEND);
@@ -702,7 +708,7 @@ void main() {
 			glGenBuffers(1, &vbo1.handle);
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, vbo1);
-				glBufferData(GL_ARRAY_BUFFER, sizeof(QuadData_center_scale_rotate_color) * m_max_quad_count, nullptr, GL_STREAM_DRAW);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(QuadData_center_color_scale_rotate_tex) * m_max_quad_count, nullptr, GL_STREAM_DRAW);
 			}
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -725,9 +731,9 @@ void main() {
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo1);
 		{
-			auto buf = (QuadData_center_scale_rotate_color*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(QuadData_center_scale_rotate_color) * quads.size(),
+			auto buf = (QuadData_center_color_scale_rotate_tex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(QuadData_center_color_scale_rotate_tex) * quads.size(),
 				GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-			memcpy(buf, quads.data(), sizeof(QuadData_center_scale_rotate_color) * quads.size());
+			memcpy(buf, quads.data(), sizeof(QuadData_center_color_scale_rotate_tex) * quads.size());
 			glUnmapBuffer(GL_ARRAY_BUFFER);
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -754,19 +760,19 @@ void main() {
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo1);
 
-		glVertexAttribPointer(in_center, 3, GL_FLOAT, GL_FALSE, sizeof(QuadData_center_scale_rotate_color), (GLvoid*)offsetof(QuadData_center_scale_rotate_color, x));
+		glVertexAttribPointer(in_center, 3, GL_FLOAT, GL_FALSE, sizeof(QuadData_center_color_scale_rotate_tex), (GLvoid*)offsetof(QuadData_center_color_scale_rotate_tex, x));
 		glVertexAttribDivisor(in_center, 1);
 		glEnableVertexAttribArray(in_center);
 
-		glVertexAttribPointer(in_scale_rotate_i, 4, GL_SHORT, GL_FALSE, sizeof(QuadData_center_scale_rotate_color), (GLvoid*)offsetof(QuadData_center_scale_rotate_color, scaleX));
+		glVertexAttribPointer(in_scale_rotate_i, 4, GL_SHORT, GL_FALSE, sizeof(QuadData_center_color_scale_rotate_tex), (GLvoid*)offsetof(QuadData_center_color_scale_rotate_tex, scaleX));
 		glVertexAttribDivisor(in_scale_rotate_i, 1);
 		glEnableVertexAttribArray(in_scale_rotate_i);
 
-		glVertexAttribPointer(in_color, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(QuadData_center_scale_rotate_color), (GLvoid*)offsetof(QuadData_center_scale_rotate_color, colorR));
+		glVertexAttribPointer(in_color, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(QuadData_center_color_scale_rotate_tex), (GLvoid*)offsetof(QuadData_center_color_scale_rotate_tex, colorR));
 		glVertexAttribDivisor(in_color, 1);
 		glEnableVertexAttribArray(in_color);
 
-		glVertexAttribPointer(in_texRect, 4, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(QuadData_center_scale_rotate_color), (GLvoid*)offsetof(QuadData_center_scale_rotate_color, textureRectX));
+		glVertexAttribPointer(in_texRect, 4, GL_UNSIGNED_SHORT, GL_TRUE, sizeof(QuadData_center_color_scale_rotate_tex), (GLvoid*)offsetof(QuadData_center_color_scale_rotate_tex, textureRectX));
 		glVertexAttribDivisor(in_texRect, 1);
 		glEnableVertexAttribArray(in_texRect);
 

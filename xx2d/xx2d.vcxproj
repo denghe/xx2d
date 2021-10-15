@@ -99,12 +99,6 @@
     <ClCompile Include="Structs.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\xxlib\xx_chrono.h" />
-    <ClInclude Include="..\xxlib\xx_data.h" />
-    <ClInclude Include="..\xxlib\xx_obj.h" />
-    <ClInclude Include="..\xxlib\xx_ptr.h" />
-    <ClInclude Include="..\xxlib\xx_typehelpers.h" />
-    <ClInclude Include="..\xxlib\xx_typename_islambda.h" />
     <ClInclude Include="AppDelegate.h" />
     <ClInclude Include="PlatformMacros.h" />
     <ClInclude Include="Structs.h" />
