@@ -108,7 +108,7 @@ void main() {
 	xx::es::VertexArrays vao;
 	xx::es::Buffer vbo1, vbo2;
 	std::vector<xx::es::Texture> texs;
-	std::vector<std::pair<GLint, GLsizei>> texsIndexCount;
+	std::vector<GLsizei> texsQuadCount;
 	GLuint u_projection{}, u_sampler{}, in_vert{}, in_center{}, in_scale_rotate_i{}, in_color{}, in_texRect{};
 
 	// 个数上限
@@ -121,6 +121,8 @@ void main() {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+		glEnable(GL_DEPTH_TEST);
+
 		//glViewport(0, 0, width, height);		// todo: call from window resize event
 		//glClearColor(0.9f, 0.9f, 0.9f, 0.0f);
 
@@ -128,7 +130,6 @@ void main() {
 		vs = LoadVertexShader({ vsSrc }); if (!vs) return __LINE__;
 		fs = LoadFragmentShader({ fsSrc }); if (!fs) return __LINE__;
 		ps = LinkProgram(vs, fs); if (!ps) return __LINE__;
-
 
 		// ps args idxs
 		u_projection = glGetUniformLocation(ps, "u_projection");
@@ -139,10 +140,6 @@ void main() {
 		in_scale_rotate_i = glGetAttribLocation(ps, "in_scale_rotate_i");
 		in_color = glGetAttribLocation(ps, "in_color");
 		in_texRect = glGetAttribLocation(ps, "in_texRect");
-
-		// texs
-		texs.emplace_back(LoadEtc2TextureFile(rootPath / "p1.pkm"));
-		texs.emplace_back(LoadEtc2TextureFile(rootPath / "p2.pkm"));
 
 		// vao
 		glGenVertexArrays(1, &vao.handle);
@@ -166,6 +163,9 @@ void main() {
 		}
 		glBindVertexArray(0);
 
+		// texs
+		texs.emplace_back(LoadEtc2TextureFile(rootPath / "p1.pkm"));
+		texs.emplace_back(LoadEtc2TextureFile(rootPath / "p2.pkm"));
 
 		check_gl_error();
 		return 0;
@@ -174,25 +174,13 @@ void main() {
 	void Update() {
 		// todo: change quads logic here
 		ShowFpsInTitle();
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo1);
-		{
-			auto buf = (QuadData_center_color_scale_rotate_tex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(QuadData_center_color_scale_rotate_tex) * quads.size(),
-				GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-			memcpy(buf, quads.data(), sizeof(QuadData_center_color_scale_rotate_tex) * quads.size());
-			glUnmapBuffer(GL_ARRAY_BUFFER);
-		}
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		check_gl_error();
 	}
 
 	void Draw() {
-		glClear(GL_COLOR_BUFFER_BIT);// | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glUseProgram(ps);
 		glUniform4f(u_projection, 2.0f / width, 2.0f / height, -1.0f, -1.0f);
-
-		glUniform1i(u_sampler, 0);
 
 		glBindVertexArray(vao);
 
@@ -218,14 +206,26 @@ void main() {
 		glVertexAttribDivisor(in_texRect, 1);
 		glEnableVertexAttribArray(in_texRect);
 
-		for (size_t i = 0; i < texs.size(); i++) {
-			glActiveTexture(GL_TEXTURE0 + i);
-			glBindTexture(GL_TEXTURE_2D, texs[i]);
-			auto& ic = texsIndexCount[i];
-			glDrawArraysInstanced(GL_TRIANGLE_STRIP, ic.first, _countof(offset_and_texcoord), ic.second);
-		}
+		int beginIndex = 0;
 
-		check_gl_error();
+		for (size_t i = 0; i < texs.size(); i++) {
+			auto& count = texsQuadCount[i];
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texs[i]);
+			glUniform1i(u_sampler, 0);
+
+			{
+				auto buf = (QuadData_center_color_scale_rotate_tex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(QuadData_center_color_scale_rotate_tex) * count,
+					GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
+				memcpy(buf, quads.data() + beginIndex, sizeof(QuadData_center_color_scale_rotate_tex) * count);
+				beginIndex += count;
+				glUnmapBuffer(GL_ARRAY_BUFFER);
+			}
+
+			glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, _countof(offset_and_texcoord), count);
+			check_gl_error();
+		}
 	}
 
 	void Init(int const& w, int const& h, GLuint const& n, bool vsync) {
@@ -234,24 +234,28 @@ void main() {
 		this->height = h;
 		this->vsync = vsync ? 1 : 0;
 
+		srand(0);
+
 		auto random_of_range = [](GLfloat min, GLfloat max) {
 			return min + (max - min) * (GLfloat(rand()) / RAND_MAX);
 		};
 
 		quads.resize(n);
 
-		int texsCount = 2;	// 贴图张数
-		std::array<int, 2> texsSize = { 32, 64 };	// 每张尺寸
+		std::array<int, 2> texsSize = { 32, 64 };		// 尺寸
+		std::array<float, 2> texsZ = { 0, 0.0000001f };	// 起始 z 错位，步进 0.0000002 制造交错
+		texsQuadCount.emplace_back(n / 2);	// 先模拟下统计结果
+		texsQuadCount.emplace_back(n / 2);
 
-		float z = 0;
 		for (size_t i = 0; i < n; i++) {
 			auto& q = quads[i];
-			q.x = random_of_range(0, w);
-			q.y = random_of_range(0, h);
+			q.textureIndex = i < (n/2) ? 0 : 1;		// 两张贴图各占一半
+			auto& z = texsZ[q.textureIndex];
+			q.x = random_of_range(0, (GLfloat)w);
+			q.y = random_of_range(0, (GLfloat)h);
 			q.z = z;
-			z += 0.0000001;		// 递增 z
+			z += 0.0000002f;
 			q.colorR = q.colorG = q.colorB = q.colorA = 0xFFu;
-			q.textureIndex = i % texsCount;
 			q.scaleX = texsSize[q.textureIndex];	// 1:1 显示
 			q.scaleY = q.scaleX;
 			q.rotate = 0;
@@ -261,16 +265,13 @@ void main() {
 			q.textureRectY = 0;
 		}
 
-		// todo: 对 quads 按 textureIndex 稳定排序 并计算连续 textureIndex 的个数 起始下标
-		// 先模拟下
-		texsIndexCount.emplace_back(0, 100);
-		texsIndexCount.emplace_back(100, 200);
+		// todo: 对 quads 按 textureIndex 稳定排序 并计算连续 textureIndex 的个数
 	}
 };
 
 int main() {
 	Game g;
-	g.Init(1920, 1080, 4000000, false);
+	g.Init(1920, 1080, 2000000, false);
 	if (int r = g.Run()) {
 		std::cout << "g.Run() r = " << r << ", lastErrorNumber = " << g.lastErrorNumber << ", lastErrorMessage = " << g.lastErrorMessage << std::endl;
 	}
