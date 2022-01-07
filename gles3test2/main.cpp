@@ -107,7 +107,8 @@ void main() {
 	xx::es::Program ps;
 	xx::es::VertexArrays vao;
 	xx::es::Buffer vbo1, vbo2;
-	xx::es::Texture tex;
+	std::vector<xx::es::Texture> texs;
+	std::vector<std::pair<GLint, GLsizei>> texsIndexCount;
 	GLuint u_projection{}, u_sampler{}, in_vert{}, in_center{}, in_scale_rotate_i{}, in_color{}, in_texRect{};
 
 	// 个数上限
@@ -139,8 +140,9 @@ void main() {
 		in_color = glGetAttribLocation(ps, "in_color");
 		in_texRect = glGetAttribLocation(ps, "in_texRect");
 
-		// tex
-		tex = LoadEtc2TextureFile(rootPath / "p1.pkm");
+		// texs
+		texs.emplace_back(LoadEtc2TextureFile(rootPath / "p1.pkm"));
+		texs.emplace_back(LoadEtc2TextureFile(rootPath / "p2.pkm"));
 
 		// vao
 		glGenVertexArrays(1, &vao.handle);
@@ -163,6 +165,7 @@ void main() {
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 		glBindVertexArray(0);
+
 
 		check_gl_error();
 		return 0;
@@ -189,17 +192,13 @@ void main() {
 		glUseProgram(ps);
 		glUniform4f(u_projection, 2.0f / width, 2.0f / height, -1.0f, -1.0f);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, tex);
 		glUniform1i(u_sampler, 0);
-		check_gl_error();
 
 		glBindVertexArray(vao);
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo2);
 		glVertexAttribPointer(in_vert, 2, GL_FLOAT, GL_FALSE, sizeof(QuadData_offset_texcoord), 0);
 		glEnableVertexAttribArray(in_vert);
-		check_gl_error();
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo1);
 
@@ -219,7 +218,13 @@ void main() {
 		glVertexAttribDivisor(in_texRect, 1);
 		glEnableVertexAttribArray(in_texRect);
 
-		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, _countof(offset_and_texcoord), (GLsizei)quads.size());
+		for (size_t i = 0; i < texs.size(); i++) {
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, texs[i]);
+			auto& ic = texsIndexCount[i];
+			glDrawArraysInstanced(GL_TRIANGLE_STRIP, ic.first, _countof(offset_and_texcoord), ic.second);
+		}
+
 		check_gl_error();
 	}
 
@@ -234,20 +239,32 @@ void main() {
 		};
 
 		quads.resize(n);
-		for (auto& q : quads) {
+
+		int texsCount = 2;	// 贴图张数
+		std::array<int, 2> texsSize = { 32, 64 };	// 每张尺寸
+
+		float z = 0;
+		for (size_t i = 0; i < n; i++) {
+			auto& q = quads[i];
 			q.x = random_of_range(0, w);
 			q.y = random_of_range(0, h);
-			q.z = 0;
+			q.z = z;
+			z += 0.0000001;		// 递增 z
 			q.colorR = q.colorG = q.colorB = q.colorA = 0xFFu;
-			q.scaleX = 8;//16;// 64;// 128;
+			q.textureIndex = i % texsCount;
+			q.scaleX = texsSize[q.textureIndex];	// 1:1 显示
 			q.scaleY = q.scaleX;
 			q.rotate = 0;
-			q.textureIndex = 0;
 			q.textureRectHeight = 0xFFFFu;
 			q.textureRectWidth = 0xFFFFu;
 			q.textureRectX = 0;
 			q.textureRectY = 0;
 		}
+
+		// todo: 对 quads 按 textureIndex 稳定排序 并计算连续 textureIndex 的个数 起始下标
+		// 先模拟下
+		texsIndexCount.emplace_back(0, 100);
+		texsIndexCount.emplace_back(100, 200);
 	}
 };
 
