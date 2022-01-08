@@ -1,4 +1,8 @@
 ﻿// 简单模拟多贴图混用合批
+// 需求：按贴图分组，经过多次 draw，在确定 z 之后 才开始图之间 blend
+// 实际：无法轻松做到，显卡在 draw 的过程中 blend 同时判断 z , 如果 z 更小就不画了( 不管该区域是否透明 ), 导致 alpha 区域会遮图，仿佛 blend 失效
+
+
 
 #include "esBase.h"
 #include "xx_string.h"
@@ -99,7 +103,13 @@ in vec3 v_texcoord;
 in vec4 v_color;
 out vec4 out_color;
 void main() {
-	out_color = texture(u_sampler, v_texcoord.xy) * v_color;	// todo: v_texcoord.z texture index
+	//out_color = texture(u_sampler, v_texcoord.xy) * v_color;	// todo: v_texcoord.z texture index
+	vec4 val = texture(u_sampler, v_texcoord.xy) * v_color;
+	if (val.a > 0.5) {
+		out_color = val;
+	} else {
+		discard;
+	}
 }
 )--";
 
@@ -118,10 +128,13 @@ void main() {
 	std::vector<QuadData_center_color_scale_rotate_tex> quads;
 
 	inline int GLInit() {
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		//glDepthMask(true);
+		//glClearDepth(1);
+
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		//glViewport(0, 0, width, height);		// todo: call from window resize event
 		//glClearColor(0.9f, 0.9f, 0.9f, 0.0f);
@@ -215,13 +228,11 @@ void main() {
 			glBindTexture(GL_TEXTURE_2D, texs[i]);
 			glUniform1i(u_sampler, 0);
 
-			{
-				auto buf = (QuadData_center_color_scale_rotate_tex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(QuadData_center_color_scale_rotate_tex) * count,
-					GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
-				memcpy(buf, quads.data() + beginIndex, sizeof(QuadData_center_color_scale_rotate_tex) * count);
-				beginIndex += count;
-				glUnmapBuffer(GL_ARRAY_BUFFER);
-			}
+			auto buf = (QuadData_center_color_scale_rotate_tex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(QuadData_center_color_scale_rotate_tex) * count,
+				GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
+			memcpy(buf, quads.data() + beginIndex, sizeof(QuadData_center_color_scale_rotate_tex) * count);
+			beginIndex += count;
+			glUnmapBuffer(GL_ARRAY_BUFFER);
 
 			glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, _countof(offset_and_texcoord), count);
 			check_gl_error();
