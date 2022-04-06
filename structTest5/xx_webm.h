@@ -310,7 +310,8 @@ namespace xx {
 		inline int ForeachFrame(F&& f) {
 			vpx_codec_ctx_t ctx;
 			vpx_codec_dec_cfg_t cfg{ 1, this->width, this->height };
-			auto&& iface = this->codecId ? vpx_codec_vp9_dx() : vpx_codec_vp8_dx();
+			assert(this->codecId); //auto&& iface = this->codecId ? vpx_codec_vp9_dx() : vpx_codec_vp8_dx();
+			auto&& iface = vpx_codec_vp9_dx();
 			if (int r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return __LINE__;	// VPX_CODEC_OK == 0
 			auto sgCtx = MakeScopeGuard([&] {
 				vpx_codec_destroy(&ctx);
@@ -377,13 +378,7 @@ namespace xx {
 
 #ifdef LIBYUV_API
 			bytes.resize(w * h * 4);
-			if (int r = libyuv::I420AlphaToARGB(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0)) return __LINE__;
-			// 红蓝交换
-			auto p = bytes.data();
-			for (uint32_t i = 0; i < w * h * 4; i += 4) {
-				std::swap(p[i + 0], p[i + 2]);
-			}
-			return 0;
+			return libyuv::I420AlphaToABGR(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0);
 #else
 			// 这段代码逻辑可写入 shader
 			bytes.clear();

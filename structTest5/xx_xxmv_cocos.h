@@ -5,8 +5,22 @@
 代码示例:
 	xx::XxmvCocos mv;	// 可公用
 	...
-	mv.LoadFromXxmv("res/a.xxmv");		// 可判断返回值了解操作是否成功
-	mv.FillToSpriteFrameCache("xxxx");
+
+	int r = mv.LoadFromXxmv("zhangyu.xxmv");
+	assert(!r);
+	r = mv.FillToSpriteFrameCache("a", "", "");
+	assert(!r);
+
+	cocos2d::Vector<cocos2d::SpriteFrame*> sfs;
+	auto sfc = cocos2d::SpriteFrameCache::getInstance();
+	for (int i = 1; i <= mv.count; ++i) {
+		auto sf = sfc->getSpriteFrameByName(std::string("a") + std::to_string(i));
+		assert(sf);
+		sfs.pushBack(sf);
+	}
+	auto animation = cocos2d::Animation::createWithSpriteFrames(sfs, 1.f / 60);
+	sprite->runAction(cocos2d::RepeatForever::create(cocos2d::Animate::create(animation)));
+
 */
 
 // todo: 跳过 plist 构造 & 解析? 直接生成最终 sprite frame ?
@@ -18,6 +32,13 @@
 #include "vp8dx.h"
 #include "vpx_decoder.h"
 #include "libyuv.h"
+
+#include "xx_data.h"
+
+#define SVPNG_LINKAGE inline
+#define SVPNG_OUTPUT xx::Data& d
+#define SVPNG_PUT(u) d.WriteFixed((uint8_t)(u));
+#include "svpng.inc"
 
 namespace xx {
 	// xxmv 解析后的容易使用的存储形态
@@ -102,7 +123,7 @@ namespace xx {
 
 	public:
 		// 从 .xxmv 读出数据. 成功返回 0 (	不兼容大尾机器 )
-		inline int LoadFromXxmv(std::string const& path) {
+		inline int LoadFromXxmv(std::string_view const& path) {
 			this->Clear();
 			auto fs = cocos2d::FileUtils::getInstance();
 			fileData = fs->getDataFromFile(path);
@@ -181,7 +202,8 @@ namespace xx {
 		inline int ForeachFrame(F&& f) {
 			vpx_codec_ctx_t ctx;
 			vpx_codec_dec_cfg_t cfg{ 1, this->width, this->height };
-			auto&& iface = this->codecId ? vpx_codec_vp9_dx() : vpx_codec_vp8_dx();
+			if (this->codecId == 0) return __LINE__;	// does not support vp8 now
+			auto&& iface = vpx_codec_vp9_dx(); //auto&& iface = this->codecId ? vpx_codec_vp9_dx() : vpx_codec_vp8_dx();
 			if (int r = vpx_codec_dec_init(&ctx, iface, &cfg, 0)) return __LINE__;	// VPX_CODEC_OK == 0
 			auto sgCtx = MakeScopeGuard([&] {
 				vpx_codec_destroy(&ctx);
@@ -248,13 +270,7 @@ namespace xx {
 
 #ifdef LIBYUV_API
 			bytes.resize(w * h * 4);
-			if (int r = libyuv::I420AlphaToARGB(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0)) return __LINE__;
-			// 红蓝交换
-			auto p = bytes.data();
-			for (int i = 0; i < w * h * 4; i += 4) {
-				std::swap(p[i + 0], p[i + 2]);
-			}
-			return 0;
+			return libyuv::I420AlphaToABGR(yData, yaStride, uData, uvStride, vData, uvStride, aData, yaStride, bytes.data(), w * 4, w, h, 0);
 #else
 			// 这段代码逻辑可写入 shader
 			bytes.clear();
@@ -379,26 +395,38 @@ namespace xx {
 			}
 		};
 
-		inline static int FillToSpriteFrameCache(std::string const& plistData, uint8_t const* const& buf, int const& width, int const& height) {
+		inline static int FillToSpriteFrameCacheCore(std::string const& plistData, uint8_t const* const& buf, int const& width, int const& height) {
 			auto img = new cocos2d::Image();
 			if (!img) return __LINE__;
 			auto sgImg = MakeScopeGuard([&] { delete img; });
-			if (!img->initWithRawData(buf, width * height * 4, width, height, 32, false)) return __LINE__;
+
+			// todo: 这种加载方式 alpha 无效, 得研究下如何修复
+#if 1
+			if (!img->initWithRawData(buf, 0, width, height, 0, true)) return __LINE__;
+#else
+			xx::Data png;
+			png.Reserve(width * height * 4 + 1024);
+			svpng(png, width, height, buf, 1);
+			if (!img->initWithImageData(png.buf, png.len)) return __LINE__;
+#endif
+
 			auto t = new cocos2d::Texture2D();
 			if (!t) return __LINE__;
 			auto sgT = MakeScopeGuard([&] { t->release(); });
 			if (!t->initWithImage(img)) return __LINE__;
-			cocos2d::SpriteFrameCache::getInstance()->addSpriteFramesWithFileContent(plistData, t);
+
+			cocos2d::Data d;
+			d.fastSet((uint8_t*)plistData.data(), plistData.size());
+			cocos2d::SpriteFrameCache::getInstance()->addSpriteFramesWithFileContent(d, t);
+			d.fastSet(0, 0);
+
 			return 0;
 		}
 
-		inline int FillToSpriteFrameCache(std::string const& prefix, std::string itemPrefix = ""/* prefix + " (" */, std::string const& itemSuffix = ").png", int itemBeginNum = 1, uint32_t const& sw = 4096, uint32_t const& sh = 4096) {
+		inline int FillToSpriteFrameCache(std::string const& prefix, std::string itemPrefix = " ("/* prefix + " (" */, std::string const& itemSuffix = ").png", int itemBeginNum = 1, uint32_t const& sw = 4096, uint32_t const& sh = 4096) {
+			itemPrefix = prefix + itemPrefix;
 			auto sfc = cocos2d::SpriteFrameCache::getInstance();
 			if (sfc->getSpriteFrameByName(itemPrefix + std::to_string(itemBeginNum) + itemSuffix)) return 0;
-
-			if (itemPrefix.empty()) {
-				itemPrefix = prefix + " (";
-			}
 			PListMaker pm;
 			pm.Begin();
 			std::vector<uint32_t> space;
@@ -418,7 +446,7 @@ namespace xx {
 				if (y == numRows) {
 					y = 0;
 					pm.End(prefix + std::to_string(z) + ".png", sw, sh);
-					if (int r = FillToSpriteFrameCache(pm.data, (uint8_t*)space.data(), sw, sh)) return r;
+					if (int r = FillToSpriteFrameCacheCore(pm.data, (uint8_t*)space.data(), sw, sh)) return r;
 					pm.Begin();
 					++z;
 					memset(space.data(), 0, space.size() * sizeof(uint32_t));
@@ -428,7 +456,7 @@ namespace xx {
 			if (r) return r;
 			if (x || y) {
 				pm.End(prefix + std::to_string(z) + ".png", sw, sh);
-				return FillToSpriteFrameCache(pm.data, (uint8_t*)space.data(), sw, sh);
+				return FillToSpriteFrameCacheCore(pm.data, (uint8_t*)space.data(), sw, sh);
 			}
 
 			return 0;

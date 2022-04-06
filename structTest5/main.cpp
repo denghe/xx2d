@@ -6,6 +6,7 @@ int main(int argc, char* argv[]) {
 	xx::Webm wm;
 	if (int r = wm.LoadFromWebm("res/zhangyu.webm")) return r;
 	if (int r = wm.SaveToXxmv("res/zhangyu.xxmv")) return r;
+	if (int r = wm.SaveToPngs("res", "zhangyu")) return r;
 	if (int r = wm.LoadFromWebm("res/xiaoshuimu.webm")) return r;
 	if (int r = wm.SaveToXxmv("res/xiaoshuimu.xxmv")) return r;
 	if (int r = wm.LoadFromWebm("res/seaturtle.webm")) return r;
