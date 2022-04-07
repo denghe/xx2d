@@ -3,23 +3,31 @@
 	针对 cocos, 提供加载 .xxmv 文件到 sprite frame cache 的能力
 
 代码示例:
-	xx::XxmvCocos mv;	// 可公用
-	...
 
-	int r = mv.LoadFromXxmv("zhangyu.xxmv");
-	assert(!r);
-	r = mv.FillToSpriteFrameCache("a", "", "");
-	assert(!r);
+	xx::XxmvCocos mv;
 
-	cocos2d::Vector<cocos2d::SpriteFrame*> sfs;
-	auto sfc = cocos2d::SpriteFrameCache::getInstance();
-	for (int i = 1; i <= mv.count; ++i) {
-		auto sf = sfc->getSpriteFrameByName(std::string("a") + std::to_string(i));
-		assert(sf);
-		sfs.pushBack(sf);
+	auto GetAnim = [&](std::string const& fileName)-> cocos2d::Animation* {
+		int r = mv.LoadFromXxmv(fileName + ".xxmv");
+		assert(!r);
+		r = mv.FillToSpriteFrameCache(fileName, "_", "");
+		assert(!r);
+
+		cocos2d::Vector<cocos2d::SpriteFrame*> sfs;
+		auto sfc = cocos2d::SpriteFrameCache::getInstance();
+		for (int i = 1; i <= mv.count; ++i) {
+			auto sf = sfc->getSpriteFrameByName(fileName + "_" + std::to_string(i));
+			assert(sf);
+			sfs.pushBack(sf);
+		}
+		return cocos2d::Animation::createWithSpriteFrames(sfs, 1.f / 60);
+	};
+
+	{
+		auto sprite = Sprite::create();
+		sprite->setPosition(Vec2(visibleSize.width / 2 + origin.x - 300, visibleSize.height / 2 + origin.y));
+		this->addChild(sprite, 0);
+		sprite->runAction(cocos2d::RepeatForever::create(cocos2d::Animate::create( GetAnim("st_k10") )));
 	}
-	auto animation = cocos2d::Animation::createWithSpriteFrames(sfs, 1.f / 60);
-	sprite->runAction(cocos2d::RepeatForever::create(cocos2d::Animate::create(animation)));
 
 */
 
