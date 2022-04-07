@@ -400,9 +400,8 @@ namespace xx {
 			if (!img) return __LINE__;
 			auto sgImg = MakeScopeGuard([&] { delete img; });
 
-			// todo: 这种加载方式 alpha 无效, 得研究下如何修复
 #if 1
-			if (!img->initWithRawData(buf, 0, width, height, 0, true)) return __LINE__;
+			if (!img->initWithRawData(buf, 0, width, height, 0, false)) return __LINE__;
 #else
 			xx::Data png;
 			png.Reserve(width * height * 4 + 1024);
