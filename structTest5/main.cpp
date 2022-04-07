@@ -4,19 +4,28 @@ int main(int argc, char* argv[]) {
 	(void)argc;	(void)argv;
 
 	xx::Webm wm;
-	if (int r = wm.LoadFromWebm("res/zhangyu.webm")) return r;
-	if (int r = wm.SaveToXxmv("res/zhangyu.xxmv")) return r;
-	if (int r = wm.SaveToPngs("res", "zhangyu")) return r;
-	if (int r = wm.LoadFromWebm("res/xiaoshuimu.webm")) return r;
-	if (int r = wm.SaveToXxmv("res/xiaoshuimu.xxmv")) return r;
-	if (int r = wm.LoadFromWebm("res/seaturtle.webm")) return r;
-	if (int r = wm.SaveToXxmv("res/seaturtle.xxmv")) return r;
-	if (int r = wm.LoadFromWebm("res/judaxiaochouyu.webm")) return r;
-	if (int r = wm.SaveToXxmv("res/judaxiaochouyu.xxmv")) return r;
-	if (int r = wm.LoadFromWebm("res/judadieyu.webm")) return r;
-	if (int r = wm.SaveToXxmv("res/judadieyu.xxmv")) return r;
-	if (int r = wm.LoadFromWebm("res/qiyu.webm")) return r;
-	if (int r = wm.SaveToXxmv("res/qiyu.xxmv")) return r;
+	if (int r = wm.LoadFromWebm("res/st_k10.webm")) return r;
+	if (int r = wm.SaveToXxmv("res/st_k10.xxmv")) return r;
+	if (int r = wm.LoadFromWebm("res/st_k50.webm")) return r;
+	if (int r = wm.SaveToXxmv("res/st_k50.xxmv")) return r;
+	if (int r = wm.LoadFromWebm("res/st_k100.webm")) return r;
+	if (int r = wm.SaveToXxmv("res/st_k100.xxmv")) return r;
+	if (int r = wm.LoadFromWebm("res/st_k200.webm")) return r;
+	if (int r = wm.SaveToXxmv("res/st_k200.xxmv")) return r;
+
+	//if (int r = wm.LoadFromWebm("res/zhangyu.webm")) return r;
+	//if (int r = wm.SaveToXxmv("res/zhangyu.xxmv")) return r;
+	//if (int r = wm.SaveToPngs("res", "zhangyu")) return r;
+	//if (int r = wm.LoadFromWebm("res/xiaoshuimu.webm")) return r;
+	//if (int r = wm.SaveToXxmv("res/xiaoshuimu.xxmv")) return r;
+	//if (int r = wm.LoadFromWebm("res/seaturtle.webm")) return r;
+	//if (int r = wm.SaveToXxmv("res/seaturtle.xxmv")) return r;
+	//if (int r = wm.LoadFromWebm("res/judaxiaochouyu.webm")) return r;
+	//if (int r = wm.SaveToXxmv("res/judaxiaochouyu.xxmv")) return r;
+	//if (int r = wm.LoadFromWebm("res/judadieyu.webm")) return r;
+	//if (int r = wm.SaveToXxmv("res/judadieyu.xxmv")) return r;
+	//if (int r = wm.LoadFromWebm("res/qiyu.webm")) return r;
+	//if (int r = wm.SaveToXxmv("res/qiyu.xxmv")) return r;
 
 	//if (int r = wm.LoadFromXxmv("res/a.xxmv")) return r;
 	//if (int r = wm.SaveToPngs("res/", "a")) return r;
