@@ -4,14 +4,18 @@
 void EnvInit(void* scene);
 
 extern "C" {
+	/*********************************************************************/
+
 	// load .xxmv file by fileName, return key index
-	int XxmvLoad(char const* fileName, int fileNameSize);
+	int XxmvNew(char const* fileName, int fileNameSize);
 
 	// unload .xxmv sprite frames by key index
-	void XxmvUnload(int selfKI);
+	void XxmvDelete(int selfKI);
 
 	// return sprite frames .size()
 	int XxmvGetFramesCount(int selfKI);
+
+	/*********************************************************************/
 
 	// scene->addChild( create sprite ), return key index
 	int SpriteNew(int xxmvKI, int parentIndex);

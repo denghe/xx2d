@@ -15,10 +15,10 @@ struct Xxmv {
 	int numFrames = 0;
 	Xxmv(Xxmv&& o) { this->_ki_ = o._ki_; o._ki_ = -1; }
 	Xxmv& operator=(Xxmv&& o) { this->_ki_ = o._ki_; o._ki_ = -1; return *this; }
-	~Xxmv() { if (_ki_ != -1) { XxmvUnload(_ki_); _ki_ = -1; } }
+	~Xxmv() { if (_ki_ != -1) { XxmvDelete(_ki_); _ki_ = -1; } }
 	operator bool() const { return _ki_ != -1; }
 	void Init(std::string_view fileName) {
-		_ki_ = XxmvLoad(fileName.data(), fileName.size());
+		_ki_ = XxmvNew(fileName.data(), fileName.size());
 		numFrames = XxmvGetFramesCount(_ki_);
 	}
 };
@@ -48,24 +48,26 @@ struct Sprite {
 struct Monster {
 	STRUCT_BASE_CODE(Monster);
 
-	Sprite sprite;
+	Sprite body;
 	Sprite shadow;
+	int numFrames = 0;
 	int frameIndex = -1;
 	float x = 0, y = 0;
 
 	void Init(std::shared_ptr<Xxmv> xxmv) {
+		numFrames = xxmv->numFrames;
 		shadow.Init(xxmv);
 		shadow.SetColor(0, 0, 0);
 		shadow.SetOpacity(127);
-		sprite.Init(xxmv);
+		body.Init(xxmv);
 		Update(0);
 	}
 
 	int Update(float delta) {
 		++frameIndex;
-		if (frameIndex == sprite.xxmv->numFrames) frameIndex = 0;
-		sprite.SetXxmvFrame(frameIndex);
-		sprite.SetPosition(x, y);
+		if (frameIndex == numFrames) frameIndex = 0;
+		body.SetXxmvFrame(frameIndex);
+		body.SetPosition(x, y);
 		shadow.SetXxmvFrame(frameIndex);
 		shadow.SetPosition(x + 10, y + 10);
 		return 0;
@@ -82,6 +84,7 @@ struct Logic {
 
 		bg.Init(v);
 		bg.SetScale(100, 100);
+		bg.SetColor(0, 0, 255);
 
 		auto& m = ms.emplace_back( std::make_unique<Monster>() );
 		m->x = 200;

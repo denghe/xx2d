@@ -24,7 +24,9 @@ void EnvInit(void* scene) {
 }
 
 extern "C" {
-	int XxmvLoad(char const* fileName, int fileNameSize) {
+	/*********************************************************************/
+
+	int XxmvNew(char const* fileName, int fileNameSize) {
 		fileName += __wasmBaseMemory;
 		std::string fn(fileName, fileNameSize);
 
@@ -46,7 +48,7 @@ extern "C" {
 		return result.index;
 	}
 
-	void XxmvUnload(int selfKI) {
+	void XxmvDelete(int selfKI) {
 		assert(__spriteFramess.IndexExists(selfKI));
 
 		auto fn = __spriteFramess.KeyAt(selfKI);
@@ -63,9 +65,7 @@ extern "C" {
 		return (int)__spriteFramess.ValueAt(selfKI).size();
 	}
 
-	void RemoveUnusedSpriteFrames() {
-		cocos2d::SpriteFrameCache::getInstance()->removeUnusedSpriteFrames();
-	}
+	/*********************************************************************/
 
 	int SpriteNew(int xxmvKI, int parentIndex) {
 		assert(__spriteFramess.IndexExists(xxmvKI));
