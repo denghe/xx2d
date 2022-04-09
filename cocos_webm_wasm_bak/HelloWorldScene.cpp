@@ -1,7 +1,6 @@
 #include "HelloWorldScene.h"
 #include "xx_xxmv_cocos.h"
 #include "xx_helpers.h"
-#include "wasm3_cpp.h"
 #include "Env.h"
 #include "Logic.h"
 

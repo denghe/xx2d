@@ -4,17 +4,30 @@
 void EnvInit(void* scene);
 
 extern "C" {
+	// load .xxmv file by fileName, return key index
+	int XxmvLoad(char const* fileName, int fileNameSize);
 
-	int XxmvLoad(char* fileName);
+	// unload .xxmv sprite frames by key index
+	void XxmvUnload(int selfKI);
 
-	int SpriteNew(char* spriteFrameName, int parentIndex = -1);
-	void SpriteDelete(int index);
-	void SpriteSetPosition(int index, float x, float y);
-	void SpriteSetZOrder(int index, float z);
-	void SpriteSetAnchor(int index, float x, float y);
-	void SpriteSetRotation(int index, float r);
-	void SpriteSetColor(int index, uint8_t r, uint8_t g, uint8_t b);
-	void SpriteSetOpacity(int index, uint8_t o);
-	void SpriteSetVisible(int index, bool b);
-	void SpriteSetFrameName(int index, char* spriteFrameName);
+	// return sprite frames .size()
+	int XxmvGetFramesCount(int selfKI);
+
+	// scene->addChild( create sprite ), return key index
+	int SpriteNew(int xxmvKI, int parentIndex);
+
+	// remove sprite from scene childs by key index
+	void SpriteDelete(int selfKI);
+
+	// set sprite's sprite frame by xxmv's sprite frames[ index ]
+	void SpriteSetXxmvFrame(int selfKI, int xxmvKI, int index);
+
+	void SpriteSetPosition(int selfKI, float x, float y);
+	void SpriteSetZOrder(int selfKI, float z);
+	void SpriteSetAnchor(int selfKI, float x, float y);
+	void SpriteSetRotation(int selfKI, float r);
+	void SpriteSetScale(int selfKI, float x, float y);
+	void SpriteSetColor(int selfKI, uint8_t r, uint8_t g, uint8_t b);
+	void SpriteSetOpacity(int selfKI, uint8_t o);
+	void SpriteSetVisible(int selfKI, bool b);
 }

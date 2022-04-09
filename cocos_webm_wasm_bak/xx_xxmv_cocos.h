@@ -430,7 +430,7 @@ namespace xx {
 			return 0;
 		}
 
-		inline int FillToSpriteFrameCache(std::string const& prefix, std::string itemPrefix = " ("/* prefix + " (" */, std::string const& itemSuffix = ").png", int itemBeginNum = 1, uint32_t const& sw = 4096, uint32_t const& sh = 4096) {
+		inline int FillToSpriteFrameCache(std::string const& prefix, std::string itemPrefix = " ("/* prefix + " (" */, std::string const& itemSuffix = ").png", int itemBeginNum = 0, uint32_t const& sw = 4096, uint32_t const& sh = 4096) {
 			itemPrefix = prefix + itemPrefix;
 			auto sfc = cocos2d::SpriteFrameCache::getInstance();
 			if (sfc->getSpriteFrameByName(itemPrefix + std::to_string(itemBeginNum) + itemSuffix)) return 0;
