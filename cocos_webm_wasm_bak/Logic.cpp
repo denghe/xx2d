@@ -1,5 +1,7 @@
 #pragma once
 #include "Env.h"
+#include <array>
+#include <tuple>
 #include <vector>
 #include <string>
 #include <memory>
@@ -45,6 +47,20 @@ struct Sprite {
 	// todo: more
 };
 
+struct Random3 {
+	STRUCT_BASE_CODE_CORE(Random3);
+	uint64_t seed = 1234567891234567890;
+	inline uint32_t Next() {
+		seed ^= (seed << 21u);
+		seed ^= (seed >> 35u);
+		seed ^= (seed << 4u);
+		return (uint32_t)seed;
+	}
+	inline int Next(int min, int max) {
+		return (Next() % (max - min)) + min;
+	}
+};
+
 struct Monster {
 	STRUCT_BASE_CODE(Monster);
 
@@ -75,21 +91,44 @@ struct Monster {
 };
 
 struct Logic {
+	std::array<uint8_t, 1024> inBuf, outBuf;
+
 	Sprite bg;
-	std::vector<std::unique_ptr<Monster>> ms;
+	std::vector<std::shared_ptr<Monster>> ms;
+
+	std::shared_ptr<Monster> MakeMonster(float x, float y) {
+		auto& m = ms.emplace_back(std::make_shared<Monster>());
+		m->x = x;
+		m->y = y;
+		m->Init(mv);
+		return m;
+	}
+
+	Random3 rnd;
+	std::shared_ptr<Xxmv> mv;
+
+	bool TouchBegan(int ki, float x, float y) {
+		MakeMonster(x, y);
+		return true;
+	};
+
+	void TouchMoved(int ki, float x, float y) {
+		MakeMonster(x, y);
+	};
+
+	void TouchEnded(int ki, float x, float y) {
+	};
+
+	void TouchCancelled(int ki) {
+	};
 
 	Logic() {
-		auto v = std::make_shared<Xxmv>();
-		v->Init("zhangyu");
+		mv = std::make_shared<Xxmv>();
+		mv->Init("zhangyu");
 
-		bg.Init(v);
+		bg.Init(mv);
 		bg.SetScale(100, 100);
 		bg.SetColor(0, 0, 255);
-
-		auto& m = ms.emplace_back( std::make_unique<Monster>() );
-		m->x = 200;
-		m->y = 200;
-		m->Init(v);
 	}
 
 	void Update(float delta) {
@@ -102,15 +141,40 @@ struct Logic {
 	}
 };
 
-Logic* __logic = nullptr;
 extern "C" {
-	void LogicInit() {
-		__logic = new Logic();
+	void* LogicNew() {
+		return new Logic();
 	}
-	void LogicUninit() {
-		delete __logic;
+
+	void LogicDelete(void* logic) {
+		delete (Logic*)logic;
 	}
-	void LogicUpdate(float delta) {
-		__logic->Update(delta);
+
+	void* LogicGetInBuf(void* logic) {
+		return ((Logic*)logic)->inBuf.data();
+	}
+
+	void* LogicGetOutBuf(void* logic) {
+		return ((Logic*)logic)->outBuf.data();
+	}
+
+	bool LogicTouchBegan(void* logic, int ki, float x, float y) {
+		return ((Logic*)logic)->TouchBegan(ki, x, y);
+	};
+
+	void LogicTouchMoved(void* logic, int ki, float x, float y) {
+		((Logic*)logic)->TouchMoved(ki, x, y);
+	};
+
+	void LogicTouchEnded(void* logic, int ki, float x, float y) {
+		((Logic*)logic)->TouchEnded(ki, x, y);
+	};
+
+	void LogicTouchCancelled(void* logic, int ki) {
+		((Logic*)logic)->TouchCancelled(ki);
+	};
+
+	void LogicUpdate(void* logic, float delta) {
+		((Logic*)logic)->Update(delta);
 	}
 }
