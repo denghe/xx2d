@@ -1,5 +1,6 @@
 #pragma once
 #include "Env.h"
+#include "Logic.h"
 #include <array>
 #include <tuple>
 #include <vector>
