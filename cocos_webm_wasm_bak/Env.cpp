@@ -26,9 +26,8 @@ void EnvInit(void* scene) {
 extern "C" {
 	/*********************************************************************/
 
-	int XxmvNew(char const* fileName, int fileNameSize) {
-		fileName += __wasmBaseMemory;
-		std::string fn(fileName, fileNameSize);
+	int XxmvNew(void* fileName, int fileNameSize) {
+		std::string fn((char*)fileName + __wasmBaseMemory, fileNameSize);
 
 		auto iter = __spriteFramess.Find(fn);
 		if (iter != -1) return -iter;
@@ -115,17 +114,17 @@ extern "C" {
 		__sprites.ValueAt(selfKI)->setScale(x, y);
 	}
 
-	void SpriteSetColor(int selfKI, uint8_t r, uint8_t g, uint8_t b) {
+	void SpriteSetColor(int selfKI, int r, int g, int b) {
 		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->setColor({ r,g,b });
+		__sprites.ValueAt(selfKI)->setColor({ (uint8_t)r, (uint8_t)g, (uint8_t)b });
 	}
 
-	void SpriteSetOpacity(int selfKI, uint8_t o) {
+	void SpriteSetOpacity(int selfKI, int o) {
 		assert(__sprites.IndexExists(selfKI));
 		__sprites.ValueAt(selfKI)->setOpacity(o);
 	}
 
-	void SpriteSetVisible(int selfKI, bool b) {
+	void SpriteSetVisible(int selfKI, int b) {
 		assert(__sprites.IndexExists(selfKI));
 		__sprites.ValueAt(selfKI)->setVisible(b);
 	}

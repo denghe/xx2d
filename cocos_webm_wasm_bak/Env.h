@@ -7,7 +7,7 @@ extern "C" {
 	/*********************************************************************/
 
 	// load .xxmv file by fileName, return key index
-	extern int XxmvNew(char const* fileName, int fileNameSize);
+	extern int XxmvNew(void* fileName, int fileNameSize);
 
 	// unload .xxmv sprite frames by key index
 	extern void XxmvDelete(int selfKI);
@@ -31,7 +31,7 @@ extern "C" {
 	extern void SpriteSetAnchor(int selfKI, float x, float y);
 	extern void SpriteSetRotation(int selfKI, float r);
 	extern void SpriteSetScale(int selfKI, float x, float y);
-	extern void SpriteSetColor(int selfKI, uint8_t r, uint8_t g, uint8_t b);
-	extern void SpriteSetOpacity(int selfKI, uint8_t o);
-	extern void SpriteSetVisible(int selfKI, bool b);
+	extern void SpriteSetColor(int selfKI, int r, int g, int b);
+	extern void SpriteSetOpacity(int selfKI, int o);
+	extern void SpriteSetVisible(int selfKI, int b);
 }
