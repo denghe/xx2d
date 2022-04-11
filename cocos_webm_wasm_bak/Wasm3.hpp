@@ -42,7 +42,7 @@ struct Wasm3 {
 	{
 		rt.load(mod);
 
-		__wasmBaseMemory = (size_t)rt.get_true_addr(0);
+		__wasmBaseMemory = (size_t)rt.get_base_addr();
 		__director = cocos2d::Director::getInstance();
 		__scene = (cocos2d::Scene*)scene;
 		__sfcache = cocos2d::SpriteFrameCache::getInstance();
