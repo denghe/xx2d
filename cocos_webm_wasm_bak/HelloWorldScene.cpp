@@ -8,18 +8,10 @@ bool HelloWorld::init() {
 	auto closeItem = cocos2d::MenuItemImage::create("CloseNormal.png", "CloseSelected.png", [this](auto) {
 		LogicDelete->call(logic);
 		cocos2d::Director::getInstance()->end();
-		});
+	});
 	closeItem->setPosition(100, 100);
 
 	auto menu = cocos2d::Menu::create(closeItem, NULL);
-
-	//auto t = GetNow();
-	//for (size_t i = 0; i < 100000000; i++) {
-	//	menu->setPosition(i, i);
-	//}
-	//auto te = (GetNow() - t) / 10000;
-	//cocos2d::log("cpp call 100000000 %s", std::to_string(te).c_str());
-
 	menu->setPosition(0, 0);
 	this->addChild(menu, 1);
 

@@ -2,6 +2,7 @@
 #include "Env.h"
 #include "CCRefPtr.h"
 #include "xx_dict.h"
+#include "xx_podpool.h"
 #include "xx_xxmv_cocos.h"
 
 inline cocos2d::Director* __director = nullptr;
@@ -10,8 +11,7 @@ inline cocos2d::SpriteFrameCache* __sfcache = nullptr;
 
 inline size_t __wasmBaseMemory = 0;
 
-inline int64_t __keyId = 0;
-inline xx::Dict<int64_t, cocos2d::RefPtr<cocos2d::Sprite>> __sprites;
+inline xx::PodPool<cocos2d::RefPtr<cocos2d::Sprite>> __sprites;
 
 inline xx::Dict<std::string, std::vector<cocos2d::RefPtr<cocos2d::SpriteFrame>>> __spriteFramess;
 
@@ -95,68 +95,56 @@ extern "C" {
 		assert(__spriteFramess.ValueAt(xxmvKI).size() > 0);
 
 		auto spr = cocos2d::Sprite::createWithSpriteFrame(__spriteFramess.ValueAt(xxmvKI)[0]);
-		auto r = __sprites.Add(++__keyId, spr);
-		assert(r.success);
+		auto r = __sprites.Add(spr);
 		if (parentIndex == -1) {
 			__scene->addChild(spr);
 		}
 		else {
-			assert(__sprites.IndexExists(parentIndex));
-			__sprites.ValueAt(parentIndex)->addChild(spr);
+			__sprites[parentIndex]->addChild(spr);
 		}
-		return r.index;
+		return r;
 	}
 
 	void SpriteDelete(int selfKI) {
-		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->removeFromParent();
-		__sprites.RemoveAt(selfKI);
+		__sprites[selfKI]->removeFromParent();
+		__sprites.Remove(selfKI);
 	}
 
 	void SpriteSetPosition(int selfKI, float x, float y) {
-		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->setPosition(x, y);
+		__sprites[selfKI]->setPosition(x, y);
 	}
 
 	void SpriteSetZOrder(int selfKI, float z) {
-		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->setGlobalZOrder(z);
+		__sprites[selfKI]->setGlobalZOrder(z);
 	}
 
 	void SpriteSetAnchor(int selfKI, float x, float y) {
-		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->setAnchorPoint({ x, y });
+		__sprites[selfKI]->setAnchorPoint({ x, y });
 	}
 
 	void SpriteSetRotation(int selfKI, float r) {
-		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->setRotation(r);
+		__sprites[selfKI]->setRotation(r);
 	}
 
 	void SpriteSetScale(int selfKI, float x, float y) {
-		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->setScale(x, y);
+		__sprites[selfKI]->setScale(x, y);
 	}
 
 	void SpriteSetColor(int selfKI, int r, int g, int b) {
-		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->setColor({ (uint8_t)r, (uint8_t)g, (uint8_t)b });
+		__sprites[selfKI]->setColor({ (uint8_t)r, (uint8_t)g, (uint8_t)b });
 	}
 
 	void SpriteSetOpacity(int selfKI, int o) {
-		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->setOpacity(o);
+		__sprites[selfKI]->setOpacity(o);
 	}
 
 	void SpriteSetVisible(int selfKI, int b) {
-		assert(__sprites.IndexExists(selfKI));
-		__sprites.ValueAt(selfKI)->setVisible(b);
+		__sprites[selfKI]->setVisible(b);
 	}
 
 	void SpriteSetXxmvFrame(int selfKI, int xxmvKI, int index) {
-		assert(__sprites.IndexExists(selfKI));
 		assert(__spriteFramess.IndexExists(xxmvKI));
 		assert(__spriteFramess.ValueAt(xxmvKI).size() > index && index >= 0);
-		__sprites.ValueAt(selfKI)->setSpriteFrame(__spriteFramess.ValueAt(xxmvKI)[index]);
+		__sprites[selfKI]->setSpriteFrame(__spriteFramess.ValueAt(xxmvKI)[index]);
 	}
 }

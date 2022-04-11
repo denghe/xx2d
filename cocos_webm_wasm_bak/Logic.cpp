@@ -79,6 +79,7 @@ struct Monster {
 	int numFrames = 0;
 	int frameIndex = -1;
 	float x = 0, y = 0;
+	int life = 200;
 
 	void Init(std::shared_ptr<Xxmv> xxmv) {
 		numFrames = xxmv->numFrames;
@@ -90,6 +91,7 @@ struct Monster {
 	}
 
 	int Update(float delta) {
+		if (!--life) return -1;
 		++frameIndex;
 		if (frameIndex == numFrames) frameIndex = 0;
 		body.SetXxmvFrame(frameIndex);
@@ -119,15 +121,6 @@ struct Logic {
 
 	int TouchBegan(int ki, float x, float y) {
 		MakeMonster(x, y);
-
-		// 测试发现 该 函数调用性能 大约是 luajit 的 20 倍
-		//auto t = Now();
-		//for (size_t i = 0; i < 100000000; i++) {
-		//	bg.SetPosition(i, i);
-		//}
-		//auto te = (Now() - t) / 10000;
-		//ConsoleLog((void*)std::to_string(te).c_str());
-
 		return 1;
 	};
 
