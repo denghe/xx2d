@@ -6,8 +6,17 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <chrono>
 #include <unordered_set>
 #include <cassert>
+
+uint64_t Now() {
+	return GetNow();
+}
+
+uint64_t SteadyNow() {
+	return GetSteadyNow();
+}
 
 #define STRUCT_BASE_CODE_CORE(T) T()=default;T(T const&)=delete;T& operator=(T const&)=delete;
 #define STRUCT_BASE_CODE(T) T(T&&)=default;T& operator=(T&&)=default;STRUCT_BASE_CODE_CORE(T)
@@ -110,6 +119,15 @@ struct Logic {
 
 	int TouchBegan(int ki, float x, float y) {
 		MakeMonster(x, y);
+
+		// 测试发现 该 函数调用性能 大约是 luajit 的 20 倍
+		//auto t = Now();
+		//for (size_t i = 0; i < 100000000; i++) {
+		//	bg.SetPosition(i, i);
+		//}
+		//auto te = (Now() - t) / 10000;
+		//ConsoleLog((void*)std::to_string(te).c_str());
+
 		return 1;
 	};
 

@@ -17,17 +17,41 @@ inline xx::Dict<std::string, std::vector<cocos2d::RefPtr<cocos2d::SpriteFrame>>>
 
 inline xx::XxmvCocos __mv;
 
-void EnvInit(void* scene) {
+void EnvInit(void* scene, size_t wasmBaseMemory) {
+	__wasmBaseMemory = wasmBaseMemory;
 	__director = cocos2d::Director::getInstance();
 	__scene = (cocos2d::Scene*)scene;
 	__sfcache = cocos2d::SpriteFrameCache::getInstance();
 }
 
+void FixAddress(void*& p) {
+	if constexpr (sizeof(void*) > 4) {
+		if (((size_t)p & 0xFFFFFFFF00000000u) == 0xCCCCCCCC00000000u) {
+			p = (void*)((uint32_t)p + __wasmBaseMemory);
+		}
+	}
+}
+
 extern "C" {
+
+	void ConsoleLog(void* str) {
+		FixAddress(str);
+		cocos2d::log("%s", str);
+	}
+
+	long long GetNow() {
+		return (int64_t)std::chrono::system_clock::now().time_since_epoch().count();
+	}
+
+	long long GetSteadyNow() {
+		return std::chrono::steady_clock::now().time_since_epoch().count();
+	}
+
 	/*********************************************************************/
 
 	int XxmvNew(void* fileName, int fileNameSize) {
-		std::string fn((char*)fileName + __wasmBaseMemory, fileNameSize);
+		FixAddress(fileName);
+		std::string fn((char*)fileName, fileNameSize);
 
 		auto iter = __spriteFramess.Find(fn);
 		if (iter != -1) return -iter;
@@ -136,11 +160,3 @@ extern "C" {
 		__sprites.ValueAt(selfKI)->setSpriteFrame(__spriteFramess.ValueAt(xxmvKI)[index]);
 	}
 }
-
-
-//wasm3::environment w3;
-//wasm3::runtime runtime = w3.new_runtime(1024);
-	//template<bool FromWasm = false>
-	//if constexpr (FromWasm) fileName += wasmBaseMemory;
-	//template<bool FromWasm = false>
-

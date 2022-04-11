@@ -12,20 +12,36 @@ bool HelloWorld::init() {
 	closeItem->setPosition(100, 100);
 
 	auto menu = cocos2d::Menu::create(closeItem, NULL);
+
+	//auto t = GetNow();
+	//for (size_t i = 0; i < 100000000; i++) {
+	//	menu->setPosition(i, i);
+	//}
+	//auto te = (GetNow() - t) / 10000;
+	//cocos2d::log("cpp call 100000000 %s", std::to_string(te).c_str());
+
 	menu->setPosition(0, 0);
 	this->addChild(menu, 1);
 
-	EnvInit(this);
 
 	env = std::make_unique<wasm3::environment>();
 	runtime = std::make_unique<wasm3::runtime>(env->new_runtime(1024 * 1024));
+
+
 	auto d = cocos2d::FileUtils::getInstance()->getDataFromFile("logic.wasm");
 	m3mod = std::make_unique<wasm3::module>(env->parse_module(d.getBytes(), d.getSize()));
 	runtime->load(*m3mod);
 
+	EnvInit(this, (size_t)runtime->get_true_addr(0));
+
+	m3mod->link_optional("*", "ConsoleLog", ConsoleLog);
+	m3mod->link_optional("*", "GetNow", GetNow);
+	m3mod->link_optional("*", "GetSteadyNow", GetSteadyNow);
+
 	m3mod->link_optional("*", "XxmvNew", XxmvNew);
 	m3mod->link_optional("*", "XxmvDelete", XxmvDelete);
 	m3mod->link_optional("*", "XxmvGetFramesCount", XxmvGetFramesCount);
+
 	m3mod->link_optional("*", "SpriteNew", SpriteNew);
 	m3mod->link_optional("*", "SpriteDelete", SpriteDelete);
 	m3mod->link_optional("*", "SpriteSetXxmvFrame", SpriteSetXxmvFrame);

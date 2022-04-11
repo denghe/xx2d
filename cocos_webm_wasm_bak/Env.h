@@ -1,9 +1,19 @@
 #pragma once
-#include <cstdint>
+#ifndef EMSCRIPTEN
 // call by host
-void EnvInit(void* scene);
+void EnvInit(void* scene, size_t EnvInit);
+#endif
 
 extern "C" {
+	// print str to console
+	extern void ConsoleLog(void* str);
+
+	// return std::chrono::system_clock::now();
+	extern long long GetNow();
+
+	// return std::chrono::steady_clock::now();
+	extern long long GetSteadyNow();
+
 	/*********************************************************************/
 
 	// load .xxmv file by fileName, return key index
