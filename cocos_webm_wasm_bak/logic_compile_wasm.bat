@@ -1,1 +1,2 @@
-em++ --no-entry -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s TOTAL_MEMORY=65536 -s TOTAL_STACK=4096 -s MALLOC=emmalloc -Wl,--export-dynamic -std=c++20 -O2 -ID:/Codes/xxlib/src -ID:/Codes/emsdk/upstream/emscripten  -DEMSCRIPTEN   Logic.cpp   -o ../Resources/logic.wasm
+em++ --no-entry -s ERROR_ON_UNDEFINED_SYMBOLS=0 -Wl,--export-dynamic -std=c++20 -O2 -I../../xxlib/src -I../../emsdk/upstream/emscripten  -DEMSCRIPTEN   Logic.cpp   -o ../Resources/logic.wasm
+#echo -s MALLOC=emmalloc 

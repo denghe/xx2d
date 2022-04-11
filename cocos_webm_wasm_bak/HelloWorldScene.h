@@ -8,8 +8,10 @@ public:
     virtual bool init() override;
     virtual void update(float delta) override;
 
-    wasm3::environment env;
-    wasm3::runtime runtime = env.new_runtime(1024);
+    std::unique_ptr<wasm3::environment> env;
+    std::unique_ptr<wasm3::runtime> runtime;
+    std::unique_ptr<wasm3::module> m3mod;
+
     std::unique_ptr<wasm3::function> LogicNew;
     std::unique_ptr<wasm3::function> LogicDelete;
     std::unique_ptr<wasm3::function> LogicGetInBuf;

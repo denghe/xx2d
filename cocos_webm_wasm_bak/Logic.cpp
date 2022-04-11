@@ -92,54 +92,54 @@ struct Monster {
 };
 
 struct Logic {
-	//std::array<uint8_t, 1024> inBuf, outBuf;
+	std::array<uint8_t, 1024> inBuf, outBuf;
 
-	//Sprite bg;
-	//std::vector<std::shared_ptr<Monster>> ms;
+	Sprite bg;
+	std::vector<std::shared_ptr<Monster>> ms;
 
-	//std::shared_ptr<Monster> MakeMonster(float x, float y) {
-	//	auto& m = ms.emplace_back(std::make_shared<Monster>());
-	//	m->x = x;
-	//	m->y = y;
-	//	m->Init(mv);
-	//	return m;
-	//}
+	std::shared_ptr<Monster> MakeMonster(float x, float y) {
+		auto& m = ms.emplace_back(std::make_shared<Monster>());
+		m->x = x;
+		m->y = y;
+		m->Init(mv);
+		return m;
+	}
 
-	//Random3 rnd;
-	//std::shared_ptr<Xxmv> mv;
+	Random3 rnd;
+	std::shared_ptr<Xxmv> mv;
 
-	//bool TouchBegan(int ki, float x, float y) {
-	//	MakeMonster(x, y);
-	//	return true;
-	//};
+	int TouchBegan(int ki, float x, float y) {
+		MakeMonster(x, y);
+		return 1;
+	};
 
-	//void TouchMoved(int ki, float x, float y) {
-	//	MakeMonster(x, y);
-	//};
+	void TouchMoved(int ki, float x, float y) {
+		MakeMonster(x, y);
+	};
 
-	//void TouchEnded(int ki, float x, float y) {
-	//};
+	void TouchEnded(int ki, float x, float y) {
+	};
 
-	//void TouchCancelled(int ki) {
-	//};
+	void TouchCancelled(int ki) {
+	};
 
-	//Logic() {
-	//	mv = std::make_shared<Xxmv>();
-	//	mv->Init("zhangyu");
+	Logic() {
+		mv = std::make_shared<Xxmv>();
+		mv->Init("zhangyu");
 
-	//	bg.Init(mv);
-	//	bg.SetScale(100, 100);
-	//	bg.SetColor(0, 0, 255);
-	//}
+		bg.Init(mv);
+		bg.SetScale(100, 100);
+		bg.SetColor(0, 0, 255);
+	}
 
-	//void Update(float delta) {
-	//	for (auto i = (int)ms.size() - 1; i >= 0; --i) {
-	//		if (ms[i]->Update(delta)) {
-	//			std::swap(ms[i], ms.back());
-	//			ms.pop_back();
-	//		}
-	//	}
-	//}
+	void Update(float delta) {
+		for (auto i = (int)ms.size() - 1; i >= 0; --i) {
+			if (ms[i]->Update(delta)) {
+				std::swap(ms[i], ms.back());
+				ms.pop_back();
+			}
+		}
+	}
 };
 
 extern "C" {
@@ -152,33 +152,30 @@ extern "C" {
 	}
 
 	void* LogicGetInBuf(void* logic) {
-		//return ((Logic*)logic)->inBuf.data();
-		return 0;
+		return ((Logic*)logic)->inBuf.data();
 	}
 
 	void* LogicGetOutBuf(void* logic) {
-		//return ((Logic*)logic)->outBuf.data();
-		return 0;
+		return ((Logic*)logic)->outBuf.data();
 	}
 
 	int LogicTouchBegan(void* logic, int ki, float x, float y) {
-		//return ((Logic*)logic)->TouchBegan(ki, x, y) ? 1 : 0;
-		return 0;
+		return ((Logic*)logic)->TouchBegan(ki, x, y);
 	};
 
 	void LogicTouchMoved(void* logic, int ki, float x, float y) {
-		//((Logic*)logic)->TouchMoved(ki, x, y);
+		((Logic*)logic)->TouchMoved(ki, x, y);
 	};
 
 	void LogicTouchEnded(void* logic, int ki, float x, float y) {
-		//((Logic*)logic)->TouchEnded(ki, x, y);
+		((Logic*)logic)->TouchEnded(ki, x, y);
 	};
 
 	void LogicTouchCancelled(void* logic, int ki) {
-		//((Logic*)logic)->TouchCancelled(ki);
+		((Logic*)logic)->TouchCancelled(ki);
 	};
 
 	void LogicUpdate(void* logic, float delta) {
-		//((Logic*)logic)->Update(delta);
+		((Logic*)logic)->Update(delta);
 	}
 }

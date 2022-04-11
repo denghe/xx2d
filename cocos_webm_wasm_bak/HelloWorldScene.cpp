@@ -1,127 +1,92 @@
 #include "HelloWorldScene.h"
-#include "xx_xxmv_cocos.h"
 #include "Env.h"
-#include <fstream>
-#include "xx_file.h"
-//#include "Logic.h"
 
 bool HelloWorld::init() {
 	if (!Scene::init()) return false;
 	scheduleUpdate();
 
+	auto closeItem = cocos2d::MenuItemImage::create("CloseNormal.png", "CloseSelected.png", [this](auto) {
+		LogicDelete->call(logic);
+		cocos2d::Director::getInstance()->end();
+		});
+	closeItem->setPosition(100, 100);
+
+	auto menu = cocos2d::Menu::create(closeItem, NULL);
+	menu->setPosition(0, 0);
+	this->addChild(menu, 1);
+
 	EnvInit(this);
 
-
-
+	env = std::make_unique<wasm3::environment>();
+	runtime = std::make_unique<wasm3::runtime>(env->new_runtime(1024 * 1024));
 	auto d = cocos2d::FileUtils::getInstance()->getDataFromFile("logic.wasm");
-	wasm3::module mod = env.parse_module(d.getBytes(), d.getSize());
-	runtime.load(mod);
+	m3mod = std::make_unique<wasm3::module>(env->parse_module(d.getBytes(), d.getSize()));
+	runtime->load(*m3mod);
 
-	auto f = runtime.find_function("LogicNew");
-	auto r = f.call<void*>();
-	r = f.call<void*>();
+	m3mod->link_optional("*", "XxmvNew", XxmvNew);
+	m3mod->link_optional("*", "XxmvDelete", XxmvDelete);
+	m3mod->link_optional("*", "XxmvGetFramesCount", XxmvGetFramesCount);
+	m3mod->link_optional("*", "SpriteNew", SpriteNew);
+	m3mod->link_optional("*", "SpriteDelete", SpriteDelete);
+	m3mod->link_optional("*", "SpriteSetXxmvFrame", SpriteSetXxmvFrame);
+	m3mod->link_optional("*", "SpriteSetPosition", SpriteSetPosition);
+	m3mod->link_optional("*", "SpriteSetZOrder", SpriteSetZOrder);
+	m3mod->link_optional("*", "SpriteSetAnchor", SpriteSetAnchor);
+	m3mod->link_optional("*", "SpriteSetRotation", SpriteSetRotation);
+	m3mod->link_optional("*", "SpriteSetScale", SpriteSetScale);
+	m3mod->link_optional("*", "SpriteSetColor", SpriteSetColor);
+	m3mod->link_optional("*", "SpriteSetOpacity", SpriteSetOpacity);
+	m3mod->link_optional("*", "SpriteSetVisible", SpriteSetVisible);
 
+	LogicNew = std::make_unique<wasm3::function>(runtime->find_function("LogicNew"));
+	LogicDelete = std::make_unique<wasm3::function>(runtime->find_function("LogicDelete"));
+	LogicGetInBuf = std::make_unique<wasm3::function>(runtime->find_function("LogicGetInBuf"));
+	LogicGetOutBuf = std::make_unique<wasm3::function>(runtime->find_function("LogicGetOutBuf"));
+	LogicTouchBegan = std::make_unique<wasm3::function>(runtime->find_function("LogicTouchBegan"));
+	LogicTouchMoved = std::make_unique<wasm3::function>(runtime->find_function("LogicTouchMoved"));
+	LogicTouchEnded = std::make_unique<wasm3::function>(runtime->find_function("LogicTouchEnded"));
+	LogicTouchCancelled = std::make_unique<wasm3::function>(runtime->find_function("LogicTouchCancelled"));
+	LogicUpdate = std::make_unique<wasm3::function>(runtime->find_function("LogicUpdate"));
 
+	logic = (void*)(uint32_t)LogicNew->call<void*>();
+	logicInBuf = runtime->get_true_addr(LogicGetInBuf->call<void*>(this->logic));
+	logicOutBuf = runtime->get_true_addr(LogicGetOutBuf->call<void*>(this->logic));
 
-	//auto d = cocos2d::FileUtils::getInstance()->getDataFromFile("logic.wasm");
-	//wasm3::module mod = env.parse_module(d.getBytes(), d.getSize());
-	//runtime.load(mod);
-
-	//mod.link_optional("*", "XxmvNew", XxmvNew);
-	//mod.link_optional("*", "XxmvDelete", XxmvDelete);
-	//mod.link_optional("*", "XxmvGetFramesCount", XxmvGetFramesCount);
-	//mod.link_optional("*", "SpriteNew", SpriteNew);
-	//mod.link_optional("*", "SpriteDelete", SpriteDelete);
-	//mod.link_optional("*", "SpriteSetXxmvFrame", SpriteSetXxmvFrame);
-	//mod.link_optional("*", "SpriteSetPosition", SpriteSetPosition);
-	//mod.link_optional("*", "SpriteSetZOrder", SpriteSetZOrder);
-	//mod.link_optional("*", "SpriteSetAnchor", SpriteSetAnchor);
-	//mod.link_optional("*", "SpriteSetRotation", SpriteSetRotation);
-	//mod.link_optional("*", "SpriteSetScale", SpriteSetScale);
-	//mod.link_optional("*", "SpriteSetColor", SpriteSetColor);
-	//mod.link_optional("*", "SpriteSetOpacity", SpriteSetOpacity);
-	//mod.link_optional("*", "SpriteSetVisible", SpriteSetVisible);
-
-	//LogicNew = std::make_unique<wasm3::function>(runtime.find_function("LogicNew"));
-	//LogicDelete = std::make_unique<wasm3::function>(runtime.find_function("LogicDelete"));
-	//LogicGetInBuf = std::make_unique<wasm3::function>(runtime.find_function("LogicGetInBuf"));
-	//LogicGetOutBuf = std::make_unique<wasm3::function>(runtime.find_function("LogicGetOutBuf"));
-	//LogicTouchBegan = std::make_unique<wasm3::function>(runtime.find_function("LogicTouchBegan"));
-	//LogicTouchMoved = std::make_unique<wasm3::function>(runtime.find_function("LogicTouchMoved"));
-	//LogicTouchEnded = std::make_unique<wasm3::function>(runtime.find_function("LogicTouchEnded"));
-	//LogicTouchCancelled = std::make_unique<wasm3::function>(runtime.find_function("LogicTouchCancelled"));
-	//LogicUpdate = std::make_unique<wasm3::function>(runtime.find_function("LogicUpdate"));
-
-	//this->logic = LogicNew->call<void*>();
-	//this->logicInBuf = LogicGetInBuf->call<void*>(this->logic);
-	//this->logicOutBuf = LogicGetOutBuf->call<void*>(this->logic);
-
-	//auto listener = cocos2d::EventListenerTouchOneByOne::create();
-	//listener->onTouchBegan = [this](cocos2d::Touch* t, cocos2d::Event* e)->bool {
-	//	auto result = touches.Add(t, logic);
-	//	assert(result.success);
-	//	auto p = t->getLocation();
-	//	return LogicTouchBegan->call<int>(logic, result.index, p.x, p.y);
-	//};
-	//listener->onTouchMoved = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
-	//	auto iter = touches.Find(t);
-	//	assert(iter != -1);
-	//	auto p = t->getLocation();
-	//	LogicTouchMoved->call(touches.ValueAt(iter), iter, p.x, p.y);
-	//};
-	//listener->onTouchEnded = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
-	//	auto iter = touches.Find(t);
-	//	assert(iter != -1);
-	//	auto p = t->getLocation();
-	//	LogicTouchEnded->call(touches.ValueAt(iter), iter, p.x, p.y);
-	//	touches.RemoveAt(iter);
-	//};
-	//listener->onTouchCancelled = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
-	//	auto iter = touches.Find(t);
-	//	assert(iter != -1);
-	//	LogicTouchCancelled->call(touches.ValueAt(iter), iter);
-	//	touches.RemoveAt(iter);
-	//};
-	//this->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener, this);
+	auto listener = cocos2d::EventListenerTouchOneByOne::create();
+	listener->onTouchBegan = [this](cocos2d::Touch* t, cocos2d::Event* e)->bool {
+		auto result = touches.Add(t, logic);
+		assert(result.success);
+		auto p = t->getLocation();
+		return LogicTouchBegan->call<int>(logic, result.index, p.x, p.y) == 1;
+	};
+	listener->onTouchMoved = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
+		auto iter = touches.Find(t);
+		assert(iter != -1);
+		auto p = t->getLocation();
+		LogicTouchMoved->call(touches.ValueAt(iter), iter, p.x, p.y);
+	};
+	listener->onTouchEnded = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
+		auto iter = touches.Find(t);
+		assert(iter != -1);
+		auto p = t->getLocation();
+		LogicTouchEnded->call(touches.ValueAt(iter), iter, p.x, p.y);
+		touches.RemoveAt(iter);
+	};
+	listener->onTouchCancelled = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
+		auto iter = touches.Find(t);
+		assert(iter != -1);
+		LogicTouchCancelled->call(touches.ValueAt(iter), iter);
+		touches.RemoveAt(iter);
+	};
+	this->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener, this);
 
 
-	//this->logic = LogicNew();
-	//this->logicInBuf = LogicGetInBuf(this->logic);
-	//this->logicOutBuf = LogicGetOutBuf(this->logic);
-
-	//auto listener = cocos2d::EventListenerTouchOneByOne::create();
-	//listener->onTouchBegan = [this](cocos2d::Touch* t, cocos2d::Event* e)->bool {
-	//    auto result = touches.Add(t, logic);
-	//    assert(result.success);
-	//    auto p = t->getLocation();
-	//    return LogicTouchBegan(logic, result.index, p.x, p.y);
-	//};
-	//listener->onTouchMoved = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
-	//    auto iter = touches.Find(t);
-	//    assert(iter != -1);
-	//    auto p = t->getLocation();
-	//    LogicTouchMoved(touches.ValueAt(iter), iter, p.x, p.y);
-	//};
-	//listener->onTouchEnded = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
-	//    auto iter = touches.Find(t);
-	//    assert(iter != -1);
-	//    auto p = t->getLocation();
-	//    LogicTouchEnded(touches.ValueAt(iter), iter, p.x, p.y);
-	//    touches.RemoveAt(iter);
-	//};
-	//listener->onTouchCancelled = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
-	//    auto iter = touches.Find(t);
-	//    assert(iter != -1);
-	//    LogicTouchCancelled(touches.ValueAt(iter), iter);
-	//    touches.RemoveAt(iter);
-	//};
-	//this->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener, this);
 
 	return true;
 }
 
 void HelloWorld::update(float delta) {
-	//LogicUpdate->call(logic, delta);
+	LogicUpdate->call(logic, delta);
 }
 
 
@@ -138,9 +103,48 @@ void HelloWorld::update(float delta) {
 
 
 
+//#include "Logic.h"
+
+//logic = LogicNew();
+//logicInBuf = LogicGetInBuf(this->logic);
+//logicOutBuf = LogicGetOutBuf(this->logic);
+
+//auto listener = cocos2d::EventListenerTouchOneByOne::create();
+//listener->onTouchBegan = [this](cocos2d::Touch* t, cocos2d::Event* e)->bool {
+//    auto result = touches.Add(t, logic);
+//    assert(result.success);
+//    auto p = t->getLocation();
+//    return LogicTouchBegan(logic, result.index, p.x, p.y);
+//};
+//listener->onTouchMoved = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
+//    auto iter = touches.Find(t);
+//    assert(iter != -1);
+//    auto p = t->getLocation();
+//    LogicTouchMoved(touches.ValueAt(iter), iter, p.x, p.y);
+//};
+//listener->onTouchEnded = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
+//    auto iter = touches.Find(t);
+//    assert(iter != -1);
+//    auto p = t->getLocation();
+//    LogicTouchEnded(touches.ValueAt(iter), iter, p.x, p.y);
+//    touches.RemoveAt(iter);
+//};
+//listener->onTouchCancelled = [this](cocos2d::Touch* t, cocos2d::Event* e)->void {
+//    auto iter = touches.Find(t);
+//    assert(iter != -1);
+//    LogicTouchCancelled(touches.ValueAt(iter), iter);
+//    touches.RemoveAt(iter);
+//};
+//this->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener, this);
 
 
 
+
+
+
+
+//#include "xx_xxmv_cocos.h"
+// 
 //xx::XxmvCocos mv;
 //auto GetAnim = [&](std::string const& fileName, float frameDelay = 1.f / 60)-> cocos2d::Animation* {
 //    int r = mv.LoadFromXxmv(fileName + ".xxmv");
