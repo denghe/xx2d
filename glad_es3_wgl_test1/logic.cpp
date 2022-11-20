@@ -38,17 +38,18 @@ void main() {
 	glBindAttribLocation(p, 2, "aColor");
 
 	uTex0 = glGetUniformLocation(p, "uTex0");
-	assert(uTex0 == 1);
-	glUniform1i(uTex0, 0);
-
 	uMVPMatrix = glGetUniformLocation(p, "uMVPMatrix");
-	assert(uMVPMatrix == 0);
-	//glUniform1i(uMVPMatrix, 0);
-
-	glUseProgram(p);
 }
 
 void Logic::Update() {
+	glUseProgram(p);
+
+	//glUniform1i(uTex0, 0);
+	//glUniform???(uMVPMatrix, 0);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, t);
+
 	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 }

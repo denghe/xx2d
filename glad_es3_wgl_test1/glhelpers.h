@@ -1,13 +1,6 @@
 ﻿#pragma once
 #include "pch.h"
 
-union Color4b {
-	struct {
-		uint8_t r, g, b, a;
-	};
-	uint32_t data = 0;
-};
-
 #ifndef NDEBUG
 inline void CheckGLErrorAt(const char* file, int line, const char* func) {
 	if (auto e = glGetError(); e != GL_NO_ERROR) {
@@ -34,10 +27,10 @@ struct GLRes {
 	GLRes(GLuint&& i) {
 		std::get<0>(vs) = i;
 	}
-	GLRes(GLRes&& o) {
+	GLRes(GLRes&& o) noexcept {
 		std::swap(vs, o.vs);
 	}
-	GLRes& operator=(GLRes&& o) {
+	GLRes& operator=(GLRes&& o) noexcept {
 		std::swap(vs, o.vs);
 		return *this;
 	}
@@ -62,7 +55,7 @@ using VertexArrays = GLRes<GLResTypes::Vertexss>;
 using Buffer = GLRes<GLResTypes::Buffer>;
 using Texture = GLRes<GLResTypes::Texture, GLsizei, GLsizei>;
 
-xx::Shared<Texture> MakeTexture(std::string_view const& fn);
+Texture LoadTexture(std::string_view const& fn);
 Shader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_);
 Shader LoadVertexShader(std::initializer_list<std::string_view>&& codes_);
 Shader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_);
