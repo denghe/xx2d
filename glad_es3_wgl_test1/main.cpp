@@ -45,7 +45,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         MessageBox(NULL, _T("Failed to create window!"), window_title, MB_ICONERROR);
         return -1;
     }
-    // Configure & Initialize OpenGL:
 
     // Get a device context so I can set the pixel format later:
     HDC hdc = GetDC(hWnd);
@@ -89,78 +88,47 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
     wglMakeCurrent(hdc, temp_context);
 
+    // Glad Loader!
+    if (!gladLoadGLES2((GLADloadfunc)glGetProcAddr)) {
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(temp_context);
+        ReleaseDC(hWnd, hdc);
+        DestroyWindow(hWnd);
+        MessageBox(NULL, _T("Glad Loader failed!"), window_title, MB_ICONERROR);
+        return -1;
+    }
 
-    // todo
-    gladLoadGL((GLADloadfunc)glGetProcAddr);
+    // Show & Update the main window:
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
 
-    //// Load WGL Extensions:
-    //gladLoaderLoadWGL(hdc);
+    // A typical native Windows game loop:
+    bool should_quit = false;
+    MSG msg = { };
+    while (!should_quit) {
+        while (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
 
-    //// Set the desired OpenGL version:
-    //int attributes[] = {
-    //    WGL_CONTEXT_MAJOR_VERSION_ARB, 3,   // Set the MAJOR version of OpenGL to 3
-    //    WGL_CONTEXT_MINOR_VERSION_ARB, 2,   // Set the MINOR version of OpenGL to 2
-    //    WGL_CONTEXT_FLAGS_ARB,
-    //    WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, // Set our OpenGL context to be forward compatible
-    //    0
-    //};
+            if (msg.message == WM_QUIT || (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE))
+                should_quit = true;
+        }
 
-    //// Create the final opengl context and get rid of the temporary one:
-    //HGLRC opengl_context = NULL;
-    //if (NULL == (opengl_context = wglCreateContextAttribsARB(hdc, NULL, attributes))) {
-    //    wglDeleteContext(temp_context);
-    //    ReleaseDC(hWnd, hdc);
-    //    DestroyWindow(hWnd);
-    //    MessageBox(NULL, _T("Failed to create the final rendering context!"), window_title, MB_ICONERROR);
-    //    return -1;
-    //}
-    //wglMakeCurrent(NULL, NULL); // Remove the temporary context from being active
-    //wglDeleteContext(temp_context); // Delete the temporary OpenGL context
-    //wglMakeCurrent(hdc, opengl_context);    // Make our OpenGL 3.2 context current
+        glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-    //// Glad Loader!
-    //if (!gladLoadGL()) {
-    //    wglMakeCurrent(NULL, NULL);
-    //    wglDeleteContext(opengl_context);
-    //    ReleaseDC(hWnd, hdc);
-    //    DestroyWindow(hWnd);
-    //    MessageBox(NULL, _T("Glad Loader failed!"), window_title, MB_ICONERROR);
-    //    return -1;
-    //}
-    //// Show & Update the main window:
-    //ShowWindow(hWnd, nCmdShow);
-    //UpdateWindow(hWnd);
+        SwapBuffers(hdc);
+    }
 
-    //// A typical native Windows game loop:
-    //bool should_quit = false;
-    //MSG msg = { };
-    //while (!should_quit) {
-    //    // Generally you'll want to empty out the message queue before each rendering
-    //    // frame or messages will build up in the queue possibly causing input
-    //    // delay. Multiple messages and input events occur before each frame.
-    //    while (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
-    //        TranslateMessage(&msg);
-    //        DispatchMessage(&msg);
+    // Clean-up:
+    if (temp_context)
+        wglDeleteContext(temp_context);
+    if (hdc)
+        ReleaseDC(hWnd, hdc);
+    if (hWnd)
+        DestroyWindow(hWnd);
 
-    //        if (msg.message == WM_QUIT || (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE))
-    //            should_quit = true;
-    //    }
-
-    //    glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
-    //    glClear(GL_COLOR_BUFFER_BIT);
-
-    //    SwapBuffers(hdc);
-    //}
-
-    //// Clean-up:
-    //if (opengl_context)
-    //    wglDeleteContext(opengl_context);
-    //if (hdc)
-    //    ReleaseDC(hWnd, hdc);
-    //if (hWnd)
-    //    DestroyWindow(hWnd);
-
-    //return (int)msg.wParam;
+    return (int)msg.wParam;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
