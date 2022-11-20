@@ -4,4 +4,11 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="..\glad_glcore33\glad.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gltest3.hpp" />
+    <ClInclude Include="gltest4.hpp" />
+    <ClInclude Include="gltest5.hpp" />
+    <ClInclude Include="gltest1.hpp" />
+    <ClInclude Include="gltest2.hpp" />
+  </ItemGroup>
 </Project>

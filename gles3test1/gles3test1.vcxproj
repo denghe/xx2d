@@ -97,6 +97,13 @@
     <ClCompile Include="..\glad_glcore33\glad.c" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gltest1.hpp" />
+    <ClInclude Include="gltest2.hpp" />
+    <ClInclude Include="gltest3.hpp" />
+    <ClInclude Include="gltest4.hpp" />
+    <ClInclude Include="gltest5.hpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

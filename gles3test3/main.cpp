@@ -786,9 +786,9 @@
 #define var decltype(auto)
 
 //#include "../gles3test1/gltest1.hpp"
-//#include "../gles3test1/gltest2.hpp"
+#include "../gles3test1/gltest2.hpp"
 //#include "../gles3test1/gltest3.hpp"
-#include "../gles3test1/gltest4.hpp"
+//#include "../gles3test1/gltest4.hpp"
 //#include "../gles3test1/gltest5.hpp"
 
 #include <thread>
@@ -798,12 +798,12 @@ inline int width = 0;
 inline int height = 0;
 
 int main() {
-	#ifdef NDEBUG
-	// 拿一半的 cpu 跑物理( 对于超线程 cpu 来说这样挺好 )
-	auto numThreads = std::thread::hardware_concurrency();
-	omp_set_num_threads(numThreads / 2);
-	omp_set_dynamic(0);
-	#endif
+	//#ifdef NDEBUG
+	//// 拿一半的 cpu 跑物理( 对于超线程 cpu 来说这样挺好 )
+	//auto numThreads = std::thread::hardware_concurrency();
+	//omp_set_num_threads(numThreads / 2);
+	//omp_set_dynamic(0);
+	//#endif
 
 
 
@@ -839,9 +839,9 @@ int main() {
 	glfwSwapInterval(0);
 
 	//GLTest1 gltest;
-	//GLTest2 gltest;
+	GLTest2 gltest;
 	//GLTest3 gltest;
-	GLTest4 gltest;
+	//GLTest4 gltest;
 	//GLTest5 gltest;
 
 	while (!glfwWindowShouldClose(wnd)) {
