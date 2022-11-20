@@ -2,8 +2,7 @@
 #include <windows.h>
 #include <tchar.h>
 #include <stdbool.h>
-
-#include <gl.h>
+#include "wgl.h"
 
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -71,13 +70,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         return -1;
     }
 
-    // Get the wgl funcs from dll
-    glInstance = LoadLibraryA("opengl32.dll");
-    if (!glInstance) return -1;
-    auto wglCreateContext = (HGLRC(__stdcall*)(HDC))::GetProcAddress(glInstance, "wglCreateContext");
-    auto wglMakeCurrent = (BOOL(__stdcall*)(HDC, HGLRC))::GetProcAddress(glInstance, "wglMakeCurrent");
-    auto wglDeleteContext = (BOOL(__stdcall*)(HGLRC))::GetProcAddress(glInstance, "wglDeleteContext");
-
     // Create and enable a temporary (helper) opengl context:
     HGLRC temp_context = NULL;
     if (NULL == (temp_context = wglCreateContext(hdc))) {
@@ -88,9 +80,40 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
     wglMakeCurrent(hdc, temp_context);
 
-    // known issue: can't load extensions
-    gladLoadGLES2((GLADloadfunc)glGetProcAddr);
+    // Load WGL Extensions:
+    gladLoaderLoadWGL(hdc);
 
+    // Set the desired OpenGL version:
+    int attributes[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, 3,   // Set the MAJOR version of OpenGL to 3
+        WGL_CONTEXT_MINOR_VERSION_ARB, 3,   // Set the MINOR version of OpenGL to 3
+        WGL_CONTEXT_FLAGS_ARB,
+        WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB, // Set our OpenGL context to be forward compatible
+        0
+    };
+
+    // Create the final opengl context and get rid of the temporary one:
+    HGLRC opengl_context = NULL;
+    if (NULL == (opengl_context = wglCreateContextAttribsARB(hdc, NULL, attributes))) {
+        wglDeleteContext(temp_context);
+        ReleaseDC(hWnd, hdc);
+        DestroyWindow(hWnd);
+        MessageBox(NULL, _T("Failed to create the final rendering context!"), window_title, MB_ICONERROR);
+        return -1;
+    }
+    wglMakeCurrent(NULL, NULL); // Remove the temporary context from being active
+    wglDeleteContext(temp_context); // Delete the temporary OpenGL context
+    wglMakeCurrent(hdc, opengl_context);    // Make our OpenGL 3.2 context current
+
+    // Glad Loader!
+    if (!gladLoaderLoadGL()) {
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(opengl_context);
+        ReleaseDC(hWnd, hdc);
+        DestroyWindow(hWnd);
+        MessageBox(NULL, _T("Glad Loader failed!"), window_title, MB_ICONERROR);
+        return -1;
+    }
     // Show & Update the main window:
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
@@ -99,6 +122,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     bool should_quit = false;
     MSG msg = { };
     while (!should_quit) {
+        // Generally you'll want to empty out the message queue before each rendering
+        // frame or messages will build up in the queue possibly causing input
+        // delay. Multiple messages and input events occur before each frame.
         while (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -114,8 +140,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
 
     // Clean-up:
-    if (temp_context)
-        wglDeleteContext(temp_context);
+    if (opengl_context)
+        wglDeleteContext(opengl_context);
     if (hdc)
         ReleaseDC(hWnd, hdc);
     if (hWnd)
