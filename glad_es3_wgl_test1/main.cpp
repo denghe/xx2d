@@ -7,8 +7,6 @@ static const TCHAR window_classname[] = _T("GLAD_ES3_TEST1");
 static const TCHAR window_title[] = _T("glad without glfw opengl es3.0 test1");
 static const POINT window_location = { CW_USEDEFAULT, 0 };
 static const SIZE window_size = { 1024, 768 };
-static const GLfloat clear_color[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     UNREFERENCED_PARAMETER(hPrevInstance);
@@ -112,26 +110,22 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     // Close vsync
     wglSwapIntervalEXT(0);
 
+    // create logic code
+    auto logic = xx::Make<Logic>();
+
     // A typical native Windows game loop:
-    bool should_quit = false;
     MSG msg = { };
-    while (!should_quit) {
-        // Generally you'll want to empty out the message queue before each rendering
-        // frame or messages will build up in the queue possibly causing input
-        // delay. Multiple messages and input events occur before each frame.
+    while (true) {
         while (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-
-            if (msg.message == WM_QUIT || (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE))
-                should_quit = true;
+            if (msg.message == WM_QUIT || (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE)) goto LabQuit;
         }
-
-        glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
-        glClear(GL_COLOR_BUFFER_BIT);
-
+        logic->Update();
         SwapBuffers(hdc);
     }
+LabQuit:
+    logic.Reset();
 
     // Clean-up:
     if (opengl_context)

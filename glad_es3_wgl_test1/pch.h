@@ -1,6 +1,7 @@
 ﻿#pragma once
 
-#include "xx_includes.h"
+#include <xx_helpers.h>
+#include <xx_ptr.h>
 #include <tchar.h>
 #include <stdbool.h>
 #include "wgl.h"
