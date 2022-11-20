@@ -12,7 +12,7 @@
     <ClInclude Include="wgl.h" />
     <ClInclude Include="khrplatform.h" />
     <ClInclude Include="logic.h" />
-    <ClInclude Include="main.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="xx_includes.h" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "main.h"
+#include "logic.h"
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

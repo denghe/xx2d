@@ -109,9 +109,9 @@
     <ClInclude Include="gl.h" />
     <ClInclude Include="khrplatform.h" />
     <ClInclude Include="logic.h" />
-    <ClInclude Include="main.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="wgl.h" />
+    <ClInclude Include="xx_includes.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
