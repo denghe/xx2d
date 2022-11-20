@@ -9,8 +9,8 @@
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 
-static const TCHAR window_classname[] = _T("SampleWndClass");
-static const TCHAR window_title[] = _T("[glad] WGL");
+static const TCHAR window_classname[] = _T("GLAD_ES3_TEST1");
+static const TCHAR window_title[] = _T("glad without glfw opengl es3.0 test1");
 static const POINT window_location = { CW_USEDEFAULT, 0 };
 static const SIZE window_size = { 1024, 768 };
 static const GLfloat clear_color[] = { 0.0f, 0.0f, 1.0f, 1.0f };
@@ -88,15 +88,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     }
     wglMakeCurrent(hdc, temp_context);
 
-    // Glad Loader!
-    if (!gladLoadGLES2((GLADloadfunc)glGetProcAddr)) {
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(temp_context);
-        ReleaseDC(hWnd, hdc);
-        DestroyWindow(hWnd);
-        MessageBox(NULL, _T("Glad Loader failed!"), window_title, MB_ICONERROR);
-        return -1;
-    }
+    // known issue: can't load extensions
+    gladLoadGLES2((GLADloadfunc)glGetProcAddr);
 
     // Show & Update the main window:
     ShowWindow(hWnd, nCmdShow);
