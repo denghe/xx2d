@@ -6,12 +6,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 static const TCHAR window_classname[] = _T("GLAD_ES3_TEST1");
 static const TCHAR window_title[] = _T("glad without glfw opengl es3.0 test1");
 static const POINT window_location = { CW_USEDEFAULT, 0 };
-static const SIZE window_size = { 1024, 768 };
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    // create logic code
+    auto logic = xx::Make<Logic>();
+
+    // create window
     WNDCLASSEX wcex = { };
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -26,7 +29,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     HWND hWnd = CreateWindow(MAKEINTATOM(wndclass), window_title,
         WS_OVERLAPPEDWINDOW,
         window_location.x, window_location.y,
-        window_size.cx, window_size.cy,
+        logic->w, logic->h,
         NULL, NULL, hInstance, NULL);
 
     if (!hWnd) {
@@ -110,10 +113,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     // Close vsync
     wglSwapIntervalEXT(0);
 
-    // create logic code
-    auto logic = xx::Make<Logic>();
-
     // A typical native Windows game loop:
+    logic->Init();
+    CheckGLError();
     MSG msg = { };
     while (true) {
         while (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
@@ -121,7 +123,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             DispatchMessage(&msg);
             if (msg.message == WM_QUIT || (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE)) goto LabQuit;
         }
+        CheckGLError();
         logic->Update();
+        CheckGLError();
         SwapBuffers(hdc);
     }
 LabQuit:
