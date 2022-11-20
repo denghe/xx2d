@@ -2,7 +2,9 @@
 #include "logic.h"
 
 Logic::Logic() {
-
+	v = LoadVertexShader({ R"()" });
+	f = LoadFragmentShader({ R"()" });
+	p = LinkProgram(v, f);
 }
 
 void Logic::Update() {

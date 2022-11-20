@@ -54,9 +54,9 @@ Shader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& 
 			s.resize(r);
 			glGetShaderInfoLog(shader, r, nullptr, s.data());	// 复制错误文本
 		}
-		throw std::logic_error("glCompileShader failed: err msg = " + std::move(s));
+		throw std::logic_error("glCompileShader failed: err msg = " + s);
 	}
-	return shader;
+	return Shader(shader);
 }
 Shader LoadVertexShader(std::initializer_list<std::string_view>&& codes_) {
 	return LoadShader(GL_VERTEX_SHADER, std::move(codes_));
@@ -69,11 +69,8 @@ Program LinkProgram(GLuint const& vs, GLuint const& fs) {
 	// 创建一个 program. 返回 0 表示失败
 	auto program = glCreateProgram();
 	if (!program) throw std::logic_error("glCreateProgram failed.");
-
 	glAttachShader(program, vs);	// 向 program 附加 vs
-	CheckGLError();
 	glAttachShader(program, fs);	// 向 program 附加 ps
-	CheckGLError();
 	glLinkProgram(program);	// 链接
 	GLint r = GL_FALSE;	// 状态容器
 	glGetProgramiv(program, GL_LINK_STATUS, &r);	// 查询链接是否成功
@@ -85,7 +82,7 @@ Program LinkProgram(GLuint const& vs, GLuint const& fs) {
 			s.resize(r);
 			glGetProgramInfoLog(program, r, nullptr, s.data());	// 复制错误文本
 		}
-		throw std::logic_error("glLinkProgram failed: err msg = " + std::move(s));
+		throw std::logic_error("glLinkProgram failed: err msg = " + s);
 	}
-	return program;
+	return Program(program);
 }

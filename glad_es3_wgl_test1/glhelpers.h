@@ -28,9 +28,12 @@ struct GLRes {
 	std::tuple<GLuint, VS...> vs;
 	operator GLuint const& () const { return std::get<0>(vs); }
 
-	GLRes() = delete;
 	GLRes(GLRes const&) = delete;
 	GLRes& operator=(GLRes const&) = delete;
+	GLRes() = default;
+	GLRes(GLuint&& i) {
+		std::get<0>(vs) = i;
+	}
 	GLRes(GLRes&& o) {
 		std::swap(vs, o.vs);
 	}

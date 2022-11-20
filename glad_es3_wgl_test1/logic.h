@@ -3,10 +3,10 @@
 #include "glhelpers.h"
 
 struct Logic {
-	xx::Shared<Shader> vs, fs;
-	xx::Shared<Program> ps;
-	xx::Shared<VertexArrays> vao;
-	xx::Shared<Buffer> vbo1, vbo2;
+	Shader v, f;
+	Program p;
+	VertexArrays va;
+	Buffer b1, b2;
 	std::vector<xx::Shared<Texture>> ts;
 
 	Logic();
