@@ -1,12 +1,7 @@
-﻿#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <tchar.h>
-#include <stdbool.h>
-#include "wgl.h"
-
+﻿#include "pch.h"
+#include "main.h"
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
 
 static const TCHAR window_classname[] = _T("GLAD_ES3_TEST1");
 static const TCHAR window_title[] = _T("glad without glfw opengl es3.0 test1");

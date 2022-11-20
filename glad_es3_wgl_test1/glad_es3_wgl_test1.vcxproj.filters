@@ -4,10 +4,15 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="wgl.c" />
     <ClCompile Include="gl.c" />
+    <ClCompile Include="logic.cpp" />
+    <ClCompile Include="pch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl.h" />
     <ClInclude Include="wgl.h" />
     <ClInclude Include="khrplatform.h" />
+    <ClInclude Include="logic.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
 </Project>
