@@ -14,10 +14,6 @@ static const POINT window_location = { CW_USEDEFAULT, 0 };
 static const SIZE window_size = { 1024, 768 };
 static const GLfloat clear_color[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 
-static HMODULE glInstance = nullptr;
-static void* glGetProcAddr(const char* name) {
-    return GetProcAddress(glInstance, name);
-}
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     UNREFERENCED_PARAMETER(hPrevInstance);
@@ -117,6 +113,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     // Show & Update the main window:
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
+
+    // Close vsync
+    wglSwapIntervalEXT(0);
 
     // A typical native Windows game loop:
     bool should_quit = false;
