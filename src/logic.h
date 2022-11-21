@@ -4,7 +4,6 @@
 
 struct Logic {
 	// 外部赋值
-	GLFWwindow* wnd;
 	GLsizei w = 1280, h = 1024;
 
 	// 内部变量

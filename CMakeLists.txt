@@ -16,18 +16,13 @@ link_directories(
 
 set(SRCS)
 file(GLOB_RECURSE SRCS
-    glad/*.h
     glad/*.c
-    glfw/*.h
 	src/*.cpp
 	src/*.h
 	src/*.hpp
 	src/*.inc
 )
 add_executable(${name} ${SRCS})
-
-#add_subdirectory(glfw)
-#target_link_libraries(${name} glfw)
 
 if(MSVC)
 	target_link_libraries(${name} opengl32 glfw3)

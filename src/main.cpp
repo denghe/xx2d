@@ -18,19 +18,22 @@ int main() {
 	wnd = glfwCreateWindow(logic->w, logic->h, "xx2dtest1", nullptr, nullptr);
 	if (!wnd) return -2;
 	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
-	logic->wnd = wnd;
 
 	glfwSetKeyCallback(wnd, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {
 		assert(wnd == ::wnd);
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 			glfwSetWindowShouldClose(wnd, GLFW_TRUE);
 		}
+		// todo: set key to logic
 	});
+
+	// todo: send mouse event to logic
 
 	glfwSetFramebufferSizeCallback(wnd, [](GLFWwindow* wnd, int width, int height) {
 		assert(wnd == ::wnd);
 		::logic->w = width;
 		::logic->h = height;
+		// todo: add event to logic
 	});
 	glfwGetFramebufferSize(wnd, &width, &height);
 
