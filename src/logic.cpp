@@ -1,9 +1,6 @@
 ﻿#include "pch.h"
 #include "logic.h"
 
-Logic::Logic() {
-}
-
 inline static auto vsSrc = R"--(
 #version 300 es
 layout(location = 0) in vec4 aColor;
@@ -38,29 +35,24 @@ inline static std::array<GLfloat, 9> verts =
 	0.5f,  -0.5f,  0.0f
 };
 
-void Logic::Init() {
+void Logic::GLInit() {
+	CheckGLError();
 	v = LoadVertexShader({ vsSrc });
 	f = LoadFragmentShader({ fsSrc });
 	p = LinkProgram(v, f);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);								CheckGLError();
 }
 
-void Logic::Update() {
+void Logic::Update(float delta) {
+	assert(w >= 0 && h >= 0);	// 防止 glViewport 出错
 	glViewport(0, 0, w, h);												CheckGLError();
 	glClear(GL_COLOR_BUFFER_BIT);										CheckGLError();
-
+	assert(p);
 	glUseProgram(p);													CheckGLError();
-
 	glVertexAttrib4fv(0, color.data());									CheckGLError();
-	glEnableVertexAttribArray(0);										CheckGLError();
-
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, verts.data());	CheckGLError();
 	glEnableVertexAttribArray(1);										CheckGLError();
-
 	glDrawArrays(GL_TRIANGLES, 0, 3);									CheckGLError();
-
-	glDisableVertexAttribArray(1);										CheckGLError();
-	glDisableVertexAttribArray(0);										CheckGLError();
 }
 
 /*

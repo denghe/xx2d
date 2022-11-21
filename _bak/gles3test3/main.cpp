@@ -774,7 +774,7 @@
 
 
 
-#include "xx_ptr.h"
+#include "../xxlib/xx_ptr.h"
 #include "glfw/glfw3.h"
 #include "glad/glad.h"
 

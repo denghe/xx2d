@@ -3,8 +3,11 @@
 #include "glhelpers.h"
 
 struct Logic {
-	GLsizei w = 1024, h = 768;
+	// 外部赋值
+	GLFWwindow* wnd;
+	GLsizei w = 1280, h = 1024;
 
+	// 内部变量
 	Shader v, f;
 	Program p;
 	GLint uMVPMatrix = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
@@ -12,7 +15,6 @@ struct Logic {
 	Buffer b1, b2;
 	Texture t;
 
-	Logic();
-	void Init();
-	void Update();
+	void GLInit();
+	void Update(float delta);
 };

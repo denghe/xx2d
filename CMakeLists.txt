@@ -6,8 +6,6 @@ project(${name})
 set(CMAKE_CXX_STANDARD 20)
 
 include_directories(
-	glad
-	glfw
 	xxlib
 	src
 	./
@@ -17,7 +15,6 @@ link_directories(
 )
 
 set(SRCS)
-
 file(GLOB_RECURSE SRCS
     glad/*.h
     glad/*.c
@@ -27,11 +24,13 @@ file(GLOB_RECURSE SRCS
 	src/*.hpp
 	src/*.inc
 )
-
 add_executable(${name} ${SRCS})
 
+#add_subdirectory(glfw)
+#target_link_libraries(${name} glfw)
+
 if(MSVC)
-	target_link_libraries(${name} opengl32 glfw3_mt)
+	target_link_libraries(${name} opengl32 glfw3)
 	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/GL")
 	SET_TARGET_PROPERTIES(${name} PROPERTIES LINK_FLAGS "/LTCG")
 	target_compile_options(${name} 

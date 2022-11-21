@@ -4,7 +4,5 @@
 #include <xx_ptr.h>
 #include <tchar.h>
 #include <stdbool.h>
-#include <glad.h>
-#ifdef _WIN32
-#pragma comment (lib, "opengl32.lib")
-#endif
+#include <glad/glad.h>
+#include <glfw/glfw3.h>

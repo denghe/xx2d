@@ -1,12 +1,49 @@
-﻿#include "pch.h"
+﻿#include"pch.h"
 #include "logic.h"
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
+xx::Shared<Logic> logic = xx::Make<Logic>();
+GLFWwindow* wnd = nullptr;
+inline int width = 0;
+inline int height = 0;
 
-    // create logic code
-    auto logic = xx::Make<Logic>();
+int main() {
 
-    return 0;
+	glfwSetErrorCallback([](int error, const char* description) {
+		throw new std::exception(description, error);
+		});
+
+	if (!glfwInit()) return -1;
+	auto sg_glfw = xx::MakeSimpleScopeGuard([] { glfwTerminate(); });
+
+	wnd = glfwCreateWindow(logic->w, logic->h, "xx2dtest1", nullptr, nullptr);
+	if (!wnd) return -2;
+	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
+	logic->wnd = wnd;
+
+	glfwSetKeyCallback(wnd, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {
+		assert(wnd == ::wnd);
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+			glfwSetWindowShouldClose(wnd, GLFW_TRUE);
+		}
+	});
+
+	glfwSetFramebufferSizeCallback(wnd, [](GLFWwindow* wnd, int width, int height) {
+		assert(wnd == ::wnd);
+		::logic->w = width;
+		::logic->h = height;
+	});
+	glfwGetFramebufferSize(wnd, &width, &height);
+
+	glfwMakeContextCurrent(wnd);
+	if (!gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress)) return -3;
+	glfwSwapInterval(0);
+
+	logic->GLInit();
+	while (!glfwWindowShouldClose(wnd)) {
+		glfwPollEvents();
+		logic->Update((float)glfwGetTime());
+		glfwSwapBuffers(wnd);
+	}
+
+	return 0;
 }
