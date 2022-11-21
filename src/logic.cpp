@@ -58,9 +58,9 @@ void Logic::GLInit() {
 	glGenBuffers(1, &b.Ref());
 	glBindBuffer(GL_ARRAY_BUFFER, b);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * verts.size(), nullptr, GL_STREAM_DRAW);
-	auto buf = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(float) * verts.size(), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
-	memcpy(buf, verts.data(), sizeof(float) * verts.size());
-	glUnmapBuffer(GL_ARRAY_BUFFER);
+	//auto buf = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(float) * verts.size(), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
+	//memcpy(buf, verts.data(), sizeof(float) * verts.size());
+	//glUnmapBuffer(GL_ARRAY_BUFFER);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glEnable(GL_BLEND);
@@ -82,6 +82,9 @@ void Logic::Update(float delta) {
 	glVertexAttrib4fv(aColor, color.data());																	CheckGLError();
 
 	glBindBuffer(GL_ARRAY_BUFFER, b);
+	auto buf = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(float) * verts.size(), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
+	memcpy(buf, verts.data(), sizeof(float) * verts.size());
+	glUnmapBuffer(GL_ARRAY_BUFFER);
 
 	glVertexAttribPointer(aPos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);									CheckGLError();
 	glEnableVertexAttribArray(aPos);																			CheckGLError();
