@@ -10,8 +10,7 @@ struct Logic {
 	Shader v, f;
 	Program p;
 	GLint uMVPMatrix = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
-	VertexArrays va;
-	Buffer b1, b2;
+	Buffer b;
 	Texture t;
 
 	void GLInit();

@@ -20,6 +20,7 @@ template<GLResTypes T, typename...VS>
 struct GLRes {
 	std::tuple<GLuint, VS...> vs;
 	operator GLuint const& () const { return std::get<0>(vs); }
+	GLuint& Ref() { return std::get<0>(vs); }
 
 	GLRes(GLRes const&) = delete;
 	GLRes& operator=(GLRes const&) = delete;
