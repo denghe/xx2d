@@ -4,22 +4,34 @@ set(name xx2d)
 project(${name})
 
 set(CMAKE_CXX_STANDARD 20)
-set(CXX_STANDARD_FLAG -std=c++20)
 
-set(TOP_DIR ${CMAKE_CURRENT_LIST_DIR}/../)
-set(SOURCES_DIR ${CMAKE_CURRENT_LIST_DIR}/sources)
-
-set(SRCS
-    glad/gles2.h
-    glfw/glfw3.h
+include_directories(
+	glad
+	glfw
+	xxlib
+	src
+	./
+)
+link_directories(
+	glfw
 )
 
-file(GLOB_RECURSE SRCS src/*.cpp)
+set(SRCS)
 
-add_executable(${PROJECT_NAME} ${SRCS})
-target_link_libraries(${PROJECT_NAME} glfw3_mt.lib)
+file(GLOB_RECURSE SRCS
+    glad/*.h
+    glad/*.c
+    glfw/*.h
+	src/*.cpp
+	src/*.h
+	src/*.hpp
+	src/*.inc
+)
+
+add_executable(${name} ${SRCS})
 
 if(MSVC)
+	target_link_libraries(${name} opengl32 glfw3_mt)
 	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/GL")
 	SET_TARGET_PROPERTIES(${name} PROPERTIES LINK_FLAGS "/LTCG")
 	target_compile_options(${name} 
