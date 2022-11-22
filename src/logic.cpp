@@ -67,7 +67,9 @@ void Logic::GLInit() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	//glEnable(GL_DEPTH_TEST);
-	//glDepthFunc(GL_LEQUAL);
+	//glDepthFunc(GL_ALWAYS);//glDepthFunc(GL_LEQUAL);
+	//glDepthMask(GL_TRUE);
+	//glDisable(GL_CULL_FACE);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 }
