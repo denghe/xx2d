@@ -1,176 +1,62 @@
 ﻿#include "pch.h"
 #include "logic.h"
 
-inline static auto vsSrc = R"(#version 300 es
-precision highp float;
-//uniform mat4 uMVPMatrix;
-
-in vec4 aColor;
-in vec4 aPos;
-in vec2 aTexCoord;
-
-out mediump vec4 vColor;
-out mediump vec2 vTexCoord;
-
-void main() {
-	vColor = aColor;
-	gl_Position = /*uMVPMatrix * */aPos;
-	vTexCoord = aTexCoord;
-})"sv;
-
-inline static auto fsSrc = R"(#version 300 es
-precision mediump float;
-uniform sampler2D uTex0;
-
-in vec4 vColor;
-in vec2 vTexCoord;
-
-out vec4 oColor;
-
-void main() {
-	oColor = vColor * texture(uTex0, vTexCoord);
-})"sv;
-
-inline static std::array<GLfloat, 4> color = {
-	1.0f, 1.0f, 1.0f, 1.0f,
-};
-inline static std::array<GLfloat, 20> verts = {
-	-0.5f,  -0.5f,  0.0f,/*     */0.0f, 1.0f,
-	-0.5f,   0.5f,  0.0f,/*     */0.0f, 0.0f,
-	 0.5f,   0.5f,  0.0f,/*     */1.0f, 0.0f,
-	 0.5f,  -0.5f,  0.0f,/*     */1.0f, 1.0f,
-};
-
 void Logic::GLInit() {
-	t = LoadTexture(XX_STRINGIFY(RES_ROOT_DIR)"/res/zazaka.pkm");
+	s.SetTexture(xx::Make<Texture>(LoadTexture(XX_STRINGIFY(RES_ROOT_DIR)"/res/zazaka.pkm")));
+	s.SetScale({ 5, 5 });
+	s.SetPositon({ 0, 0 });
+	s.SetColor({ 111, 111, 255, 255 });
 
-	v = LoadVertexShader({ vsSrc });
-	f = LoadFragmentShader({ fsSrc });
+	v = LoadVertexShader({ Sprite::vsSrc });
+	f = LoadFragmentShader({ Sprite::fsSrc });
 	p = LinkProgram(v, f);
 
-	//uMVPMatrix = glGetUniformLocation(p, "uMVPMatrix");
+	uCxy = glGetUniformLocation(p, "uCxy");
 	uTex0 = glGetUniformLocation(p, "uTex0");
 
-	aColor = glGetAttribLocation(p, "aColor");
 	aPos = glGetAttribLocation(p, "aPos");
 	aTexCoord = glGetAttribLocation(p, "aTexCoord");
+	aColor = glGetAttribLocation(p, "aColor");
 
 	glGenBuffers(1, &b.Ref());
 	glBindBuffer(GL_ARRAY_BUFFER, b);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * verts.size(), nullptr, GL_STREAM_DRAW);
-	//auto buf = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(float) * verts.size(), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
-	//memcpy(buf, verts.data(), sizeof(float) * verts.size());
-	//glUnmapBuffer(GL_ARRAY_BUFFER);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(s.verts) * 1, nullptr, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	//glEnable(GL_DEPTH_TEST);
-	//glDepthFunc(GL_ALWAYS);//glDepthFunc(GL_LEQUAL);
-	//glDepthMask(GL_TRUE);
-	//glDisable(GL_CULL_FACE);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 void Logic::Update(float delta) {
 	assert(w >= 0 && h >= 0);
-	glViewport(0, 0, w, h);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glViewport(0, 0, w, h);																									CheckGLError();
+	glClear(GL_COLOR_BUFFER_BIT);																							CheckGLError();
 
-	glUseProgram(p);																							CheckGLError();
+	s.SetPositon({ float((rand() % 100) - 50) , float((rand() % 100) - 50) });
 
-	glVertexAttrib4fv(aColor, color.data());																	CheckGLError();
+	glUseProgram(p);																										CheckGLError();
 
 	glBindBuffer(GL_ARRAY_BUFFER, b);
-	auto buf = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(float) * verts.size(), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
-	memcpy(buf, verts.data(), sizeof(float) * verts.size());
+	auto buf = glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(s.verts) * 1, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
+	// for all sprite
+	memcpy(buf, s.verts.data(), sizeof(s.verts));
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 
-	glVertexAttribPointer(aPos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);									CheckGLError();
-	glEnableVertexAttribArray(aPos);																			CheckGLError();
+	glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVRGBA8), 0);												CheckGLError();
+	glEnableVertexAttribArray(aPos);																						CheckGLError();
+	glVertexAttribPointer(aTexCoord, 2, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(XYUVRGBA8), (GLvoid*)offsetof(XYUVRGBA8, u));	CheckGLError();
+	glEnableVertexAttribArray(aTexCoord);																					CheckGLError();
+	glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYUVRGBA8), (GLvoid*)offsetof(XYUVRGBA8, r));		CheckGLError();
+	glEnableVertexAttribArray(aColor);																						CheckGLError();
 
-	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));	CheckGLError();
-	glEnableVertexAttribArray(aTexCoord);																		CheckGLError();
+	glUniform2f(uCxy, w / 2, h / 2);																						CheckGLError();
 
-	glActiveTexture(GL_TEXTURE0);																				CheckGLError();
-	glBindTexture(GL_TEXTURE_2D, t);																			CheckGLError();
-	glUniform1i(uTex0, 0);																						CheckGLError();
+	glActiveTexture(GL_TEXTURE0);																							CheckGLError();
+	glBindTexture(GL_TEXTURE_2D, *s.tex);																					CheckGLError();
+	glUniform1i(uTex0, 0);																									CheckGLError();
 
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);																		CheckGLError();
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);																					CheckGLError();
 }
-
-
-
-
-//#include "pch.h"
-//#include "logic.h"
-//
-//inline static auto vsSrc = R"(#version 300 es
-//precision highp float;
-//
-//in vec4 aColor;
-//in vec4 aPos;
-//
-//out mediump vec4 vColor;
-//
-//void main() {
-//	vColor = aColor;
-//	gl_Position = aPos;
-//})"sv;
-//
-//inline static auto fsSrc = R"(#version 300 es
-//precision mediump float;
-//
-//in vec4 vColor;
-//
-//out vec4 oColor;
-//
-//void main() {
-//	oColor = vColor;
-//})"sv;
-//
-//inline static std::array<GLfloat, 12> color = {
-//	1.0f, 0.0f, 0.0f, 1.0f,
-//	0.0f, 1.0f, 0.0f, 1.0f,
-//	0.0f, 0.0f, 1.0f, 1.0f,
-//};
-//inline static std::array<GLfloat, 9> verts = {
-//	0.0f,   0.5f,  0.0f,
-//	-0.5f, -0.5f,  0.0f,
-//	0.5f,  -0.5f,  0.0f
-//};
-
-//void Logic::GLInit() {
-//	v = LoadVertexShader({ vsSrc });
-//	f = LoadFragmentShader({ fsSrc });
-//	p = LinkProgram(v, f);
-//
-//	uMVPMatrix = glGetUniformLocation(p, "uMVPMatrix");
-//	uTex0 = glGetUniformLocation(p, "uTex0");
-//
-//	aColor = glGetAttribLocation(p, "aColor");
-//	aPos = glGetAttribLocation(p, "aPos");
-//	aTexCoord = glGetAttribLocation(p, "aTexCoord");
-//
-//	//glEnable(GL_DEPTH_TEST);
-//	//glDepthFunc(GL_LEQUAL);
-//	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-//}
-//
-//void Logic::Update(float delta) {
-//	assert(w >= 0 && h >= 0);
-//	glViewport(0, 0, w, h);
-//	glClear(GL_COLOR_BUFFER_BIT);
-//	glUseProgram(p);														CheckGLError();
-//	//glVertexAttrib4fv(aColor, color.data());								CheckGLError();
-//	glVertexAttribPointer(aColor, 4, GL_FLOAT, GL_FALSE, 0, color.data());	CheckGLError();
-//	glEnableVertexAttribArray(aColor);										CheckGLError();
-//	glVertexAttribPointer(aPos, 3, GL_FLOAT, GL_FALSE, 0, verts.data());	CheckGLError();
-//	glEnableVertexAttribArray(aPos);										CheckGLError();
-//	glDrawArrays(GL_TRIANGLES, 0, 3);										CheckGLError();
-//}
-
-
-
