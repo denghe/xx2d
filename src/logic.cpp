@@ -42,7 +42,7 @@ inline static std::array<GLfloat, 20> verts = {
 };
 
 void Logic::GLInit() {
-	t = LoadTexture("D:/Codes/xx2d/_bak/res/zazaka.pkm"sv);
+	t = LoadTexture(XX_STRINGIFY(RES_ROOT_DIR)"/res/zazaka.pkm");
 
 	v = LoadVertexShader({ vsSrc });
 	f = LoadFragmentShader({ fsSrc });
