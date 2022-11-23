@@ -46,6 +46,7 @@ int main() {
 	glfwSwapInterval(0);
 
 	logic->GLInit();
+	logic->Init();
 	while (!glfwWindowShouldClose(wnd)) {
 		glfwPollEvents();
 		logic->Update((float)glfwGetTime());

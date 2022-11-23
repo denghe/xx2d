@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.20)
 set(name xx2d)
 project(${name})
 
-add_definitions(-DRES_ROOT_DIR=${CMAKE_CURRENT_SOURCE_DIR})
-
 set(CMAKE_CXX_STANDARD 20)
 
 include_directories(
@@ -27,9 +25,11 @@ file(GLOB_RECURSE SRCS
 add_executable(${name} ${SRCS})
 
 if(MSVC)
+	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
 	target_link_libraries(${name} opengl32 glfw3)
 
-	add_definitions(-DOPEN_MP_NUM_THREADS=2)
+	add_definitions(-DOPEN_MP_NUM_THREADS=3)
 	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/openmp")
 
 	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/GL")
