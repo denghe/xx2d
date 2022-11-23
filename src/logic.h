@@ -11,9 +11,11 @@ struct Logic {
 	Shader v, f;
 	Program p;
 	GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
-	Buffer b;
+	Buffer vb, ib;
+	inline static const size_t batchSize = std::numeric_limits<uint16_t>::max() / 6;
 	
-	Sprite s;	//xx::Shared<Texture> t;
+	xx::Shared<Texture> t;
+	std::vector<Sprite> ss;
 
 	void GLInit();
 	void Update(float delta);
