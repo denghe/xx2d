@@ -19,4 +19,5 @@ struct Logic {
 
 	void GLInit();
 	void Update(float delta);
+	void DrawBatch(Sprite* sp, size_t count);
 };

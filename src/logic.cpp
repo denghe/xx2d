@@ -34,7 +34,7 @@ void Logic::GLInit() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	t = xx::Make<Texture>(LoadTexture(XX_STRINGIFY(RES_ROOT_DIR)"/res/zazaka.pkm"));
-	size_t numSprites = 10000;
+	size_t numSprites = 200000;
 	ss.resize(numSprites);
 	for (size_t i = 0; i < numSprites; i++) {
 		auto& s = ss[i];
@@ -51,24 +51,14 @@ void Logic::GLInit() {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
-void Logic::Update(float delta) {
-	assert(w >= 0 && h >= 0);
-	glViewport(0, 0, w, h);																									CheckGLError();
-	glClear(GL_COLOR_BUFFER_BIT);																							CheckGLError();
-
+void Logic::DrawBatch(Sprite* sp, size_t n) {
 	glUseProgram(p);																										CheckGLError();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
-	auto buf = (decltype(Sprite::verts)*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * ss.size(), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
-	int n = (int)ss.size();
-#ifdef OPEN_MP_NUM_THREADS
-#pragma omp parallel for
-#endif
+	auto buf = (decltype(Sprite::verts)*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * n, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
 	for (int i = 0; i < n; ++i) {
-		auto& s = ss[i];
-		s.SetPositon({ float((rand() % w) - w / 2) , float((rand() % h) - h / 2) });
-		memcpy(buf + i, s.verts.data(), sizeof(Sprite::verts));
+		memcpy(buf + i, sp[i].verts.data(), sizeof(Sprite::verts));
 	}
 	glUnmapBuffer(GL_ARRAY_BUFFER);																							CheckGLError();
 
@@ -85,5 +75,28 @@ void Logic::Update(float delta) {
 	glBindTexture(GL_TEXTURE_2D, *t);																						CheckGLError();
 	glUniform1i(uTex0, 0);																									CheckGLError();
 
-	glDrawElements(GL_TRIANGLES, (GLsizei)ss.size() * 6, GL_UNSIGNED_SHORT, 0);												CheckGLError();
+	glDrawElements(GL_TRIANGLES, (GLsizei)n * 6, GL_UNSIGNED_SHORT, 0);														CheckGLError();
+}
+
+void Logic::Update(float delta) {
+	assert(w >= 0 && h >= 0);
+	glViewport(0, 0, w, h);																									CheckGLError();
+	glClear(GL_COLOR_BUFFER_BIT);																							CheckGLError();
+
+#ifdef OPEN_MP_NUM_THREADS
+	int n = (int)ss.size();
+#pragma omp parallel for
+#endif
+	for (int i = 0; i < n; ++i) {
+		auto& s = ss[i];
+		s.SetPositon({ float((rand() % w) - w / 2) , float((rand() % h) - h / 2) });
+	}
+
+	auto numBatchs = n / batchSize;
+	for (int j = 0; j < numBatchs; ++j) {
+		DrawBatch(&ss[j * batchSize], batchSize);
+	}
+	if (auto left = n - numBatchs * batchSize) {
+		DrawBatch(&ss[n - left], left);
+	}
 }
