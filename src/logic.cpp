@@ -61,7 +61,11 @@ void Logic::Update(float delta) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
 	auto buf = (decltype(Sprite::verts)*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * ss.size(), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
-	for (size_t n = ss.size(), i = 0; i < n; ++i) {
+	int n = (int)ss.size();
+#ifdef OPEN_MP_NUM_THREADS
+#pragma omp parallel for
+#endif
+	for (int i = 0; i < n; ++i) {
 		auto& s = ss[i];
 		s.SetPositon({ float((rand() % w) - w / 2) , float((rand() % h) - h / 2) });
 		memcpy(buf + i, s.verts.data(), sizeof(Sprite::verts));
