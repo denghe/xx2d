@@ -3,8 +3,8 @@
 #include "glbase.h"
 
 struct Logic : GLBase {
-	xx::Shared<Texture> t;
 	std::vector<Sprite> ss;
+	Rnd rnd;
 
 	void Init();
 	void Update(float delta);

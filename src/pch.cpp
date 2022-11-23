@@ -520,3 +520,79 @@ glDepthMask(GL_TRUE);
 //
 //	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);																					CheckGLError();
 //}
+
+
+
+
+
+//
+//
+//    // reference from https://github.com/cslarsen/mersenne-twister
+//    // faster than std impl, can store & restore state data directly
+//    // ser/de data size == 5000 bytes
+//struct Random5 : RandomBase<Random5> {
+//    inline static const size_t SIZE = 624;
+//    inline static const size_t PERIOD = 397;
+//    inline static const size_t DIFF = SIZE - PERIOD;
+//    inline static const uint32_t MAGIC = 0x9908b0df;
+//    uint32_t MT[SIZE];
+//    uint32_t MT_TEMPERED[SIZE];
+//    size_t index = SIZE;
+//    uint32_t seed;
+//    void Reset(uint32_t const& seed = 1234567890) {
+//        this->seed = seed;
+//        MT[0] = seed;
+//        index = SIZE;
+//        for (uint_fast32_t i = 1; i < SIZE; ++i) {
+//            MT[i] = 0x6c078965 * (MT[i - 1] ^ MT[i - 1] >> 30) + i;
+//        }
+//    }
+//    Random5(uint32_t const& seed = 1234567890) {
+//        Reset(seed);
+//    }
+//
+//    Random5& operator=(Random5 const&) = default;
+//    Random5(Random5&& o) = default;
+//    Random5& operator=(Random5&& o) = default;
+//
+//#define Random5_M32(x) (0x80000000 & x) // 32nd MSB
+//#define Random5_L31(x) (0x7FFFFFFF & x) // 31 LSBs
+//#define Random5_UNROLL(expr) \
+//  y = Random5_M32(MT[i]) | Random5_L31(MT[i+1]); \
+//  MT[i] = MT[expr] ^ (y >> 1) ^ (((int32_t(y) << 31) >> 31) & MAGIC); \
+//  ++i;
+//    void Generate() {
+//        size_t i = 0;
+//        uint32_t y;
+//        while (i < DIFF) {
+//            Random5_UNROLL(i + PERIOD);
+//        }
+//        while (i < SIZE - 1) {
+//            Random5_UNROLL(i - DIFF);
+//        }
+//        {
+//            y = Random5_M32(MT[SIZE - 1]) | Random5_L31(MT[0]);
+//            MT[SIZE - 1] = MT[PERIOD - 1] ^ (y >> 1) ^ (((int32_t(y) << 31) >> 31) & MAGIC);
+//        }
+//        for (size_t i = 0; i < SIZE; ++i) {
+//            y = MT[i];
+//            y ^= y >> 11;
+//            y ^= y << 7 & 0x9d2c5680;
+//            y ^= y << 15 & 0xefc60000;
+//            y ^= y >> 18;
+//            MT_TEMPERED[i] = y;
+//        }
+//        index = 0;
+//    }
+//#undef Random5_UNROLL
+//#undef Random5_L31
+//#undef Random5_M32
+//
+//    uint32_t Next() {
+//        if (index == SIZE) {
+//            Generate();
+//            index = 0;
+//        }
+//        return MT_TEMPERED[index++];
+//    }
+//};

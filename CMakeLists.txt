@@ -29,8 +29,8 @@ if(MSVC)
 
 	target_link_libraries(${name} opengl32 glfw3)
 
-	add_definitions(-DOPEN_MP_NUM_THREADS=3)
-	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/openmp")
+#	add_definitions(-DOPEN_MP_NUM_THREADS=3)
+#	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/openmp")
 
 	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/GL")
 	SET_TARGET_PROPERTIES(${name} PROPERTIES LINK_FLAGS "/LTCG")
@@ -40,4 +40,3 @@ if(MSVC)
 else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
 endif()
- 

@@ -40,15 +40,21 @@ void GLBase::GLInit() {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
-void GLBase::DrawBatch(Sprite* sp, size_t n) {
+void GLBase::GLUpdate() {
+	assert(w >= 0 && h >= 0);
+	glViewport(0, 0, w, h);
+	glClear(GL_COLOR_BUFFER_BIT);
+}
+
+decltype(Sprite::verts)* GLBase::BeginDraw(size_t siz) {
 	glUseProgram(p);																										CheckGLError();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
-	auto buf = (decltype(Sprite::verts)*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * n, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
-	for (int i = 0; i < n; ++i) {
-		memcpy(buf + i, sp[i].verts.data(), sizeof(Sprite::verts));
-	}
+	return (decltype(Sprite::verts)*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * siz, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
+}
+
+void GLBase::EndDraw(Texture const& t, size_t siz) {
 	glUnmapBuffer(GL_ARRAY_BUFFER);																							CheckGLError();
 
 	glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVRGBA8), 0);												CheckGLError();
@@ -61,8 +67,52 @@ void GLBase::DrawBatch(Sprite* sp, size_t n) {
 	glUniform2f(uCxy, w / 2, h / 2);																						CheckGLError();
 
 	glActiveTexture(GL_TEXTURE0);																							CheckGLError();
-	glBindTexture(GL_TEXTURE_2D, *sp->tex);																					CheckGLError();
+	glBindTexture(GL_TEXTURE_2D, t);																						CheckGLError();
 	glUniform1i(uTex0, 0);																									CheckGLError();
 
-	glDrawElements(GL_TRIANGLES, (GLsizei)n * 6, GL_UNSIGNED_SHORT, 0);														CheckGLError();
+	glDrawElements(GL_TRIANGLES, (GLsizei)siz * 6, GL_UNSIGNED_SHORT, 0);													CheckGLError();
+}
+
+void GLBase::DrawSpriteBatch(Sprite const* ptr, size_t siz) {
+	auto buf = BeginDraw(siz);
+	for (int i = 0; i < siz; ++i) {
+		memcpy(buf + i, ptr[i].verts.data(), sizeof(ptr[i].verts));
+	}
+	EndDraw(*ptr->tex, siz);
+}
+
+void GLBase::DrawSpriteBatch(Sprite const** ptr, size_t siz) {
+	auto buf = BeginDraw(siz);
+	for (int i = 0; i < siz; ++i) {
+		memcpy(buf + i, ptr[i]->verts.data(), sizeof(ptr[i]->verts));
+	}
+	EndDraw(*ptr[0]->tex, siz);
+}
+
+void GLBase::DrawSpriteBatch(xx::Shared<Sprite> const* ptr, size_t siz) {
+	DrawSpriteBatch((Sprite const**)ptr, siz);
+}
+
+void GLBase::DrawSprites(Sprite const* ptr, size_t siz) {
+	auto n = siz / batchSize;
+	for (int j = 0; j < n; ++j) {
+		DrawSpriteBatch(&ptr[j * batchSize], batchSize);
+	}
+	if (auto left = siz - n * batchSize) {
+		DrawSpriteBatch(&ptr[siz - left], left);
+	}
+}
+
+void GLBase::DrawSprites(Sprite const** ptr, size_t siz) {
+	auto n = siz / batchSize;
+	for (int j = 0; j < n; ++j) {
+		DrawSpriteBatch(&ptr[j * batchSize], batchSize);
+	}
+	if (auto left = siz - n * batchSize) {
+		DrawSpriteBatch(&ptr[siz - left], left);
+	}
+}
+
+void GLBase::DrawSprites(xx::Shared<Sprite> const* ptr, size_t siz) {
+	DrawSprites((Sprite const**)ptr, siz);
 }
