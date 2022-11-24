@@ -3,9 +3,6 @@
 #include "glhelpers.h"
 
 struct Sprite {
-	static std::string_view vsSrc;
-	static std::string_view fsSrc;
-
 	std::array<XYUVRGBA8, 4> verts;
 	xx::Shared<Texture> tex;
 	XY tsizMscaleD2;

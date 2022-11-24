@@ -10,8 +10,7 @@ void Logic::Init() {
 	for (size_t i = 0; i < numSprites; i++) {
 		auto& s = ss[i];
 		s.SetTexture(t);
-		s.SetScale({ 0.5, 0.5 });
-		s.SetPositon({ float(rnd.Next(w) - w/2), float(rnd.Next(h) - h/2) });
+		s.SetScale({ 0.5, 0.5 });	// 缩小到 0.5 时，100万对象，fps 从 37 提升到 79. 继续缩小并没什么收益了
 		auto c = rnd.Get(); auto cp = (uint8_t*)&c;
 		s.SetColor({ cp[0], cp[1], cp[2], 255});
 	}

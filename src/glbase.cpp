@@ -1,9 +1,10 @@
 ﻿#include "pch.h"
 #include "glbase.h"
+#include "shaders.h"
 
 void GLBase::GLInit() {
-	v = LoadVertexShader({ Sprite::vsSrc });
-	f = LoadFragmentShader({ Sprite::fsSrc });
+	v = LoadVertexShader({ Shaders::vsSrc });
+	f = LoadFragmentShader({ Shaders::fsSrc });
 	p = LinkProgram(v, f);
 
 	uCxy = glGetUniformLocation(p, "uCxy");
@@ -54,7 +55,7 @@ decltype(Sprite::verts)* GLBase::BeginDraw(size_t siz) {
 	return (decltype(Sprite::verts)*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * siz, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
 }
 
-void GLBase::EndDraw(Texture const& t, size_t siz) {
+void GLBase::EndDraw(Texture& t, size_t siz) {
 	glUnmapBuffer(GL_ARRAY_BUFFER);																							CheckGLError();
 
 	glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVRGBA8), 0);												CheckGLError();
@@ -73,7 +74,7 @@ void GLBase::EndDraw(Texture const& t, size_t siz) {
 	glDrawElements(GL_TRIANGLES, (GLsizei)siz * 6, GL_UNSIGNED_SHORT, 0);													CheckGLError();
 }
 
-void GLBase::DrawSpriteBatch(Sprite const* ptr, size_t siz) {
+void GLBase::DrawSpriteBatch(Sprite* ptr, size_t siz) {
 	auto buf = BeginDraw(siz);
 	for (int i = 0; i < siz; ++i) {
 		memcpy(buf + i, ptr[i].verts.data(), sizeof(ptr[i].verts));
@@ -81,7 +82,7 @@ void GLBase::DrawSpriteBatch(Sprite const* ptr, size_t siz) {
 	EndDraw(*ptr->tex, siz);
 }
 
-void GLBase::DrawSpriteBatch(Sprite const** ptr, size_t siz) {
+void GLBase::DrawSpriteBatch(Sprite** ptr, size_t siz) {
 	auto buf = BeginDraw(siz);
 	for (int i = 0; i < siz; ++i) {
 		memcpy(buf + i, ptr[i]->verts.data(), sizeof(ptr[i]->verts));
@@ -89,11 +90,7 @@ void GLBase::DrawSpriteBatch(Sprite const** ptr, size_t siz) {
 	EndDraw(*ptr[0]->tex, siz);
 }
 
-void GLBase::DrawSpriteBatch(xx::Shared<Sprite> const* ptr, size_t siz) {
-	DrawSpriteBatch((Sprite const**)ptr, siz);
-}
-
-void GLBase::DrawSprites(Sprite const* ptr, size_t siz) {
+void GLBase::DrawSprites(Sprite* ptr, size_t siz) {
 	auto n = siz / batchSize;
 	for (int j = 0; j < n; ++j) {
 		DrawSpriteBatch(&ptr[j * batchSize], batchSize);
@@ -103,7 +100,7 @@ void GLBase::DrawSprites(Sprite const* ptr, size_t siz) {
 	}
 }
 
-void GLBase::DrawSprites(Sprite const** ptr, size_t siz) {
+void GLBase::DrawSprites(Sprite** ptr, size_t siz) {
 	auto n = siz / batchSize;
 	for (int j = 0; j < n; ++j) {
 		DrawSpriteBatch(&ptr[j * batchSize], batchSize);
@@ -113,6 +110,6 @@ void GLBase::DrawSprites(Sprite const** ptr, size_t siz) {
 	}
 }
 
-void GLBase::DrawSprites(xx::Shared<Sprite> const* ptr, size_t siz) {
-	DrawSprites((Sprite const**)ptr, siz);
+void GLBase::DrawSprites(xx::Shared<Sprite>* ptr, size_t siz) {
+	DrawSprites((Sprite**)ptr, siz);
 }
