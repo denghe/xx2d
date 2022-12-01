@@ -13,7 +13,8 @@ struct GLBase {
 	GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
 	Buffer vb, ib;
 
-	inline static const size_t batchSize = std::numeric_limits<uint16_t>::max() / 6;
+	size_t maxBatchSize = std::numeric_limits<uint16_t>::max() / 6;
+	size_t autoBatchSize = maxBatchSize;
 	QuadVerts* autoBatchBuf = nullptr, *autoBatchBufEnd = nullptr;
 	GLint autoBatchTextureId = -1;
 	void AutoBatchBegin();

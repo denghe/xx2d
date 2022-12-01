@@ -14,22 +14,24 @@ void GLBase::GLInit() {
 	aTexCoord = glGetAttribLocation(p, "aTexCoord");
 	aColor = glGetAttribLocation(p, "aColor");
 
+	// todo: 贴图数组支持。绘制前需要先用要用到的贴图，填进数组。Texture 对象将附带存储 其对应的 下标。用的时候 顶点数据 安排一个 贴图下标 的存储位置? 还是说必须配合 draw instance 方案, 再用一个 buffer 存每个实例用哪个 tex 下标？
+
 	glGenBuffers(1, &vb.Ref());
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Sprite::verts) * batchSize, nullptr, GL_DYNAMIC_DRAW);	// GL_STREAM_DRAW
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Sprite::verts) * maxBatchSize, nullptr, GL_DYNAMIC_DRAW);	// GL_STREAM_DRAW
 	glBindBuffer(GL_ARRAY_BUFFER, 0);																						CheckGLError();
 
 	glGenBuffers(1, &ib.Ref());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * 6 * batchSize, nullptr, GL_STATIC_DRAW);
-	auto buf = (uint16_t*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(uint16_t) * 6 * batchSize, GL_MAP_WRITE_BIT/* | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT*/);	// | GL_MAP_UNSYNCHRONIZED_BIT
-	for (size_t i = 0; i < batchSize; i++) {
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * 6 * maxBatchSize, nullptr, GL_STATIC_DRAW);
+	auto buf = (uint16_t*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(uint16_t) * 6 * maxBatchSize, GL_MAP_WRITE_BIT/* | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT*/);	// | GL_MAP_UNSYNCHRONIZED_BIT
+	for (size_t i = 0; i < maxBatchSize; i++) {
 		buf[i * 6 + 0] = uint16_t(i * 4 + 0);
 		buf[i * 6 + 1] = uint16_t(i * 4 + 1);
 		buf[i * 6 + 2] = uint16_t(i * 4 + 2);
-		buf[i * 6 + 3] = uint16_t(i * 4 + 3);
+		buf[i * 6 + 3] = uint16_t(i * 4 + 0);
 		buf[i * 6 + 4] = uint16_t(i * 4 + 2);
-		buf[i * 6 + 5] = uint16_t(i * 4 + 1);
+		buf[i * 6 + 5] = uint16_t(i * 4 + 3);
 	}
 	glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);																					CheckGLError();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -45,6 +47,7 @@ void GLBase::GLUpdateBegin() {
 	assert(w >= 0 && h >= 0);
 	glViewport(0, 0, w, h);
 	glClear(GL_COLOR_BUFFER_BIT);
+
 	glUseProgram(p);																										CheckGLError();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
@@ -52,8 +55,8 @@ void GLBase::GLUpdateBegin() {
 }
 
 void GLBase::AutoBatchBegin() {
-	autoBatchBuf = (QuadVerts*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * batchSize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
-	autoBatchBufEnd = autoBatchBuf + batchSize;
+	autoBatchBuf = (QuadVerts*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * autoBatchSize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
+	autoBatchBufEnd = autoBatchBuf + autoBatchSize;
 }
 
 void GLBase::AutoBatchDrawQuad(Texture& tex, QuadVerts const& qvs) {
@@ -88,7 +91,7 @@ void GLBase::AutoBatchCommit() {
 	glBindTexture(GL_TEXTURE_2D, autoBatchTextureId);																		CheckGLError();
 	glUniform1i(uTex0, 0);																									CheckGLError();
 
-	glDrawElements(GL_TRIANGLES, (GLsizei)(batchSize - (autoBatchBufEnd - autoBatchBuf)) * 6, GL_UNSIGNED_SHORT, 0);		CheckGLError();
+	glDrawElements(GL_TRIANGLES, (GLsizei)(autoBatchSize - (autoBatchBufEnd - autoBatchBuf)) * 6, GL_UNSIGNED_SHORT, 0);	CheckGLError();
 }
 
 void GLBase::GLUpdateEnd() {
