@@ -6,11 +6,11 @@ precision highp float;
 uniform vec2 uCxy;	// center x y
 
 in vec2 aPos;
-in vec2 aTexCoord;
+in vec3 aTexCoord;
 in vec4 aColor;
 
 out mediump vec4 vColor;
-out mediump vec2 vTexCoord;
+out mediump vec3 vTexCoord;
 
 void main() {
 	gl_Position = vec4(aPos / uCxy, 0, 1);
@@ -23,11 +23,11 @@ precision mediump float;
 uniform sampler2D uTex0;
 
 in vec4 vColor;
-in vec2 vTexCoord;
+in vec3 vTexCoord;
 
 out vec4 oColor;
 
 void main() {
-	oColor = vColor * texture(uTex0, vTexCoord / vec2(textureSize(uTex0, 0)));
+	oColor = vColor * texture(uTex0, vTexCoord.xy / vec2(textureSize(uTex0, 0)));
 })"sv;
 };

@@ -6,12 +6,19 @@ GLsizei& Sprite::TH() const { return std::get<2>(tex->vs); }
 
 void Sprite::SetTexture(xx::Shared<Texture> t_) {
 	tex = std::move(t_);
+
 	verts[0].u = 0;       verts[0].v = TH();
 	verts[1].u = 0;       verts[1].v = 0;
 	verts[2].u = TW();    verts[2].v = 0;
 	verts[3].u = TW();    verts[3].v = TH();
+
+	//verts[0].i = 0;
+	//verts[1].i = 0;
+	//verts[2].i = 0;
+	//verts[3].i = 0;
+
+	// todo: set uv & texture index
 }
-// todo: set uv
 
 void Sprite::SetScale(XY const& xy) {
 	tsizMscaleD2.x = TW() * xy.x / 2.f;
