@@ -41,21 +41,38 @@ void GLBase::GLInit() {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
-void GLBase::GLUpdate() {
+void GLBase::GLUpdateBegin() {
 	assert(w >= 0 && h >= 0);
 	glViewport(0, 0, w, h);
 	glClear(GL_COLOR_BUFFER_BIT);
-}
-
-decltype(Sprite::verts)* GLBase::BeginDraw(size_t siz) {
 	glUseProgram(p);																										CheckGLError();
-
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
-	return (decltype(Sprite::verts)*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * siz, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
+	AutoBatchBegin();
 }
 
-void GLBase::EndDraw(Texture& t, size_t siz) {
+void GLBase::AutoBatchBegin() {
+	autoBatchBuf = (QuadVerts*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * batchSize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
+	autoBatchBufEnd = autoBatchBuf + batchSize;
+}
+
+void GLBase::AutoBatchDrawQuad(Texture& tex, QuadVerts const& qvs) {
+	if (autoBatchTextureId != tex) {
+		if (autoBatchTextureId != -1) {
+			AutoBatchCommit();
+			AutoBatchBegin();
+		}
+		autoBatchTextureId = tex;
+	}
+	else if (autoBatchBuf == autoBatchBufEnd) {
+		AutoBatchCommit();
+		AutoBatchBegin();
+	}
+	memcpy(autoBatchBuf, qvs.data(), sizeof(QuadVerts));
+	++autoBatchBuf;
+};
+
+void GLBase::AutoBatchCommit() {
 	glUnmapBuffer(GL_ARRAY_BUFFER);																							CheckGLError();
 
 	glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVRGBA8), 0);												CheckGLError();
@@ -68,48 +85,19 @@ void GLBase::EndDraw(Texture& t, size_t siz) {
 	glUniform2f(uCxy, w / 2, h / 2);																						CheckGLError();
 
 	glActiveTexture(GL_TEXTURE0);																							CheckGLError();
-	glBindTexture(GL_TEXTURE_2D, t);																						CheckGLError();
+	glBindTexture(GL_TEXTURE_2D, autoBatchTextureId);																		CheckGLError();
 	glUniform1i(uTex0, 0);																									CheckGLError();
 
-	glDrawElements(GL_TRIANGLES, (GLsizei)siz * 6, GL_UNSIGNED_SHORT, 0);													CheckGLError();
+	glDrawElements(GL_TRIANGLES, (GLsizei)(batchSize - (autoBatchBufEnd - autoBatchBuf)) * 6, GL_UNSIGNED_SHORT, 0);		CheckGLError();
 }
 
-void GLBase::DrawSpriteBatch(Sprite* ptr, size_t siz) {
-	auto buf = BeginDraw(siz);
-	for (int i = 0; i < siz; ++i) {
-		memcpy(buf + i, ptr[i].verts.data(), sizeof(ptr[i].verts));
+void GLBase::GLUpdateEnd() {
+	if (autoBatchTextureId != -1) {
+		AutoBatchCommit();
+	} else {
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glUseProgram(0);
 	}
-	EndDraw(*ptr->tex, siz);
-}
-
-void GLBase::DrawSpriteBatch(Sprite** ptr, size_t siz) {
-	auto buf = BeginDraw(siz);
-	for (int i = 0; i < siz; ++i) {
-		memcpy(buf + i, ptr[i]->verts.data(), sizeof(ptr[i]->verts));
-	}
-	EndDraw(*ptr[0]->tex, siz);
-}
-
-void GLBase::DrawSprites(Sprite* ptr, size_t siz) {
-	auto n = siz / batchSize;
-	for (int j = 0; j < n; ++j) {
-		DrawSpriteBatch(&ptr[j * batchSize], batchSize);
-	}
-	if (auto left = siz - n * batchSize) {
-		DrawSpriteBatch(&ptr[siz - left], left);
-	}
-}
-
-void GLBase::DrawSprites(Sprite** ptr, size_t siz) {
-	auto n = siz / batchSize;
-	for (int j = 0; j < n; ++j) {
-		DrawSpriteBatch(&ptr[j * batchSize], batchSize);
-	}
-	if (auto left = siz - n * batchSize) {
-		DrawSpriteBatch(&ptr[siz - left], left);
-	}
-}
-
-void GLBase::DrawSprites(xx::Shared<Sprite>* ptr, size_t siz) {
-	DrawSprites((Sprite**)ptr, siz);
 }

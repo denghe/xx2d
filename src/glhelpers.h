@@ -73,3 +73,5 @@ struct RGBA8 {
 	uint8_t r, g, b, a;
 };
 struct XYUVRGBA8 : XY, UV, RGBA8 {};
+
+using QuadVerts = std::array<XYUVRGBA8, 4>;

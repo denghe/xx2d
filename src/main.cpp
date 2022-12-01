@@ -49,8 +49,9 @@ int main() {
 	logic->Init();
 	while (!glfwWindowShouldClose(wnd)) {
 		glfwPollEvents();
-		logic->GLUpdate();
+		logic->GLUpdateBegin();
 		logic->Update((float)glfwGetTime());
+		logic->GLUpdateEnd();
 		glfwSwapBuffers(wnd);
 	}
 

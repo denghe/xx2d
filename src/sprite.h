@@ -3,7 +3,7 @@
 #include "glhelpers.h"
 
 struct Sprite {
-	std::array<XYUVRGBA8, 4> verts;
+	QuadVerts verts;
 	xx::Shared<Texture> tex;
 	XY tsizMscaleD2;
 

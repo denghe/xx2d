@@ -26,5 +26,7 @@ void Logic::Update(float delta) {
 		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
 	}
 
-	DrawSprites(ss.data(), ss.size());
+	for (auto& s : ss) {
+		AutoBatchDrawQuad(*s.tex, s.verts);
+	}
 }
