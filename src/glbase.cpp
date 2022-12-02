@@ -54,12 +54,24 @@ void GLBase::GLUpdateBegin() {
 	glUniform2f(uCxy, w / 2, h / 2);																						CheckGLError();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
+
+	glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVIJRGBA8), 0);
+	glEnableVertexAttribArray(aPos);																						CheckGLError();
+	glVertexAttribPointer(aTexCoord, 4, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(XYUVIJRGBA8), (GLvoid*)offsetof(XYUVIJRGBA8, u));
+	glEnableVertexAttribArray(aTexCoord);																					CheckGLError();
+	glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYUVIJRGBA8), (GLvoid*)offsetof(XYUVIJRGBA8, r));
+	glEnableVertexAttribArray(aColor);																						CheckGLError();
+
 	AutoBatchBegin();
 }
 
 void GLBase::AutoBatchBegin() {
 	autoBatchBuf = (QuadVerts*)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(Sprite::verts) * autoBatchSize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);	// | GL_MAP_UNSYNCHRONIZED_BIT
 	autoBatchBufEnd = autoBatchBuf + autoBatchSize;
+}
+void GLBase::AutoBatchCommit() {
+	glUnmapBuffer(GL_ARRAY_BUFFER);																							CheckGLError();
+	glDrawElements(GL_TRIANGLES, (GLsizei)(autoBatchSize - (autoBatchBufEnd - autoBatchBuf)) * 6, GL_UNSIGNED_SHORT, 0);	CheckGLError();
 }
 
 void GLBase::AutoBatchDrawQuad(Texture& tex, QuadVerts const& qvs) {
@@ -69,6 +81,7 @@ void GLBase::AutoBatchDrawQuad(Texture& tex, QuadVerts const& qvs) {
 			AutoBatchBegin();
 		}
 		autoBatchTextureId = tex;
+		glBindTexture(GL_TEXTURE_2D, autoBatchTextureId);																	CheckGLError();
 	}
 	else if (autoBatchBuf == autoBatchBufEnd) {
 		AutoBatchCommit();
@@ -77,21 +90,6 @@ void GLBase::AutoBatchDrawQuad(Texture& tex, QuadVerts const& qvs) {
 	memcpy(autoBatchBuf, qvs.data(), sizeof(QuadVerts));
 	++autoBatchBuf;
 };
-
-void GLBase::AutoBatchCommit() {
-	glUnmapBuffer(GL_ARRAY_BUFFER);																							CheckGLError();
-
-	glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVIJRGBA8), 0);
-	glEnableVertexAttribArray(aPos);																						CheckGLError();
-	glVertexAttribPointer(aTexCoord, 4, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(XYUVIJRGBA8), (GLvoid*)offsetof(XYUVIJRGBA8, u));
-	glEnableVertexAttribArray(aTexCoord);																					CheckGLError();
-	glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYUVIJRGBA8), (GLvoid*)offsetof(XYUVIJRGBA8, r));
-	glEnableVertexAttribArray(aColor);																						CheckGLError();
-
-	glBindTexture(GL_TEXTURE_2D, autoBatchTextureId);																		CheckGLError();
-
-	glDrawElements(GL_TRIANGLES, (GLsizei)(autoBatchSize - (autoBatchBufEnd - autoBatchBuf)) * 6, GL_UNSIGNED_SHORT, 0);	CheckGLError();
-}
 
 void GLBase::GLUpdateEnd() {
 	if (autoBatchTextureId != -1) {

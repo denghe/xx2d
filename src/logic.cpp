@@ -17,7 +17,7 @@ void Logic::Init() {
 	for (size_t i = 0; i < numSprites; i++) {
 		auto& s = ss[i];
 		s.SetTexture(/*rnd.Get()*/i % 2 == 0 ? t1 : t2);
-		s.SetScale({ 0.5, 0.5 });
+		s.SetScale({ 1, 1 });
 		auto c = rnd.Get(); auto cp = (uint8_t*)&c;
 		s.SetColor({ cp[0], cp[1], cp[2], 255 });
 		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
