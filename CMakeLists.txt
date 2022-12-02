@@ -6,17 +6,13 @@ project(${name})
 set(CMAKE_CXX_STANDARD 20)
 
 include_directories(
-	xxlib
+	3rd/xxlib
 	src
 	./
-)
-link_directories(
-	glfw
 )
 
 set(SRCS)
 file(GLOB_RECURSE SRCS
-    glad/*.c
 	src/*.cpp
 	src/*.h
 	src/*.hpp
@@ -24,10 +20,16 @@ file(GLOB_RECURSE SRCS
 )
 add_executable(${name} ${SRCS})
 
+add_subdirectory(3rd/glfw glfw)
+target_link_libraries(${name} glfw)
+
+add_subdirectory(3rd/glad glad)
+target_link_libraries(${name} glad)
+
 if(MSVC)
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-	target_link_libraries(${name} opengl32 glfw3)
+#	target_link_libraries(${name} opengl32 glfw3)
 
 #	add_definitions(-DOPEN_MP_NUM_THREADS=3)
 #	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/openmp")

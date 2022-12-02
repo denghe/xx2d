@@ -42,7 +42,8 @@ int main() {
 	glfwGetFramebufferSize(wnd, &width, &height);
 
 	glfwMakeContextCurrent(wnd);
-	if (!gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress)) return -3;
+	if (!gladLoadGL(glfwGetProcAddress)) return -3;
+	//if (!gladLoadGLES2(glfwGetProcAddress)) return -3;
 	glfwSwapInterval(0);
 
 	logic->GLInit();
