@@ -1,4 +1,5 @@
-﻿#include "pch.h"
+﻿#pragma once
+#include "pch.h"
 
 struct Shaders {
 	inline static constexpr std::string_view vsSrc = R"(#version 300 es

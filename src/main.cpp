@@ -1,5 +1,8 @@
 ﻿#include"pch.h"
 #include "logic.h"
+#include <glfw/glfw3.h>
+#include <glfw/glfw3native.h>
+#include <glfw/glfw3ext.h>
 
 xx::Shared<Logic> logic = xx::Make<Logic>();
 GLFWwindow* wnd = nullptr;

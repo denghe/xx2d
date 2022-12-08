@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "pch.h"
-#include "glhelpers.h"
 
 struct Sprite {
 	QuadVerts verts;

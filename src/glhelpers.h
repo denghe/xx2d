@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "pch.h"
+#include <glad/gl.h>
 
 #ifndef NDEBUG
 inline void CheckGLErrorAt(const char* file, int line, const char* func) {

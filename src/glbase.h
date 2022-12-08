@@ -1,7 +1,5 @@
 ﻿#pragma once
 #include "pch.h"
-#include "glhelpers.h"
-#include "sprite.h"
 
 struct GLBase {
 	// 外部赋值
@@ -11,7 +9,7 @@ struct GLBase {
 	Shader v, f;
 	Program p;
 	GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
-	//VertexArrays va;
+	VertexArrays va;
 	Buffer vb, ib;
 
 	static const size_t maxVertNums = 65536;

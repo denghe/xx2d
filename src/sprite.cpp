@@ -1,5 +1,4 @@
 ﻿#include "pch.h"
-#include "sprite.h"
 
 GLsizei& Sprite::TW() const { return std::get<1>(tex->vs); }
 GLsizei& Sprite::TH() const { return std::get<2>(tex->vs); }
