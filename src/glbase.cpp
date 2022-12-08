@@ -46,6 +46,8 @@ void GLBase::GLInit() {
 
 	// 初始化 gl 运行环境 特性支持
 
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
 	glDisable(GL_CULL_FACE);
 
 	glDisable(GL_DEPTH_TEST);

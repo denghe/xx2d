@@ -10,17 +10,22 @@ inline int width = 0;
 inline int height = 0;
 
 int main() {
-	#ifdef OPEN_MP_NUM_THREADS
+#ifdef OPEN_MP_NUM_THREADS
 	omp_set_num_threads(OPEN_MP_NUM_THREADS);
 	omp_set_dynamic(0);
-	#endif
+#endif
 
 	glfwSetErrorCallback([](int error, const char* description) {
 		throw new std::exception(description, error);
 		});
 
+#if defined(_WIN32)
+	if (!glfwxInit()) return -1;
+	auto sg_glfw = xx::MakeSimpleScopeGuard([] { glfwxTerminate(); });
+#else
 	if (!glfwInit()) return -1;
 	auto sg_glfw = xx::MakeSimpleScopeGuard([] { glfwTerminate(); });
+#endif
 
 	//glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 	//glfwWindowHint(GLFW_RED_BITS, 8);
@@ -30,10 +35,14 @@ int main() {
 	//glfwWindowHint(GLFW_DEPTH_BITS, 24);
 	//glfwWindowHint(GLFW_STENCIL_BITS, 8);
 	//glfwWindowHint(GLFW_SAMPLES, 0);
+	//glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
+	//glfwWindowHint(GLFW_DECORATED, GL_TRUE);
+	//glfwxSetParent((HWND)0);
 
 	wnd = glfwCreateWindow(logic->w, logic->h, "xx2dtest1", nullptr, nullptr);
 	if (!wnd) return -2;
 	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
+	glfwMakeContextCurrent(wnd);
 
 	//int realW = 0, realH = 0;
 	//glfwGetWindowSize(_mainWindow, &realW, &realH);
@@ -43,14 +52,14 @@ int main() {
 	//if (realH != neededHeight) {
 	//	rect.size.height = realH / _frameZoomFactor;
 	//}
-	// 
+
 	//glfwSetMouseButtonCallback(wnd, GLFWEventHandler::onGLFWMouseCallBack);
 	//glfwSetCursorPosCallback(wnd, GLFWEventHandler::onGLFWMouseMoveCallBack);
 	//glfwSetScrollCallback(wnd, GLFWEventHandler::onGLFWMouseScrollCallback);
 	//glfwSetCharCallback(wnd, GLFWEventHandler::onGLFWCharCallback);
-	//glfwSetKeyCallback(wnd, GLFWEventHandler::onGLFWKeyCallback);
+	////glfwSetKeyCallback(wnd, GLFWEventHandler::onGLFWKeyCallback);
 	//glfwSetWindowPosCallback(wnd, GLFWEventHandler::onGLFWWindowPosCallback);
-	//glfwSetFramebufferSizeCallback(wnd, GLFWEventHandler::onGLFWframebuffersize);
+	////glfwSetFramebufferSizeCallback(wnd, GLFWEventHandler::onGLFWframebuffersize);
 	//glfwSetWindowSizeCallback(wnd, GLFWEventHandler::onGLFWWindowSizeFunCallback);
 	//glfwSetWindowIconifyCallback(wnd, GLFWEventHandler::onGLFWWindowIconifyCallback);
 	//glfwSetWindowFocusCallback(wnd, GLFWEventHandler::onGLFWWindowFocusCallback);
@@ -72,9 +81,6 @@ int main() {
 		// todo: add event to logic
 	});
 	glfwGetFramebufferSize(wnd, &width, &height);
-
-	glfwMakeContextCurrent(wnd);
-
 
 
 	if (!gladLoadGL(glfwGetProcAddress)) return -3;
