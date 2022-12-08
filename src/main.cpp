@@ -22,9 +22,38 @@ int main() {
 	if (!glfwInit()) return -1;
 	auto sg_glfw = xx::MakeSimpleScopeGuard([] { glfwTerminate(); });
 
+	//glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+	//glfwWindowHint(GLFW_RED_BITS, 8);
+	//glfwWindowHint(GLFW_GREEN_BITS, 8);
+	//glfwWindowHint(GLFW_BLUE_BITS, 8);
+	//glfwWindowHint(GLFW_ALPHA_BITS, 8);
+	//glfwWindowHint(GLFW_DEPTH_BITS, 24);
+	//glfwWindowHint(GLFW_STENCIL_BITS, 8);
+	//glfwWindowHint(GLFW_SAMPLES, 0);
+
 	wnd = glfwCreateWindow(logic->w, logic->h, "xx2dtest1", nullptr, nullptr);
 	if (!wnd) return -2;
 	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
+
+	//int realW = 0, realH = 0;
+	//glfwGetWindowSize(_mainWindow, &realW, &realH);
+	//if (realW != neededWidth) {
+	//	rect.size.width = realW / _frameZoomFactor;
+	//}
+	//if (realH != neededHeight) {
+	//	rect.size.height = realH / _frameZoomFactor;
+	//}
+	// 
+	//glfwSetMouseButtonCallback(wnd, GLFWEventHandler::onGLFWMouseCallBack);
+	//glfwSetCursorPosCallback(wnd, GLFWEventHandler::onGLFWMouseMoveCallBack);
+	//glfwSetScrollCallback(wnd, GLFWEventHandler::onGLFWMouseScrollCallback);
+	//glfwSetCharCallback(wnd, GLFWEventHandler::onGLFWCharCallback);
+	//glfwSetKeyCallback(wnd, GLFWEventHandler::onGLFWKeyCallback);
+	//glfwSetWindowPosCallback(wnd, GLFWEventHandler::onGLFWWindowPosCallback);
+	//glfwSetFramebufferSizeCallback(wnd, GLFWEventHandler::onGLFWframebuffersize);
+	//glfwSetWindowSizeCallback(wnd, GLFWEventHandler::onGLFWWindowSizeFunCallback);
+	//glfwSetWindowIconifyCallback(wnd, GLFWEventHandler::onGLFWWindowIconifyCallback);
+	//glfwSetWindowFocusCallback(wnd, GLFWEventHandler::onGLFWWindowFocusCallback);
 
 	glfwSetKeyCallback(wnd, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {
 		assert(wnd == ::wnd);
@@ -45,6 +74,9 @@ int main() {
 	glfwGetFramebufferSize(wnd, &width, &height);
 
 	glfwMakeContextCurrent(wnd);
+
+
+
 	if (!gladLoadGL(glfwGetProcAddress)) return -3;
 	//if (!gladLoadGLES2(glfwGetProcAddress)) return -3;
 	glfwSwapInterval(0);
