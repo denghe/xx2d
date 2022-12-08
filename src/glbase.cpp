@@ -1,6 +1,5 @@
 ﻿#include "pch.h"
 #include "glbase.h"
-#include "shader.h"
 
 void GLBase::GLInit() {
 	v = LoadVertexShader({ Shaders::vsSrc });
@@ -65,16 +64,16 @@ void GLBase::GLUpdateBegin() {
 	glBindVertexArray(va);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);	// 不再来一发这句会出 bug
 
-	CheckGLError();
+	//CheckGLError();
 }
 
 void GLBase::AutoBatchCommit() {
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verts[0]) * 4 * autoBatchNumQuads, verts, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glDrawElements(GL_TRIANGLES, (GLsizei)(autoBatchNumQuads * 6), GL_UNSIGNED_SHORT, 0);
-	CheckGLError();
+	//CheckGLError();
 	autoBatchNumQuads = 0;
 }
 

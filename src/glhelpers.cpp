@@ -1,6 +1,4 @@
 ﻿#include "pch.h"
-#include <xx_file.h>
-#include "glhelpers.h"
 
 Texture LoadTexture(std::string_view const& fn) {
 	xx::Data d;
