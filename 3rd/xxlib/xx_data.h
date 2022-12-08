@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include <xx_includes.h>
-#include <xx_typetraits.h>
-#include <xx_mem.h>
+#include "xx_includes.h"
+#include "xx_typetraits.h"
+#include "xx_mem.h"
 
 namespace xx {
 

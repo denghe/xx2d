@@ -23,8 +23,11 @@ add_executable(${name} ${SRCS})
 add_subdirectory(3rd/glfw glfw)
 target_link_libraries(${name} glfw)
 
-add_subdirectory(3rd/glad glad)
-target_link_libraries(${name} glad)
+#add_subdirectory(3rd/glad glad)
+#target_link_libraries(${name} glad)
+include_directories(
+	3rd/glad/include
+)
 
 if(MSVC)
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")

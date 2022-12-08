@@ -1,4 +1,9 @@
 ﻿#include "pch.h"
+#define GLAD_MALLOC(sz)       malloc(sz)
+#define GLAD_FREE(ptr)        free(ptr)
+#define GLAD_GL_IMPLEMENTATION
+#include <glad/glad.h>
+
 
 Texture LoadTexture(std::string_view const& fn) {
 	xx::Data d;

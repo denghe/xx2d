@@ -19,6 +19,7 @@ void GLBase::GLInit() {
 	aPos = glGetAttribLocation(p, "aPos");
 	aTexCoord = glGetAttribLocation(p, "aTexCoord");
 	aColor = glGetAttribLocation(p, "aColor");
+	CheckGLError();
 
 	// 初始化 shader 要用到的 buffer
 
@@ -59,6 +60,8 @@ void GLBase::GLInit() {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	glActiveTexture(GL_TEXTURE0);
+
+	CheckGLError();
 }
 
 void GLBase::GLUpdateBegin() {
@@ -79,8 +82,6 @@ void GLBase::GLUpdateBegin() {
 
 	glBindVertexArray(va);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);	// 不再来一发这句会出 bug
-
-	//CheckGLError();
 }
 
 void GLBase::AutoBatchCommit() {
@@ -88,13 +89,12 @@ void GLBase::AutoBatchCommit() {
 	// 提交 顶点数据到 buf
 
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verts[0]) * 4 * autoBatchNumQuads, verts, GL_DYNAMIC_DRAW);
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(XYUVIJRGBA8) * 4 * autoBatchNumQuads, verts, GL_DYNAMIC_DRAW);
 
 	// 绘制( 已知问题: 当前这一句的 GPU 占用是 cocos 3.x 里相同语句 的 10 倍, 问题排查中 )
 
 	glDrawElements(GL_TRIANGLES, (GLsizei)(autoBatchNumQuads * 6), GL_UNSIGNED_SHORT, 0);
-	//CheckGLError();
+	CheckGLError();
 
 	autoBatchNumQuads = 0;
 }
