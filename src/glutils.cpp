@@ -5,7 +5,7 @@
 #include <glad/glad.h>
 
 
-GLTexture LoadTexture(std::string fn) {
+GLTexture LoadTexture(std::string_view const& fn) {
 	xx::Data d;
 	if (int r = xx::ReadAllBytes(fn, d)) throw std::logic_error(xx::ToString("read file error. r = ", r, ", fn = ", fn));
 	if (d.len >= 6 && memcmp("PKM 20", d.buf, 6) == 0 && d.len >= 16) {
@@ -28,7 +28,7 @@ GLTexture LoadTexture(std::string fn) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, format == 3 ? GL_COMPRESSED_RGBA8_ETC2_EAC : GL_COMPRESSED_RGB8_ETC2, (GLsizei)width, (GLsizei)height, 0, (GLsizei)(d.len - 16), p + 16);
 		CheckGLError();
-		return { t, width, height, std::move(fn) };
+		return { t, width, height, fn };
 	}
 	throw std::logic_error(xx::ToString("unsupported texture type. fn = ", fn));
 }

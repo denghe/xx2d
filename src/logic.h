@@ -2,8 +2,7 @@
 #include "pch.h"
 #include "engine.h"
 
-struct Logic {
-	Engine eg;	// game loop support. can't change name
+struct Logic : Engine {
 	std::vector<Sprite> ss;
 	Rnd rnd;
 

@@ -2,7 +2,7 @@
 #include "engine.h"
 
 
-void Engine::Init() {
+void Engine::EngineInit() {
 	SearchPathReset();
 
 	CheckGLError();
@@ -75,7 +75,7 @@ void Engine::Init() {
 	CheckGLError();
 }
 
-void Engine::UpdateBegin() {
+void Engine::EngineUpdateBegin() {
 
 	assert(w >= 0 && h >= 0);
 	glViewport(0, 0, w, h);
@@ -92,7 +92,7 @@ void Engine::UpdateBegin() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);	// 已知问题：这句不加要出错
 }
 
-void Engine::UpdateEnd() {
+void Engine::EngineUpdateEnd() {
 	if (autoBatchQuadVertsCount) {
 		AutoBatchCommit();
 	}
@@ -102,7 +102,7 @@ void Engine::UpdateEnd() {
 	}
 }
 
-void Engine::Destroy() {
+void Engine::EngineDestroy() {
 	textureCache.clear();
 	// ...
 }

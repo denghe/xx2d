@@ -41,7 +41,7 @@ struct Engine {
 
 	/**********************************************************************************/
 	// window info
-	GLsizei w = 1280, h = 720;
+	GLsizei w = 1920, h = 1080;
 
 
 
@@ -65,8 +65,8 @@ struct Engine {
 	size_t autoBatchTexsCount = 0;
 	size_t autoBatchQuadVertsCount = 0;
 
-	std::pair<GLuint, int> autoBatchTexs[maxQuadNums];	// tex id + count
-	QuadVerts autoBatchQuadVerts[maxQuadNums];
+	std::unique_ptr<std::pair<GLuint, int>[]> autoBatchTexs = std::make_unique<std::pair<GLuint, int>[]>(maxQuadNums);	// tex id + count
+	std::unique_ptr<QuadVerts[]> autoBatchQuadVerts = std::make_unique<QuadVerts[]>(maxQuadNums);
 
 	void AutoBatchBegin();
 	void AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qvs);
@@ -76,10 +76,10 @@ struct Engine {
 
 	/**********************************************************************************/
 	// game loop
-	void Init();
-	void UpdateBegin();
-	void UpdateEnd();
-	void Destroy();
+	void EngineInit();
+	void EngineUpdateBegin();
+	void EngineUpdateEnd();
+	void EngineDestroy();
 
 	// ...
 };

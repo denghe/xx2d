@@ -43,7 +43,11 @@ struct GLRes {
 };
 
 using GLShader = GLRes<GLResTypes::Shader>;
+
 using GLProgram = GLRes<GLResTypes::Program>;
+
 using GLVertexArrays = GLRes<GLResTypes::Vertexss>;
+
 using GLBuffer = GLRes<GLResTypes::Buffer>;
+
 using GLTexture = GLRes<GLResTypes::Texture, GLsizei, GLsizei, std::string>;
