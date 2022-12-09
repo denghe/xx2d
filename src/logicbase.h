@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "pch.h"
 
-struct GLBase {
+struct LogicBase {
 	// 外部赋值
 	GLsizei w = 1280, h = 720;
 

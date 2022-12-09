@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include "pch.h"
-#include "glbase.h"
+#include "logicbase.h"
 
-struct Logic : GLBase {
+struct Logic : LogicBase {
 	std::vector<Sprite> ss;
 	Rnd rnd;
 

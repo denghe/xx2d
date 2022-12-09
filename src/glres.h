@@ -3,17 +3,6 @@
 //#include <glad/gl.h>
 #include <glad/glad.h>
 
-#ifndef NDEBUG
-inline void CheckGLErrorAt(const char* file, int line, const char* func) {
-	if (auto e = glGetError(); e != GL_NO_ERROR) {
-		throw std::runtime_error(xx::ToStringFormat("OpenGL error: {0}, at {1}:{2}, {3}", e, file, line, func));
-	}
-}
-#define CheckGLError() CheckGLErrorAt(__FILE__, __LINE__, __FUNCTION__)
-#else
-#define CheckGLError() ((void)0)
-#endif
-
 enum class GLResTypes {
 	Shader, Program, Vertexss, Buffer, Texture
 };
@@ -57,23 +46,3 @@ using Program = GLRes<GLResTypes::Program>;
 using VertexArrays = GLRes<GLResTypes::Vertexss>;
 using Buffer = GLRes<GLResTypes::Buffer>;
 using Texture = GLRes<GLResTypes::Texture, GLsizei, GLsizei>;
-
-Texture LoadTexture(std::string_view const& fn);
-Shader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_);
-Shader LoadVertexShader(std::initializer_list<std::string_view>&& codes_);
-Shader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_);
-Program LinkProgram(GLuint const& vs, GLuint const& fs);
-
-
-struct XY {
-	float x, y;
-};
-struct UV {
-	uint16_t u, v;
-};
-struct RGBA8 {
-	uint8_t r, g, b, a;
-};
-struct XYUVRGBA8 : XY, UV, RGBA8 {};
-
-using QuadVerts = std::array<XYUVRGBA8, 4>;
