@@ -41,8 +41,9 @@ struct GLRes {
 		std::get<0>(vs) = 0;
 	}
 };
-using Shader = GLRes<GLResTypes::Shader>;
-using Program = GLRes<GLResTypes::Program>;
-using VertexArrays = GLRes<GLResTypes::Vertexss>;
-using Buffer = GLRes<GLResTypes::Buffer>;
-using Texture = GLRes<GLResTypes::Texture, GLsizei, GLsizei>;
+
+using GLShader = GLRes<GLResTypes::Shader>;
+using GLProgram = GLRes<GLResTypes::Program>;
+using GLVertexArrays = GLRes<GLResTypes::Vertexss>;
+using GLBuffer = GLRes<GLResTypes::Buffer>;
+using GLTexture = GLRes<GLResTypes::Texture, GLsizei, GLsizei>;

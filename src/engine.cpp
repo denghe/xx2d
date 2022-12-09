@@ -1,12 +1,9 @@
 ﻿#include "pch.h"
-#include "logicbase.h"
+#include "engine.h"
 
-// todo: 贴图数组支持。绘制前需要先用要用到的贴图，填进数组。Texture 对象将附带存储 其对应的 下标。用的时候 顶点数据 安排一个 贴图下标 的存储位置? 还是说必须配合 draw instance 方案, 再用一个 buffer 存每个实例用哪个 tex 下标？
 
-void LogicBase::GLInit() {
+void Engine::GLInit() {
 	CheckGLError();
-
-	// 初始化 shader 及其参数位置变量
 
 	v = LoadVertexShader({ Shaders::vsSrc });
 	f = LoadFragmentShader({ Shaders::fsSrc });
@@ -20,7 +17,7 @@ void LogicBase::GLInit() {
 	aColor = glGetAttribLocation(p, "aColor");
 	CheckGLError();
 
-	// 初始化 shader 要用到的 buffer
+
 
 	glGenVertexArrays(1, &va.Ref());
 	glBindVertexArray(va);
@@ -34,10 +31,6 @@ void LogicBase::GLInit() {
 	glEnableVertexAttribArray(aTexCoord);
 	glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYUVRGBA8), (GLvoid*)offsetof(XYUVRGBA8, r));
 	glEnableVertexAttribArray(aColor);
-
-	// 这样先声明 再提交 sub 3070 实测更慢
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(XYUVIJRGBA8) * maxVertNums, nullptr, GL_DYNAMIC_DRAW);
-	//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(XYUVIJRGBA8) * 4 * autoBatchNumQuads, verts);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	{
@@ -61,7 +54,7 @@ void LogicBase::GLInit() {
 
 	CheckGLError();
 
-	// 初始化 gl 运行环境 特性支持
+
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
@@ -80,9 +73,7 @@ void LogicBase::GLInit() {
 	CheckGLError();
 }
 
-void LogicBase::GLUpdateBegin() {
-	
-	// cleanup
+void Engine::GLUpdateBegin() {
 
 	assert(w >= 0 && h >= 0);
 	glViewport(0, 0, w, h);
@@ -90,7 +81,6 @@ void LogicBase::GLUpdateBegin() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDepthMask(false);
 
-	// 启用 shader & 传参
 
 	glUseProgram(p);
 	glUniform1i(uTex0, 0);
@@ -100,48 +90,11 @@ void LogicBase::GLUpdateBegin() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);	// 已知问题：这句不加要出错
 }
 
-void LogicBase::AutoBatchDrawQuad(Texture& tex, QuadVerts const& qvs) {
-	if (autoBatchLastTextureId != tex) {
-		autoBatchLastTextureId = tex;
-		autoBatchTexs[autoBatchTexsCount].first = tex;
-		autoBatchTexs[autoBatchTexsCount].second = 1;
-		++autoBatchTexsCount;
-	} else {
-		autoBatchTexs[autoBatchTexsCount - 1].second += 1;
-	}
-
-	memcpy(autoBatchQuadVerts + autoBatchQuadVertsCount, qvs.data(), sizeof(qvs));
-	++autoBatchQuadVertsCount;
-
-	if (autoBatchQuadVertsCount == maxQuadNums) {
-		AutoBatchCommit();
-	}
-};
-
-void LogicBase::AutoBatchCommit() {
-
-	// 提交 顶点数据到 buf
-
-	glBindBuffer(GL_ARRAY_BUFFER, vb);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVerts) * autoBatchQuadVertsCount, autoBatchQuadVerts, GL_DYNAMIC_DRAW);
-
-	for (size_t i = 0, j = 0; i < autoBatchTexsCount; i++) {
-		glBindTexture(GL_TEXTURE_2D, autoBatchTexs[i].first);
-		auto n = (GLsizei)(autoBatchTexs[i].second * 6);
-		glDrawElements(GL_TRIANGLES, n, GL_UNSIGNED_SHORT, (GLvoid*)j);
-		j += n;
-	}
-	CheckGLError();
-
-	autoBatchLastTextureId = 0;
-	autoBatchTexsCount = 0;
-	autoBatchQuadVertsCount = 0;
-}
-
-void LogicBase::GLUpdateEnd() {
+void Engine::GLUpdateEnd() {
 	if (autoBatchQuadVertsCount) {
 		AutoBatchCommit();
-	} else {
+	}
+	else {
 		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		//glBindVertexArray(0);
 	}

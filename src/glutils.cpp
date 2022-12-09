@@ -5,7 +5,7 @@
 #include <glad/glad.h>
 
 
-Texture LoadTexture(std::string_view const& fn) {
+GLTexture LoadTexture(std::string_view const& fn) {
 	xx::Data d;
 	if (int r = xx::ReadAllBytes(fn, d)) throw std::logic_error(xx::ToString("read file error. r = ", r, ", fn = ", fn));
 	if (d.len >= 6 && memcmp("PKM 20", d.buf, 6) == 0 && d.len >= 16) {
@@ -33,7 +33,7 @@ Texture LoadTexture(std::string_view const& fn) {
 	throw std::logic_error(xx::ToString("unsupported texture type. fn = ", fn));
 }
 
-Shader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
+GLShader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
 	assert(codes_.size() && (type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER));
 	auto&& shader = glCreateShader(type);	// 申请 shader 上下文. 返回 0 表示失败, 参数：GL_VERTEX_SHADER 或 GL_FRAGMENT_SHADER
 	if (!shader) throw std::logic_error(xx::ToString("glCreateShader(", type, ") failed."));
@@ -59,16 +59,16 @@ Shader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& 
 		}
 		throw std::logic_error("glCompileShader failed: err msg = " + s);
 	}
-	return Shader(shader);
+	return GLShader(shader);
 }
-Shader LoadVertexShader(std::initializer_list<std::string_view>&& codes_) {
+GLShader LoadVertexShader(std::initializer_list<std::string_view>&& codes_) {
 	return LoadShader(GL_VERTEX_SHADER, std::move(codes_));
 }
-Shader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_) {
+GLShader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_) {
 	return LoadShader(GL_FRAGMENT_SHADER, std::move(codes_));
 }
 
-Program LinkProgram(GLuint const& vs, GLuint const& fs) {
+GLProgram LinkProgram(GLuint const& vs, GLuint const& fs) {
 	// 创建一个 program. 返回 0 表示失败
 	auto program = glCreateProgram();
 	if (!program) throw std::logic_error("glCreateProgram failed.");
@@ -87,5 +87,5 @@ Program LinkProgram(GLuint const& vs, GLuint const& fs) {
 		}
 		throw std::logic_error("glLinkProgram failed: err msg = " + s);
 	}
-	return Program(program);
+	return GLProgram(program);
 }

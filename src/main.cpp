@@ -51,7 +51,7 @@ int main() {
 	glfwSetJoystickCallback(nullptr);
 	
 
-	wnd = glfwCreateWindow(logic->w, logic->h, "xx2dtest1", nullptr, nullptr);
+	wnd = glfwCreateWindow(logic->eg.w, logic->eg.h, "xx2dtest1", nullptr, nullptr);
 	if (!wnd) return -3;
 	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
 
@@ -87,8 +87,8 @@ int main() {
 
 	glfwSetFramebufferSizeCallback(wnd, [](GLFWwindow* wnd, int width, int height) {
 		assert(wnd == ::wnd);
-		::logic->w = width;
-		::logic->h = height;
+		::logic->eg.w = width;
+		::logic->eg.h = height;
 		// todo: add event to logic
 	});
 	glfwGetFramebufferSize(wnd, &width, &height);
@@ -114,13 +114,13 @@ int main() {
 		std::cout << "glGetError() == " << e << std::endl;
 	};
 
-	logic->GLInit();
+	logic->eg.GLInit();
 	logic->Init();
 	while (!glfwWindowShouldClose(wnd)) {
 		glfwPollEvents();
-		logic->GLUpdateBegin();
+		logic->eg.GLUpdateBegin();
 		logic->Update((float)glfwGetTime());
-		logic->GLUpdateEnd();
+		logic->eg.GLUpdateEnd();
 		glfwSwapBuffers(wnd);
 	}
 

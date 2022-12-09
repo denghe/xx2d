@@ -3,7 +3,7 @@
 GLsizei& Sprite::TW() const { return std::get<1>(tex->vs); }
 GLsizei& Sprite::TH() const { return std::get<2>(tex->vs); }
 
-void Sprite::SetTexture(xx::Shared<Texture> t_) {
+void Sprite::SetTexture(xx::Shared<GLTexture> t_) {
 	tex = std::move(t_);
 
 	verts[0].u = 0;       verts[0].v = TH();
