@@ -35,3 +35,11 @@ void Engine::AutoBatchCommit() {
 	autoBatchTexsCount = 0;
 	autoBatchQuadVertsCount = 0;
 }
+
+void Engine::AutoBatchDrawSprite(Sprite const& s) {
+	AutoBatchDrawQuad(*s.tex, s.verts);
+}
+
+void Engine::AutoBatchDrawSprite(xx::Shared<Sprite> const& s) {
+	AutoBatchDrawQuad(*s->tex, s->verts);
+}

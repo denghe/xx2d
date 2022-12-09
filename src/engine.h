@@ -70,6 +70,8 @@ struct Engine {
 
 	void AutoBatchBegin();
 	void AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qvs);
+	void AutoBatchDrawSprite(Sprite const& s);
+	void AutoBatchDrawSprite(xx::Shared<Sprite> const& s);
 	void AutoBatchCommit();
 	
 
