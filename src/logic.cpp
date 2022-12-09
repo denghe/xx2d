@@ -7,7 +7,7 @@ void Logic::Init() {
 	auto t1 = xx::Make<Texture>(LoadTexture("res/zazaka.pkm"));
 	auto t2 = xx::Make<Texture>(LoadTexture("res/mouse.pkm"));
 
-	size_t numSprites = 20000;// 1'000'000;
+	size_t numSprites = 200'000;// 1'000'000;
 
 	ss.resize(numSprites);
 	for (size_t i = 0; i < numSprites; i++) {

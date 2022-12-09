@@ -12,27 +12,18 @@ struct GLBase {
 	VertexArrays va;
 	Buffer vb, ib;
 
+	// 各种合批参数
 	static const size_t maxVertNums = 65536;
-	static const size_t maxIndexNums = maxVertNums * 6 / 4;
+	static const size_t maxQuadNums = maxVertNums / 4;
+	static const size_t maxIndexNums = maxQuadNums * 6;
 
-	XYUVIJRGBA8 verts[maxVertNums];
-	inline static GLushort idxs[maxIndexNums];
-	inline static int idxsFiller = [] {
-		for (size_t i = 0; i < maxVertNums / 4; i++) {
-			auto p = idxs + i * 6;
-			auto v = i * 4;
-			p[0] = uint16_t(v + 0);
-			p[1] = uint16_t(v + 1);
-			p[2] = uint16_t(v + 2);
-			p[3] = uint16_t(v + 0);
-			p[4] = uint16_t(v + 2);
-			p[5] = uint16_t(v + 3);
-		}
-		return 0;
-	}();
+	std::pair<GLuint, int> autoBatchTexs[maxQuadNums];	// tex id + count
+	size_t autoBatchTexsCount = 0;
+	GLuint autoBatchLastTextureId = 0;
 
-	size_t autoBatchMaxQuadNums = maxVertNums / 6, autoBatchNumQuads = 0;
-	GLint autoBatchTextureId = -1;
+	QuadVerts autoBatchQuadVerts[maxQuadNums];
+	size_t autoBatchQuadVertsCount = 0;
+
 	void AutoBatchBegin();
 	void AutoBatchDrawQuad(Texture& tex, QuadVerts const& qvs);
 	void AutoBatchCommit();
