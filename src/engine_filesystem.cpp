@@ -1,8 +1,10 @@
 ﻿#include "pch.h"
 #include "engine.h"
 
-void Engine::SearchPathAdd(std::string_view const& dir) {
-	assert(!dir.empty());
+void Engine::SearchPathAdd(std::string_view dir) {
+	// prepare
+	dir = xx::Trim(dir);
+	if (dir.empty()) throw std::logic_error("dir is empty");
 
 	// replace all \ to /, .\ or ./ to empty
 	auto& s = searchPaths.emplace_back();
@@ -18,7 +20,7 @@ void Engine::SearchPathAdd(std::string_view const& dir) {
 			s.push_back(dir[i]);
 		}
 	}
-	assert(!s.empty());
+	if (s.empty()) throw std::logic_error("dir is empty");
 
 	// make sure / at the end
 	if (s.back() != '/') {
@@ -32,7 +34,10 @@ void Engine::SearchPathReset() {
 }
 
 
-std::string Engine::GetFullPath(std::string_view const& fn) {
+std::string Engine::GetFullPath(std::string_view fn) {
+	// prepare
+	fn = xx::Trim(fn);
+
 	// is absolute path?
 	if (fn[0] == '/' || (fn.size() > 1 && fn[1] == ':')) return std::string(fn);
 
@@ -48,8 +53,7 @@ std::string Engine::GetFullPath(std::string_view const& fn) {
 }
 
 
-xx::Data Engine::ReadAllBytes(std::string_view const& fn) {
-	assert(!fn.empty());
+xx::Data Engine::ReadAllBytes(std::string_view fn) {
 	xx::Data d;
 	if (auto&& p = GetFullPath(fn); !p.empty()) {
 		xx::ReadAllBytes(p, d);

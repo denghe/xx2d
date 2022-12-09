@@ -21,16 +21,16 @@ struct Engine {
 	std::filesystem::path tmpPath;
 
 	// add relative base dir to searchPaths
-	void SearchPathAdd(std::string_view const& dir);
+	void SearchPathAdd(std::string_view dir);
 
 	// search paths revert to default
 	void SearchPathReset();
 
 	// search file by searchPaths + fn. not found return ""
-	std::string GetFullPath(std::string_view const& fn);
+	std::string GetFullPath(std::string_view fn);
 
 	// read all data by GetFullPath( fn )
-	xx::Data ReadAllBytes(std::string_view const& fn);
+	xx::Data ReadAllBytes(std::string_view fn);
 
 	/**********************************************************************************/
 	// texture cache system
