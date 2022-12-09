@@ -3,9 +3,6 @@
 
 // todo: 贴图数组支持。绘制前需要先用要用到的贴图，填进数组。Texture 对象将附带存储 其对应的 下标。用的时候 顶点数据 安排一个 贴图下标 的存储位置? 还是说必须配合 draw instance 方案, 再用一个 buffer 存每个实例用哪个 tex 下标？
 
-// 已知问题：相似代码，相同顶点数 帧率 GPU 占用比 cocos 高很多倍, 正在排查问题所在
-// 问题已找到，glBufferData 次数太多。这东西延迟大。只有先把 texId 存起来。批满了 再集中来一发. draw 前只切图, + offset. 似乎还需要存 tex 连续被用的次数， 以方便算 offset range
-
 void GLBase::GLInit() {
 	CheckGLError();
 
@@ -31,11 +28,11 @@ void GLBase::GLInit() {
 	glGenBuffers(2, (GLuint*)&vb);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
-	glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVIJRGBA8), 0);
+	glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVRGBA8), 0);
 	glEnableVertexAttribArray(aPos);
-	glVertexAttribPointer(aTexCoord, 4, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(XYUVIJRGBA8), (GLvoid*)offsetof(XYUVIJRGBA8, u));
+	glVertexAttribPointer(aTexCoord, 2, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(XYUVRGBA8), (GLvoid*)offsetof(XYUVRGBA8, u));
 	glEnableVertexAttribArray(aTexCoord);
-	glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYUVIJRGBA8), (GLvoid*)offsetof(XYUVIJRGBA8, r));
+	glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYUVRGBA8), (GLvoid*)offsetof(XYUVRGBA8, r));
 	glEnableVertexAttribArray(aColor);
 
 	// 这样先声明 再提交 sub 3070 实测更慢
@@ -137,6 +134,7 @@ void GLBase::AutoBatchCommit() {
 	CheckGLError();
 
 	autoBatchLastTextureId = 0;
+	autoBatchTexsCount = 0;
 	autoBatchQuadVertsCount = 0;
 }
 

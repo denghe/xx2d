@@ -7,12 +7,13 @@ void Logic::Init() {
 	auto t1 = xx::Make<Texture>(LoadTexture("res/zazaka.pkm"));
 	auto t2 = xx::Make<Texture>(LoadTexture("res/mouse.pkm"));
 
-	size_t numSprites = 200'000;// 1'000'000;
+	size_t numSprites = 500'000;// 1'000'000;
 
 	ss.resize(numSprites);
 	for (size_t i = 0; i < numSprites; i++) {
 		auto& s = ss[i];
-		s.SetTexture(/*rnd.Get()*/i % 2 == 0 ? t1 : t2);
+		//s.SetTexture(/*rnd.Get()*/i % 2 == 0 ? t1 : t2);
+		s.SetTexture(t1);
 		s.SetScale({ 1, 1 });
 		auto c = rnd.Get(); auto cp = (uint8_t*)&c;
 		s.SetColor({ cp[0], cp[1], cp[2], 255 });

@@ -17,12 +17,12 @@ struct GLBase {
 	static const size_t maxQuadNums = maxVertNums / 4;
 	static const size_t maxIndexNums = maxQuadNums * 6;
 
-	std::pair<GLuint, int> autoBatchTexs[maxQuadNums];	// tex id + count
-	size_t autoBatchTexsCount = 0;
 	GLuint autoBatchLastTextureId = 0;
-
-	QuadVerts autoBatchQuadVerts[maxQuadNums];
+	size_t autoBatchTexsCount = 0;
 	size_t autoBatchQuadVertsCount = 0;
+
+	std::pair<GLuint, int> autoBatchTexs[maxQuadNums];	// tex id + count
+	QuadVerts autoBatchQuadVerts[maxQuadNums];
 
 	void AutoBatchBegin();
 	void AutoBatchDrawQuad(Texture& tex, QuadVerts const& qvs);

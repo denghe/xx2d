@@ -68,12 +68,12 @@ Program LinkProgram(GLuint const& vs, GLuint const& fs);
 struct XY {
 	float x, y;
 };
-struct UVIJ {
-	uint16_t u, v, i, j;
+struct UV {
+	uint16_t u, v;
 };
 struct RGBA8 {
 	uint8_t r, g, b, a;
 };
-struct XYUVIJRGBA8 : XY, UVIJ, RGBA8 {};
+struct XYUVRGBA8 : XY, UV, RGBA8 {};
 
-using QuadVerts = std::array<XYUVIJRGBA8, 4>;
+using QuadVerts = std::array<XYUVRGBA8, 4>;
