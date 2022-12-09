@@ -13,8 +13,13 @@ inline void CheckGLErrorAt(const char* file, int line, const char* func) {
 #define CheckGLError() ((void)0)
 #endif
 
+// fn must be absolute path. GetFullPath recommend
 GLTexture LoadTexture(std::string_view const& fn);
+
 GLShader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_);
+
 GLShader LoadVertexShader(std::initializer_list<std::string_view>&& codes_);
+
 GLShader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_);
+
 GLProgram LinkProgram(GLuint const& vs, GLuint const& fs);

@@ -4,8 +4,8 @@
 void Logic::Init() {
 	rnd.SetSeed();
 
-	auto t1 = xx::Make<GLTexture>(LoadTexture("res/zazaka.pkm"));
-	auto t2 = xx::Make<GLTexture>(LoadTexture("res/mouse.pkm"));
+	auto t1 = xx::Make<GLTexture>(LoadTexture(eg.GetFullPath("res/zazaka.pkm"sv)));
+	auto t2 = xx::Make<GLTexture>(LoadTexture(eg.GetFullPath("res/mouse.pkm"sv)));
 
 	size_t numSprites = 500'000;// 1'000'000;
 
@@ -31,7 +31,7 @@ void Logic::Update(float delta) {
 		s.SetPositon({ float(rnd.Next(eg.w) - eg.w / 2), float(rnd.Next(eg.h) - eg.h / 2) });
 	}
 
-	// todo: 根据 节点关系，或 y 值之类的改变绘制顺序
+	// todo: sort by y example
 	for (auto& s : ss) {
 		eg.AutoBatchDrawQuad(*s.tex, s.verts);
 	}

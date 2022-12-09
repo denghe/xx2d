@@ -109,18 +109,18 @@ int main() {
 	bool supportETC2 = GLAD_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
-	// 当前情况为 刚开始始终会产生 1282 的错误码. 清掉
+	// cleanup glfw3 error
 	while (auto e = glGetError()) {
 		std::cout << "glGetError() == " << e << std::endl;
 	};
 
-	logic->eg.GLInit();
+	logic->eg.Init();
 	logic->Init();
 	while (!glfwWindowShouldClose(wnd)) {
 		glfwPollEvents();
-		logic->eg.GLUpdateBegin();
+		logic->eg.UpdateBegin();
 		logic->Update((float)glfwGetTime());
-		logic->eg.GLUpdateEnd();
+		logic->eg.UpdateEnd();
 		glfwSwapBuffers(wnd);
 	}
 

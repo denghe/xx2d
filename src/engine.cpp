@@ -2,7 +2,9 @@
 #include "engine.h"
 
 
-void Engine::GLInit() {
+void Engine::Init() {
+	SearchPathReset();
+
 	CheckGLError();
 
 	v = LoadVertexShader({ Shaders::vsSrc });
@@ -73,7 +75,7 @@ void Engine::GLInit() {
 	CheckGLError();
 }
 
-void Engine::GLUpdateBegin() {
+void Engine::UpdateBegin() {
 
 	assert(w >= 0 && h >= 0);
 	glViewport(0, 0, w, h);
@@ -90,7 +92,7 @@ void Engine::GLUpdateBegin() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);	// 已知问题：这句不加要出错
 }
 
-void Engine::GLUpdateEnd() {
+void Engine::UpdateEnd() {
 	if (autoBatchQuadVertsCount) {
 		AutoBatchCommit();
 	}

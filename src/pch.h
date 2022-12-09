@@ -12,8 +12,6 @@
 
 #include "prims.h"
 #include "sprite.h"
-#include "filesystem.h"
-#include "texturecache.h"
 // ...
 
 #include <omp.h>

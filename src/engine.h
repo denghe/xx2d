@@ -15,9 +15,29 @@ struct Engine {
 	GLBuffer vb, ib;
 
 	/**********************************************************************************/
-	// others
-	FileSystem fileSystem;
-	TextureCache textureCache;
+	// file system
+
+	std::vector<std::string> searchPaths;
+	std::filesystem::path tmpPath;
+
+	// add relative base dir to searchPaths
+	void SearchPathAdd(std::string_view const& dir);
+
+	// search paths revert to default
+	void SearchPathReset();
+
+	// search file by searchPaths + fn. not found return ""
+	std::string GetFullPath(std::string_view const& fn);
+
+	// read all data by GetFullPath( fn )
+	xx::Data ReadAllBytes(std::string_view const& fn);
+
+	/**********************************************************************************/
+	// texture cache system
+
+	std::unordered_map<std::string, xx::Shared<GLTexture>, xx::StringHasher<>, std::equal_to<void>> textureCache;
+
+	// todo
 
 	/**********************************************************************************/
 	// auto batch
@@ -38,9 +58,9 @@ struct Engine {
 	
 	/**********************************************************************************/
 	// for game loop
-	void GLInit();
-	void GLUpdateBegin();
-	void GLUpdateEnd();
+	void Init();
+	void UpdateBegin();
+	void UpdateEnd();
 
 
 	// ...
