@@ -1,10 +1,12 @@
 ﻿#include "pch.h"
 #include "engine.h"
 
+
 void Engine::SearchPathAdd(std::string_view dir) {
 	// prepare
 	dir = xx::Trim(dir);
-	if (dir.empty()) throw std::logic_error("dir is empty");
+	if (dir.empty())
+		throw std::logic_error("dir is empty");
 
 	// replace all \ to /, .\ or ./ to empty
 	auto& s = searchPaths.emplace_back();
@@ -20,13 +22,15 @@ void Engine::SearchPathAdd(std::string_view dir) {
 			s.push_back(dir[i]);
 		}
 	}
-	if (s.empty()) throw std::logic_error("dir is empty");
+	if (s.empty())
+		throw std::logic_error("dir is empty");
 
 	// make sure / at the end
 	if (s.back() != '/') {
 		s.push_back('/');
 	}
 }
+
 
 void Engine::SearchPathReset() {
 	searchPaths.clear();
@@ -39,13 +43,15 @@ std::string Engine::GetFullPath(std::string_view fn) {
 	fn = xx::Trim(fn);
 
 	// is absolute path?
-	if (fn[0] == '/' || (fn.size() > 1 && fn[1] == ':')) return std::string(fn);
+	if (fn[0] == '/' || (fn.size() > 1 && fn[1] == ':'))
+		return std::string(fn);
 
 	// search file. order by search paths desc
 	for (ptrdiff_t i = searchPaths.size() - 1; i >= 0; --i) {
 		tmpPath = searchPaths[i];
 		tmpPath /= fn;
-		if (std::filesystem::exists(tmpPath) && std::filesystem::is_regular_file(tmpPath)) return tmpPath.string();
+		if (std::filesystem::exists(tmpPath) && std::filesystem::is_regular_file(tmpPath))
+			return tmpPath.string();
 	}
 
 	// not found

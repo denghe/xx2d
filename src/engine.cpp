@@ -101,3 +101,8 @@ void Engine::UpdateEnd() {
 		//glBindVertexArray(0);
 	}
 }
+
+void Engine::Destroy() {
+	textureCache.clear();
+	// ...
+}

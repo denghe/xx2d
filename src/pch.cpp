@@ -1,6 +1,5 @@
 ﻿#include "pch.h"
 
-// todo: search path
 // todo: texture cache
 // todo: texture packer plist support
 // todo: font & label

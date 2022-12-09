@@ -19,7 +19,8 @@ int main() {
 		throw new std::exception(description, error);
 		});
 
-	if (!glfwInit()) return -1;
+	if (!glfwInit())
+		return -1;
 	auto sg_glfw = xx::MakeSimpleScopeGuard([] { glfwTerminate(); });
 
 	glfwDefaultWindowHints();
@@ -52,7 +53,8 @@ int main() {
 	
 
 	wnd = glfwCreateWindow(logic->eg.w, logic->eg.h, "xx2dtest1", nullptr, nullptr);
-	if (!wnd) return -3;
+	if (!wnd)
+		return -2;
 	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
 
 	//int realW = 0, realH = 0;
@@ -98,8 +100,9 @@ int main() {
 	glfwSetInputMode(wnd, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
 	glfwSwapInterval(0);	// No V-Sync by default
 
-	if (!gladLoadGL(glfwGetProcAddress)) return -4;
-	//if (!gladLoadGLES2(glfwGetProcAddress)) return -4;
+	if (!gladLoadGL(glfwGetProcAddress))
+		return -3;
+	//if (!gladLoadGLES2(glfwGetProcAddress))
 
 
 	GLint numExt = 0;
@@ -123,6 +126,7 @@ int main() {
 		logic->eg.UpdateEnd();
 		glfwSwapBuffers(wnd);
 	}
+	logic->eg.Destroy();
 
 	return 0;
 }

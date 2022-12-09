@@ -3,18 +3,6 @@
 
 struct Engine {
 	/**********************************************************************************/
-	// window info
-	GLsizei w = 1280, h = 720;
-
-	/**********************************************************************************/
-	// shader members
-	GLShader v, f;
-	GLProgram p;
-	GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
-	GLVertexArrays va;
-	GLBuffer vb, ib;
-
-	/**********************************************************************************/
 	// file system
 
 	std::vector<std::string> searchPaths;
@@ -32,12 +20,40 @@ struct Engine {
 	// read all data by GetFullPath( fn )
 	xx::Data ReadAllBytes(std::string_view fn);
 
+
+
 	/**********************************************************************************/
 	// texture cache system
 
+	// key: full path
 	std::unordered_map<std::string, xx::Shared<GLTexture>, xx::StringHasher<>, std::equal_to<void>> textureCache;
 
-	// todo
+	// load + insert or get texture from texture cache
+	xx::Shared<GLTexture> TextureCacheLoad(std::string_view fn);
+
+	// unload texture from texture cache by full path
+	void TextureCacheUnload(std::string_view fn);
+
+	// unload texture from texture cache by texture
+	void TextureCacheUnload(xx::Shared<GLTexture> const& t);
+
+
+
+	/**********************************************************************************/
+	// window info
+	GLsizei w = 1280, h = 720;
+
+
+
+	/**********************************************************************************/
+	// shader members
+	GLShader v, f;
+	GLProgram p;
+	GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
+	GLVertexArrays va;
+	GLBuffer vb, ib;
+
+
 
 	/**********************************************************************************/
 	// auto batch
@@ -56,12 +72,14 @@ struct Engine {
 	void AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qvs);
 	void AutoBatchCommit();
 	
+
+
 	/**********************************************************************************/
-	// for game loop
+	// game loop
 	void Init();
 	void UpdateBegin();
 	void UpdateEnd();
-
+	void Destroy();
 
 	// ...
 };

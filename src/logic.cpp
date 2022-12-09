@@ -4,8 +4,8 @@
 void Logic::Init() {
 	rnd.SetSeed();
 
-	auto t1 = xx::Make<GLTexture>(LoadTexture(eg.GetFullPath("res/zazaka.pkm"sv)));
-	auto t2 = xx::Make<GLTexture>(LoadTexture(eg.GetFullPath("res/mouse.pkm"sv)));
+	auto t1 = eg.TextureCacheLoad("res/zazaka.pkm"sv);
+	auto t2 = eg.TextureCacheLoad("res/mouse.pkm"sv);
 
 	size_t numSprites = 500'000;// 1'000'000;
 
