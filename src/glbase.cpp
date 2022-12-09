@@ -6,6 +6,7 @@
 // 已知问题：相似代码，相同顶点数 帧率 GPU 占用比 cocos 高很多倍, 正在排查问题所在
 
 void GLBase::GLInit() {
+	CheckGLError();
 
 	// 初始化 shader 及其参数位置变量
 
@@ -35,9 +36,10 @@ void GLBase::GLInit() {
 	glEnableVertexAttribArray(aTexCoord);
 	glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYUVIJRGBA8), (GLvoid*)offsetof(XYUVIJRGBA8, r));
 	glEnableVertexAttribArray(aColor);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(XYUVIJRGBA8) * maxVertNums, nullptr, GL_DYNAMIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, maxIndexNums, idxs, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * maxIndexNums, idxs, GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -89,6 +91,7 @@ void GLBase::AutoBatchCommit() {
 	// 提交 顶点数据到 buf
 
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
+	//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(XYUVIJRGBA8) * 4 * autoBatchNumQuads, verts);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(XYUVIJRGBA8) * 4 * autoBatchNumQuads, verts, GL_DYNAMIC_DRAW);
 
 	// 绘制( 已知问题: 当前这一句的 GPU 占用是 cocos 3.x 里相同语句 的 10 倍, 问题排查中 )

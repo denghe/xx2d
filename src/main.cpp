@@ -101,8 +101,6 @@ int main() {
 	if (!gladLoadGL(glfwGetProcAddress)) return -4;
 	//if (!gladLoadGLES2(glfwGetProcAddress)) return -4;
 
-	// 当前情况为 刚开始始终会产生 1282 的错误码. 读一次清掉
-	glGetError();
 
 	GLint numExt = 0;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &numExt);
@@ -110,8 +108,11 @@ int main() {
 	bool supportDXT = GLAD_GL_EXT_texture_compression_s3tc;  // Texture compression: DXT
 	bool supportETC2 = GLAD_GL_ARB_ES3_compatibility;        // Texture compression: ETC2/EAC
 	std::cout << glGetString(GL_VERSION) << std::endl;
-	CheckGLError();
 
+	// 当前情况为 刚开始始终会产生 1282 的错误码. 清掉
+	while (auto e = glGetError()) {
+		std::cout << "glGetError() == " << e << std::endl;
+	};
 
 	logic->GLInit();
 	logic->Init();
