@@ -1,8 +1,8 @@
 ﻿#include "pch.h"
 
-// todo: texture cache
-// todo: texture packer plist support
 // todo: font & label
+// todo: auto switch texture file format by content header
+// todo: texture packer plist support
 // todo: node
 // todo: spine? webassembly? lua? 
 // 

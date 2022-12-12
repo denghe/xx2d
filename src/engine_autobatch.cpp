@@ -25,7 +25,7 @@ void Engine::AutoBatchCommit() {
 		glBindTexture(GL_TEXTURE_2D, autoBatchTexs[i].first);
 		auto n = (GLsizei)(autoBatchTexs[i].second * 6);
 		glDrawElements(GL_TRIANGLES, n, GL_UNSIGNED_SHORT, (GLvoid*)j);
-		j += n;
+		j += n * 2;
 	}
 	CheckGLError();
 

@@ -23,7 +23,7 @@ void Logic::Init() {
 
 void Logic::Update(float delta) {
 	for (auto& s : ss) {
-		//s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
+		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
 		AutoBatchDrawSprite(s);
 	}
 }
