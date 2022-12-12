@@ -2,6 +2,9 @@
 #include "engine.h"
 
 void Engine::AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qvs) {
+	if (autoBatchQuadVertsCount == maxQuadNums) {
+		AutoBatchCommit();
+	}
 	if (autoBatchLastTextureId != tex) {
 		autoBatchLastTextureId = tex;
 		autoBatchTexs[autoBatchTexsCount].first = tex;
@@ -10,13 +13,8 @@ void Engine::AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qvs) {
 	} else {
 		autoBatchTexs[autoBatchTexsCount - 1].second += 1;
 	}
-
 	memcpy(&autoBatchQuadVerts[autoBatchQuadVertsCount], qvs.data(), sizeof(qvs));
 	++autoBatchQuadVertsCount;
-
-	if (autoBatchQuadVertsCount == maxQuadNums) {
-		AutoBatchCommit();
-	}
 };
 
 void Engine::AutoBatchCommit() {
