@@ -9,8 +9,8 @@ struct BMFont {
 		uint8_t page, chnl;
 	};
 	std::array<Char, 256> charRectArray{};	// index: ascII
-	std::unordered_map<uint32_t, Char> charRectMap;	// key: unicode value
-	std::unordered_map<uint64_t, int> kerningPairs;	// maybe unused ???
+	std::unordered_map<uint32_t, Char> charRectMap;	// key: char id
+	std::unordered_map<uint64_t, int> kerningPairs;	// key: char id pair
 	std::vector<xx::Shared<GLTexture>> texs;
 	uint8_t paddingLeft{}, paddingTop{}, paddingRight{}, paddingBottom{};
 	int16_t fontSize{};

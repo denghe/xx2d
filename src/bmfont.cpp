@@ -13,7 +13,6 @@ void BMFont::LoadFromFile(Engine* eg, std::string_view fn) {
     texs.clear();
     paddingLeft = paddingTop = paddingRight = paddingBottom = fontSize = lineHeight = 0;
 
-	// originalFontSize = ???
     xx::Data d;
     if (int r = xx::ReadAllBytes(fn, d)) throw std::logic_error(xx::ToString("BMFont file read error. r = ", r, ", fn = ", fn));
     if (d.len < 4) throw std::logic_error(xx::ToString("BMFont file's size is too small. fn = ", fn));
