@@ -69,9 +69,7 @@ struct Engine {
 	std::unique_ptr<QuadVerts[]> autoBatchQuadVerts = std::make_unique<QuadVerts[]>(maxQuadNums);
 
 	void AutoBatchBegin();
-	void AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qvs);
-	void AutoBatchDrawSprite(Sprite const& s);
-	void AutoBatchDrawSprite(xx::Shared<Sprite> const& s);
+	void AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qv);
 	void AutoBatchCommit();
 	
 

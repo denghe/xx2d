@@ -11,15 +11,15 @@ GLsizei& Sprite::TH() const {
 void Sprite::SetTexture(xx::Shared<GLTexture> t_) {
 	tex = std::move(t_);
 
-	verts[0].u = 0;       verts[0].v = TH();
-	verts[1].u = 0;       verts[1].v = 0;
-	verts[2].u = TW();    verts[2].v = 0;
-	verts[3].u = TW();    verts[3].v = TH();
+	qv[0].u = 0;       qv[0].v = TH();
+	qv[1].u = 0;       qv[1].v = 0;
+	qv[2].u = TW();    qv[2].v = 0;
+	qv[3].u = TW();    qv[3].v = TH();
 
-	//verts[0].i = 0;
-	//verts[1].i = 0;
-	//verts[2].i = 0;
-	//verts[3].i = 0;
+	//qv[0].i = 0;
+	//qv[1].i = 0;
+	//qv[2].i = 0;
+	//qv[3].i = 0;
 
 	// todo: set uv & texture index
 }
@@ -30,15 +30,19 @@ void Sprite::SetScale(XY const& xy) {
 }
 
 void Sprite::SetPositon(XY const& xy) {
-	verts[0].x = verts[1].x = xy.x - tsizMscaleD2.x;
-	verts[2].x = verts[3].x = xy.x + tsizMscaleD2.x;
-	verts[0].y = verts[3].y = xy.y - tsizMscaleD2.y;
-	verts[1].y = verts[2].y = xy.y + tsizMscaleD2.y;
+	qv[0].x = qv[1].x = xy.x - tsizMscaleD2.x;
+	qv[2].x = qv[3].x = xy.x + tsizMscaleD2.x;
+	qv[0].y = qv[3].y = xy.y - tsizMscaleD2.y;
+	qv[1].y = qv[2].y = xy.y + tsizMscaleD2.y;
 }
 
 void Sprite::SetColor(RGBA8 const& c) {
-	memcpy(&verts[0].r, &c, sizeof(c));
-	memcpy(&verts[1].r, &c, sizeof(c));
-	memcpy(&verts[2].r, &c, sizeof(c));
-	memcpy(&verts[3].r, &c, sizeof(c));
+	memcpy(&qv[0].r, &c, sizeof(c));
+	memcpy(&qv[1].r, &c, sizeof(c));
+	memcpy(&qv[2].r, &c, sizeof(c));
+	memcpy(&qv[3].r, &c, sizeof(c));
+}
+
+void Sprite::Draw(Engine* eg) {
+	eg->AutoBatchDrawQuad(*tex, qv);
 }

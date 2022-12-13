@@ -7,7 +7,8 @@
 
 GLTexture LoadTexture(std::string_view const& fn) {
 	xx::Data d;
-	if (int r = xx::ReadAllBytes(fn, d)) throw std::logic_error(xx::ToString("read file error. r = ", r, ", fn = ", fn));
+	if (int r = xx::ReadAllBytes(fn, d))
+		throw std::logic_error(xx::ToString("read file error. r = ", r, ", fn = ", fn));
 	if (d.len >= 6 && memcmp("PKM 20", d.buf, 6) == 0 && d.len >= 16) {
 		auto p = (uint8_t*)d.buf;
 		uint16_t format = (p[6] << 8) | p[7];				// 1 ETC2_RGB_NO_MIPMAPS, 3 ETC2_RGBA_NO_MIPMAPS
@@ -37,7 +38,8 @@ GLTexture LoadTexture(std::string_view const& fn) {
 GLShader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
 	assert(codes_.size() && (type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER));
 	auto&& shader = glCreateShader(type);
-	if (!shader) throw std::logic_error(xx::ToString("glCreateShader(", type, ") failed."));
+	if (!shader)
+		throw std::logic_error(xx::ToString("glCreateShader(", type, ") failed."));
 	std::vector<GLchar const*> codes;
 	codes.resize(codes_.size());
 	std::vector<GLint> codeLens;
@@ -76,7 +78,8 @@ GLShader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_) {
 
 GLProgram LinkProgram(GLuint const& vs, GLuint const& fs) {
 	auto program = glCreateProgram();
-	if (!program) throw std::logic_error("glCreateProgram failed.");
+	if (!program)
+		throw std::logic_error("glCreateProgram failed.");
 	glAttachShader(program, vs);
 	glAttachShader(program, fs);
 	glLinkProgram(program);

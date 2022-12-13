@@ -11,6 +11,7 @@
 #include "glshaders.h"
 
 #include "prims.h"
+#include "engine.h"
 #include "sprite.h"
 // ...
 
