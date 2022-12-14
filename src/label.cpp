@@ -13,25 +13,24 @@ void Label::SetText(BMFont& bmf, std::string_view const& txt, float const& fontS
 			auto&& c = chars.emplace_back();
 			c.tex = bmf.texs[r->page];
 
-			// align: center
-			auto x = px - r->width / 2 - r->xoffset;
-			auto y = py - r->height / 2 - r->yoffset;
-
-			// calc scale width height
+			auto x = px + r->xoffset * scale / 2;
+			auto y = py - r->yoffset * scale / 2;
 			auto w = scale * r->width;
 			auto h = scale * r->height;
+			auto wd2 = w / 2;
+			auto hd2 = h / 2;
 
-			c.qv[0].x = x - w;  c.qv[0].y = y - h;
-			c.qv[1].x = x - w;  c.qv[1].y = y + h;
-			c.qv[2].x = x + w;  c.qv[2].y = y + h;
-			c.qv[3].x = x + w;  c.qv[3].y = y - h;
+			c.qv[0].x = x - wd2;  c.qv[0].y = y - hd2;
+			c.qv[1].x = x - wd2;  c.qv[1].y = y + hd2;
+			c.qv[2].x = x + wd2;  c.qv[2].y = y + hd2;
+			c.qv[3].x = x + wd2;  c.qv[3].y = y - hd2;
 
 			c.qv[0].u = r->x;               c.qv[0].v = r->y + r->height;
 			c.qv[1].u = r->x;               c.qv[1].v = r->y;
 			c.qv[2].u = r->x + r->width;    c.qv[2].v = r->y;
 			c.qv[3].u = r->x + r->width;    c.qv[3].v = r->y + r->height;
 
-			px += w;
+			px += r->xadvance * scale;
 		}
 		else {
 			px += bmf.fontSize;	
