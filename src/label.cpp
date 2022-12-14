@@ -1,52 +1,50 @@
 ﻿#include "pch.h"
 #include "label.h"
 
-void Label::SetText(BMFont& bmf, std::string_view const& txt, float const& fontSize, XY const& pos) {
-	// todo: fontSize, scale, utf8, kerning?  xadvance??
+void Label::SetText(BMFont& bmf, std::string_view const& txt, float const& fontSize) {
 
 	chars.clear();
 	auto scale = fontSize / bmf.fontSize;
-	lastPos = pos;
-	float px = pos.x, py = pos.y;	// cursor pos
+	float px = 0, py = 0;
 	for (auto& t : txt) {
 		if (auto&& r = bmf.GetChar(t)) {
 			auto&& c = chars.emplace_back();
 			c.tex = bmf.texs[r->page];
 
-			auto x = px + r->xoffset * scale / 2;
-			auto y = py - r->yoffset * scale / 2;
 			auto w = scale * r->width;
 			auto h = scale * r->height;
-			auto wd2 = w / 2;
-			auto hd2 = h / 2;
 
-			c.qv[0].x = x - wd2;  c.qv[0].y = y - hd2;
-			c.qv[1].x = x - wd2;  c.qv[1].y = y + hd2;
-			c.qv[2].x = x + wd2;  c.qv[2].y = y + hd2;
-			c.qv[3].x = x + wd2;  c.qv[3].y = y - hd2;
+			auto x = px + r->xoffset * scale;
+			auto y = py - r->yoffset * scale;
 
-			c.qv[0].u = r->x;               c.qv[0].v = r->y + r->height;
-			c.qv[1].u = r->x;               c.qv[1].v = r->y;
-			c.qv[2].u = r->x + r->width;    c.qv[2].v = r->y;
-			c.qv[3].u = r->x + r->width;    c.qv[3].v = r->y + r->height;
+			c.qv[0].x = x;                  c.qv[0].y = y;
+			c.qv[1].x = x;                  c.qv[1].y = y - h;
+			c.qv[2].x = x + w;              c.qv[2].y = y - h;
+			c.qv[3].x = x + w;              c.qv[3].y = y;
+
+			c.qv[0].u = r->x;               c.qv[0].v = r->y;
+			c.qv[1].u = r->x;               c.qv[1].v = r->y + r->height;
+			c.qv[2].u = r->x + r->width;    c.qv[2].v = r->y + r->height;
+			c.qv[3].u = r->x + r->width;    c.qv[3].v = r->y;
 
 			px += r->xadvance * scale;
 		}
 		else {
-			px += bmf.fontSize;	
+			px += bmf.fontSize * scale;
 		}
-		//y += bmf.lineHeight;
 	}
-	// todo: store px, py for calc entire width & height? bonding box?
-	// todo: anchor fix? align mode?
+	lastSize = { px, (float)bmf.lineHeight * scale };
+
+	// todo: utf8, kerning?
 	// todo: sort by tex
 }
 
 
-//void Label::SetScale(XY const& xy) {
-//}
-//
-//
+void Label::SetAnchor(XY const& a) {
+	SetPositon({ lastPos.x - lastSize.x * a.x, lastPos.y + lastSize.y * a.y });
+}
+
+
 void Label::SetPositon(XY const& pos) {
 	auto dx = pos.x - lastPos.x;
 	auto dy = pos.y - lastPos.y;

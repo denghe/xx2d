@@ -9,15 +9,19 @@ struct Label {
 		QuadVerts qv;
 	};
 	std::vector<Char> chars;
+	XY lastSize{};
 	XY lastPos{};
-	float tsizMscaleD2{};
 
-	void SetText(BMFont& bmf, std::string_view const& txt, float const& fontSize = 32.f, XY const& pos = {});
-
-	//void SetScale(XY const& scale);
-	void SetPositon(XY const& pos);
+	// default anchor: 0, 1
+	void SetText(BMFont& bmf, std::string_view const& txt, float const& fontSize = 32.f);
 
 	void SetColor(RGBA8 const& c);
+
+	// call after SetText
+	void SetPositon(XY const& pos);
+
+	// call after SetPositon
+	void SetAnchor(XY const& a);
 
 	void Draw(Engine* eg);
 };

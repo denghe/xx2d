@@ -23,10 +23,10 @@ void Logic::Init() {
 	{
 		BMFont bmf;
 		bmf.Load(this, "res/font2/basechars.fnt"sv);
-		title.SetText(bmf, "afqr", 512);
-		//title.SetScale({ 1, 1 });
+		title.SetText(bmf, "afph", 512);
 		title.SetColor({ 255, 255, 255, 255 });
 		title.SetPositon({ 0, 0 });
+		title.SetAnchor({ 0.5, 0.5 });
 	}
 }
 
