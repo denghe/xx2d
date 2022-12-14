@@ -12,7 +12,7 @@ struct Label {
 	XY lastPos{};
 	float tsizMscaleD2{};
 
-	void SetText(BMFont& bmf, float const& fontSize, std::string_view const& txt);
+	void SetText(BMFont& bmf, std::string_view const& txt, float const& fontSize = 32.f, XY const& pos = {});
 
 	//void SetScale(XY const& scale);
 	void SetPositon(XY const& pos);

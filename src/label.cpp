@@ -1,30 +1,45 @@
 ﻿#include "pch.h"
 #include "label.h"
 
-void Label::SetText(BMFont& bmf, float const& fontSize, std::string_view const& txt) {
+void Label::SetText(BMFont& bmf, std::string_view const& txt, float const& fontSize, XY const& pos) {
+	// todo: fontSize, scale, utf8, kerning?  xadvance??
+
 	chars.clear();
-	// todo: fontSize support, scale, utf8, xoffset, yoffset, xadvance, kerning handle
-	auto sx = bmf.fontSize / 2;
-	auto sy = bmf.lineHeight / 2;
-	float x = 0, y = 0;
+	auto scale = fontSize / bmf.fontSize;
+	lastPos = pos;
+	float px = pos.x, py = pos.y;	// cursor pos
 	for (auto& t : txt) {
 		if (auto&& r = bmf.GetChar(t)) {
 			auto&& c = chars.emplace_back();
 			c.tex = bmf.texs[r->page];
 
-			c.qv[0].x = x - sx;				c.qv[0].y = y - sy;
-			c.qv[0].u = r->x;				c.qv[0].v = r->y + r->height;
-			c.qv[1].x = x - sx;				c.qv[1].y = y + sy;
-			c.qv[1].u = r->x;				c.qv[1].v = r->y;
-			c.qv[2].x = x + sx;				c.qv[2].y = y + sy;
+			// align: center
+			auto x = px - r->width / 2 - r->xoffset;
+			auto y = py - r->height / 2 - r->yoffset;
+
+			// calc scale width height
+			auto w = scale * r->width;
+			auto h = scale * r->height;
+
+			c.qv[0].x = x - w;  c.qv[0].y = y - h;
+			c.qv[1].x = x - w;  c.qv[1].y = y + h;
+			c.qv[2].x = x + w;  c.qv[2].y = y + h;
+			c.qv[3].x = x + w;  c.qv[3].y = y - h;
+
+			c.qv[0].u = r->x;               c.qv[0].v = r->y + r->height;
+			c.qv[1].u = r->x;               c.qv[1].v = r->y;
 			c.qv[2].u = r->x + r->width;    c.qv[2].v = r->y;
-			c.qv[3].x = x + sx;				c.qv[3].y = y - sy;
 			c.qv[3].u = r->x + r->width;    c.qv[3].v = r->y + r->height;
+
+			px += w;
 		}
-		x += bmf.fontSize;	
+		else {
+			px += bmf.fontSize;	
+		}
 		//y += bmf.lineHeight;
 	}
-
+	// todo: store px, py for calc entire width & height? bonding box?
+	// todo: anchor fix? align mode?
 	// todo: sort by tex
 }
 
