@@ -8,13 +8,17 @@ struct BMFont {
 		int16_t xoffset, yoffset, xadvance;
 		uint8_t page, chnl;
 	};
-	std::array<Char, 256> charRectArray{};	// index: ascII
-	std::unordered_map<uint32_t, Char> charRectMap;	// key: char id
-	std::unordered_map<uint64_t, int> kerningPairs;	// key: char id pair
+	std::array<Char, 256> charArray{};	// charMap ascii cache
+	std::unordered_map<uint32_t, Char> charMap;	// key: char id
+	std::unordered_map<uint64_t, int> kernings;	// key: char id pair
 	std::vector<xx::Shared<GLTexture>> texs;
 	uint8_t paddingLeft{}, paddingTop{}, paddingRight{}, paddingBottom{};
 	int16_t fontSize{};
 	uint16_t lineHeight{};
 
+	// load binary .fnt & texture from .fnt file
 	void Load(Engine* eg, std::string_view fn);
+
+	// texture index: page
+	Char* GetChar(int const& charId);
 };

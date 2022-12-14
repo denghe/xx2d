@@ -7,9 +7,9 @@ void BMFont::Load(Engine* eg, std::string_view fn) {
     if (p.empty()) throw std::logic_error("fn can't find: " + std::string(fn));
 
     // cleanup for logic safety
-    charRectArray.fill({});
-    charRectMap.clear();
-    kerningPairs.clear();
+    charArray.fill({});
+    charMap.clear();
+    kernings.clear();
     texs.clear();
     paddingLeft = paddingTop = paddingRight = paddingBottom = fontSize = lineHeight = 0;
 
@@ -22,7 +22,7 @@ void BMFont::Load(Engine* eg, std::string_view fn) {
     std::vector<std::string> texFNs;
     uint16_t pages;
 
-    d.ReadJump(4);  // skip BMF\x3
+    (void)d.ReadJump(4);  // skip BMF\x3
     while (d.HasLeft()) {
         uint8_t blockId;
         if (auto r = d.ReadFixed(blockId)) throw std::logic_error(xx::ToString("BMFont read blockId error. r = ", r, ". fn = ", fn));
@@ -110,7 +110,7 @@ void BMFont::Load(Engine* eg, std::string_view fn) {
                 uint32_t id;
                 if (auto r = dr.ReadFixed(id)) throw std::logic_error(xx::ToString("BMFont read id error. r = ", r, ". fn = ", fn));
 
-                auto&& result = charRectMap.emplace(id, Char{});
+                auto&& result = charMap.emplace(id, Char{});
                 if (!result.second) throw std::logic_error(xx::ToString("BMFont insert to charRectMap error. Char id = ", id, ". fn = ", fn));
 
                 auto& c = result.first->second;
@@ -122,10 +122,11 @@ void BMFont::Load(Engine* eg, std::string_view fn) {
                 if (auto r = dr.ReadFixed(c.yoffset)) throw std::logic_error(xx::ToString("BMFont read c.yoffset error. r = ", r, ". fn = ", fn));
                 if (auto r = dr.ReadFixed(c.xadvance)) throw std::logic_error(xx::ToString("BMFont read c.xadvance error. r = ", r, ". fn = ", fn));
                 if (auto r = dr.ReadFixed(c.page)) throw std::logic_error(xx::ToString("BMFont read c.page error. r = ", r, ". fn = ", fn));
+                if (c.page >= pages) throw std::logic_error(xx::ToString("BMFont c.page out of range. c.page = ", c.page, ", pages = ", pages, ". fn = ", fn));
                 if (auto r = dr.ReadFixed(c.chnl)) throw std::logic_error(xx::ToString("BMFont read c.chnl error. r = ", r, ". fn = ", fn));
 
                 if (id < 256) {
-                    charRectArray[id] = c;
+                    charArray[id] = c;
                 }
             }
         } else if (blockId == 5) {
@@ -143,7 +144,7 @@ void BMFont::Load(Engine* eg, std::string_view fn) {
                 if (auto r = dr.ReadFixed(amount)) throw std::logic_error(xx::ToString("BMFont read amount error. r = ", r, ". fn = ", fn));
 
                 uint64_t key = ((uint64_t)first << 32) | ((uint64_t)second & 0xffffffffll);
-                kerningPairs[key] = amount;
+                kernings[key] = amount;
             }
         }
 
@@ -154,4 +155,18 @@ void BMFont::Load(Engine* eg, std::string_view fn) {
     for (auto&& fn : texFNs) {
         texs.emplace_back(xx::Make<GLTexture>(LoadTexture(fn)));
     }
+}
+
+BMFont::Char* BMFont::GetChar(int const& charId) {
+    if (charId < 256) {
+        auto& c = charArray[charId];
+        if ((uint64_t&)c) {
+            return &c;
+        }
+    } else {
+        if (auto iter = charMap.find(charId); iter != charMap.end()) {
+            return &iter->second;
+        }
+    }
+    return nullptr;
 }

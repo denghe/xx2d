@@ -20,13 +20,20 @@ void Logic::Init() {
 		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
 	}
 
-	bmf.Load(this, "res/basechars.fnt"sv);
+	{
+		BMFont bmf;
+		bmf.Load(this, "res/basechars.fnt"sv);
+		title.SetText(bmf, 32, "asdfqwer");
+		//title.SetScale({ 1, 1 });
+		title.SetColor({ 255, 255, 255, 255 });
+		title.SetPositon({ 0, float(h) / 2 - 32 / 2 - 8 });
+	}
 }
 
 void Logic::Update(float delta) {
-	for (auto& s : ss) {
-		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
-		s.Draw(this);
-	}
-	
+	//for (auto& s : ss) {
+	//	s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
+	//	s.Draw(this);
+	//}
+	title.Draw(this);
 }

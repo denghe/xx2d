@@ -3,7 +3,7 @@
 #include "engine.h"
 
 struct Logic : Engine {
-	BMFont bmf;
+	Label title;
 	std::vector<Sprite> ss;
 	Rnd rnd;
 

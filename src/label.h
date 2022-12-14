@@ -3,15 +3,20 @@
 #include "bmfont.h"
 
 struct Label {
-	std::vector<QuadVerts> qvs;
-	xx::Shared<GLTexture> tex;
-	XY tsizMscaleD2;
+	struct Char {
+		//int charId;
+		xx::Shared<GLTexture> tex;
+		QuadVerts qv;
+	};
+	std::vector<Char> chars;
+	XY lastPos{};
+	float tsizMscaleD2{};
 
 	void SetText(BMFont& bmf, float const& fontSize, std::string_view const& txt);
-	// todo: more set text for ttf?
 
-	void SetScale(XY const& xy);
-	void SetPositon(XY const& xy);
+	//void SetScale(XY const& scale);
+	void SetPositon(XY const& pos);
+
 	void SetColor(RGBA8 const& c);
 
 	void Draw(Engine* eg);
