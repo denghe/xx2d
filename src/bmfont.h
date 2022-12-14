@@ -16,5 +16,5 @@ struct BMFont {
 	int16_t fontSize{};
 	uint16_t lineHeight{};
 
-	void LoadFromFile(Engine* eg, std::string_view fn);
+	void Load(Engine* eg, std::string_view fn);
 };

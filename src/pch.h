@@ -13,6 +13,8 @@
 #include "prims.h"
 #include "engine.h"
 #include "sprite.h"
+#include "bmfont.h"
+#include "label.h"
 // ...
 
 #include <omp.h>

@@ -19,6 +19,8 @@ void Logic::Init() {
 		s.SetColor({ cp[0], cp[1], cp[2], 255 });
 		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
 	}
+
+	bmf.Load(this, "res/basechars.fnt"sv);
 }
 
 void Logic::Update(float delta) {
@@ -26,4 +28,5 @@ void Logic::Update(float delta) {
 		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
 		s.Draw(this);
 	}
+	
 }

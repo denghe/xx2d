@@ -2,7 +2,7 @@
 #include "bmfont.h"
 
 // reference from cocos CCFontFNT.cpp  parseBinaryConfigFile. detail: http://www.angelcode.com/products/bmfont/doc/file_format.html
-void BMFont::LoadFromFile(Engine* eg, std::string_view fn) {
+void BMFont::Load(Engine* eg, std::string_view fn) {
     auto p = eg->GetFullPath(fn);
     if (p.empty()) throw std::logic_error("fn can't find: " + std::string(fn));
 
@@ -22,6 +22,7 @@ void BMFont::LoadFromFile(Engine* eg, std::string_view fn) {
     std::vector<std::string> texFNs;
     uint16_t pages;
 
+    d.ReadJump(4);  // skip BMF\x3
     while (d.HasLeft()) {
         uint8_t blockId;
         if (auto r = d.ReadFixed(blockId)) throw std::logic_error(xx::ToString("BMFont read blockId error. r = ", r, ". fn = ", fn));
@@ -84,10 +85,10 @@ void BMFont::LoadFromFile(Engine* eg, std::string_view fn) {
                 if (auto r = dr.ReadCStr(texFN)) throw std::logic_error(xx::ToString("BMFont read pageNames[", i, "] error. r = ", r, ". fn = ", fn));
             }
 
-            // attack prefix dir name
-            if (auto i = p.find_last_not_of("/"); i != p.npos) {
+            // attach prefix dir name
+            if (auto i = p.find_last_of("/"); i != p.npos) {
                 for (auto& s : texFNs) {
-                    s = p.substr(i) + s;
+                    s = p.substr(0, i + 1) + s;
                 }
             }
 
