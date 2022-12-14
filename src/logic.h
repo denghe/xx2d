@@ -3,9 +3,8 @@
 #include "engine.h"
 
 struct Logic : Engine {
-	Label title;
-	std::vector<Sprite> ss;
 	Rnd rnd;
+	std::vector<std::pair<Sprite, Label>> objs;
 
 	void Init();
 	void Update(float delta);

@@ -85,6 +85,20 @@ struct Rnd {
         }
     }
 
+    std::string NextWord(size_t siz = 0, std::string_view chars = "abcdefghijklmnopqrstuvwxyz"sv) {
+        assert(chars.size() < 256);
+        if (!siz) {
+            siz = Next(2, 10);
+        }
+        std::string s;
+        s.resize(siz);
+        NextBytes(s.data(), siz);
+        for (auto& c : s) {
+            c = chars[c % chars.size()];
+        }
+        return s;
+    }
+
     template<typename V = int32_t, class = std::enable_if_t<std::is_arithmetic_v<V>>>
     V Next() {
         if constexpr (std::is_same_v<bool, std::decay_t<V>>) {

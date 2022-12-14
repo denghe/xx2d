@@ -24,16 +24,17 @@ void Sprite::SetTexture(xx::Shared<GLTexture> t_) {
 	// todo: set uv & texture index
 }
 
-void Sprite::SetScale(XY const& xy) {
-	tsizMscaleD2.x = TW() * xy.x / 2.f;
-	tsizMscaleD2.y = TH() * xy.y / 2.f;
+void Sprite::SetScale(XY const& scale) {
+	tsizMscaleD2.x = TW() * scale.x / 2.f;
+	tsizMscaleD2.y = TH() * scale.y / 2.f;
 }
 
-void Sprite::SetPositon(XY const& xy) {
-	qv[0].x = qv[1].x = xy.x - tsizMscaleD2.x;
-	qv[2].x = qv[3].x = xy.x + tsizMscaleD2.x;
-	qv[0].y = qv[3].y = xy.y - tsizMscaleD2.y;
-	qv[1].y = qv[2].y = xy.y + tsizMscaleD2.y;
+void Sprite::SetPositon(XY const& pos) {
+	lastPos = pos;
+	qv[0].x = qv[1].x = pos.x - tsizMscaleD2.x;
+	qv[2].x = qv[3].x = pos.x + tsizMscaleD2.x;
+	qv[0].y = qv[3].y = pos.y - tsizMscaleD2.y;
+	qv[1].y = qv[2].y = pos.y + tsizMscaleD2.y;
 }
 
 void Sprite::SetColor(RGBA8 const& c) {
