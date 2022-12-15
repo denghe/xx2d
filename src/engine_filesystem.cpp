@@ -59,10 +59,10 @@ std::string Engine::GetFullPath(std::string_view fn) {
 
 xx::Data Engine::ReadAllBytesWithFullPath(std::string_view const& fp, bool autoUnzip) {
 	xx::Data d;
-	if (int r = xx::ReadAllBytes(fp, d)) throw std::logic_error(xx::ToString("file read error. r = ", r, ", fn = ", p));
-	if(d.len == 0) throw std::logic_error(xx::ToString("file content is empty. fn = ", p));
+	if (int r = xx::ReadAllBytes(fp, d)) throw std::logic_error(xx::ToString("file read error. r = ", r, ", fn = ", fp));
+	if(d.len == 0) throw std::logic_error(xx::ToString("file content is empty. fn = ", fp));
 	if (autoUnzip) {
-		throw std::logic_error(xx::ToString("todo: file content auto unzip. fn = ", p));
+		// todo
 	}
 	return d;
 }

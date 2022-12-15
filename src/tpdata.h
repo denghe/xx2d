@@ -125,7 +125,7 @@ struct TPData {
 		}
 	}
 
-	int Fill(std::string_view const& text) {
+	int Fill(std::string_view const& text, std::string_view const& texPreFixPath) {
 		items.clear();
 		size_t offset = 0, siz = text.size();
 		std::string_view line;
@@ -207,7 +207,8 @@ struct TPData {
 						SkipLines(text, offset, 1);                             // skip <key>realTextureFileName</key>
 						if (!NextLine(text, offset, line)) return __LINE__;     // <string>abc123.png</string>
 						if (SubStr(line, 20, 9)) return __LINE__;               // cut fileName
-						realTextureFileName = line;
+						realTextureFileName = texPreFixPath;
+						realTextureFileName.append(line);
 
 						SkipLines(text, offset, 1);                             // skip <key>size</key>
 						if (!NextLine(text, offset, line)) return __LINE__;     // <string>{w,h}</string>

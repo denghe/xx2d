@@ -3,17 +3,38 @@
 
 struct Sprite {
 	QuadVerts qv;
-	xx::Shared<GLTexture> tex;
-	XY lastPos;
-	XY tsizMscaleD2;
+	union {
+		struct {
+			uint8_t dirtyFrame;
+			uint8_t dirtyPosScaleRotate;
+			uint8_t dirtyColor;
+			uint8_t dirtyDummy;
+		};
+		uint32_t dirty = 0xFFFFFFFFu;
+	};
 
-	GLsizei& TW() const;
-	GLsizei& TH() const;
+	xx::Shared<Frame> frame;
 
-	void SetTexture(xx::Shared<GLTexture> t_);	// todo: set uv
-	void SetScale(XY const& scale);
-	void SetPositon(XY const& pos);
+	Size size;
+	XY pos;
+	XY scale;
+	float rotate;
+	RGBA8 color;
+
+
+	void SetTexture(xx::Shared<GLTexture> t);
+
+	void SetTexture(xx::Shared<Frame> f);
+
+	void SetScale(XY const& s);
+
+	void SetPositon(XY const& p);
+
 	void SetColor(RGBA8 const& c);
 
+	// todo: rotate?
+
+
+	// todo: matrix version
 	void Draw(Engine* eg);
 };

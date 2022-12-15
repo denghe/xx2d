@@ -10,6 +10,7 @@
 #include "glutils.h"
 #include "glshaders.h"
 
+#include "globalutils.h"
 #include "prims.h"
 #include "tpdata.h"
 #include "bmfont.h"

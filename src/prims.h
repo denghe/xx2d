@@ -35,6 +35,9 @@ struct Rect : XY, Size {};
 
 struct Frame {
 	xx::Shared<GLTexture> tex;
-	Rect rect;
-	bool rotated;
+	XY spriteOffset;
+	Size spriteSize;
+	Size spriteSourceSize;
+	Rect textureRect;
+	bool textureRotated;
 };
