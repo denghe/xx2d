@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 
-// todo: texture packer plist support
+// todo: label refine like sprite
 // todo: mouse, touch, keyboard, joystick support
 // todo: node( with matrix )
 

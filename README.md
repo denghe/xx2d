@@ -2,11 +2,24 @@
 
 this is a simple 2d game engine based by opengl es 3.0 & c++20
 
-performance = raylib * 1xx%, cocos2dx 3.x * 600%+
+performance ~= raylib, much more faster than cocos2dx 3.x
 
 # feature
 
-quad with auto batch
-sprite based by quad
+search path
 
-todo: texture cache, texture packer support, font & label, node, ...
+texture format: pkm
+
+texture cache
+
+texture packer frame cache
+
+quad with auto batch
+
+sprite based of quad
+
+bmfont
+
+label
+
+todo: inputs, node, ...
