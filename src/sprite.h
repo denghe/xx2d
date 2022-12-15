@@ -27,6 +27,7 @@ struct Sprite {
 	void SetTexture(xx::Shared<Frame> f);
 
 	void SetAnchor(XY const& a);
+	void SetAnchorFromFrame();
 
 	void SetRotate(float const& r);
 

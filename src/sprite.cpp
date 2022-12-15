@@ -6,24 +6,27 @@ void Sprite::SetTexture(xx::Shared<GLTexture> t) {
 	}
 	if (frame->tex == t) return;
 	dirtyFrame = 1;
+	frame->anchor = { 0.5, 0.5 };
 	frame->textureRotated = false;
-	frame->spriteSize = { (float)std::get<1>(t->vs), (float)std::get<2>(t->vs) };
-	frame->spriteSourceSize = frame->spriteSize;
-	frame->spriteOffset = { frame->spriteSize.w * anchor.x, frame->spriteSize.h * anchor.y };
+	frame->spriteSize = frame->spriteSourceSize = { (float)std::get<1>(t->vs), (float)std::get<2>(t->vs) };
+	frame->spriteOffset = { 0, 0 };
 	frame->textureRect = { 0, 0, frame->spriteSize };
 	frame->tex = std::move(t);
 }
 
 void Sprite::SetTexture(xx::Shared<Frame> f) {
-	frame = std::move(f);
 	dirtyFrame = 1;
-	dirtySizeAnchorPosScaleRotate = 1;
-	anchor = { frame->spriteOffset.x / frame->spriteSize.w, frame->spriteOffset.y / frame->spriteSize.h };
+	frame = std::move(f);
 }
 
 void Sprite::SetAnchor(XY const& a) {
 	dirtySizeAnchorPosScaleRotate = 1;
 	anchor = a;
+}
+
+void Sprite::SetAnchorFromFrame() {
+	dirtySizeAnchorPosScaleRotate = 1;
+	anchor = frame->anchor;
 }
 
 void Sprite::SetRotate(float const& r) {
@@ -56,17 +59,16 @@ void Sprite::Draw(Engine* eg) {
 			qv[3].u = r.x + r.w;        qv[3].v = r.y + r.h;
 		}
 		if (dirtySizeAnchorPosScaleRotate) {
-			auto dx = frame->spriteSize.w * scale.x / 2.f;
-			auto dy = frame->spriteSize.h * scale.y / 2.f;
+			auto w = frame->spriteSize.w * scale.x;
+			auto h = frame->spriteSize.h * scale.y;
+			auto x = pos.x + frame->spriteOffset.x * scale.x - w * anchor.x;
+			auto y = pos.y + frame->spriteOffset.y * scale.y + h * anchor.y;
+			qv[0].x = x + w;				qv[0].y = y;
+			qv[1].x = x + w;				qv[1].y = y + h;
+			qv[2].x = x;					qv[2].y = y + h;
+			qv[3].x = x;					qv[3].y = y;
 
-			// todo
-			// frame->spriteSourceSize
-			// rotate
-
-			qv[0].x = qv[1].x = pos.x + frame->spriteSize.w * anchor.x - dx;
-			qv[2].x = qv[3].x = pos.x + frame->spriteSize.w * anchor.x + dx;
-			qv[0].y = qv[3].y = pos.y + frame->spriteSize.h * anchor.y - dy;
-			qv[1].y = qv[2].y = pos.y + frame->spriteSize.h * anchor.y + dy;
+			// todo: rotate support?
 		}
 		if (dirtyColor) {
 			memcpy(&qv[0].r, &color, sizeof(color));

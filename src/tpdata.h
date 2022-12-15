@@ -4,30 +4,11 @@
 // texture packer's data container. can fill data from .plist file. support export for cocos 3.x file, DO NOT REMOVE ANY SPACE ( REFORMAT ) !!!
 struct TPData {
 
-	struct Item {
-		std::string key;
-		// std::vector<std::string> aliases;	// unused
-		XY anchor;
-		XY spriteOffset;
-		Size spriteSize;		// content size
-		Size spriteSourceSize;	// original pic size
-		Rect textureRect;
-		bool textureRotated;
-		std::vector<uint16_t> triangles;
-		std::vector<float> vertices;
-		std::vector<float> verticesUV;
-	};
-
-	enum class PixelFormats : uint8_t {
-		RGBA8888	// more?
-	};
-
+	std::vector<xx::Shared<Frame>> frames;
 	bool premultiplyAlpha;
 	std::string realTextureFileName;
 	Size size;
-	//std::string smartupdate;
 	std::string textureFileName;
-	std::vector<Item> items;
 
 	static bool NextLine(std::string_view const& text, size_t& offset, std::string_view& out) {
 	LabBegin:
@@ -125,7 +106,7 @@ struct TPData {
 	}
 
 	int Fill(std::string_view const& text, std::string_view const& texPreFixPath) {
-		items.clear();
+		frames.clear();
 		size_t offset = 0, siz = text.size();
 		std::string_view line;
 		while (NextLine(text, offset, line)) {
@@ -133,7 +114,7 @@ struct TPData {
 				SkipLines(text, offset, 2);                                     // skip <key>frames</key> & <dict>
 
 			LabBegin:
-				auto&& o = items.emplace_back();
+				auto&& o = *frames.emplace_back().Emplace();
 				if (!NextLine(text, offset, line)) return __LINE__;             // locate to <key>???????</key>
 				if (SubStr(line, 17, 6)) return __LINE__;                       // cut item.key
 				o.key = line;
@@ -192,7 +173,7 @@ struct TPData {
 					auto bak = offset;
 					if (!NextLine(text, offset, line)) return __LINE__;         // <key> | </dict>
 
-					if (line == "        </dict>") {                            // items fill end, begin fill meta
+					if (line == "        </dict>") {                            // frames fill end, begin fill meta
 						SkipLines(text, offset, 4);                             // skip <key>metadata</key>    <dict>     <key>format</key>    <integer>3</integer>
 
 						if (!NextLine(text, offset, line)) return __LINE__;		// <key>pixelFormat</key>  ||  <key>premultiplyAlpha</key>

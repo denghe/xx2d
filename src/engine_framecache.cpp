@@ -14,23 +14,17 @@ TPData Engine::LoadTPData(std::string_view const& fn) {
 
 void Engine::LoadFramesFromCache(TPData const& tpd) {
 	auto t = xx::Make<GLTexture>(LoadTexture(tpd.realTextureFileName));
-	for (auto const& o : tpd.items) {
-		auto&& result = frameCache.emplace(o.key, xx::Shared<Frame>{});
-		if (!result.second) throw std::logic_error(xx::ToString("duplicated key in frameCache. key = ", o.key, ". plist fn = ", std::get<std::string>(t->vs)));
-		auto&& f = *result.first->second.Emplace();
-		f.tex = t;
-		f.spriteOffset = o.spriteOffset;
-		f.spriteSize = o.spriteSize;
-		f.spriteSourceSize = o.spriteSourceSize;
-		f.textureRect = o.textureRect;
-		f.textureRotated = o.textureRotated;
+	for (auto& o : tpd.frames) {
+		auto&& result = frameCache.emplace(o->key, o);
+		if (!result.second) throw std::logic_error(xx::ToString("duplicated key in frameCache. key = ", o->key, ". plist fn = ", std::get<std::string>(t->vs)));
+		o->tex = t;
 	}
 }
 
 
 void Engine::UnloadFramesFromCache(TPData const& tpd) {
-	for (auto const& o : tpd.items) {
-		frameCache.erase(o.key);
+	for (auto const& o : tpd.frames) {
+		frameCache.erase(o->key);
 	}
 }
 

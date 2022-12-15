@@ -35,9 +35,15 @@ struct Rect : XY, Size {};
 
 struct Frame {
 	xx::Shared<GLTexture> tex;
+	std::string key;
+	// std::vector<std::string> aliases;	// unused
+	XY anchor;
 	XY spriteOffset;
-	Size spriteSize;
-	Size spriteSourceSize;
+	Size spriteSize;		// content size
+	Size spriteSourceSize;	// original pic size
 	Rect textureRect;
 	bool textureRotated;
+	std::vector<uint16_t> triangles;
+	std::vector<float> vertices;
+	std::vector<float> verticesUV;
 };
