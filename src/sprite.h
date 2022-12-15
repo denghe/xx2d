@@ -3,10 +3,11 @@
 
 struct Sprite {
 	QuadVerts qv;
+
 	union {
 		struct {
 			uint8_t dirtyFrame;
-			uint8_t dirtyPosScaleRotate;
+			uint8_t dirtySizeAnchorPosScaleRotate;
 			uint8_t dirtyColor;
 			uint8_t dirtyDummy;
 		};
@@ -14,17 +15,20 @@ struct Sprite {
 	};
 
 	xx::Shared<Frame> frame;
-
-	Size size;
-	XY pos;
-	XY scale;
-	float rotate;
-	RGBA8 color;
+	XY pos{ 0, 0 };
+	XY anchor{ 0.5, 0.5 };
+	XY scale{ 1, 1 };
+	float rotate{ 0 };
+	RGBA8 color{ 255, 255, 255, 255 };
 
 
 	void SetTexture(xx::Shared<GLTexture> t);
 
 	void SetTexture(xx::Shared<Frame> f);
+
+	void SetAnchor(XY const& a);
+
+	void SetRotate(float const& r);
 
 	void SetScale(XY const& s);
 

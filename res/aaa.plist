@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>frames</key>
+        <dict>
+            <key>zazaka.pkm</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>anchor</key>
+                <string>{0.5,0}</string>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{46,64}</string>
+                <key>spriteSourceSize</key>
+                <string>{64,64}</string>
+                <key>textureRect</key>
+                <string>{{1,1},{46,64}}</string>
+                <key>textureRotated</key>
+                <false/>
+            </dict>
+        </dict>
+        <key>metadata</key>
+        <dict>
+            <key>format</key>
+            <integer>3</integer>
+            <key>premultiplyAlpha</key>
+            <false/>
+            <key>realTextureFileName</key>
+            <string>aaa.pkm</string>
+            <key>size</key>
+            <string>{48,66}</string>
+            <key>smartupdate</key>
+            <string>$TexturePacker:SmartUpdate:b4f30c876b3d367d75569876f8cbb2f9:06073093fe24b6a58d787fee05188ad0:435c50fd20e6951f42c0faa621d70027$</string>
+            <key>textureFileName</key>
+            <string>aaa.pkm</string>
+        </dict>
+    </dict>
+</plist>

@@ -15,8 +15,8 @@ TPData Engine::LoadTPData(std::string_view const& fn) {
 void Engine::LoadFramesFromCache(TPData const& tpd) {
 	auto t = xx::Make<GLTexture>(LoadTexture(tpd.realTextureFileName));
 	for (auto const& o : tpd.items) {
-		auto&& result = frameCache.emplace(o.name, xx::Shared<Frame>{});
-		if (!result.second) throw std::logic_error(xx::ToString("duplicated key in frameCache. key = ", o.name, ". plist fn = ", std::get<std::string>(t->vs)));
+		auto&& result = frameCache.emplace(o.key, xx::Shared<Frame>{});
+		if (!result.second) throw std::logic_error(xx::ToString("duplicated key in frameCache. key = ", o.key, ". plist fn = ", std::get<std::string>(t->vs)));
 		auto&& f = *result.first->second.Emplace();
 		f.tex = t;
 		f.spriteOffset = o.spriteOffset;
@@ -30,7 +30,7 @@ void Engine::LoadFramesFromCache(TPData const& tpd) {
 
 void Engine::UnloadFramesFromCache(TPData const& tpd) {
 	for (auto const& o : tpd.items) {
-		frameCache.erase(o.name);
+		frameCache.erase(o.key);
 	}
 }
 

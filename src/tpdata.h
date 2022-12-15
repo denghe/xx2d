@@ -1,15 +1,16 @@
-#pragma once
+ï»¿#pragma once
 #include "pch.h"
 
 // texture packer's data container. can fill data from .plist file. support export for cocos 3.x file, DO NOT REMOVE ANY SPACE ( REFORMAT ) !!!
 struct TPData {
 
 	struct Item {
-		std::string name;
-		// std::vector<std::string> aliases;
+		std::string key;
+		// std::vector<std::string> aliases;	// unused
+		XY anchor;
 		XY spriteOffset;
-		Size spriteSize;
-		Size spriteSourceSize;
+		Size spriteSize;		// content size
+		Size spriteSourceSize;	// original pic size
 		Rect textureRect;
 		bool textureRotated;
 		std::vector<uint16_t> triangles;
@@ -21,8 +22,6 @@ struct TPData {
 		RGBA8888	// more?
 	};
 
-	int format;
-	PixelFormats pixelFormat;
 	bool premultiplyAlpha;
 	std::string realTextureFileName;
 	Size size;
@@ -41,7 +40,7 @@ struct TPData {
 			++offset;
 			goto LabBegin;
 		}
-		out = std::string_view(text.data() + offset, pos - offset);
+		out = std::string_view(text.data() + offset, pos - offset - (text[pos - 1] == '\r' ? 1 : 0));
 		offset = pos + 1;
 		return true;
 	}
@@ -79,7 +78,7 @@ struct TPData {
 	}
 
 	// format: a,b
-	// ascii£º ',' < '0~9' < '>}'
+	// asciiï¼š ',' < '0~9' < '>}'
 	template<typename T>
 	static int ReadInteger2(std::string_view const& line, T& a, T& b) {
 		auto&& p = line.data();
@@ -102,9 +101,9 @@ struct TPData {
 		d = (T)ReadInteger<true>(p);
 	}
 
-	static int SubStr(std::string_view& line, size_t const& from, size_t const& to) {
-		if (line.size() <= (from + to)) return __LINE__;
-		line = std::string_view(line.data() + from, (line.size() - (from + to)));
+	static int SubStr(std::string_view& line, size_t const& headLen, size_t const& tailLen) {
+		if (line.size() <= (headLen + tailLen)) return __LINE__;
+		line = std::string_view(line.data() + headLen, (line.size() - (headLen + tailLen)));
 		return 0;
 	}
 
@@ -112,7 +111,7 @@ struct TPData {
 		return line[numSpaces + 1] == 't';
 	}
 
-	// ' ' continue£¬'<' quit. ascii£º ' ' < '0-9' < '<'
+	// ' ' continueï¼Œ'<' quit. asciiï¼š ' ' < '0-9' < '<'
 	template<typename T>
 	static void SpaceSplitFillVector(std::vector<T>& vs, std::string_view const& line) {
 		vs.clear();
@@ -136,12 +135,19 @@ struct TPData {
 			LabBegin:
 				auto&& o = items.emplace_back();
 				if (!NextLine(text, offset, line)) return __LINE__;             // locate to <key>???????</key>
-				if (SubStr(line, 17, 6)) return __LINE__;                       // cut item.name
-				o.name = line;
+				if (SubStr(line, 17, 6)) return __LINE__;                       // cut item.key
+				o.key = line;
 
-				SkipLines(text, offset, 4);                                     // skip <dict> & <key>aliases</key> & <array/> & <key>spriteOffset</key>
-				if (!NextLine(text, offset, line)) return __LINE__;             // <string>{x,y}</string>
-				if (SubStr(line, 25, 10)) return __LINE__;                      // cut x,y
+				SkipLines(text, offset, 3);                                     // skip <dict> & <key>aliases</key> & <array/>
+				if (!NextLine(text, offset, line)) return __LINE__;             // <key>anchor</key> || <key>spriteOffset</key>
+				if (line == "                <key>anchor</key>") {
+					if (!NextLine(text, offset, line)) return __LINE__;         // <string>{x,y}</string>
+					if (SubStr(line, 25, 10)) return __LINE__;                  // cut x,y
+					if (ReadFloat2(line, o.anchor.x, o.anchor.y)) return __LINE__;
+					SkipLines(text, offset, 1);                                 // skip <key>spriteOffset</key>
+				}
+				if (!NextLine(text, offset, line)) return __LINE__;				// <string>{x,y}</string>
+				if (SubStr(line, 25, 10)) return __LINE__;						// cut x,y
 				if (ReadFloat2(line, o.spriteOffset.x, o.spriteOffset.y)) return __LINE__;
 
 				SkipLines(text, offset, 1);                                     // skip <key>spriteSize</key>
@@ -187,20 +193,13 @@ struct TPData {
 					if (!NextLine(text, offset, line)) return __LINE__;         // <key> | </dict>
 
 					if (line == "        </dict>") {                            // items fill end, begin fill meta
-						SkipLines(text, offset, 3);                             // skip <key>metadata</key>    <dict>     <key>format</key>
-						if (!NextLine(text, offset, line)) return __LINE__;     // <integer>???</integer>
-						if (SubStr(line, 21, 10)) return __LINE__;              // cut number
-						auto&& p = line.data();
-						format = ReadInteger(p);
+						SkipLines(text, offset, 4);                             // skip <key>metadata</key>    <dict>     <key>format</key>    <integer>3</integer>
 
-						SkipLines(text, offset, 1);                             // skip <key>pixelFormat</key>
-						if (!NextLine(text, offset, line)) return __LINE__;     // <string>RGBA8888</string>
-						if (line == "            <string>RGBA8888</string>") {
-							pixelFormat = PixelFormats::RGBA8888;
+						if (!NextLine(text, offset, line)) return __LINE__;		// <key>pixelFormat</key>  ||  <key>premultiplyAlpha</key>
+						if (line == "            <key>pixelFormat</key>") {
+							SkipLines(text, offset, 2);							// <string>RGBA8888</string> <key>premultiplyAlpha</key>
 						}
-						else return __LINE__;
 
-						SkipLines(text, offset, 1);                             // skip <key>premultiplyAlpha</key>
 						if (!NextLine(text, offset, line)) return __LINE__;     // <true/> | <false/>
 						premultiplyAlpha = ReadBool(line, 12);
 
