@@ -2,9 +2,11 @@
 #include "bmfont.h"
 
 // reference from cocos CCFontFNT.cpp  parseBinaryConfigFile. detail: http://www.angelcode.com/products/bmfont/doc/file_format.html
-void BMFont::Load(Engine* eg, std::string_view fn) {
-    auto p = eg->GetFullPath(fn);
-    if (p.empty()) throw std::logic_error("fn can't find: " + std::string(fn));
+void BMFont::Load(Engine* const& eg, std::string_view const& fn) {
+    auto [d, p] = eg->ReadAllBytes(fn);
+    if (d.len < 4) throw std::logic_error(xx::ToString("BMFont file's size is too small. fn = ", p));
+    if (std::string_view((char*)d.buf, 3) != "BMF"sv) throw std::logic_error(xx::ToString("bad BMFont format. fn = ", p));
+    if (d[3] != 3) throw std::logic_error(xx::ToString("BMFont only support version 3. fn = ", p));
 
     // cleanup for logic safety
     charArray.fill({});
@@ -12,12 +14,6 @@ void BMFont::Load(Engine* eg, std::string_view fn) {
     kernings.clear();
     texs.clear();
     paddingLeft = paddingTop = paddingRight = paddingBottom = fontSize = lineHeight = 0;
-
-    xx::Data d;
-    if (int r = xx::ReadAllBytes(p, d)) throw std::logic_error(xx::ToString("BMFont file read error. r = ", r, ", fn = ", p));
-    if (d.len < 4) throw std::logic_error(xx::ToString("BMFont file's size is too small. fn = ", p));
-    if (std::string_view((char*)d.buf, 3) != "BMF"sv) throw std::logic_error(xx::ToString("bad BMFont format. fn = ", p));
-    if (d[3] != 3) throw std::logic_error(xx::ToString("BMFont only support version 3. fn = ", p));
 
     std::vector<std::string> texFNs;
     uint16_t pages;

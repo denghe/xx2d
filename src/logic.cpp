@@ -5,9 +5,8 @@ void Logic::Init() {
 
 	auto t1 = LoadTextureFromCache("res/zazaka.pkm"sv);
 	auto t2 = LoadTextureFromCache("res/mouse.pkm"sv);
-	BMFont bmf;
-	bmf.Load(this, "res/font2/basechars.fnt"sv);
-	//FrameCacheLoadByPList("res/bomb.plist"sv);
+	auto fnt = LoadBMFont("res/font2/basechars.fnt"sv);
+	LoadFramesFromCache(LoadTPData("res/bomb.plist"sv));
 
 	rnd.SetSeed();
 	size_t numSprites = 50'000;
@@ -23,7 +22,7 @@ void Logic::Init() {
 		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
 
 		auto& l = objs[i].second;
-		l.SetText(bmf, rnd.NextWord(), 16);
+		l.SetText(fnt, rnd.NextWord(), 16);
 		l.SetColor({ 255, 255, 255, 255 });
 		l.SetPositon({ 0, 0 });
 		l.SetAnchor({ 0.5, 0.5 });

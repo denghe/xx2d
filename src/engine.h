@@ -18,11 +18,17 @@ struct Engine {
 	std::string GetFullPath(std::string_view fn);
 
 	// read all data by full path
-	xx::Data ReadAllBytesWithFullPath(std::string_view const& fp);
+	xx::Data ReadAllBytesWithFullPath(std::string_view const& fp, bool autoUnzip = true);
 
 	// read all data by GetFullPath( fn )
-	std::pair<xx::Data, std::string> ReadAllBytes(std::string_view const& fn);
+	std::pair<xx::Data, std::string> ReadAllBytes(std::string_view const& fn, bool autoUnzip = true);
 
+	/**********************************************************************************/
+	// fonts
+
+	BMFont LoadBMFont(std::string_view const& fn);
+
+	// ...
 
 
 	/**********************************************************************************/
@@ -48,7 +54,7 @@ struct Engine {
 
 
 	/**********************************************************************************/
-	// TPData & frame cache
+	// TPData & frame cache( texture does not insert into textureCache )
 
 	// key: frame key in plist( texture packer export .plist )
 	std::unordered_map<std::string, xx::Shared<Frame>, xx::StringHasher<>, std::equal_to<void>> frameCache;
@@ -57,10 +63,10 @@ struct Engine {
 	TPData LoadTPData(std::string_view const& fn);
 
 	// load plist frames into cache. duplicate key name will throw exception. auto get texture from cache if exists.
-	void LoadFrameFromCache(TPData const& tpd);
+	void LoadFramesFromCache(TPData const& tpd);
 
 	// unload plist frames from cache
-	void UnloadFrameFromCache(TPData const& tpd);
+	void UnloadFramesFromCache(TPData const& tpd);
 
 	// delete from cache where sharedCount == 1. return removed frame count
 	size_t RemoveUnusedFromFrameCache();

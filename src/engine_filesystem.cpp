@@ -1,6 +1,4 @@
 ﻿#include "pch.h"
-#include "engine.h"
-
 
 void Engine::SearchPathAdd(std::string_view dir) {
 	// prepare
@@ -59,17 +57,20 @@ std::string Engine::GetFullPath(std::string_view fn) {
 }
 
 
-xx::Data Engine::ReadAllBytesWithFullPath(std::string_view const& fp) {
+xx::Data Engine::ReadAllBytesWithFullPath(std::string_view const& fp, bool autoUnzip) {
 	xx::Data d;
 	if (int r = xx::ReadAllBytes(fp, d)) throw std::logic_error(xx::ToString("file read error. r = ", r, ", fn = ", p));
 	if(d.len == 0) throw std::logic_error(xx::ToString("file content is empty. fn = ", p));
+	if (autoUnzip) {
+		throw std::logic_error(xx::ToString("todo: file content auto unzip. fn = ", p));
+	}
 	return d;
 }
 
 
-std::pair<xx::Data, std::string> Engine::ReadAllBytes(std::string_view const& fn) {
+std::pair<xx::Data, std::string> Engine::ReadAllBytes(std::string_view const& fn, bool autoUnzip) {
 	auto p = GetFullPath(fn);
 	if (p.empty()) throw std::logic_error("fn can't find: " + std::string(fn));
-	auto d = ReadAllBytesWithFullPath(p);
+	auto d = ReadAllBytesWithFullPath(p, autoUnzip);
 	return { std::move(d), std::move(p)};
 }

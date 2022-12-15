@@ -1,6 +1,4 @@
 ﻿#include "pch.h"
-#include "engine.h"
-
 
 GLTexture Engine::LoadTexture(std::string_view const& fn) {
 	auto [d, p] = ReadAllBytes(fn);

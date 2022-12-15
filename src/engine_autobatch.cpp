@@ -1,5 +1,4 @@
 ﻿#include "pch.h"
-#include "engine.h"
 
 void Engine::AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qv) {
 	if (autoBatchQuadVertsCount == maxQuadNums) {

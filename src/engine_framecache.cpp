@@ -1,6 +1,4 @@
 ﻿#include "pch.h"
-#include "engine.h"
-#include "tpdata.h"
 
 TPData Engine::LoadTPData(std::string_view const& fn) {
 	auto [d, p] = ReadAllBytes(fn);
@@ -10,7 +8,7 @@ TPData Engine::LoadTPData(std::string_view const& fn) {
 }
 
 
-void Engine::LoadFrameFromCache(TPData const& tpd) {
+void Engine::LoadFramesFromCache(TPData const& tpd) {
 
 
 	//std::string p;
@@ -21,7 +19,7 @@ void Engine::LoadFrameFromCache(TPData const& tpd) {
 }
 
 
-void Engine::UnloadFrameFromCache(TPData const& tpd) {
+void Engine::UnloadFramesFromCache(TPData const& tpd) {
 
 }
 

@@ -1,6 +1,4 @@
 ﻿#include "pch.h"
-#include "engine.h"
-
 
 void Engine::EngineInit() {
 	SearchPathReset();
