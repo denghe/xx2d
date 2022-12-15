@@ -1,17 +1,14 @@
 ﻿#include "pch.h"
 
-// todo: font & label
-// todo: auto switch texture file format by content header
 // todo: texture packer plist support
-// todo: node
-// todo: spine? webassembly? lua? 
-// 
 // todo: mouse, touch, keyboard, joystick support
-// 
+// todo: node( with matrix )
+
+// todo: more texture format support?
 // todo: Program manager? ready for shader switch
-//
 // todo: draw instance for particle system?
 // todo: texture array support?
+// todo: spine? webassembly? lua? 
 
 
 
@@ -117,9 +114,32 @@ glEnable(GL_DEPTH_TEST);
 glDepthFunc(GL_ALWAYS);//glDepthFunc(GL_LEQUAL);
 glDepthMask(GL_TRUE);
 
-// showly than glBufferData
-//glBufferData(GL_ARRAY_BUFFER, sizeof(XYUVIJRGBA8) * maxVertNums, nullptr, GL_DYNAMIC_DRAW);
-//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(XYUVIJRGBA8) * 4 * autoBatchNumQuads, verts);
+
+
+
+
+
+glMapPersistent optimize glBufferData 
+
+GLbitfield mapFlags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+GLbitfield createFlags = mapFlags | GL_MAP_DYNAMIC_STORAGE_BIT;
+mDestHead = 0;
+mBuffSize = 3 *maxVerts *kVertexSizeBytes;
+glBindBuffer(GL_ARRAY_BUFFER,mVertexBuffer);
+glBufferStorage(GL_ARRAY_BUFFER，mBuffSize，nullptr，createFlags);
+mVertexDataPtr = glMapBufferRange(GL_ARRAY_BUFFER，0, mBuffSize, mapFlags);
+
+
+
+
+
+
+
+
+https://vulkan-tutorial.com/
+https://github.com/SaschaWillems/Vulkan
+https://github.com/KhronosGroup/Vulkan-Samples
+https://github.com/vulkanprogrammingguide/examples
 
 
 

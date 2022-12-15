@@ -14,12 +14,12 @@ inline void CheckGLErrorAt(const char* file, int line, const char* func) {
 #endif
 
 // fn must be absolute path. GetFullPath recommend
-GLTexture LoadTexture(std::string_view const& fn);
+GLTexture LoadGLTexture(std::string_view const& buf, std::string_view const& fullPath);
 
-GLShader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_);
+GLShader LoadGLShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_);
 
-GLShader LoadVertexShader(std::initializer_list<std::string_view>&& codes_);
+GLShader LoadGLVertexShader(std::initializer_list<std::string_view>&& codes_);
 
-GLShader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_);
+GLShader LoadGLFragmentShader(std::initializer_list<std::string_view>&& codes_);
 
-GLProgram LinkProgram(GLuint const& vs, GLuint const& fs);
+GLProgram LinkGLProgram(GLuint const& vs, GLuint const& fs);

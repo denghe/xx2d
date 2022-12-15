@@ -11,9 +11,10 @@
 #include "glshaders.h"
 
 #include "prims.h"
+#include "tpdata.h"
+#include "bmfont.h"
 #include "engine.h"
 #include "sprite.h"
-#include "bmfont.h"
 #include "label.h"
 // ...
 

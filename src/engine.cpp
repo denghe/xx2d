@@ -7,9 +7,9 @@ void Engine::EngineInit() {
 
 	CheckGLError();
 
-	v = LoadVertexShader({ Shaders::vsSrc });
-	f = LoadFragmentShader({ Shaders::fsSrc });
-	p = LinkProgram(v, f);
+	v = LoadGLVertexShader({ Shaders::vsSrc });
+	f = LoadGLFragmentShader({ Shaders::fsSrc });
+	p = LinkGLProgram(v, f);
 
 	uCxy = glGetUniformLocation(p, "uCxy");
 	uTex0 = glGetUniformLocation(p, "uTex0");

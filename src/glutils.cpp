@@ -5,19 +5,16 @@
 #include <glad/glad.h>
 
 
-GLTexture LoadTexture(std::string_view const& fn) {
-	xx::Data d;
-	if (int r = xx::ReadAllBytes(fn, d))
-		throw std::logic_error(xx::ToString("read file error. r = ", r, ", fn = ", fn));
-	if (d.len >= 6 && memcmp("PKM 20", d.buf, 6) == 0 && d.len >= 16) {
-		auto p = (uint8_t*)d.buf;
+GLTexture LoadGLTexture(std::string_view const& buf, std::string_view const& fullPath) {
+	if (buf.size() >= 6 && memcmp("PKM 20", buf.data(), 6) == 0 && buf.size() >= 16) {
+		auto p = (uint8_t*)buf.data();
 		uint16_t format = (p[6] << 8) | p[7];				// 1 ETC2_RGB_NO_MIPMAPS, 3 ETC2_RGBA_NO_MIPMAPS
 		uint16_t encodedWidth = (p[8] << 8) | p[9];			// 4 align width
 		uint16_t encodedHeight = (p[10] << 8) | p[11];		// 4 align height
 		uint16_t width = (p[12] << 8) | p[13];				// width
 		uint16_t height = (p[14] << 8) | p[15];				// height
 		assert((format == 1 || format == 3) && width > 0 && height > 0 && encodedWidth >= width && encodedWidth - width < 4
-			&& encodedHeight >= height && encodedHeight - height < 4 && d.len == 16 + encodedWidth * encodedHeight);
+			&& encodedHeight >= height && encodedHeight - height < 4 && buf.size() == 16 + encodedWidth * encodedHeight);
 		GLuint t = 0;
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);	// todo: optimize this value like cocos2.x CCTexture2D.cpp  line 191
 		glGenTextures(1, &t);
@@ -27,15 +24,15 @@ GLTexture LoadTexture(std::string_view const& fn) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glCompressedTexImage2D(GL_TEXTURE_2D, 0, format == 3 ? GL_COMPRESSED_RGBA8_ETC2_EAC : GL_COMPRESSED_RGB8_ETC2, (GLsizei)width, (GLsizei)height, 0, (GLsizei)(d.len - 16), p + 16);
+		glCompressedTexImage2D(GL_TEXTURE_2D, 0, format == 3 ? GL_COMPRESSED_RGBA8_ETC2_EAC : GL_COMPRESSED_RGB8_ETC2, (GLsizei)width, (GLsizei)height, 0, (GLsizei)(buf.size() - 16), p + 16);
 		CheckGLError();
-		return { t, width, height, fn };
+		return { t, width, height, fullPath };
 	}
-	throw std::logic_error(xx::ToString("unsupported texture type. fn = ", fn));
+	throw std::logic_error(xx::ToString("unsupported texture type. fn = ", fullPath));
 }
 
 
-GLShader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
+GLShader LoadGLShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
 	assert(codes_.size() && (type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER));
 	auto&& shader = glCreateShader(type);
 	if (!shader)
@@ -66,17 +63,17 @@ GLShader LoadShader(GLenum const& type, std::initializer_list<std::string_view>&
 }
 
 
-GLShader LoadVertexShader(std::initializer_list<std::string_view>&& codes_) {
-	return LoadShader(GL_VERTEX_SHADER, std::move(codes_));
+GLShader LoadGLVertexShader(std::initializer_list<std::string_view>&& codes_) {
+	return LoadGLShader(GL_VERTEX_SHADER, std::move(codes_));
 }
 
 
-GLShader LoadFragmentShader(std::initializer_list<std::string_view>&& codes_) {
-	return LoadShader(GL_FRAGMENT_SHADER, std::move(codes_));
+GLShader LoadGLFragmentShader(std::initializer_list<std::string_view>&& codes_) {
+	return LoadGLShader(GL_FRAGMENT_SHADER, std::move(codes_));
 }
 
 
-GLProgram LinkProgram(GLuint const& vs, GLuint const& fs) {
+GLProgram LinkGLProgram(GLuint const& vs, GLuint const& fs) {
 	auto program = glCreateProgram();
 	if (!program)
 		throw std::logic_error("glCreateProgram failed.");

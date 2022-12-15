@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "pch.h"
 
+struct Engine;
 struct BMFont {
 	struct Char {
 		// uint32_t id;

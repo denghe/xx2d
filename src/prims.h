@@ -25,3 +25,16 @@ struct XYUVRGBA8 : XY, UV, RGBA8 {};
  0└────┘3
 */
 using QuadVerts = std::array<XYUVRGBA8, 4>;
+
+//
+struct Size { float w, h; };
+
+//
+struct Rect : XY, Size {};
+
+
+struct Frame {
+	xx::Shared<GLTexture> tex;
+	Rect rect;
+	bool rotated;
+};

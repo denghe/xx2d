@@ -76,6 +76,11 @@ namespace xx {
         XX_INLINE operator bool() const {
             return len != 0;
         }
+
+        // 可轻松转为 std::string_view
+        XX_INLINE operator std::string_view() const {
+            return { (char*)buf, len };
+        }
     };
 
     // Data 序列化 / 反序列化 基础适配模板

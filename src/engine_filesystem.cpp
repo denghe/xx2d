@@ -59,10 +59,17 @@ std::string Engine::GetFullPath(std::string_view fn) {
 }
 
 
-xx::Data Engine::ReadAllBytes(std::string_view fn) {
+xx::Data Engine::ReadAllBytesWithFullPath(std::string_view const& fp) {
 	xx::Data d;
-	if (auto&& p = GetFullPath(fn); !p.empty()) {
-		xx::ReadAllBytes(p, d);
-	}
+	if (int r = xx::ReadAllBytes(fp, d)) throw std::logic_error(xx::ToString("file read error. r = ", r, ", fn = ", p));
+	if(d.len == 0) throw std::logic_error(xx::ToString("file content is empty. fn = ", p));
 	return d;
+}
+
+
+std::pair<xx::Data, std::string> Engine::ReadAllBytes(std::string_view const& fn) {
+	auto p = GetFullPath(fn);
+	if (p.empty()) throw std::logic_error("fn can't find: " + std::string(fn));
+	auto d = ReadAllBytesWithFullPath(p);
+	return { std::move(d), std::move(p)};
 }
