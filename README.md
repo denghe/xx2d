@@ -22,4 +22,26 @@ bmfont
 
 label
 
-todo: inputs, node, ...
+# todo
+
+touch, keyboard, joystick
+
+node( with matrix )
+
+button, scroll view
+
+Program manager? ready for shader switch
+
+draw no alpha without blend but discard shader ?
+
+texture packer polygon algorithm support?
+
+render texture?
+
+draw instance for particle system?
+
+texture array support?
+
+more texture format support?
+
+spine? webassembly? lua? 

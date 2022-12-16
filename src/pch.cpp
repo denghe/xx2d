@@ -1,12 +1,15 @@
 ﻿#include "pch.h"
 
-// todo: mouse, touch, keyboard, joystick support
+// todo: touch, keyboard, joystick support
+// todo: button, scroll view
 // todo: node( with matrix )
 
-// todo: more texture format support?
 // todo: Program manager? ready for shader switch
+// todo: draw no alpha without blend but discard shader ?
+// todo: render texture?
 // todo: draw instance for particle system?
 // todo: texture array support?
+// todo: more texture format support?
 // todo: spine? webassembly? lua? 
 
 
