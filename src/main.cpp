@@ -13,7 +13,7 @@ int main() {
 
 	glfwSetErrorCallback([](int error, const char* description) {
 		throw new std::exception(description, error);
-		});
+	});
 
 	if (!glfwInit())
 		return -1;
@@ -24,23 +24,39 @@ int main() {
 		return -2;
 	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
 
+	// reference from raylib rcore.c
 	glfwSetKeyCallback(wnd, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {
+        if (key < 0) return;    // macos fn key == -1
+
+        if (action == GLFW_RELEASE) ::logic->kbdStates[key] = 0;
+        else ::logic->kbdStates[key] = 1;
+
+        if (((key == (int)KbdKeys::CapsLock) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
+            ((key == (int)KbdKeys::NumLock) && ((mods & GLFW_MOD_NUM_LOCK) > 0))) ::logic->kbdStates[key] = 1;
+
+		// known issue: key will doube in kbdInputs
+   //     if (action == GLFW_PRESS) {
+			//::logic->kbdInputs.push_back(key);
+   //     }
+
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 			glfwSetWindowShouldClose(wnd, GLFW_TRUE);
 		}
-		// todo: set key to logic
 	});
 
-	//glfwSetCharCallback(CORE.Window.handle, CharCallback);
-	//glfwSetScrollCallback(CORE.Window.handle, MouseScrollCallback);
-	//glfwSetCursorEnterCallback(CORE.Window.handle, CursorEnterCallback);
+	glfwSetCharCallback(wnd, [](GLFWwindow* wnd, unsigned int key) {
+		::logic->kbdInputs.push_back(key);
+	});
+
+	//glfwSetScrollCallback(wnd, MouseScrollCallback);
+	//glfwSetCursorEnterCallback(wnd, CursorEnterCallback);
 
 	glfwSetCursorPosCallback(wnd, [](GLFWwindow* wnd, double x, double y) {
 		::logic->mousePosition = { (float)x - ::logic->w / 2, ::logic->h / 2 - (float)y };
 	});
 
 	glfwSetMouseButtonCallback(wnd, [](GLFWwindow* wnd, int button, int action, int mods) {
-		::logic->mouseButtonStates[button] = action;
+		::logic->mbtnStatus[button] = action;
 	});
 
 	glfwSetFramebufferSizeCallback(wnd, [](GLFWwindow* wnd, int w, int h) {

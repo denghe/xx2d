@@ -13,7 +13,13 @@ void Logic::Init() {
 }
 
 void Logic::Update(float delta) {
-	if (mouseButtonStates[0]) {
+	while (!kbdInputs.empty()) {
+		std::cout << kbdInputs.front() << " ";
+		kbdInputs.pop_front();
+	}
+	std::cout.flush();
+
+	if (mbtnStatus[(int)Mbtns::Left]) {
 		auto sec = xx::NowSteadyEpochSeconds();
 		if (sec - lastMouseClickTime > 0.001) {
 			lastMouseClickTime = sec;

@@ -80,9 +80,9 @@ struct Engine {
 	void SetWH(float w, float h);	// will fill w, h, hw, hh, ninePoints
 
 	XY mousePosition{ (float)w/2, (float)h/2 };
-	std::array<int, 32> mouseButtonStates{};
-
-
+	std::deque<uint32_t> kbdInputs;		// for store keyboard typed chars.  pop_front for use
+	std::array<uint16_t, 512> kbdStates{};	// for scan keyboard down up
+	std::array<uint8_t, 32> mbtnStatus{};	// mouse button states
 
 
 	/**********************************************************************************/
