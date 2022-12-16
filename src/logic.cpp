@@ -5,7 +5,8 @@ void Logic::Init() {
 	rnd.SetSeed();
 	lastMouseClickTime = xx::NowSteadyEpochSeconds();
 	t = LoadTextureFromCache("res/mouse.pkm"sv);
-	fnt = LoadBMFont("res/font2/basechars.fnt"sv);
+	fnt1 = LoadBMFont("res/font1/basechars.fnt"sv);
+	fnt2 = LoadBMFont("res/font2/basechars.fnt"sv);
 	LoadFramesFromCache(LoadTPData("res/aaa.plist"sv));		// key = zazaka.pkm
 	lbCount.SetPositon(ninePoints[1] + XY{ 10, 10 });
 	lbCount.SetAnchor({0, 0});
@@ -30,7 +31,7 @@ void Logic::Update(float delta) {
 			s.SetColor({ cp[0], cp[1], cp[2], 255 });
 			s.SetPositon(mousePosition);
 
-			l.SetText(fnt, rnd.NextWord(), 16);
+			l.SetText(fnt2, rnd.NextWord(), 16);
 			l.SetPositon({ s.pos.x, s.pos.y + s.frame->spriteSize.h * s.scale.y * (1 - s.anchor.y) });
 			l.SetAnchor({ 0.5, 0 });
 			l.scale = s.scale;
@@ -43,7 +44,7 @@ void Logic::Update(float delta) {
 		l.Draw(this);
 	}
 
-	lbCount.SetText(fnt, xx::ToString("draw call = ", GetDrawCall(), ", obj count = ", objs.size()));
+	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", obj count = ", objs.size()));
 	lbCount.Draw(this);
 }
 

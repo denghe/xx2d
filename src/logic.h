@@ -7,7 +7,7 @@ struct Logic : Engine {
 	double lastMouseClickTime;
 	std::vector<std::pair<Sprite, Label>> objs;
 	xx::Shared<GLTexture> t;
-	BMFont fnt;
+	BMFont fnt1, fnt2;
 	Label lbCount;
 
 	void Init();
