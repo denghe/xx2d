@@ -61,7 +61,7 @@ void Sprite::Draw(Engine* eg) {
 			auto w = frame->spriteSize.w * scale.x;
 			auto h = frame->spriteSize.h * scale.y;
 			auto x = pos.x + frame->spriteOffset.x * scale.x - w * anchor.x;
-			auto y = pos.y + frame->spriteOffset.y * scale.y + h * anchor.y;
+			auto y = pos.y + frame->spriteOffset.y * scale.y - h * anchor.y;
 			qv[0].x = x + w;				qv[0].y = y;
 			qv[1].x = x + w;				qv[1].y = y + h;
 			qv[2].x = x;					qv[2].y = y + h;

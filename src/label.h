@@ -12,10 +12,10 @@ struct Label {
 
 	union {
 		struct {
-			uint8_t dirtyText;
-			uint8_t dirtySizeAnchorPosScaleRotate;
+			uint8_t dirtyTextSizeAnchorPosScaleRotate;
 			uint8_t dirtyColor;
-			uint8_t dirtyDummy;
+			uint8_t dirtyDummy1;
+			uint8_t dirtyDummy2;
 		};
 		uint32_t dirty = 0xFFFFFFFFu;
 	};
