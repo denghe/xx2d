@@ -34,6 +34,7 @@ struct Label {
 	void SetRotate(float const& r);
 
 	void SetScale(XY const& s);
+	void SetScale(float const& s);
 
 	void SetPositon(XY const& p);
 

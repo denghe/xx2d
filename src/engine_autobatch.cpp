@@ -25,10 +25,16 @@ void Engine::AutoBatchCommit() {
 		auto n = (GLsizei)(autoBatchTexs[i].second * 6);
 		glDrawElements(GL_TRIANGLES, n, GL_UNSIGNED_SHORT, (GLvoid*)j);
 		j += n * 2;
+
 	}
 	CheckGLError();
+	drawCall += autoBatchTexsCount;
 
 	autoBatchLastTextureId = 0;
 	autoBatchTexsCount = 0;
 	autoBatchQuadVertsCount = 0;
+}
+
+size_t Engine::GetDrawCall() {
+	return drawCall + autoBatchTexsCount;
 }

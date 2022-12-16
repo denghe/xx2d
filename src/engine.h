@@ -73,9 +73,15 @@ struct Engine {
 
 
 	/**********************************************************************************/
-	// window
+	// window & input
 
-	GLsizei w = 1920, h = 1080;
+	float w = 1920, h = 1080, hw = w/2, hh = h/2;
+	std::array<XY, 10> ninePoints;
+	void SetWH(float w, float h);	// will fill w, h, hw, hh, ninePoints
+
+	XY mousePosition{ (float)w/2, (float)h/2 };
+	std::array<int, 32> mouseButtonStates{};
+
 
 
 
@@ -100,6 +106,8 @@ struct Engine {
 	GLuint autoBatchLastTextureId = 0;
 	size_t autoBatchTexsCount = 0;
 	size_t autoBatchQuadVertsCount = 0;
+	size_t drawCall = 0;	// cleanup when EngineUpdateBegin. +1 when glDrawXxxxx
+	size_t GetDrawCall();
 
 	std::unique_ptr<std::pair<GLuint, int>[]> autoBatchTexs = std::make_unique<std::pair<GLuint, int>[]>(maxQuadNums);	// tex id + count
 	std::unique_ptr<QuadVerts[]> autoBatchQuadVerts = std::make_unique<QuadVerts[]>(maxQuadNums);
@@ -107,7 +115,6 @@ struct Engine {
 	void AutoBatchBegin();
 	void AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qv);
 	void AutoBatchCommit();
-	
 
 
 	/**********************************************************************************/

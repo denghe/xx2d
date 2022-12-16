@@ -135,7 +135,12 @@ struct Rnd {
         assert(to >= from);
         if (from == to) return from;
         else {
-            return from + Next<V>() % (to - from + 1);
+            if constexpr (std::is_floating_point_v<V>) {
+                return from + Next<V>() * (to - from);
+            }
+            else {
+                return from + Next<V>() % (to - from + 1);
+            }
         }
     }
 

@@ -25,27 +25,34 @@ int main() {
 	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
 
 	glfwSetKeyCallback(wnd, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {
-		assert(wnd == ::wnd);
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 			glfwSetWindowShouldClose(wnd, GLFW_TRUE);
 		}
 		// todo: set key to logic
 	});
 
-	// todo: send mouse event to logic
+	//glfwSetCharCallback(CORE.Window.handle, CharCallback);
+	//glfwSetScrollCallback(CORE.Window.handle, MouseScrollCallback);
+	//glfwSetCursorEnterCallback(CORE.Window.handle, CursorEnterCallback);
 
-	glfwSetFramebufferSizeCallback(wnd, [](GLFWwindow* wnd, int width, int height) {
-		assert(wnd == ::wnd);
-		::logic->w = width;
-		::logic->h = height;
-		// todo: add event to logic
+	glfwSetCursorPosCallback(wnd, [](GLFWwindow* wnd, double x, double y) {
+		::logic->mousePosition = { (float)x - ::logic->w / 2, ::logic->h / 2 - (float)y };
+	});
+
+	glfwSetMouseButtonCallback(wnd, [](GLFWwindow* wnd, int button, int action, int mods) {
+		::logic->mouseButtonStates[button] = action;
+	});
+
+	glfwSetFramebufferSizeCallback(wnd, [](GLFWwindow* wnd, int w, int h) {
+		::logic->SetWH(w, h);
 	});
 	glfwGetFramebufferSize(wnd, &width, &height);
+	::logic->SetWH(width, height);
 
 	glfwMakeContextCurrent(wnd);
 
-	glfwSetInputMode(wnd, GLFW_LOCK_KEY_MODS, GLFW_TRUE);    // Enable lock keys modifiers (CAPS, NUM)
-	glfwSwapInterval(0);	// No V-Sync by default
+	glfwSetInputMode(wnd, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
+	glfwSwapInterval(0);	// no v-sync by default
 
 	if (!gladLoadGL(glfwGetProcAddress))
 		return -3;
@@ -53,15 +60,21 @@ int main() {
 	while (auto e = glGetError()) {};	// cleanup glfw3 error
 
 	logic->EngineInit();
+	glfwSetCursorPos(wnd, logic->mousePosition.x, logic->mousePosition.y);
+
 	logic->Init();
 	while (!glfwWindowShouldClose(wnd)) {
 		glfwPollEvents();
 		logic->EngineUpdateBegin();
+
 		logic->Update((float)glfwGetTime());
+
 		logic->EngineUpdateEnd();
 		glfwSwapBuffers(wnd);
 	}
+
 	logic->EngineDestroy();
+	logic.Reset();
 
 	return 0;
 }

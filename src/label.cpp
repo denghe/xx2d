@@ -59,6 +59,10 @@ void Label::SetScale(XY const& s) {
 	dirtyTextSizeAnchorPosScaleRotate = 1;
 	scale = s;
 }
+void Label::SetScale(float const& s) {
+	dirtyTextSizeAnchorPosScaleRotate = 1;
+	scale = { s, s };
+}
 
 void Label::SetPositon(XY const& p) {
 	dirtyTextSizeAnchorPosScaleRotate = 1;

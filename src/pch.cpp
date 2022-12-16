@@ -32,6 +32,8 @@
 
 
 
+glfwSetWindowUserPointer(wnd, ptr)
+glfwGetWindowUserPointer(window)
 
 //glfwDefaultWindowHints();
 //glfwxSetParent((HWND)0);

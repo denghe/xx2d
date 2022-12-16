@@ -6,6 +6,12 @@ struct XY {
 	float x, y;
 	bool operator==(XY const&) const = default;
 	bool operator!=(XY const&) const = default;
+
+	inline XY operator+(XY const& o) const { return { x + o.x, y + o.y }; }
+	inline XY operator-(XY const& o) const { return { x - o.x, y - o.y }; }
+	inline XY operator-() const { return { -x, -y }; }
+	inline XY operator*(float const& o) const { return { x * o, y * o }; }
+	inline XY operator/(float const& o) const { return { x / o, y / o }; }
 };
 
 // texture uv mapping pos
@@ -35,6 +41,12 @@ struct Size {
 	float w, h; 
 	bool operator==(Size const&) const = default;
 	bool operator!=(Size const&) const = default;
+
+	inline Size operator+(Size const& o) const { return { w + o.w, h + o.h }; }
+	inline Size operator-(Size const& o) const { return { w - o.w, h - o.h }; }
+	inline Size operator-() const { return { -w, -h }; }
+	inline Size operator*(float const& o) const { return { w * o, h * o }; }
+	inline Size operator/(float const& o) const { return { w / o, h / o }; }
 };
 
 //

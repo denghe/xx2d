@@ -37,6 +37,10 @@ void Sprite::SetScale(XY const& s) {
 	dirtySizeAnchorPosScaleRotate = 1;
 	scale = s;
 }
+void Sprite::SetScale(float const& s) {
+	dirtySizeAnchorPosScaleRotate = 1;
+	scale = { s, s };
+}
 
 void Sprite::SetPositon(XY const& p) {
 	dirtySizeAnchorPosScaleRotate = 1;
