@@ -124,7 +124,8 @@ struct TPData {
 				if (line == "                <key>anchor</key>") {
 					if (!NextLine(text, offset, line)) return __LINE__;         // <string>{x,y}</string>
 					if (SubStr(line, 25, 10)) return __LINE__;                  // cut x,y
-					if (ReadFloat2(line, o.anchor.x, o.anchor.y)) return __LINE__;
+					o.anchor.emplace();
+					if (ReadFloat2(line, o.anchor->x, o.anchor->y)) return __LINE__;
 					SkipLines(text, offset, 1);                                 // skip <key>spriteOffset</key>
 				}
 				if (!NextLine(text, offset, line)) return __LINE__;				// <string>{x,y}</string>

@@ -16,7 +16,7 @@ struct Sprite {
 
 	xx::Shared<Frame> frame;
 	XY pos{ 0, 0 };
-	XY anchor{ 0.5, 0.5 };
+	XY anchor{ 0.5, 0.5 };	// will be auto set by frame if included
 	XY scale{ 1, 1 };
 	float rotate{ 0 };
 	RGBA8 color{ 255, 255, 255, 255 };
@@ -27,7 +27,6 @@ struct Sprite {
 	void SetTexture(xx::Shared<Frame> f);
 
 	void SetAnchor(XY const& a);
-	void SetAnchorFromFrame();
 
 	void SetRotate(float const& r);
 

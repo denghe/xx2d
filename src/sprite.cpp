@@ -17,16 +17,15 @@ void Sprite::SetTexture(xx::Shared<GLTexture> t) {
 void Sprite::SetTexture(xx::Shared<Frame> f) {
 	dirtyFrame = 1;
 	frame = std::move(f);
+	if (frame->anchor.has_value() && anchor != *frame->anchor) {
+		dirtySizeAnchorPosScaleRotate = 1;
+		anchor = *frame->anchor;
+	}
 }
 
 void Sprite::SetAnchor(XY const& a) {
 	dirtySizeAnchorPosScaleRotate = 1;
 	anchor = a;
-}
-
-void Sprite::SetAnchorFromFrame() {
-	dirtySizeAnchorPosScaleRotate = 1;
-	anchor = frame->anchor;
 }
 
 void Sprite::SetRotate(float const& r) {
