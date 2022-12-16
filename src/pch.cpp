@@ -1,6 +1,5 @@
 ﻿#include "pch.h"
 
-// todo: label refine like sprite
 // todo: mouse, touch, keyboard, joystick support
 // todo: node( with matrix )
 
