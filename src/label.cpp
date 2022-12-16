@@ -1,21 +1,27 @@
 ﻿#include "pch.h"
 #include "label.h"
 
-void Label::SetText(BMFont& bmf, std::string_view const& txt, float const& fontSize) {
+void Label::SetText(BMFont bmf, std::string_view const& text, float const& fontSize) {
+	dirty = 0xFFFFFFFFu;
+
+	// todo: utf8, kerning?
+	// todo: sort by tex
 
 	chars.clear();
-	auto scale = fontSize / bmf.fontSize;
+	auto sc = fontSize / bmf.fontSize;
+	auto sx = scale.x * sc;
+	auto sy = scale.y * sc;
 	float px = 0, py = 0;
-	for (auto& t : txt) {
+	for (auto& t : text) {
 		if (auto&& r = bmf.GetChar(t)) {
 			auto&& c = chars.emplace_back();
 			c.tex = bmf.texs[r->page];
 
-			auto w = scale * r->width;
-			auto h = scale * r->height;
+			auto w = sx * r->width;
+			auto h = sy * r->height;
 
-			auto x = px + r->xoffset * scale;
-			auto y = py - r->yoffset * scale;
+			auto x = px + r->xoffset * sx;
+			auto y = py - r->yoffset * sy;
 
 			c.qv[0].x = x;                  c.qv[0].y = y;
 			c.qv[1].x = x;                  c.qv[1].y = y - h;
@@ -27,48 +33,68 @@ void Label::SetText(BMFont& bmf, std::string_view const& txt, float const& fontS
 			c.qv[2].u = r->x + r->width;    c.qv[2].v = r->y + r->height;
 			c.qv[3].u = r->x + r->width;    c.qv[3].v = r->y;
 
-			px += r->xadvance * scale;
-		}
-		else {
-			px += bmf.fontSize * scale;
+			px += r->xadvance * sx;
+
+			// pos 0,0  anchor 0,0  scale 1,1 data store
+			c.posBak[0] = c.qv[0];
+			c.posBak[1] = c.qv[1];
+			c.posBak[2] = c.qv[2];
+			c.posBak[3] = c.qv[3];
+		} else {
+			px += bmf.fontSize * sx;
 		}
 	}
-	lastSize = { px, (float)bmf.lineHeight * scale };
-
-	// todo: utf8, kerning?
-	// todo: sort by tex
+	maxSize = { px, (float)bmf.lineHeight * sy };
 }
-
 
 void Label::SetAnchor(XY const& a) {
-	SetPositon({ lastPos.x - lastSize.x * a.x, lastPos.y + lastSize.y * a.y });
+	dirtySizeAnchorPosScaleRotate = 1;
+	anchor = a;
 }
 
-
-void Label::SetPositon(XY const& pos) {
-	auto dx = pos.x - lastPos.x;
-	auto dy = pos.y - lastPos.y;
-	lastPos = pos;
-	for(auto& o : chars) {
-		for (auto& v : o.qv) {
-			v.x += dx;
-			v.y += dy;
-		}
-	}
+void Label::SetRotate(float const& r) {
+	dirtySizeAnchorPosScaleRotate = 1;
+	rotate = r;
 }
 
+void Label::SetScale(XY const& s) {
+	dirtySizeAnchorPosScaleRotate = 1;
+	scale = s;
+}
+
+void Label::SetPositon(XY const& p) {
+	dirtySizeAnchorPosScaleRotate = 1;
+	pos = p;
+}
 
 void Label::SetColor(RGBA8 const& c) {
-	for (auto& o : chars) {
-		memcpy(&o.qv[0].r, &c, sizeof(c));
-		memcpy(&o.qv[1].r, &c, sizeof(c));
-		memcpy(&o.qv[2].r, &c, sizeof(c));
-		memcpy(&o.qv[3].r, &c, sizeof(c));
-	}
+	dirtyColor = 1;
+	color = c;
 }
 
-
 void Label::Draw(Engine* eg) {
+	if (dirty) {
+		if (dirtySizeAnchorPosScaleRotate) {
+			auto x = maxSize.w * anchor.x;
+			auto y = maxSize.h * anchor.y;
+			for (auto& o : chars) {
+				for (size_t i = 0; i < o.qv.size(); ++i) {
+					o.qv[i].x = o.posBak[i].x * scale.x + pos.x - x;
+					o.qv[i].y = o.posBak[i].y * scale.y + pos.y + y;
+				}
+			}
+			// todo: rotate support?
+		}
+		if (dirtyColor) {
+			for (auto& o : chars) {
+				for (auto& v : o.qv) {
+					memcpy(&v.r, &color, sizeof(color));
+				}
+			}
+		}
+		dirty = 0;
+	}
+
 	for (auto& c : chars) {
 		eg->AutoBatchDrawQuad(*c.tex, c.qv);		// todo: batch version
 	}

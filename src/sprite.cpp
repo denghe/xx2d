@@ -70,10 +70,9 @@ void Sprite::Draw(Engine* eg) {
 			// todo: rotate support?
 		}
 		if (dirtyColor) {
-			memcpy(&qv[0].r, &color, sizeof(color));
-			memcpy(&qv[1].r, &color, sizeof(color));
-			memcpy(&qv[2].r, &color, sizeof(color));
-			memcpy(&qv[3].r, &color, sizeof(color));
+			for (auto& v : qv) {
+				memcpy(&v.r, &color, sizeof(color));
+			}
 		}
 		dirty = 0;
 	}

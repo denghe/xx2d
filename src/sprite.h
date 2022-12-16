@@ -36,8 +36,6 @@ struct Sprite {
 
 	void SetColor(RGBA8 const& c);
 
-	// todo: rotate?
-
 
 	// todo: matrix version
 	void Draw(Engine* eg);
