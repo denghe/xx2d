@@ -1,38 +1,127 @@
 ﻿#pragma once
 #include "pch.h"
 
-// texture packer's data container. can fill data from .plist file. support export for cocos 3.x file, DO NOT REMOVE ANY SPACE ( REFORMAT ) !!!
+// texture packer's data container. fill data from export for cocos 3.x .plist file
 struct TPData {
-
 	std::vector<xx::Shared<Frame>> frames;
 	bool premultiplyAlpha;
 	std::string realTextureFileName;
-	Size size;
-	std::string textureFileName;
 
-	static bool NextLine(std::string_view const& text, size_t& offset, std::string_view& out) {
+	int Fill(std::string_view text, std::string_view const& texPreFixPath) {
+		frames.clear();
+		size_t i, j;
+
+		if (i = text.find(">frames<"sv); i == text.npos) return __LINE__;
+		CutStr(text, i + 19);													// skip    >frames</key><dict>
+
+		if (i = text.find("<key>"sv); i == text.npos) return __LINE__;
+		CutStr(text, i + 5);													// skip    <key>
+
 	LabBegin:
-		auto pos = text.find('\n', offset);
-		if (pos == std::string_view::npos) {    // eof
-			out = std::string_view(text.data() + offset, text.size() - offset);
-			return text.size() > offset;
+		auto&& o = *frames.emplace_back().Emplace();
+		if (j = text.find('<'); j == text.npos) return __LINE__;				// </key>
+		o.key = CutStr(text, 0, j);
+		CutStr(text, j + 30);													// skip    </key><dict><key>aliases</key>
+
+		if (i = text.find("/>"sv); i == text.npos) return __LINE__;				// <array/>
+		CutStr(text, i + 2);													// skip    <array/>
+
+		if (i = text.find('<'); i == text.npos) return __LINE__;
+		CutStr(text, i + 5);													// skip    <key>
+
+		if (text.starts_with('a')) {											// anchor
+			CutStr(text, 20);													// skip    anchor</key><string>
+
+			if (i = text.find('{'); i == text.npos) return __LINE__;
+			if (j = text.find('}', i + 4); j == text.npos) return __LINE__;
+			o.anchor.emplace();
+			if (ReadFloat2(CutStr(text, i + 1, j - i - 1), o.anchor->x, o.anchor->y)) return __LINE__;
+			CutStr(text, j + 10);												// skip    }</string>
 		}
-		if (pos == offset) {                    // skip empty line
-			++offset;
+
+		if (i = text.find('{'); i == text.npos) return __LINE__;
+		if (j = text.find('}', i + 4); j == text.npos) return __LINE__;
+		if (ReadFloat2(CutStr(text, i + 1, j - i - 1), o.spriteOffset.x, o.spriteOffset.y)) return __LINE__;
+		CutStr(text, j + 10);													// skip    }</string>
+
+		if (i = text.find('{'); i == text.npos) return __LINE__;
+		if (j = text.find('}', i + 4); j == text.npos) return __LINE__;
+		if (ReadInteger2(CutStr(text, i + 1, j - i - 1), o.spriteSize.w, o.spriteSize.h)) return __LINE__;
+		CutStr(text, j + 10);													// skip    }</string>
+
+		if (i = text.find('{'); i == text.npos) return __LINE__;
+		if (j = text.find('}', i + 4); j == text.npos) return __LINE__;
+		if (ReadInteger2(CutStr(text, i + 1, j - i - 1), o.spriteSourceSize.w, o.spriteSourceSize.h)) return __LINE__;
+		CutStr(text, j + 10);													// skip    }</string>
+
+		if (i = text.find("{{"sv); i == text.npos) return __LINE__;
+		if (j = text.find("}}"sv, i + 10); j == text.npos) return __LINE__;
+		ReadInteger4(CutStr(text, i + 2, j - i - 2), o.textureRect.x, o.textureRect.y, o.textureRect.w, o.textureRect.h);
+		CutStr(text, j + 11);													// skip    }}</string>
+
+		if (i = text.find("</k"sv); i == text.npos) return __LINE__;			// <key>textureRotated</key>
+		CutStr(text, i + 6);													// skip    </key>
+
+		if (i = text.find('<'); i == text.npos) return __LINE__;				// locate <true || <false
+		CutStr(text, i + 1);													// skip    <
+
+		if (text.starts_with('t')) {
+			o.textureRotated = true;
+			CutStr(text, 6);													// skip    true/>
+		} else {
+			o.textureRotated = false;
+			CutStr(text, 7);													// skip    false/>
+		}
+
+		if (i = text.find("<k"sv); i == text.npos) return __LINE__;
+		CutStr(text, i + 5);													// skip    <key>
+
+		if (text.starts_with('t')) {
+			CutStr(text, 15);													// skip    triangles</key>
+
+			if (i = text.find('<'); i == text.npos) return __LINE__;			// <string>
+			if (j = text.find('<', i + 8); j == text.npos) return __LINE__;		// </string>
+			SpaceSplitFillVector(o.triangles, CutStr(text, i + 8, j - i - 8));
+			CutStr(text, j + 28);												// skip    </string><key>vertices</key>
+
+			if (i = text.find('<'); i == text.npos) return __LINE__;			// <string>
+			if (j = text.find('<', i + 8); j == text.npos) return __LINE__;		// </string>
+			SpaceSplitFillVector(o.vertices, CutStr(text, i + 8, j - i - 8));
+			CutStr(text, j + 30);												// skip    </string><key>verticesUV</key>
+
+			if (i = text.find('<'); i == text.npos) return __LINE__;			// <string>
+			if (j = text.find('<', i + 8); j == text.npos) return __LINE__;		// </string>
+			SpaceSplitFillVector(o.verticesUV, CutStr(text, i + 8, j - i - 8));
+			CutStr(text, j + 9);												// skip    </string>
+		}
+
+		if (!text.starts_with("metadata<"sv)) {									// <key>metadata</key>    ||    <key> frame name </key>
 			goto LabBegin;
 		}
-		out = std::string_view(text.data() + offset, pos - offset - (text[pos - 1] == '\r' ? 1 : 0));
-		offset = pos + 1;
-		return true;
-	}
 
-	static void SkipLines(std::string_view const& text, size_t& offset, size_t n) {
-		while (n) {
-			auto pos = text.find('\n', offset);
-			if (pos == std::string_view::npos) return;
-			offset = pos + 1;
-			--n;
+		CutStr(text, 20);														// skip    metadata</key><dict>
+
+		if (i = text.find(">pre"sv); i == text.npos) return __LINE__;			// <key>premultiplyAlpha</key>
+		CutStr(text, i + 23);													// skip    >premultiplyAlpha</key>
+
+		if (i = text.find('<'); i == text.npos) return __LINE__;				// locate <true || <false
+		CutStr(text, i + 1);													// skip    <
+
+		if (text.starts_with('t')) {
+			premultiplyAlpha = true;
+			CutStr(text, 6);													// skip    true/>
+		} else {
+			premultiplyAlpha = false;
+			CutStr(text, 7);													// skip    false/>
 		}
+
+		// realTextureFileName
+		if (i = text.find("<s"sv); i == text.npos) return __LINE__;				// <string> tex file name .ext
+		if (j = text.find('<', i + 8); j == text.npos) return __LINE__;			// </string>
+		realTextureFileName = texPreFixPath;
+		realTextureFileName.append(CutStr(text, i + 8, j - i - 8));
+
+		return 0;
 	}
 
 	// format: a,b
@@ -82,16 +171,6 @@ struct TPData {
 		d = (T)ReadInteger<true>(p);
 	}
 
-	static int SubStr(std::string_view& line, size_t const& headLen, size_t const& tailLen) {
-		if (line.size() <= (headLen + tailLen)) return __LINE__;
-		line = std::string_view(line.data() + headLen, (line.size() - (headLen + tailLen)));
-		return 0;
-	}
-
-	static bool ReadBool(std::string_view& line, size_t const& numSpaces) {
-		return line[numSpaces + 1] == 't';
-	}
-
 	// ' ' continue，'<' quit. ascii： ' ' < '0-9' < '<'
 	template<typename T>
 	static void SpaceSplitFillVector(std::vector<T>& vs, std::string_view const& line) {
@@ -105,112 +184,11 @@ struct TPData {
 		}
 	}
 
-	int Fill(std::string_view const& text, std::string_view const& texPreFixPath) {
-		frames.clear();
-		size_t offset = 0, siz = text.size();
-		std::string_view line;
-		while (NextLine(text, offset, line)) {
-			if (line == "    <dict>") {                                         // locate to data started
-				SkipLines(text, offset, 2);                                     // skip <key>frames</key> & <dict>
-
-			LabBegin:
-				auto&& o = *frames.emplace_back().Emplace();
-				if (!NextLine(text, offset, line)) return __LINE__;             // locate to <key>???????</key>
-				if (SubStr(line, 17, 6)) return __LINE__;                       // cut item.key
-				o.key = line;
-
-				SkipLines(text, offset, 3);                                     // skip <dict> & <key>aliases</key> & <array/>
-				if (!NextLine(text, offset, line)) return __LINE__;             // <key>anchor</key> || <key>spriteOffset</key>
-				if (line == "                <key>anchor</key>") {
-					if (!NextLine(text, offset, line)) return __LINE__;         // <string>{x,y}</string>
-					if (SubStr(line, 25, 10)) return __LINE__;                  // cut x,y
-					o.anchor.emplace();
-					if (ReadFloat2(line, o.anchor->x, o.anchor->y)) return __LINE__;
-					SkipLines(text, offset, 1);                                 // skip <key>spriteOffset</key>
-				}
-				if (!NextLine(text, offset, line)) return __LINE__;				// <string>{x,y}</string>
-				if (SubStr(line, 25, 10)) return __LINE__;						// cut x,y
-				if (ReadFloat2(line, o.spriteOffset.x, o.spriteOffset.y)) return __LINE__;
-
-				SkipLines(text, offset, 1);                                     // skip <key>spriteSize</key>
-				if (!NextLine(text, offset, line)) return __LINE__;             // <string>{w,h}</string>
-				if (SubStr(line, 25, 10)) return __LINE__;                      // cut w,h
-				if (ReadInteger2(line, o.spriteSize.w, o.spriteSize.h)) return __LINE__;
-
-				SkipLines(text, offset, 1);                                     // skip <key>spriteSourceSize</key>
-				if (!NextLine(text, offset, line)) return __LINE__;             // <string>{w,h}</string>
-				if (SubStr(line, 25, 10)) return __LINE__;                      // cut w,h
-				if (ReadInteger2(line, o.spriteSourceSize.w, o.spriteSourceSize.h)) return __LINE__;
-
-				SkipLines(text, offset, 1);                                     // skip <key>textureRect</key>
-				if (!NextLine(text, offset, line)) return __LINE__;             // <string>{{x,y},{w,h}}</string>
-				if (SubStr(line, 26, 11)) return __LINE__;                      // cut x,y},{w,h
-				ReadInteger4(line.data(), o.textureRect.x, o.textureRect.y, o.textureRect.w, o.textureRect.h);
-
-				SkipLines(text, offset, 1);                                     // skip <key>textureRotated</key>
-				if (!NextLine(text, offset, line)) return __LINE__;             // <true/> or <false/>
-				o.textureRotated = ReadBool(line, 16);
-
-				if (!NextLine(text, offset, line)) return __LINE__;             // <key>triangles</key> | </dict>
-				if (line == "                <key>triangles</key>") {
-					if (!NextLine(text, offset, line)) return __LINE__;         // <string>27 29 7 27 1...</string>
-					if (SubStr(line, 24, 9)) return __LINE__;                   // cut numbers
-					SpaceSplitFillVector(o.triangles, line);
-
-					SkipLines(text, offset, 1);                                 // skip <key>vertices</key>
-					if (!NextLine(text, offset, line)) return __LINE__;         // <string>471 408...</string>
-					if (SubStr(line, 24, 9)) return __LINE__;                   // cut numbers
-					SpaceSplitFillVector(o.vertices, line);
-
-					SkipLines(text, offset, 1);                                 // skip <key>verticesUV</key>
-					if (!NextLine(text, offset, line)) return __LINE__;         // <string>1280 1321...</string>
-					if (SubStr(line, 24, 9)) return __LINE__;                   // cut numbers
-					SpaceSplitFillVector(o.verticesUV, line);
-
-					if (!NextLine(text, offset, line)) return __LINE__;         // </dict>
-				}
-
-				if (line == "            </dict>") {
-					auto bak = offset;
-					if (!NextLine(text, offset, line)) return __LINE__;         // <key> | </dict>
-
-					if (line == "        </dict>") {                            // frames fill end, begin fill meta
-						SkipLines(text, offset, 4);                             // skip <key>metadata</key>    <dict>     <key>format</key>    <integer>3</integer>
-
-						if (!NextLine(text, offset, line)) return __LINE__;		// <key>pixelFormat</key>  ||  <key>premultiplyAlpha</key>
-						if (line == "            <key>pixelFormat</key>") {
-							SkipLines(text, offset, 2);							// <string>RGBA8888</string> <key>premultiplyAlpha</key>
-						}
-
-						if (!NextLine(text, offset, line)) return __LINE__;     // <true/> | <false/>
-						premultiplyAlpha = ReadBool(line, 12);
-
-						SkipLines(text, offset, 1);                             // skip <key>realTextureFileName</key>
-						if (!NextLine(text, offset, line)) return __LINE__;     // <string>abc123.png</string>
-						if (SubStr(line, 20, 9)) return __LINE__;               // cut fileName
-						realTextureFileName = texPreFixPath;
-						realTextureFileName.append(line);
-
-						SkipLines(text, offset, 1);                             // skip <key>size</key>
-						if (!NextLine(text, offset, line)) return __LINE__;     // <string>{w,h}</string>
-						if (SubStr(line, 21, 10)) return __LINE__;              // cut w,h
-						ReadInteger2(line, size.w, size.h);
-
-						SkipLines(text, offset, 3);                             // skip <key>smartupdate</key>  ...... <key>textureFileName</key>
-						if (!NextLine(text, offset, line)) return __LINE__;     // <string>abc123.png</string>
-						if (SubStr(line, 20, 9)) return __LINE__;               // cut fileName
-						textureFileName = line;
-
-						return 0;
-					}
-					else {
-						offset = bak;
-						goto LabBegin;
-					}
-				}
-				else return __LINE__;
-			}
-		}
-		return __LINE__;
+	// unsafe for speed up
+	XX_INLINE static void CutStr(std::string_view& sv, size_t const& i) {
+		sv = { sv.data() + i, sv.size() - i };
+	}
+	XX_INLINE static std::string_view CutStr(std::string_view const& sv, size_t const& i, size_t const& siz) {
+		return { sv.data() + i, siz };
 	}
 };
