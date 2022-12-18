@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 
 void Engine::EngineInit() {
+	lastTime = xx::NowSteadyEpochSeconds();
+	lastDelta = 0;
 	SearchPathReset();
 
 	CheckGLError();
@@ -74,6 +76,7 @@ void Engine::EngineInit() {
 }
 
 void Engine::EngineUpdateBegin() {
+	lastDelta = xx::NowSteadyEpochSeconds(lastTime);
 	drawCall = 0;
 
 	assert(w >= 0 && h >= 0);

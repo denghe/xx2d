@@ -86,6 +86,8 @@ struct Engine {
 	bool Pressed(Mbtns const& b);	// return mbtnStatus[(size_t)b];
 	bool Pressed(KbdKeys const& k);	// return kbdStates[(size_t)k];
 
+	double lastTime{}, lastDelta{};	// seconds. update before call Update()
+
 
 	/**********************************************************************************/
 	// shader

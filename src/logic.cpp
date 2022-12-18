@@ -13,14 +13,16 @@ void Logic::Init() {
 	lbCount.SetAnchor({0, 0});
 }
 
-int Logic::Update(float delta) {
+int Logic::Update() {
 	if (Pressed(KbdKeys::Escape)) return 1;
-	coros();
-	if (Pressed(Mbtns::Left)) {
-		auto sec = xx::NowSteadyEpochSeconds();
-		if (sec - lastMouseClickTime > 0.001) {
-			lastMouseClickTime = sec;
 
+	constexpr double fixedFrameDelta = 1.0 / 60;
+	timePool += lastDelta;
+	while (timePool >= fixedFrameDelta) {
+		timePool -= fixedFrameDelta;
+		coros();
+
+		if (Pressed(Mbtns::Left)) {
 			auto&& [iter, ok] = objs.emplace(++objsCounter, std::make_pair(Sprite{}, Label{}));
 			assert(ok);
 			auto& [s, l] = iter->second;
@@ -44,9 +46,9 @@ int Logic::Update(float delta) {
 
 			coros.Add([](Logic* self, size_t k, Sprite& s, Label& l)->CoType {
 				CoYield;
-				while (s.scale.x > 0.01) {
-					s.SetScale(s.scale * 0.999);
-					l.SetScale(l.scale * 0.999);
+				while (s.scale.x > 0.05) {
+					s.SetScale(s.scale * 0.99);
+					l.SetScale(s.scale);
 					l.SetPositon({ s.pos.x, s.pos.y + s.frame->spriteSize.h * s.scale.y * (1 - s.anchor.y) });
 					CoYield;
 				}
@@ -54,6 +56,7 @@ int Logic::Update(float delta) {
 			}(this, objsCounter, s, l));
 		}
 	}
+
 	for (auto& [k, v] : objs) {
 		v.first.Draw(this);
 	}

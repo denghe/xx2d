@@ -72,7 +72,7 @@ int main() {
 		glfwPollEvents();
 		logic->EngineUpdateBegin();
 
-		if (logic->Update((float)glfwGetTime())) break;
+		if (logic->Update()) break;
 
 		logic->EngineUpdateEnd();
 		glfwSwapBuffers(wnd);
