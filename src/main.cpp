@@ -10,6 +10,7 @@ inline int width = 0;
 inline int height = 0;
 
 int main() {
+	SetConsoleOutputCP(65001);
 
 	glfwSetErrorCallback([](int error, const char* description) {
 		throw new std::exception(description, error);
@@ -27,25 +28,13 @@ int main() {
 	// reference from raylib rcore.c
 	glfwSetKeyCallback(wnd, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {
         if (key < 0) return;    // macos fn key == -1
-
-        if (action == GLFW_RELEASE) ::logic->kbdStates[key] = 0;
-        else ::logic->kbdStates[key] = 1;
-
-        if (((key == (int)KbdKeys::CapsLock) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
-            ((key == (int)KbdKeys::NumLock) && ((mods & GLFW_MOD_NUM_LOCK) > 0))) ::logic->kbdStates[key] = 1;
-
-		// known issue: key will doube in kbdInputs
-   //     if (action == GLFW_PRESS) {
-			//::logic->kbdInputs.push_back(key);
-   //     }
-
-		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-			glfwSetWindowShouldClose(wnd, GLFW_TRUE);
-		}
+		::logic->kbdStates[key] = action;
 	});
 
 	glfwSetCharCallback(wnd, [](GLFWwindow* wnd, unsigned int key) {
-		::logic->kbdInputs.push_back(key);
+		if (::logic->kbdInputs.size() < 512) {
+			::logic->kbdInputs.push_back(key);
+		}
 	});
 
 	//glfwSetScrollCallback(wnd, MouseScrollCallback);
@@ -83,7 +72,7 @@ int main() {
 		glfwPollEvents();
 		logic->EngineUpdateBegin();
 
-		logic->Update((float)glfwGetTime());
+		if (logic->Update((float)glfwGetTime())) break;
 
 		logic->EngineUpdateEnd();
 		glfwSwapBuffers(wnd);

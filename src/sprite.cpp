@@ -56,10 +56,18 @@ void Sprite::Draw(Engine* eg) {
 	if (dirty) {
 		if (dirtyFrame) {
 			auto& r = frame->textureRect;
-			qv[0].u = r.x;              qv[0].v = r.y + r.h;
-			qv[1].u = r.x;              qv[1].v = r.y;
-			qv[2].u = r.x + r.w;        qv[2].v = r.y;
-			qv[3].u = r.x + r.w;        qv[3].v = r.y + r.h;
+			if (frame->textureRotated) {
+				qv[0].u = r.x;				qv[0].v = r.y + r.w;
+				qv[1].u = r.x + r.h;        qv[1].v = r.y + r.w;
+				qv[2].u = r.x + r.h;        qv[2].v = r.y;
+				qv[3].u = r.x;				qv[3].v = r.y;
+			}
+			else {
+				qv[0].u = r.x;              qv[0].v = r.y + r.h;
+				qv[1].u = r.x;              qv[1].v = r.y;
+				qv[2].u = r.x + r.w;        qv[2].v = r.y;
+				qv[3].u = r.x + r.w;        qv[3].v = r.y + r.h;
+			}
 		}
 		if (dirtySizeAnchorPosScaleRotate) {
 			auto w = frame->spriteSize.w * scale.x;

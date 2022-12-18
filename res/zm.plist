@@ -4,6 +4,23 @@
     <dict>
         <key>frames</key>
         <dict>
+            <key>mouse.pkm</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>anchor</key>
+                <string>{0.5,0}</string>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{28,32}</string>
+                <key>spriteSourceSize</key>
+                <string>{32,32}</string>
+                <key>textureRect</key>
+                <string>{{67,1},{28,32}}</string>
+                <key>textureRotated</key>
+                <false/>
+            </dict>
             <key>zazaka.pkm</key>
             <dict>
                 <key>aliases</key>
@@ -19,7 +36,7 @@
                 <key>textureRect</key>
                 <string>{{1,1},{46,64}}</string>
                 <key>textureRotated</key>
-                <false/>
+                <true/>
             </dict>
         </dict>
         <key>metadata</key>
@@ -29,13 +46,13 @@
             <key>premultiplyAlpha</key>
             <false/>
             <key>realTextureFileName</key>
-            <string>aaa.pkm</string>
+            <string>zm.pkm</string>
             <key>size</key>
-            <string>{48,66}</string>
+            <string>{96,48}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:b4f30c876b3d367d75569876f8cbb2f9:06073093fe24b6a58d787fee05188ad0:435c50fd20e6951f42c0faa621d70027$</string>
+            <string>$TexturePacker:SmartUpdate:46a00f58fc2ceb6d3e74d6728166f502:8b79b7c2ab100ec072ba9bba417dced3:9e1b68d48dfb5a83e478f27192f25ba1$</string>
             <key>textureFileName</key>
-            <string>aaa.pkm</string>
+            <string>zm.pkm</string>
         </dict>
     </dict>
 </plist>

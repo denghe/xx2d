@@ -3,34 +3,34 @@
 
 void Logic::Init() {
 	rnd.SetSeed();
-	lastMouseClickTime = xx::NowSteadyEpochSeconds();
-	t = LoadTextureFromCache("res/mouse.pkm"sv);
 	fnt1 = LoadBMFont("res/font1/basechars.fnt"sv);
 	fnt2 = LoadBMFont("res/font2/basechars.fnt"sv);
-	LoadFramesFromCache(LoadTPData("res/aaa.plist"sv));		// key = zazaka.pkm
+	LoadFramesFromCache(LoadTPData("res/zm.plist"sv));		// key = zazaka.pkm, mouse.pkm
+	fZazaka = frameCache.find("zazaka.pkm"sv)->second;
+	fMouse = frameCache.find("mouse.pkm"sv)->second;
+	t = LoadTextureFromCache("res/bomb.pkm"sv);
 	lbCount.SetPositon(ninePoints[1] + XY{ 10, 10 });
 	lbCount.SetAnchor({0, 0});
 }
 
-void Logic::Update(float delta) {
-	while (!kbdInputs.empty()) {
-		std::cout << kbdInputs.front() << " ";
-		kbdInputs.pop_front();
-	}
-	std::cout.flush();
-
-	if (mbtnStatus[(int)Mbtns::Left]) {
+int Logic::Update(float delta) {
+	if (Pressed(KbdKeys::Escape)) return 1;
+	coros();
+	if (Pressed(Mbtns::Left)) {
 		auto sec = xx::NowSteadyEpochSeconds();
 		if (sec - lastMouseClickTime > 0.001) {
 			lastMouseClickTime = sec;
 
-			auto& [s, l] = objs.emplace_back();
+			auto&& [iter, ok] = objs.emplace(++objsCounter, std::make_pair(Sprite{}, Label{}));
+			assert(ok);
+			auto& [s, l] = iter->second;
+
 			if (objs.size() % 2) {
-				s.SetTexture(frameCache.find("zazaka.pkm"sv)->second);
+				s.SetTexture(fZazaka);
 				s.SetScale(rnd.Next(0.5f, 2.f));
 			}
 			else {
-				s.SetTexture(t);
+				s.SetTexture(fMouse);
 				s.SetScale(rnd.Next(1.f, 4.f));
 			}
 			auto c = rnd.Get(); auto cp = (uint8_t*)&c;
@@ -41,67 +41,26 @@ void Logic::Update(float delta) {
 			l.SetPositon({ s.pos.x, s.pos.y + s.frame->spriteSize.h * s.scale.y * (1 - s.anchor.y) });
 			l.SetAnchor({ 0.5, 0 });
 			l.scale = s.scale;
+
+			coros.Add([](Logic* self, size_t k, Sprite& s, Label& l)->CoType {
+				CoYield;
+				while (s.scale.x > 0.01) {
+					s.SetScale(s.scale * 0.999);
+					l.SetScale(l.scale * 0.999);
+					l.SetPositon({ s.pos.x, s.pos.y + s.frame->spriteSize.h * s.scale.y * (1 - s.anchor.y) });
+					CoYield;
+				}
+				self->objs.erase(k);
+			}(this, objsCounter, s, l));
 		}
 	}
-	for (auto& o : objs) {
-		o.first.Draw(this);
+	for (auto& [k, v] : objs) {
+		v.first.Draw(this);
 	}
-	for (auto& [s, l] : objs) {
-		l.Draw(this);
+	for (auto& [k, v] : objs) {
+		v.second.Draw(this);
 	}
-
 	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", obj count = ", objs.size()));
 	lbCount.Draw(this);
+	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//LoadFramesFromCache(LoadTPData("res/bomb.plist"sv));	// key = bomb1.png ~ bomb36.png
-
-//size_t numSprites = 50'000;
-//objs.resize(numSprites);
-
-//std::string key;
-//for (size_t j = 0; j < 10000; j++) {
-//	for (int i = 1; i <= 36; ++i) {
-//		auto&& [s, l] = objs.emplace_back();
-//		xx::Append(key, "bomb", i, ".png");
-//		s.SetTexture( frameCache[key] );
-//		s.SetScale({0.5, 0.5});
-//		key.clear();
-//		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
-//	}
-//}
-
-//{
-//	auto&& o = objs.emplace_back();
-//	auto& s = o.first;
-//	s.SetTexture(frameCache.find("zazaka.pkm"sv)->second);
-//	s.SetScale({ 16, 16 });
-//	s.SetAnchorFromFrame();
-//}
-
-//auto&& o = objs.emplace_back().second;
-//o.SetText(fnt, "ofplo"sv, 512);
-//o.SetAnchor({ 0.5, 0 });
-
-	//for (auto& o : objs) {
-	//	o.first.Draw(this);
-	//}
-
-	//for (auto& o : objs) {
-	//	o.second.Draw(this);
-	//}

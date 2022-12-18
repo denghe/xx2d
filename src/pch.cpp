@@ -35,6 +35,76 @@
 
 
 
+	if (!kbdInputs.empty()) {
+		std::cout << "kbdInputs = ";
+		for (auto& c : kbdInputs) {
+			//std::cout << c << " ";
+			xx::Cout(c);
+		}
+		kbdInputs.clear();
+		std::cout << std::endl;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//LoadFramesFromCache(LoadTPData("res/bomb.plist"sv));	// key = bomb1.png ~ bomb36.png
+
+//size_t numSprites = 50'000;
+//objs.resize(numSprites);
+
+//std::string key;
+//for (size_t j = 0; j < 10000; j++) {
+//	for (int i = 1; i <= 36; ++i) {
+//		auto&& [s, l] = objs.emplace_back();
+//		xx::Append(key, "bomb", i, ".png");
+//		s.SetTexture( frameCache[key] );
+//		s.SetScale({0.5, 0.5});
+//		key.clear();
+//		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
+//	}
+//}
+
+//{
+//	auto&& o = objs.emplace_back();
+//	auto& s = o.first;
+//	s.SetTexture(frameCache.find("zazaka.pkm"sv)->second);
+//	s.SetScale({ 16, 16 });
+//	s.SetAnchorFromFrame();
+//}
+
+//auto&& o = objs.emplace_back().second;
+//o.SetText(fnt, "ofplo"sv, 512);
+//o.SetAnchor({ 0.5, 0 });
+
+	//for (auto& o : objs) {
+	//	o.first.Draw(this);
+	//}
+
+	//for (auto& o : objs) {
+	//	o.second.Draw(this);
+	//}
+
+
+
+
+
+
+
 glfwSetWindowUserPointer(wnd, ptr)
 glfwGetWindowUserPointer(window)
 
