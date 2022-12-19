@@ -10,6 +10,11 @@ inline int width = 0;
 inline int height = 0;
 
 int main() {
+#ifdef OPEN_MP_NUM_THREADS
+	omp_set_num_threads(OPEN_MP_NUM_THREADS);
+	omp_set_dynamic(0);
+#endif
+
 	SetConsoleOutputCP(65001);
 
 	glfwSetErrorCallback([](int error, const char* description) {

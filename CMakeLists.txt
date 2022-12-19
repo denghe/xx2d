@@ -13,6 +13,7 @@ include_directories(
 
 set(SRCS)
 file(GLOB_RECURSE SRCS
+	3rd/xxlib/*.h
 	src/*.cpp
 	src/*.h
 	src/*.hpp
@@ -45,3 +46,4 @@ if(MSVC)
 else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
 endif()
+ 
