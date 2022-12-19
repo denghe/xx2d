@@ -110,8 +110,9 @@ struct Engine {
 	GLuint autoBatchLastTextureId = 0;
 	size_t autoBatchTexsCount = 0;
 	size_t autoBatchQuadVertsCount = 0;
-	size_t drawCall = 0;	// cleanup when EngineUpdateBegin. +1 when glDrawXxxxx
+	size_t drawCall = 0, drawQuads = 0;	// cleanup when EngineUpdateBegin. +1 when glDrawXxxxx
 	size_t GetDrawCall();
+	size_t GetDrawQuads();
 
 	std::unique_ptr<std::pair<GLuint, int>[]> autoBatchTexs = std::make_unique<std::pair<GLuint, int>[]>(maxQuadNums);	// tex id + count
 	std::unique_ptr<QuadVerts[]> autoBatchQuadVerts = std::make_unique<QuadVerts[]>(maxQuadNums);

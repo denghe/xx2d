@@ -78,6 +78,7 @@ void Engine::EngineInit() {
 void Engine::EngineUpdateBegin() {
 	lastDelta = xx::NowSteadyEpochSeconds(lastTime);
 	drawCall = 0;
+	drawQuads = 0;
 
 	assert(w >= 0 && h >= 0);
 	glViewport(0, 0, w, h);
