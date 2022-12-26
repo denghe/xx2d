@@ -31,12 +31,15 @@ include_directories(
 )
 
 if(MSVC)
+	add_definitions("-D_SECURE_SCL=0")
+	add_definitions("-D_HAS_ITERATOR_DEBUGGING=0")
+
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 #	target_link_libraries(${name} opengl32 glfw3)
 
-#	add_definitions(-DOPEN_MP_NUM_THREADS=3)
-#	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/openmp")
+	add_definitions(-DOPEN_MP_NUM_THREADS=3)
+	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/openmp")
 
 	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/GL")
 	SET_TARGET_PROPERTIES(${name} PROPERTIES LINK_FLAGS "/LTCG")
