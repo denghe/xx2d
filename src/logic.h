@@ -60,8 +60,6 @@ namespace GameLogic {
 		XY xy;
 		// 即将生效的坐标( Update 多线并行填充 )
 		XY xy2;
-		// 剩余生命. <=0 时销毁. 每 update -1
-		int life;
 
 		Sprite spr;
 
@@ -88,7 +86,7 @@ namespace GameLogic {
 		size_t objsCap;
 
 		// 随机数一枚, 用于对象完全重叠的情况下产生一个移动方向
-		Rnd rnd;
+		inline static thread_local Rnd rnd;
 
 		// 每帧统计还有多少个对象正在移动
 		int count = 0;
@@ -98,7 +96,6 @@ namespace GameLogic {
 
 		void Init(Logic* eg, int const& cap) {
 			this->eg = eg;
-			rnd.SetSeed();
 			objsCap = cap;
 
 			// 初始化 2d 空间索引 容器

@@ -52,7 +52,11 @@ struct Rnd {
 #undef Random5_M32
 #pragma endregion
 
-    void SetSeed(uint32_t const& seed = std::random_device()()) {
+    Rnd() {
+        SetSeed(std::random_device()());
+    }
+
+    void SetSeed(uint32_t const& seed) {
         this->seed = seed;
         MT[0] = seed;
         index = SIZE;
