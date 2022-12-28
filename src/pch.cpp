@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 
-// todo: touch, keyboard, joystick support
+// todo: touch, joystick support
 // todo: button, scroll view
 // todo: node( with matrix )
 

@@ -22,11 +22,14 @@ bmfont
 
 label
 
+keyboard, mouse
+
+
 # todo
 
-touch, keyboard, joystick
+touch, joystick
 
-node( with matrix )
+node / translate support( matrix manager )
 
 button, scroll view
 
