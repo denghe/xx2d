@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "pch.h"
 
-// tiled map xml version data loader & container. supported to version 1.9x
+// tiled map xml version data loader & container. supported to version 1.9x. compress method support zstandard
 struct TMXData {
 
 	// Chunks are used to store the tile layer data for infinite maps.
@@ -452,5 +452,12 @@ struct TMXData {
 	};
 
 
-	// todo: funcs
+	/*********************************************************************************************/
+	/*********************************************************************************************/
+	/*********************************************************************************************/
+
+	Map map;
+
+	// 从 .tmx 文件内容加载数据到 map 变量
+	int Fill(std::string_view text);
 };
