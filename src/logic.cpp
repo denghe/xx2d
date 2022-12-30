@@ -3,16 +3,10 @@
 #include "tmxdata.h"
 
 void Logic::Init() {
-	coros.Add([](Logic* self)->CoType {
+	coros.Add([](Logic* eg)->CoType {
 		CoYield;
 		TMXData t;
-		auto&& [d, fp] = self->ReadAllBytes("res/tiledmap1/m1.tmx");
-		if (!d) {
-			throw std::logic_error("read file error.");
-		}
-		if (int r = t.Fill(d)) {
-			throw std::logic_error(xx::ToString("tmxd.Fill error. r = ", r, ", fn = ", fp));
-		}
+		t.Fill(eg, "res/tiledmap1/m1.tmx");
 		std::cout << t.map.version << std::endl;
 	}(this));
 }

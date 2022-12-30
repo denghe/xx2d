@@ -2,7 +2,98 @@
 #include "pch.h"
 
 // tiled map xml version data loader & container. supported to version 1.9x. compress method support zstandard
+
+// https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#
+
+// todo: + field: "class"
+
 struct TMXData {
+
+	template<typename T>
+	inline static void FillIntsTo(std::vector<T>& out, std::string_view const& tar) {
+		// todo
+	}
+
+	template<typename ET>
+	struct StrToEnumMappings {
+		inline static constexpr std::string_view const* svs = nullptr;
+		inline static constexpr size_t count = 0;
+	};
+
+	template<typename ET, typename U = std::decay_t<ET>>
+	inline static void FillEnumTo(ET& out, std::string_view const& tar) {
+		for (size_t i = 0; i < StrToEnumMappings<U>::count; ++i) {
+			if (StrToEnumMappings<U>::svs[i] == tar) {
+				out = (U)i;
+				return;
+			}
+		}
+		throw std::logic_error("can't find enum by value: " + std::string(tar));
+	}
+
+	/**********************************************************************************/
+
+	enum class Orientations {
+		Orthogonal,
+		Isometric,
+		Staggered,
+		Hexagonal,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 4> enumTexts_Orientations = {
+		"orthogonal"sv,
+		"isometric"sv,
+		"staggered"sv,
+		"hexagonal"sv
+	};
+	template<>
+	struct StrToEnumMappings<Orientations> {
+		inline static constexpr std::string_view const* svs = enumTexts_Orientations.data();
+		inline static constexpr size_t count = enumTexts_Orientations.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class RenderOrders {
+		RightDown,
+		RightUp,
+		LeftDown,
+		LeftUp,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 4> enumTexts_RenderOrders = {
+		"right-down"sv,
+		"right-up"sv,
+		"left-down"sv,
+		"left-up"sv
+	};
+	template<>
+	struct StrToEnumMappings<RenderOrders> {
+		inline static constexpr std::string_view const* svs = enumTexts_RenderOrders.data();
+		inline static constexpr size_t count = enumTexts_RenderOrders.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class WangSetTypes {
+		Corner,
+		Edge,
+		Mixed,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 4> enumTexts_WangSetTypes = {
+		"corner"sv,
+		"edge"sv,
+		"mixed"sv,
+	};
+	template<>
+	struct StrToEnumMappings<WangSetTypes> {
+		inline static constexpr std::string_view const* svs = enumTexts_WangSetTypes.data();
+		inline static constexpr size_t count = enumTexts_WangSetTypes.size();
+	};
+
+	/**********************************************************************************/
+
 
 	// Chunks are used to store the tile layer data for infinite maps.
 	struct Chunk {
@@ -189,7 +280,7 @@ struct TMXData {
 		int height;
 
 		// orthogonal (default) or isometric
-		std::string orientation;
+		Orientations orientation;
 
 		// Cell width of tile grid
 		int width;
@@ -272,7 +363,7 @@ struct TMXData {
 
 	struct WangTile {
 		// Local ID of tile
-		int tileId;
+		uint32_t tileId;
 
 		// Array of Wang color indexes (uchar[8])
 		std::vector<byte> wangid;
@@ -292,7 +383,7 @@ struct TMXData {
 		std::vector<Property> properties;
 
 		// Local ID of tile representing the Wang color
-		int tile;
+		uint32_t tile;
 	};
 
 	struct WangSet {
@@ -302,11 +393,14 @@ struct TMXData {
 		// Name of the Wang set
 		std::string name;
 
+		// Type of the Wang set: corner, edge, mixed
+		WangSetTypes type;
+
 		// Array of Properties
 		std::vector<Property> properties;
 
 		// Local ID of tile representing the Wang set
-		int tile;
+		uint32_t tile;
 
 		// Array of Wang tiles
 		std::vector<WangTile> wangtiles;
@@ -320,7 +414,7 @@ struct TMXData {
 		int columns;
 
 		//	GID corresponding to the first tile in the set
-		int firstgid;
+		uint32_t firstgid;
 
 		// (optional)
 		Grid grid;
@@ -397,10 +491,10 @@ struct TMXData {
 		int compressionlevel;
 
 		// Number of tile rows
-		int height;
+		uint32_t height;
 
 		// 	Length of the side of a hex tile in pixels (hexagonal maps only)
-		int hexsidelength;
+		uint32_t hexsidelength;
 
 		// 	Whether the map has infinite dimensions
 		bool infinite;
@@ -409,19 +503,19 @@ struct TMXData {
 		std::vector<Layer> layers;
 
 		// Auto-increments for each layer
-		int nextlayerid;
+		uint32_t nextlayerid;
 
 		// 	Auto-increments for each placed object
-		int nextobjectid;
+		uint32_t nextobjectid;
 
 		// orthogonal, isometric, staggered or hexagonal
-		std::string orientation;
+		Orientations orientation;
 
 		// Array of Properties
 		std::vector<Property> properties;
 
 		// right-down (the default), right-up, left-down or left-up (currently only supported for orthogonal maps)
-		std::string renderorder;
+		RenderOrders renderorder;
 
 		// x or y (staggered / hexagonal maps only)
 		std::string staggeraxis;
@@ -433,13 +527,13 @@ struct TMXData {
 		std::string tiledversion;
 
 		// Map grid height
-		int tileheight;
+		uint32_t tileheight;
 
 		// Array of Tilesets
 		std::vector<Tileset> tilesets;
 
 		// Map grid width
-		int tilewidth;
+		uint32_t tilewidth;
 
 		// map (since 1.0)
 		std::string type;
@@ -448,7 +542,7 @@ struct TMXData {
 		std::string version;
 
 		// Number of tile columns
-		int width;
+		uint32_t width;
 	};
 
 
@@ -458,6 +552,6 @@ struct TMXData {
 
 	Map map;
 
-	// 从 .tmx 文件内容加载数据到 map 变量
-	int Fill(std::string_view text);
+	// fill map data by .tmx file
+	int Fill(Engine* const& eg, std::string_view const& tmxfn);
 };
