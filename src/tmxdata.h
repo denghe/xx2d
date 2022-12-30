@@ -1,35 +1,22 @@
 ﻿#pragma once
 #include "pch.h"
 
-// tiled map xml version data loader & container. supported to version 1.9x. compress method support zstandard
-
+// tiled map xml version data loader & container. supported to version 1.9x. compress method only support zstandard
 // https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#
 
+// todo: strong type refine
+// todo: fill step 2: ptrs by id, props obj by id
+// todo: vector reserve
 // todo: + field: "class"
+// todo: handle path "../../". remove rootDir ( write global function for append path? test FS::path )
 
 struct TMXData {
-
-	template<typename T>
-	inline static void FillIntsTo(std::vector<T>& out, std::string_view const& tar) {
-		// todo
-	}
 
 	template<typename ET>
 	struct StrToEnumMappings {
 		inline static constexpr std::string_view const* svs = nullptr;
 		inline static constexpr size_t count = 0;
 	};
-
-	template<typename ET, typename U = std::decay_t<ET>>
-	inline static void FillEnumTo(ET& out, std::string_view const& tar) {
-		for (size_t i = 0; i < StrToEnumMappings<U>::count; ++i) {
-			if (StrToEnumMappings<U>::svs[i] == tar) {
-				out = (U)i;
-				return;
-			}
-		}
-		throw std::logic_error("can't find enum by value: " + std::string(tar));
-	}
 
 	/**********************************************************************************/
 
@@ -81,7 +68,7 @@ struct TMXData {
 		Mixed,
 		MAX_VALUE_UNKNOWN
 	};
-	inline static constexpr std::array<std::string_view, 4> enumTexts_WangSetTypes = {
+	inline static constexpr std::array<std::string_view, 3> enumTexts_WangSetTypes = {
 		"corner"sv,
 		"edge"sv,
 		"mixed"sv,
@@ -94,12 +81,183 @@ struct TMXData {
 
 	/**********************************************************************************/
 
+	enum class Encodings {
+		Csv,
+		Base64,													// support Compressions
+		Xml,													// deprecated
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 3> enumTexts_Encodings = {
+		"csv"sv,
+		"base64"sv,
+		"xml"sv,
+	};
+	template<>
+	struct StrToEnumMappings<Encodings> {
+		inline static constexpr std::string_view const* svs = enumTexts_Encodings.data();
+		inline static constexpr size_t count = enumTexts_Encodings.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class Compressions {
+		Uncompressed,
+		Gzip,
+		Zlib,
+		Zstd,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 4> enumTexts_Compressions = {
+		"uncompressed"sv,
+		"gzip"sv,
+		"zlib"sv,
+		"zstd"sv,
+	};
+	template<>
+	struct StrToEnumMappings<Compressions> {
+		inline static constexpr std::string_view const* svs = enumTexts_Compressions.data();
+		inline static constexpr size_t count = enumTexts_Compressions.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class HAligns {
+		Left,
+		Center,
+		Right,
+		Justify,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 4> enumTexts_HAligns = {
+		"left"sv,
+		"center"sv,
+		"right"sv,
+		"justify"sv,
+	};
+	template<>
+	struct StrToEnumMappings<HAligns> {
+		inline static constexpr std::string_view const* svs = enumTexts_HAligns.data();
+		inline static constexpr size_t count = enumTexts_HAligns.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class StaggerAxiss {
+		X,
+		Y,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_StaggerAxiss = {
+		"x"sv,
+		"y"sv,
+	};
+	template<>
+	struct StrToEnumMappings<StaggerAxiss> {
+		inline static constexpr std::string_view const* svs = enumTexts_StaggerAxiss.data();
+		inline static constexpr size_t count = enumTexts_StaggerAxiss.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class StaggerIndexs {
+		Odd,
+		Even,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_StaggerIndexs = {
+		"odd"sv,
+		"even"sv,
+	};
+	template<>
+	struct StrToEnumMappings<StaggerIndexs> {
+		inline static constexpr std::string_view const* svs = enumTexts_StaggerIndexs.data();
+		inline static constexpr size_t count = enumTexts_StaggerIndexs.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class VAligns {
+		Top,
+		Center,
+		Bottom,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 3> enumTexts_VAligns = {
+		"top"sv,
+		"center"sv,
+		"bottom"sv,
+	};
+	template<>
+	struct StrToEnumMappings<VAligns> {
+		inline static constexpr std::string_view const* svs = enumTexts_VAligns.data();
+		inline static constexpr size_t count = enumTexts_VAligns.size();
+	};
+
+
+	/**********************************************************************************/
+
+	enum class PropertyTypes {
+		Bool,
+		Color,
+		Float,
+		File,
+		Int,
+		Object,
+		String,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 7> enumTexts_PropertyTypes = {
+		"bool"sv,
+		"color"sv,
+		"float"sv,
+		"file"sv,
+		"int"sv,
+		"object"sv,
+		"string"sv,
+	};
+	template<>
+	struct StrToEnumMappings<PropertyTypes> {
+		inline static constexpr std::string_view const* svs = enumTexts_PropertyTypes.data();
+		inline static constexpr size_t count = enumTexts_PropertyTypes.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class DrawOrders {
+		TopDown,
+		Index,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_DrawOrders = {
+		"topdown"sv,
+		"index"sv,
+	};
+	template<>
+	struct StrToEnumMappings<DrawOrders> {
+		inline static constexpr std::string_view const* svs = enumTexts_DrawOrders.data();
+		inline static constexpr size_t count = enumTexts_DrawOrders.size();
+	};
+
+
+	/**********************************************************************************/
+
+	enum class ObjectTypes {
+		Point,
+		Ellipse,
+		Polygon,
+		Tile,
+		Text,
+		Template,
+		MAX_VALUE_UNKNOWN
+	};
+
+	/**********************************************************************************/
+
 
 	// Chunks are used to store the tile layer data for infinite maps.
 	struct Chunk {
 		// Array of unsigned int (GIDs) or base64-encoded data
-		std::string dataBase64;
-		//std::vector<uint32_t> data;
+		std::vector<uint32_t> gids;
 
 		// Height in tiles
 		int height;
@@ -114,107 +272,167 @@ struct TMXData {
 		int y;
 	};
 
-	// A point on a polygon or a polyline, relative to the position of the object.
-	struct Point {
-		// X coordinate in pixels
-		double x;
 
-		// Y coordinate in pixels
-		double y;
+	struct Property {
+		std::string name;
+		PropertyTypes type;
 	};
 
-	// Wraps any number of custom properties. Can be used as a child of the map, tileset, tile (when part of a tileset), terrain, wangset, wangcolor, layer, objectgroup, object, imagelayer and group elements.
-	struct Property {
-		// Name of the property
-		std::string name;
+	struct PropertyBool : Property {
+		bool value;
+	};
 
-		// The type of the property. Can be string (default), int, float, bool, color, file or object (since 0.16, with color and file added in 0.17, and object added in 1.4).
-		std::string type;
+	struct PropertyColor : Property {
+		RGBA8 value;
+	};
 
-		// The value of the property. (default string is “”, default number is 0, default boolean is “false”, default color is #00000000, default file is “.” (the current file’s parent directory))
-		// Boolean properties have a value of either “true” or “false”.
-		// Color properties are stored in the format #AARRGGBB.
-		// File properties are stored as paths relative from the location of the map file.
-		// Object properties can reference any object on the same map and are stored as an integer (the ID of the referenced object, or 0 when no object is referenced). When used on objects in the Tile Collision Editor, they can only refer to other objects on the same tile.
-		// When a string property contains newlines, the current version of Tiled will write out the value as characters contained inside the property element rather than as the value attribute. It is possible that a future version of the TMX format will switch to always saving property values inside the element rather than as an attribute.
+	struct PropertyFloat : Property {
+		double value;
+	};
+
+	struct PropertyString : Property {
 		std::string value;
 	};
 
+	struct PropertyFile : PropertyString {
+	};
+
+	struct PropertyInt : Property {
+		int64_t value;
+	};
+
+	struct Object;
+	struct PropertyObject : Property {
+		uint32_t objectId;
+		xx::Shared<Object> value;
+	};
+
+
+	// A point on a polygon or a polyline, relative to the position of the object.
+	struct Point {
+		// X coordinate in pixels
+		int32_t x = 0;
+
+		// Y coordinate in pixels
+		int32_t y = 0;
+	};
+
 	struct Object {
-		// Used to mark an object as an ellipse
-		bool ellipse;
-
-		// Global tile ID, only if object represents a tile
-		int gid;
-
-		// Height in pixels.
-		double height;
+		ObjectTypes type;
 
 		// Incremental ID, unique across all objects
-		int id;
+		uint32_t id;
 
 		// String assigned to name field in editor
 		std::string name;
 
-		// Used to mark an object as a point
-		bool point;
-
-		// Array of Points, in case the object is a polygon
-		std::vector<Point> polygon;
-
-		// Array of Points, in case the object is a polyline
-		std::vector<Point> polyline;
+		// String assigned to class field in editor
+		std::string class_;
 
 		// Array of Properties
-		std::vector<Property> properties;
-
-		// Angle in degrees clockwise
-		double rotation;
-
-		// Reference to a template file, in case object is a template instance
-		std::string template_;
-
-		// Only used for text objects
-		std::string text;
-
-		// String assigned to type field in editor
-		std::string type;
-
-		// Whether object is shown in editor.
-		bool visible;
-
-		// Width in pixels.
-		double width;
+		std::vector<xx::Shared<Property>> properties;
 
 		// 	X coordinate in pixels
 		double x;
 
 		// Y coordinate in pixels
 		double y;
+
+		// Angle in degrees clockwise
+		double rotation;
+
+		// Whether object is shown in editor.
+		bool visible;
 	};
 
+	struct ObjectPoint : Object {
+	};
+
+	struct ObjectRectangle : Object {
+		// Width in pixels.
+		uint32_t width;
+
+		// Height in pixels.
+		uint32_t height;
+	};
+
+	struct ObjectEllipse : ObjectRectangle {
+	};
+
+	struct ObjectPolygon : Object {
+		// Array of Points
+		std::vector<Point> points;
+	};
+
+	struct ObjectTile : ObjectRectangle {
+		// todo: offical doc
+		bool flippingHorizontal;	// (gid >> 31) & 1
+
+		// todo: offical doc
+		bool flippingVertical;		// (gid >> 30) & 1
+
+		// Global tile ID
+		uint32_t gid;				// & 0x3FFFFFFFu;
+	};
+
+	struct ObjectText : ObjectRectangle {
+		// todo: offical doc
+		std::string text;
+		std::string fontfamily;
+		uint32_t pixelsize;
+		bool wrap;
+		RGBA8 color;
+		bool bold;
+		bool italic;
+		bool underline;
+		bool strikeout;
+		bool kerning;
+		HAligns halign;
+		VAligns valign;
+	};
+
+	struct ObjectTemplate : Object {
+		// Reference to a template file, in case object is a template instance
+		std::string template_;
+	};
+
+	// todo: offical doc here
+	struct ObjectGroup {
+		uint32_t id;
+		std::string name;
+		std::string class_;
+		bool locked;
+		bool visible;
+		// topdown (default) or index. objectgroup only.
+		DrawOrders draworder;
+		double opacity;
+		double offsetx;
+		double offsety;
+		double parallaxx;
+		double parallaxy;
+		std::optional<RGBA8> tintcolor;
+		std::vector<xx::Shared<Object>> objects;
+	};
+
+	// todo: split to strong type
 	struct Layer {
 		// 	Array of chunks (optional). tilelayer only.
 		std::vector<Chunk> chunks;
 
 		// zlib, gzip, zstd (since Tiled 1.3) or empty (default). tilelayer only.
-		std::string compression;
+		Compressions compression;
 
 		// Array of unsigned int (GIDs) or base64-encoded data. tilelayer only.
-		std::string dataBase64;
-		//std::vector<uint32_t> data;
+		std::vector<uint32_t> gids;
 
-		// topdown (default) or index. objectgroup only.
-		std::string draworder;
-
-		// 	csv (default) or base64. tilelayer only.
-		std::string encoding;
+		// csv (default) or base64. tilelayer only.
+		Encodings encoding;
 
 		// Row count. Same as map height for fixed-size maps.
 		int height;
 
 		// Incremental ID - unique across all layers
-		int id;
+		uint32_t id;
 
 		// Image used by this layer. imagelayer only.
 		std::string image;
@@ -244,7 +462,7 @@ struct TMXData {
 		double parallaxy;
 
 		// Array of Properties
-		std::vector<Property> properties;
+		std::vector<xx::Shared<Property>> properties;
 
 		// X coordinate where layer content starts (for infinite maps)
 		int startx;
@@ -253,10 +471,10 @@ struct TMXData {
 		int starty;
 
 		// Hex-formatted tint color (#RRGGBB or #AARRGGBB) that is multiplied with any graphics drawn by this layer or any child layers (optional).
-		std::string tintcolor;
+		std::optional<RGBA8> tintcolor;
 
 		// Hex-formatted color (#RRGGBB) (optional). imagelayer only.
-		std::string transparentcolor;
+		std::optional<RGBA8> transparentcolor;
 
 		// tilelayer, objectgroup, imagelayer or group
 		std::string type;
@@ -291,7 +509,7 @@ struct TMXData {
 		std::string name;
 
 		// Array of Properties
-		std::vector<Property> properties;
+		std::vector<xx::Shared<Property>> properties;
 
 		// Local ID of tile representing terrain
 		int tile;
@@ -337,7 +555,7 @@ struct TMXData {
 		double probability;
 
 		// Array of Properties
-		std::vector<Property> properties;
+		std::vector<xx::Shared<Property>> properties;
 
 		// Index of terrain for each corner of tile (optional)
 		std::vector<int> terrain;
@@ -371,7 +589,7 @@ struct TMXData {
 
 	struct WangColor {
 		// Hex-formatted color (#RRGGBB or #AARRGGBB)
-		std::string color;
+		RGBA8 color;
 
 		// Name of the Wang color
 		std::string name;
@@ -380,7 +598,7 @@ struct TMXData {
 		double probability;
 
 		// Array of Properties
-		std::vector<Property> properties;
+		std::vector<xx::Shared<Property>> properties;
 
 		// Local ID of tile representing the Wang color
 		uint32_t tile;
@@ -397,7 +615,7 @@ struct TMXData {
 		WangSetTypes type;
 
 		// Array of Properties
-		std::vector<Property> properties;
+		std::vector<xx::Shared<Property>> properties;
 
 		// Local ID of tile representing the Wang set
 		uint32_t tile;
@@ -408,7 +626,10 @@ struct TMXData {
 
 	struct Tileset {
 		// Hex-formatted color (#RRGGBB or #AARRGGBB) (optional)
-		std::string backgroundcolor;
+		std::optional<RGBA8> backgroundcolor;
+
+		// todo: offical doc here
+		std::string class_;
 
 		// The number of tile columns in the tileset
 		int columns;
@@ -438,7 +659,7 @@ struct TMXData {
 		std::string objectalignment;
 
 		// Array of Properties
-		std::vector<Property> properties;
+		std::vector<xx::Shared<Property>> properties;
 
 		// The external file that contains this tilesets data
 		std::string source;
@@ -471,7 +692,7 @@ struct TMXData {
 		Transformations transformations;
 
 		// Hex-formatted color (#RRGGBB) (optional)
-		std::string transparentcolor;
+		std::optional<RGBA8> transparentcolor;
 
 		// tileset (for tileset files, since 1.0)
 		std::string type;
@@ -485,10 +706,19 @@ struct TMXData {
 
 	struct Map {
 		// Hex-formatted color (#RRGGBB or #AARRGGBB) (optional)
-		std::string backgroundcolor;
+		std::optional<RGBA8> backgroundcolor;
 
 		// The compression level to use for tile layer data (defaults to -1, which means to use the algorithm default)
 		int compressionlevel;
+
+		// todo: offical doc here
+		uint32_t outputChunkWidth;
+
+		// todo: offical doc here
+		uint32_t outputChunkHeight;
+
+		// todo: offical doc here
+		std::string class_;
 
 		// Number of tile rows
 		uint32_t height;
@@ -511,17 +741,26 @@ struct TMXData {
 		// orthogonal, isometric, staggered or hexagonal
 		Orientations orientation;
 
+		// todo: offical doc here
+		std::vector<ObjectGroup> objectgroups;
+
+		// todo: offical doc here
+		double parallaxoriginx;
+
+		// todo: offical doc here
+		double parallaxoriginy;
+
 		// Array of Properties
-		std::vector<Property> properties;
+		std::vector<xx::Shared<Property>> properties;
 
 		// right-down (the default), right-up, left-down or left-up (currently only supported for orthogonal maps)
 		RenderOrders renderorder;
 
 		// x or y (staggered / hexagonal maps only)
-		std::string staggeraxis;
+		StaggerAxiss staggeraxis;
 
 		// odd or even (staggered / hexagonal maps only)
-		std::string staggerindex;
+		StaggerIndexs staggerindex;
 
 		// The Tiled version used to save the file (since Tiled 1.0.1). May be a date (for snapshot builds). (optional)
 		std::string tiledversion;

@@ -62,4 +62,10 @@ SET(ZSTD_BUILD_TESTS OFF CACHE BOOL "ZSTD_BUILD_SHARED" FORCE)
 SET(ZSTD_LEGACY_SUPPORT OFF CACHE BOOL "ZSTD_LEGACY_SUPPORT" FORCE)
 add_subdirectory(../zstd/build/cmake zstd)
 target_link_libraries(${name} libzstd_static)
+include_directories(
+	../zstd/lib
+)
 
+
+#add_subdirectory(../zlib zlib)
+#target_link_libraries(${name} zlibstatic)

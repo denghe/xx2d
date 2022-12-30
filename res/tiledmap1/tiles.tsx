@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.9" tiledversion="1.9.2" name="tiles" tilewidth="64" tileheight="64" spacing="2" margin="2" tilecount="48" columns="8">
+<tileset version="1.9" tiledversion="1.9.2" name="tiles" class="qwer" tilewidth="64" tileheight="64" spacing="2" margin="2" tilecount="48" columns="8">
  <image source="tmw_desert_spacing-hd.png" width="530" height="398"/>
  <wangsets>
   <wangset name="desert ground" type="corner" tile="24">
