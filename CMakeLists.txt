@@ -6,14 +6,16 @@ project(${name})
 set(CMAKE_CXX_STANDARD 20)
 
 include_directories(
-	3rd/xxlib
+	3rd
+	../xxlib/src
 	src
 	./
 )
 
 set(SRCS)
 file(GLOB_RECURSE SRCS
-	3rd/xxlib/*.h
+	3rd/*.h
+	../xxlib/src/*.h
 	src/*.cpp
 	src/*.h
 	src/*.hpp
@@ -21,22 +23,20 @@ file(GLOB_RECURSE SRCS
 )
 add_executable(${name} ${SRCS})
 
-add_subdirectory(3rd/glfw glfw)
+add_subdirectory(../glfw glfw)
 target_link_libraries(${name} glfw)
 
-#add_subdirectory(3rd/glad glad)
-#target_link_libraries(${name} glad)
-include_directories(
-	3rd/glad/include
-)
+add_subdirectory(../pugixml pugixml)
+target_link_libraries(${name} pugixml)
+
+add_subdirectory(../zstd/build/cmake zstd)
+target_link_libraries(${name} libzstd_static)
 
 if(MSVC)
 	add_definitions("-D_SECURE_SCL=0")
 	add_definitions("-D_HAS_ITERATOR_DEBUGGING=0")
 
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-
-#	target_link_libraries(${name} opengl32 glfw3)
 
 	add_definitions(-DOPEN_MP_NUM_THREADS=3)
 	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/openmp")
@@ -49,4 +49,3 @@ if(MSVC)
 else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
 endif()
- 

@@ -4,6 +4,7 @@ this is a simple 2d game engine based by opengl es 3.0 & c++20
 
 performance ~= raylib, much more faster than cocos2dx 3.x
 
+
 # feature
 
 search path
@@ -25,7 +26,25 @@ label
 keyboard, mouse
 
 
+# compile requires
+
+cmake 3.20+
+
+sub modules: ( put them to sibling directory )
+
+https://github.com/denghe/xxlib.git
+
+https://github.com/glfw/glfw.git
+
+https://github.com/zeux/pugixml.git
+
+https://github.com/facebook/zstd.git
+
+
+
 # todo
+
+tiledmap loader
 
 touch, joystick
 

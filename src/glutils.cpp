@@ -2,7 +2,7 @@
 #define GLAD_MALLOC(sz)       malloc(sz)
 #define GLAD_FREE(ptr)        free(ptr)
 #define GLAD_GL_IMPLEMENTATION
-#include <glad/glad.h>
+#include <glad.h>
 
 
 GLTexture LoadGLTexture(std::string_view const& buf, std::string_view const& fullPath) {

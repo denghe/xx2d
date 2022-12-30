@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "pch.h"
-//#include <glad/gl.h>
-#include <glad/glad.h>
+#include <glad.h>
 
 enum class GLResTypes {
 	Shader, Program, Vertexss, Buffer, Texture
