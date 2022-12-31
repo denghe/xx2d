@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+ <object name="c1" class="c1c" width="832" height="1280">
+  <ellipse/>
+ </object>
+</template>

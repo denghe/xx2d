@@ -4,6 +4,10 @@
 // tiled map xml version data loader & container. supported to version 1.9x. compress method only support zstandard
 // https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#
 
+// todo: set fields default value
+// todo: sort tiledset by firstgid ?
+// todo: texture ? frame ?
+// todo: gid to frame ?
 // todo: strong type refine
 // todo: fill step 2: ptrs by id, props obj by id
 // todo: vector reserve
@@ -245,9 +249,9 @@ struct TMXData {
 		Point,
 		Ellipse,
 		Polygon,
+		Rectangle,
 		Tile,
 		Text,
-		Template,
 		MAX_VALUE_UNKNOWN
 	};
 
@@ -275,7 +279,7 @@ struct TMXData {
 
 	struct Property {
 		std::string name;
-		PropertyTypes type;
+		PropertyTypes type = PropertyTypes::MAX_VALUE_UNKNOWN;
 	};
 
 	struct PropertyBool : Property {
@@ -303,7 +307,7 @@ struct TMXData {
 
 	struct Object;
 	struct PropertyObject : Property {
-		uint32_t objectId;
+		uint32_t objectId = 0;
 		xx::Shared<Object> value;
 	};
 
@@ -318,10 +322,10 @@ struct TMXData {
 	};
 
 	struct Object {
-		ObjectTypes type;
+		ObjectTypes type = ObjectTypes::MAX_VALUE_UNKNOWN;
 
 		// Incremental ID, unique across all objects
-		uint32_t id;
+		uint32_t id = 0;
 
 		// String assigned to name field in editor
 		std::string name;
@@ -333,16 +337,16 @@ struct TMXData {
 		std::vector<xx::Shared<Property>> properties;
 
 		// 	X coordinate in pixels
-		double x;
+		double x = 0;
 
 		// Y coordinate in pixels
-		double y;
+		double y = 0;
 
 		// Angle in degrees clockwise
-		double rotation;
+		double rotation = false;
 
 		// Whether object is shown in editor.
-		bool visible;
+		bool visible = true;
 	};
 
 	struct ObjectPoint : Object {
@@ -350,10 +354,10 @@ struct TMXData {
 
 	struct ObjectRectangle : Object {
 		// Width in pixels.
-		uint32_t width;
+		uint32_t width = 0;
 
 		// Height in pixels.
-		uint32_t height;
+		uint32_t height = 0;
 	};
 
 	struct ObjectEllipse : ObjectRectangle {
@@ -364,6 +368,7 @@ struct TMXData {
 		std::vector<Point> points;
 	};
 
+	struct Tileset;
 	struct ObjectTile : ObjectRectangle {
 		// todo: offical doc
 		bool flippingHorizontal;	// (gid >> 31) & 1
@@ -373,22 +378,25 @@ struct TMXData {
 
 		// Global tile ID
 		uint32_t gid;				// & 0x3FFFFFFFu;
+
+		// gid owner
+		//xx::Shared<Tileset> tileset;
 	};
 
 	struct ObjectText : ObjectRectangle {
 		// todo: offical doc
 		std::string text;
 		std::string fontfamily;
-		uint32_t pixelsize;
-		bool wrap;
-		RGBA8 color;
-		bool bold;
-		bool italic;
-		bool underline;
-		bool strikeout;
-		bool kerning;
-		HAligns halign;
-		VAligns valign;
+		uint32_t pixelsize = 16;
+		bool wrap = false;
+		RGBA8 color = { 0, 0, 0, 255 };
+		bool bold = false;
+		bool italic = false;
+		bool underline = false;
+		bool strikeout = false;
+		bool kerning = true;
+		HAligns halign = HAligns::Left;
+		VAligns valign = VAligns::Top;
 	};
 
 	struct ObjectTemplate : Object {
@@ -641,7 +649,7 @@ struct TMXData {
 		Grid grid;
 
 		// Image used for tiles in this set
-		std::string image;
+		xx::Shared<GLTexture> image;
 
 		// Height of source image in pixels
 		int imageheight;
@@ -769,7 +777,7 @@ struct TMXData {
 		uint32_t tileheight;
 
 		// Array of Tilesets
-		std::vector<Tileset> tilesets;
+		std::vector<xx::Shared<Tileset>> tilesets;
 
 		// Map grid width
 		uint32_t tilewidth;

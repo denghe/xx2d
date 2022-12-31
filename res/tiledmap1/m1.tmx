@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.2" class="asdf" orientation="orthogonal" renderorder="right-down" width="300" height="200" tilewidth="64" tileheight="64" infinite="0" nextlayerid="3" nextobjectid="45">
+<map version="1.9" tiledversion="1.9.2" class="asdf" orientation="orthogonal" renderorder="right-down" width="300" height="200" tilewidth="64" tileheight="64" infinite="0" nextlayerid="3" nextobjectid="52">
  <tileset firstgid="1" source="tiles.tsx"/>
  <layer id="1" name="bg" width="300" height="200">
   <data encoding="base64" compression="zstd">
@@ -7,35 +7,30 @@
   </data>
  </layer>
  <objectgroup id="2" name="objs" class="qwer" locked="1" opacity="0.9" tintcolor="#550000" offsetx="1.1" offsety="2.2" parallaxx="1.01" parallaxy="1.01">
-  <object id="22" name="p1" class="p1c" x="5120" y="5504">
-   <point/>
-  </object>
+  <object id="22" template="p1.tx" class="p1c" x="5120" y="5504"/>
   <object id="23" x="4544" y="6336">
    <point/>
   </object>
-  <object id="28" x="4736" y="8448" width="1856" height="1024"/>
-  <object id="32" name="c1" class="c1c" x="10560" y="5440" width="832" height="1280">
-   <ellipse/>
-  </object>
-  <object id="33" x="14592" y="7936" rotation="15">
-   <polygon points="0,0 1600,448 768,-1728"/>
-  </object>
-  <object id="42" gid="3221225503" x="14592" y="3392" width="640" height="640"/>
-  <object id="43" name="s1" class="s1c" x="9792" y="8448" width="1024" height="192" rotation="15">
-   <properties>
-    <property name="bb" type="bool" value="true"/>
-    <property name="cc" type="color" value="#ffff5500"/>
-    <property name="ff" type="float" value="-4.5"/>
-    <property name="fn" type="file" value="tmw_desert_spacing-hd.png"/>
-    <property name="fn2" type="file" value="../zm.pkm"/>
-    <property name="ii" type="int" value="123"/>
-    <property name="ooo" type="object" value="32"/>
-    <property name="ss" value="asdfqwer"/>
-   </properties>
-   <text fontfamily="黑体" pixelsize="96" wrap="1">Hello World 中文 !!</text>
-  </object>
+  <object id="28" template="r1.tx" x="4736" y="8448"/>
+  <object id="32" template="c1.tx" class="c1c" x="10560" y="5440"/>
+  <object id="33" template="3.tx" x="14592" y="7936"/>
+  <object id="42" template="t1.tx" x="14592" y="3392"/>
+  <object id="43" template="s1.tx" class="s1c" x="9792" y="8448"/>
   <object id="44" x="11584" y="8704" width="88" height="16" visible="0">
    <text wrap="1">Hello World</text>
   </object>
+  <object id="45" template="s1.tx" x="6784" y="4480"/>
+  <object id="46" template="s1.tx" name="s111" class="s111c" x="10048" y="4032" width="1936.49" height="328.485" rotation="33" visible="1">
+   <properties>
+    <property name="eee" value="ererer"/>
+    <property name="ff" type="float" value="-7.5"/>
+   </properties>
+   <text fontfamily="仿宋" pixelsize="64" color="#aa557f" underline="1" strikeout="1" kerning="0" halign="center" valign="center">asdfasdfasdf</text>
+  </object>
+  <object id="47" template="t1.tx" name="ttt" class="ccc" gid="31" x="10688" y="1762.84" width="1170.58" height="1058.84" rotation="33"/>
+  <object id="48" template="r1.tx" x="1600" y="4160"/>
+  <object id="49" template="p1.tx" x="5248" y="1984"/>
+  <object id="50" template="c1.tx" x="6208" y="6784"/>
+  <object id="51" template="3.tx" x="14976" y="4352"/>
  </objectgroup>
 </map>

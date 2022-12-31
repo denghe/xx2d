@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "m1.tmx",
+    "activeFile": "",
     "expandedProjectPaths": [
         "."
     ],
@@ -29,17 +29,18 @@
             "scale": 0.03125,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 8864,
-                "y": 5424
+                "x": 9776,
+                "y": 4560
             }
         },
         "tiles.tsx": {
             "scaleInDock": 0.5,
-            "scaleInEditor": 2
+            "scaleInEditor": 1.5
         }
     },
     "last.exportedFilePath": "C:/Users/xx/Documents/xx2d/res/tiledmap1",
     "last.imagePath": "C:/Users/xx/Documents/xx2d/res/tiledmap1",
+    "last.objectTemplatePath": "C:/Code/xx2d/res/tiledmap1",
     "map.height": 200,
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "js",
@@ -47,14 +48,12 @@
     "map.tileWidth": 64,
     "map.width": 300,
     "openFiles": [
-        "m1.tmx",
-        "tiles.tsx"
     ],
     "project": "test1.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "tiles.tsx",
         "m1.tmx",
+        "tiles.tsx",
         "m1.js",
         "m1..tmj"
     ],

@@ -3,16 +3,12 @@
 #include "tmxdata.h"
 
 void Logic::Init() {
-	coros.Add([](Logic* eg)->CoType {
-		CoYield;
-		TMXData t;
-		t.Fill(eg, "res/tiledmap1/m1.tmx");
-		std::cout << t.map.version << std::endl;
-	}(this));
+	TMXData t;
+	t.Fill(this, "res/tiledmap1/m1.tmx");
+	std::cout << t.map.version << std::endl;
 }
 
 int Logic::Update() {
 	if (Pressed(KbdKeys::Escape)) return 1;
-	coros();
 	return 0;
 }

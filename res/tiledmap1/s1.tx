@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+ <object name="s1" class="s1c" width="1024" height="192" rotation="15">
+  <properties>
+   <property name="bb" type="bool" value="true"/>
+   <property name="cc" type="color" value="#ffff5500"/>
+   <property name="ff" type="float" value="-4.5"/>
+   <property name="fn" type="file" value="tmw_desert_spacing-hd.png"/>
+   <property name="fn2" type="file" value="../zm.pkm"/>
+   <property name="ii" type="int" value="123"/>
+   <property name="ooo" type="object" value="32"/>
+   <property name="ss" value="asdfqwer"/>
+  </properties>
+  <text fontfamily="黑体" pixelsize="96" wrap="1">Hello World 中文 !!</text>
+ </object>
+</template>
