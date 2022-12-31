@@ -122,7 +122,7 @@ inline static void FillPropertiesTo(std::vector<xx::Shared<TMXData::Property>>& 
 	auto&& cProperties = owner.child("properties");
 	for (auto&& cProperty : cProperties.children("property")) {
 		TMXData::PropertyTypes pt;
-		FillEnumTo(pt, cProperty.attribute("type").as_string("string"));
+		FillEnumTo(pt, cProperty.attribute("type"));
 		xx::Shared<TMXData::Property> a;
 		switch (pt) {
 		case TMXData::PropertyTypes::Bool: {
@@ -202,6 +202,39 @@ inline void ZstdDecompress(std::string_view const& src, xx::Data& dst) {
 }
 
 
+template<typename T, typename U = std::decay_t<T>>
+inline static void TryFill(T& out, pugi::xml_attribute const& a) {
+	if (a.empty()) return;
+	if constexpr (std::is_same_v<U, std::string>) {
+		out = a.as_string();
+	}
+	if constexpr (std::is_same_v<U, bool>) {
+		out = a.as_bool();
+	}
+	if constexpr (std::is_same_v<U, int32_t>) {
+		out = a.as_int();
+	}
+	if constexpr (std::is_same_v<U, uint32_t>) {
+		out = a.as_uint();
+	}
+	if constexpr (std::is_same_v<U, int64_t>) {
+		out = a.as_llong();
+	}
+	if constexpr (std::is_same_v<U, uint64_t>) {
+		out = a.as_ullong();
+	}
+	if constexpr (std::is_enum_v<U>) {
+		FillEnumTo(out, a);
+	}
+}
+template<typename T, typename U = std::decay_t<T>>
+inline static void TryFill(T& out, std::string_view const& sv) {
+	if constexpr (std::is_same_v<U, std::vector<uint32_t>>) {
+		FillCsvIntsTo(out, sv);
+	}
+}
+
+
 int TMXData::Fill(Engine* const& eg, std::string_view const& tmxfn) {
 	pugi::xml_document docTmx, docTsx, docTx;
 	std::string rootPath;
@@ -218,10 +251,7 @@ int TMXData::Fill(Engine* const& eg, std::string_view const& tmxfn) {
 	}
 
 	// cleanup
-	map.tilesets.clear();
-	map.layers.clear();
-	map.properties.clear();
-	map.objectgroups.clear();
+	map = {};
 
 	// fill map
 	auto&& cMap = docTmx.child("map");

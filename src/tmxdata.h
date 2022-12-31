@@ -4,6 +4,9 @@
 // tiled map xml version data loader & container. supported to version 1.9x. compress method only support zstandard
 // https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#
 
+// todo: double int uint check
+// todo: sort field by editor UI
+// todo: + if exists check
 // todo: set fields default value
 // todo: sort tiledset by firstgid ?
 // todo: texture ? frame ?
@@ -27,8 +30,8 @@ struct TMXData {
 	enum class Orientations {
 		Orthogonal,
 		Isometric,
-		Staggered,
-		Hexagonal,
+		Staggered,	// not for Tileset
+		Hexagonal,	// not for Tileset
 		MAX_VALUE_UNKNOWN
 	};
 	inline static constexpr std::array<std::string_view, 4> enumTexts_Orientations = {
@@ -242,6 +245,72 @@ struct TMXData {
 		inline static constexpr size_t count = enumTexts_DrawOrders.size();
 	};
 
+	/**********************************************************************************/
+
+	enum class ObjectAlignment {
+		Unspecified,
+		TopLeft,
+		Top,
+		TopRight,
+		Left,
+		Center,
+		Right,
+		BottomLeft,
+		Bottom,
+		BottomRight,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 10> enumTexts_ObjectAlignment = {
+		"unspecified"sv,
+		"topleft"sv,
+		"top"sv,
+		"topright"sv,
+		"left"sv,
+		"center"sv,
+		"right"sv,
+		"bottomleft"sv,
+		"bottom"sv,
+		"bottomright"sv,
+	};
+	template<>
+	struct StrToEnumMappings<ObjectAlignment> {
+		inline static constexpr std::string_view const* svs = enumTexts_ObjectAlignment.data();
+		inline static constexpr size_t count = enumTexts_ObjectAlignment.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class TileRenderSizes {
+		TileSize,
+		MapGridSize,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_TileRenderSizes = {
+		"tile"sv,
+		"grid"sv,
+	};
+	template<>
+	struct StrToEnumMappings<TileRenderSizes> {
+		inline static constexpr std::string_view const* svs = enumTexts_TileRenderSizes.data();
+		inline static constexpr size_t count = enumTexts_TileRenderSizes.size();
+	};
+
+	/**********************************************************************************/
+
+	enum class FillModes {
+		Stretch,
+		PreserveAspectFit,
+		MAX_VALUE_UNKNOWN
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_FillModes = {
+		"stretch"sv,
+		"preserve-aspect-fit"sv,
+	};
+	template<>
+	struct StrToEnumMappings<FillModes> {
+		inline static constexpr std::string_view const* svs = enumTexts_FillModes.data();
+		inline static constexpr size_t count = enumTexts_FillModes.size();
+	};
 
 	/**********************************************************************************/
 
@@ -257,135 +326,90 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-
-	// Chunks are used to store the tile layer data for infinite maps.
-	struct Chunk {
-		// Array of unsigned int (GIDs) or base64-encoded data
-		std::vector<uint32_t> gids;
-
-		// Height in tiles
-		int height;
-
-		// Width in tiles
-		int width;
-
-		// X coordinate in tiles
-		int x;
-
-		// Y coordinate in tiles
-		int y;
+	enum class LayerTypes {
+		Tile,
+		Object,
+		Image,
+		Group,
+		MAX_VALUE_UNKNOWN
 	};
+
+	/**********************************************************************************/
 
 
 	struct Property {
-		std::string name;
 		PropertyTypes type = PropertyTypes::MAX_VALUE_UNKNOWN;
+		std::string name;
 	};
 
-	struct PropertyBool : Property {
-		bool value;
+	struct Property_Bool : Property {
+		bool value = false;
 	};
 
-	struct PropertyColor : Property {
-		RGBA8 value;
+	struct Property_Color : Property {
+		RGBA8 value = { 0, 0, 0, 255 };
 	};
 
-	struct PropertyFloat : Property {
-		double value;
+	struct Property_Float : Property {
+		double value = 0;
 	};
 
-	struct PropertyString : Property {
+	struct Property_String : Property {
 		std::string value;
 	};
 
-	struct PropertyFile : PropertyString {
+	struct Property_File : Property_String {
 	};
 
-	struct PropertyInt : Property {
-		int64_t value;
+	struct Property_Int : Property {
+		int64_t value = 0;
 	};
 
 	struct Object;
 	struct PropertyObject : Property {
-		uint32_t objectId = 0;
 		xx::Shared<Object> value;
+		uint32_t objectId = 0;
 	};
 
-
-	// A point on a polygon or a polyline, relative to the position of the object.
-	struct Point {
-		// X coordinate in pixels
-		int32_t x = 0;
-
-		// Y coordinate in pixels
-		int32_t y = 0;
-	};
 
 	struct Object {
 		ObjectTypes type = ObjectTypes::MAX_VALUE_UNKNOWN;
-
-		// Incremental ID, unique across all objects
 		uint32_t id = 0;
-
-		// String assigned to name field in editor
 		std::string name;
-
-		// String assigned to class field in editor
 		std::string class_;
-
-		// Array of Properties
-		std::vector<xx::Shared<Property>> properties;
-
-		// 	X coordinate in pixels
 		double x = 0;
-
-		// Y coordinate in pixels
 		double y = 0;
-
-		// Angle in degrees clockwise
 		double rotation = false;
-
-		// Whether object is shown in editor.
 		bool visible = true;
+		std::vector<xx::Shared<Property>> properties;
 	};
 
-	struct ObjectPoint : Object {
+	struct Object_Point : Object {
 	};
 
-	struct ObjectRectangle : Object {
-		// Width in pixels.
+	struct Object_Rectangle : Object {
 		uint32_t width = 0;
-
-		// Height in pixels.
 		uint32_t height = 0;
 	};
 
-	struct ObjectEllipse : ObjectRectangle {
+	struct Object_Ellipse : Object_Rectangle {
 	};
 
-	struct ObjectPolygon : Object {
-		// Array of Points
+	struct Point {
+		int32_t x = 0, y = 0;
+	};
+	struct Object_Polygon : Object {
 		std::vector<Point> points;
 	};
 
 	struct Tileset;
-	struct ObjectTile : ObjectRectangle {
-		// todo: offical doc
-		bool flippingHorizontal;	// (gid >> 31) & 1
-
-		// todo: offical doc
-		bool flippingVertical;		// (gid >> 30) & 1
-
-		// Global tile ID
-		uint32_t gid;				// & 0x3FFFFFFFu;
-
-		// gid owner
-		//xx::Shared<Tileset> tileset;
+	struct Object_Tile : Object_Rectangle {
+		uint32_t gid = 0;				// & 0x3FFFFFFFu;
+		bool flippingHorizontal = false;	// (gid >> 31) & 1
+		bool flippingVertical = false;		// (gid >> 30) & 1
 	};
 
-	struct ObjectText : ObjectRectangle {
-		// todo: offical doc
-		std::string text;
+	struct Object_Text : Object_Rectangle {
 		std::string fontfamily;
 		uint32_t pixelsize = 16;
 		bool wrap = false;
@@ -397,399 +421,171 @@ struct TMXData {
 		bool kerning = true;
 		HAligns halign = HAligns::Left;
 		VAligns valign = VAligns::Top;
+		std::string text;
 	};
 
-	struct ObjectTemplate : Object {
-		// Reference to a template file, in case object is a template instance
-		std::string template_;
-	};
 
-	// todo: offical doc here
-	struct ObjectGroup {
-		uint32_t id;
+	struct Layer {
+		LayerTypes type = LayerTypes::MAX_VALUE_UNKNOWN;
+		uint32_t id = 0;
 		std::string name;
-		std::string class_;
-		bool locked;
-		bool visible;
-		// topdown (default) or index. objectgroup only.
-		DrawOrders draworder;
-		double opacity;
-		double offsetx;
-		double offsety;
-		double parallaxx;
-		double parallaxy;
-		std::optional<RGBA8> tintcolor;
+		std::string class_;	// class
+		bool visible = true;
+		bool locked = false;
+		double opacity = 1;	// 0 ~ 1
+		std::optional<RGBA8> tintColor;	// tintcolor
+		double horizontalOffset = 0;	// offsetx
+		double verticalOffset = 0;	// offsety
+		Point parallaxFactor = {1, 1};	// parallaxx, parallaxy
+		std::vector<xx::Shared<Property>> properties;
+	};
+
+	struct Chunk {
+		std::vector<uint32_t> gids;
+		uint32_t height = 0;
+		uint32_t width = 0;
+		Point xy;	// x, y
+	};
+	struct Layer_Tile : Layer {
+		std::vector<Chunk> chunks;	// when map.infinite == true
+		std::vector<uint32_t> gids;	// when map.infinite == false
+	};
+
+	struct Layer_Object : Layer {
+		std::optional<RGBA8> color;
+		DrawOrders draworder = DrawOrders::TopDown;
 		std::vector<xx::Shared<Object>> objects;
 	};
 
-	// todo: split to strong type
-	struct Layer {
-		// 	Array of chunks (optional). tilelayer only.
-		std::vector<Chunk> chunks;
-
-		// zlib, gzip, zstd (since Tiled 1.3) or empty (default). tilelayer only.
-		Compressions compression;
-
-		// Array of unsigned int (GIDs) or base64-encoded data. tilelayer only.
-		std::vector<uint32_t> gids;
-
-		// csv (default) or base64. tilelayer only.
-		Encodings encoding;
-
-		// Row count. Same as map height for fixed-size maps.
-		int height;
-
-		// Incremental ID - unique across all layers
-		uint32_t id;
-
-		// Image used by this layer. imagelayer only.
-		std::string image;
-
-		// Array of layers. group only.
-		std::vector<Layer> layers;
-
-		// Name assigned to this layer
-		std::string name;
-
-		// Array of objects. objectgroup only.
-		std::vector<Object> objects;
-
-		// Horizontal layer offset in pixels (default: 0)
-		double offsetx;
-
-		// Vertical layer offset in pixels (default: 0)
-		double offsety;
-
-		// Value between 0 and 1
-		double opacity;
-
-		// Horizontal parallax factor for this layer (default: 1). (since Tiled 1.5)
-		double parallaxx;
-
-		// Vertical parallax factor for this layer (default: 1). (since Tiled 1.5)
-		double parallaxy;
-
-		// Array of Properties
-		std::vector<xx::Shared<Property>> properties;
-
-		// X coordinate where layer content starts (for infinite maps)
-		int startx;
-
-		// Y coordinate where layer content starts (for infinite maps)
-		int starty;
-
-		// Hex-formatted tint color (#RRGGBB or #AARRGGBB) that is multiplied with any graphics drawn by this layer or any child layers (optional).
-		std::optional<RGBA8> tintcolor;
-
-		// Hex-formatted color (#RRGGBB) (optional). imagelayer only.
-		std::optional<RGBA8> transparentcolor;
-
-		// tilelayer, objectgroup, imagelayer or group
-		std::string type;
-
-		// Whether layer is shown or hidden in editor
-		bool visible;
-
-		// Column count. Same as map width for fixed-size maps.
-		int width;
-
-		// Horizontal layer offset in tiles. Always 0.
-		int x;
-
-		// Vertical layer offset in tiles. Always 0.
-		int y;
+	struct Layer_Group : Layer {
+		std::vector<xx::Shared<Layer>> layers;
 	};
 
-	// Specifies common grid settings used for tiles in a tileset. See <grid> in the TMX Map Format.
-	struct Grid {
-		// Cell height of tile grid
-		int height;
-
-		// orthogonal (default) or isometric
-		Orientations orientation;
-
-		// Cell width of tile grid
-		int width;
+	struct Image {
+		std::string source;
+		uint32_t width;
+		uint32_t height;
+		std::optional<RGBA8> transparentColor;	// trans="ff00ff"
+		xx::Shared<GLTexture> texture;
 	};
 
-	struct Terrain {
-		// Name of terrain
-		std::string name;
-
-		// Array of Properties
-		std::vector<xx::Shared<Property>> properties;
-
-		// Local ID of tile representing terrain
-		int tile;
+	struct Layer_Image {
+		xx::Shared<Image> image;
+		std::optional<RGBA8> transparentColor;	// trans="ff00ff"
+		bool repeatX = false;	// repeatx
+		bool repeatY = false;	// repeaty
 	};
 
-	// This element is used to specify an offset in pixels, to be applied when drawing a tile from the related tileset. When not present, no offset is applied.
-	struct TileOffset {
-		// Horizontal offset in pixels
-		int x;
+	//struct Terrain {
+	//	std::string name;
+	//	int tile;
+	//	std::vector<xx::Shared<Property>> properties;
+	//};
 
-		// Vertical offset in pixels (positive is down)
-		int y;
-	};
+	//struct Frame {
+	//	int duration;
+	//	int tileid;
+	//};
 
-	struct Frame {
-		// Frame duration in milliseconds
-		int duration;
-
-		// Local tile ID representing this frame
-		int tileid;
-	};
-
-	struct Tile {
-		// Array of Frames
-		std::vector<Frame> animation;
-
-		// Local ID of the tile
-		int id;
-
-		// Image representing this tile (optional)
-		std::string image;
-
-		// Height of the tile image in pixels
-		int imageheight;
-
-		// Width of the tile image in pixels
-		int imagewidth;
-
-		// Layer with type objectgroup, when collision shapes are specified(optional)
-		Layer objectgroup;
-
-		// Percentage chance this tile is chosen when competing with others in the editor(optional)
-		double probability;
-
-		// Array of Properties
-		std::vector<xx::Shared<Property>> properties;
-
-		// Index of terrain for each corner of tile (optional)
-		std::vector<int> terrain;
-
-		// The type of the tile(optional)
-		std::string type;
-	};
-
-	// This element is used to describe which transformations can be applied to the tiles (e.g. to extend a Wang set by transforming existing tiles).
-	struct Transformations {
-		// Tiles can be flipped horizontally
-		bool hflip;
-
-		// Tiles can be flipped vertically
-		bool vflip;
-
-		// Tiles can be rotated in 90-degree increments
-		bool rotate;
-
-		// Whether untransformed tiles remain preferred, otherwise transformed tiles are used to produce more variations
-		bool preferuntransformed;
-	};
+	//struct Tile {
+	//	std::vector<Frame> animation;
+	//	int id;
+	//	std::string image;
+	//	int imageheight;
+	//	int imagewidth;
+	//	Layer objectgroup;
+	//	double probability;
+	//	std::vector<xx::Shared<Property>> properties;
+	//	std::vector<int> terrain;
+	//	std::string type;
+	//};
 
 	struct WangTile {
-		// Local ID of tile
-		uint32_t tileId;
-
-		// Array of Wang color indexes (uchar[8])
-		std::vector<byte> wangid;
+		uint32_t tileId = 0;	// tileid
+		std::vector<byte> wangIds;	// wangid
 	};
 
 	struct WangColor {
-		// Hex-formatted color (#RRGGBB or #AARRGGBB)
-		RGBA8 color;
-
-		// Name of the Wang color
 		std::string name;
-
-		// Probability used when randomizing
-		double probability;
-
-		// Array of Properties
+		RGBA8 color = { 0, 0, 0, 255 };
+		uint32_t tile = 0;
+		double probability = 1;
 		std::vector<xx::Shared<Property>> properties;
-
-		// Local ID of tile representing the Wang color
-		uint32_t tile;
 	};
 
 	struct WangSet {
-		// Array of Wang colors
-		std::vector<WangColor> colors;
-
-		// Name of the Wang set
 		std::string name;
-
-		// Type of the Wang set: corner, edge, mixed
-		WangSetTypes type;
-
-		// Array of Properties
-		std::vector<xx::Shared<Property>> properties;
-
-		// Local ID of tile representing the Wang set
-		uint32_t tile;
-
-		// Array of Wang tiles
+		WangSetTypes type = WangSetTypes::Corner;
+		uint32_t tile = 0;
 		std::vector<WangTile> wangtiles;
+		std::vector<WangColor> colors;
+		std::vector<xx::Shared<Property>> properties;
+	};
+
+	struct Transformations {
+		bool flipHorizontally = false;	// hflip
+		bool flipVertically = false;	// vflip
+		bool rotate = false;
+		bool preferUntransformedTiles = false;	// preferuntransformed
 	};
 
 	struct Tileset {
-		// Hex-formatted color (#RRGGBB or #AARRGGBB) (optional)
-		std::optional<RGBA8> backgroundcolor;
-
-		// todo: offical doc here
-		std::string class_;
-
-		// The number of tile columns in the tileset
-		int columns;
-
-		//	GID corresponding to the first tile in the set
-		uint32_t firstgid;
-
-		// (optional)
-		Grid grid;
-
-		// Image used for tiles in this set
-		xx::Shared<GLTexture> image;
-
-		// Height of source image in pixels
-		int imageheight;
-
-		// Width of source image in pixels
-		int imagewidth;
-
-		// Buffer between image edge and first tile (pixels)
-		int margin;
-
-		// Name given to this tileset
 		std::string name;
-
-		// Alignment to use for tile objects (unspecified (default), topleft, top, topright, left, center, right, bottomleft, bottom or bottomright) (since 1.4)
-		std::string objectalignment;
-
-		// Array of Properties
+		std::string class_;	// class
+		ObjectAlignment objectAlignment = ObjectAlignment::Unspecified;	// objectalignment
+		Point drawingOffset;	// <tileoffset x= y=
+		TileRenderSizes tileRenderSize = TileRenderSizes::TileSize; // tilerendersize
+		FillModes fillMode = FillModes::Stretch;	// fillmode
+		std::optional<RGBA8> backgroundColor;	// backgroundcolor
+		Orientations orientation = Orientations::Orthogonal;	// <grid orientation=
+		uint32_t gridWidth = 0;	// <grid width=
+		uint32_t gridHeight = 0;	// <grid height=
+		uint32_t columns = 0;
+		Transformations allowedTransformations;	// <transformations ...
+		xx::Shared<Image> image;
+		uint32_t tilewidth = 0;
+		uint32_t tileheight = 0;
+		uint32_t margin = 0;
+		uint32_t spacing = 0;
 		std::vector<xx::Shared<Property>> properties;
 
-		// The external file that contains this tilesets data
-		std::string source;
-
-		// Spacing between adjacent tiles in image (pixels)
-		int spacing;
-
-		// Array of Terrains (optional)
-		std::vector<Terrain> terrains;
-
-		// The number of tiles in this tileset
-		int tilecount;
-
-		// The Tiled version used to save the file
-		std::string tiledversion;
-
-		// Maximum height of tiles in this set
-		int tileheight;
-
-		// (optional)
-		TileOffset tileoffset;
-
-		// Array of Tiles (optional)
-		std::vector<Tile> tiles;
-
-		// Maximum width of tiles in this set
-		int tilewidth;
-
-		// Allowed transformations (optional)
-		Transformations transformations;
-
-		// Hex-formatted color (#RRGGBB) (optional)
-		std::optional<RGBA8> transparentcolor;
-
-		// tileset (for tileset files, since 1.0)
-		std::string type;
-
-		// The JSON format version (previously a number, saved as string since 1.6)
 		std::string version;
+		std::string tiledversion;
+		uint32_t tilecount = 0;
 
-		// Array of Wang sets (since 1.1.5)
-		std::vector<WangSet> wangsets;
+		std::vector<WangSet> wangSets;	// <wangsets>
+
+		//std::vector<Terrain> terrains;
+		//std::vector<Tile> tiles;
 	};
 
 	struct Map {
-		// Hex-formatted color (#RRGGBB or #AARRGGBB) (optional)
-		std::optional<RGBA8> backgroundcolor;
-
-		// The compression level to use for tile layer data (defaults to -1, which means to use the algorithm default)
-		int compressionlevel;
-
-		// todo: offical doc here
-		uint32_t outputChunkWidth;
-
-		// todo: offical doc here
-		uint32_t outputChunkHeight;
-
-		// todo: offical doc here
-		std::string class_;
-
-		// Number of tile rows
-		uint32_t height;
-
-		// 	Length of the side of a hex tile in pixels (hexagonal maps only)
-		uint32_t hexsidelength;
-
-		// 	Whether the map has infinite dimensions
-		bool infinite;
-
-		// Array of Layers
-		std::vector<Layer> layers;
-
-		// Auto-increments for each layer
-		uint32_t nextlayerid;
-
-		// 	Auto-increments for each placed object
-		uint32_t nextobjectid;
-
-		// orthogonal, isometric, staggered or hexagonal
-		Orientations orientation;
-
-		// todo: offical doc here
-		std::vector<ObjectGroup> objectgroups;
-
-		// todo: offical doc here
-		double parallaxoriginx;
-
-		// todo: offical doc here
-		double parallaxoriginy;
-
-		// Array of Properties
+		std::string class_;	// class
+		Orientations orientation = Orientations::Orthogonal;
+		uint32_t width = 0;
+		uint32_t height = 0;
+		uint32_t tileWidth = 0;	// tilewidth
+		uint32_t tileHeight = 0;	// tileheight
+		bool infinite = false;
+		uint32_t tileSideLength = 0;	// hexsidelength
+		StaggerAxiss staggeraxis = StaggerAxiss::Y;	// staggeraxis
+		StaggerIndexs staggerindex = StaggerIndexs::Odd;	// staggerindex
+		Point parallaxOrigin;	// parallaxoriginx, parallaxoriginy
+		std::pair<Encodings, Compressions> tileLayerFormat = { Encodings::Csv,  Compressions::Uncompressed };	// for every layer's data
+		uint32_t outputChunkWidth = 16;
+		uint32_t outputChunkHeight = 16;
+		RenderOrders renderOrder = RenderOrders::RightDown;	// renderorder
+		int32_t compressionLevel = -1;	// compressionlevel
+		std::optional<RGBA8> backgroundColor;	// backgroundcolor
 		std::vector<xx::Shared<Property>> properties;
 
-		// right-down (the default), right-up, left-down or left-up (currently only supported for orthogonal maps)
-		RenderOrders renderorder;
-
-		// x or y (staggered / hexagonal maps only)
-		StaggerAxiss staggeraxis;
-
-		// odd or even (staggered / hexagonal maps only)
-		StaggerIndexs staggerindex;
-
-		// The Tiled version used to save the file (since Tiled 1.0.1). May be a date (for snapshot builds). (optional)
-		std::string tiledversion;
-
-		// Map grid height
-		uint32_t tileheight;
-
-		// Array of Tilesets
+		std::vector<xx::Shared<Image>> images;
 		std::vector<xx::Shared<Tileset>> tilesets;
-
-		// Map grid width
-		uint32_t tilewidth;
-
-		// map (since 1.0)
-		std::string type;
-
-		// The TMX format version. Was “1.0” so far, and will be incremented to match minor Tiled releases.
+		std::vector<xx::Shared<Layer>> layers;
 		std::string version;
-
-		// Number of tile columns
-		uint32_t width;
+		std::string tiledVersion;	// tiledversion
+		uint32_t nextLayerId = 0;	// nextlayerid
+		uint32_t nextObjectId = 0;	// nextobjectid
 	};
 
 
