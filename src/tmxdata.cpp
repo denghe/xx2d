@@ -186,15 +186,15 @@ namespace TMX {
 		switch (sv.size()) {
 		case 6:
 			out.a = 0xFFu;
-			out.r = ((uint32_t)xx::FromHex(sv[0]) << 8) | (uint32_t)xx::FromHex(sv[1]);
-			out.g = ((uint32_t)xx::FromHex(sv[2]) << 8) | (uint32_t)xx::FromHex(sv[3]);
-			out.b = ((uint32_t)xx::FromHex(sv[4]) << 8) | (uint32_t)xx::FromHex(sv[5]);
+			out.r = xx::FromHex(&sv[0]);
+			out.g = xx::FromHex(&sv[2]);
+			out.b = xx::FromHex(&sv[4]);
 			return;
 		case 8:
-			out.a = ((uint32_t)xx::FromHex(sv[0]) << 8) | (uint32_t)xx::FromHex(sv[1]);
-			out.r = ((uint32_t)xx::FromHex(sv[2]) << 8) | (uint32_t)xx::FromHex(sv[3]);
-			out.g = ((uint32_t)xx::FromHex(sv[4]) << 8) | (uint32_t)xx::FromHex(sv[5]);
-			out.b = ((uint32_t)xx::FromHex(sv[6]) << 8) | (uint32_t)xx::FromHex(sv[7]);
+			out.a = xx::FromHex(&sv[0]);
+			out.r = xx::FromHex(&sv[2]);
+			out.g = xx::FromHex(&sv[4]);
+			out.b = xx::FromHex(&sv[6]);
 			return;
 		default:
 			break;
@@ -327,8 +327,8 @@ namespace TMX {
 	void Map::TryFillProperties(std::vector<xx::Shared<Property>>& out, pugi::xml_node const& owner, bool needOverride) {
 		auto&& cProperties = owner.child("properties");
 		for (auto&& cProperty : cProperties.children("property")) {
-			PropertyTypes pt;
-			FillEnumTo(pt, cProperty.attribute("type"));
+			PropertyTypes pt = PropertyTypes::String;
+			TryFill(pt, cProperty.attribute("type"));
 			xx::Shared<Property> a;
 			switch (pt) {
 			case PropertyTypes::Bool: {
@@ -397,10 +397,10 @@ namespace TMX {
 		if (c.empty()) return {};
 		std::string s;
 		TryFill(s, c.attribute("source"));
-		s = rootPath + s;	// to fullpath
-		if (s.ends_with(".png"sv)) {			// hack: replace ext to pkm
-			s.resize(s.size() - 4);
-			s.append(".pkm");
+		auto fp = rootPath + s;	// to fullpath
+		if (fp.ends_with(".png"sv)) {			// hack: replace ext to pkm
+			fp.resize(fp.size() - 4);
+			fp.append(".pkm");
 		}
 		auto&& iter = std::find_if(this->images.begin(), this->images.end(), [&](xx::Shared<Image> const& img) {
 			return img->source == s;
@@ -408,10 +408,11 @@ namespace TMX {
 		if (iter == this->images.end()) {
 			auto&& img = xx::Make<Image>();
 			img->source = std::move(s);
-			img->texture.Emplace(eg->LoadTexture(img->source));
+			img->texture.Emplace(eg->LoadTexture(fp));
 			TryFill(img->width, c.attribute("width"));
 			TryFill(img->height, c.attribute("height"));
 			TryFill(img->transparentColor, c.attribute("trans"));
+			this->images.push_back(img);
 			return img;
 		} else {
 			return *iter;
@@ -421,10 +422,10 @@ namespace TMX {
 	void Map::TryFillTileset(Tileset& ts, pugi::xml_node const& c) {
 		TryFill(ts.firstgid, c.attribute("firstgid"));
 		TryFill(ts.source, c.attribute("source"));
-		ts.source = rootPath + ts.source;	// to fullpath
 
-		if (auto&& [d, fp] = eg->ReadAllBytes(ts.source); !d) {
-			throw std::logic_error("read file error: " + ts.source);
+		auto fp = rootPath + ts.source;	// to fullpath
+		if (auto&& d = eg->ReadAllBytesWithFullPath(fp); !d) {
+			throw std::logic_error("read file error: " + fp);
 		} else if (auto r = docTsx->load_buffer(d.buf, d.len); r.status) {
 			throw std::logic_error("docTsx.load_buffer error: " + std::string(r.description()));
 		} else {
@@ -724,6 +725,7 @@ namespace TMX {
 		TryFillLayerBase(pL, pC);
 		for (auto&& c : pC.children()) {
 			std::string_view name(c.name());
+			if (name == "properties"sv) continue;
 			if (name == "layer"sv) {
 				auto L = xx::Make<Layer_Tile>();
 				TryFillLayer(*L, c);
