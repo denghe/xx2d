@@ -366,7 +366,7 @@ struct TMXData {
 	};
 
 	struct Object;
-	struct PropertyObject : Property {
+	struct Property_Object : Property {
 		xx::Shared<Object> value;
 		uint32_t objectId = 0;
 	};
@@ -488,13 +488,13 @@ struct TMXData {
 	//	std::vector<xx::Shared<Property>> properties;
 	//};
 
-	//struct Frame {
+	//struct AFrame {
 	//	uint32_t duration;
 	//	uint32_t tileid;
 	//};
 
 	//struct Tile {
-	//	std::vector<Frame> animation;
+	//	std::vector<AFrame> animation;
 	//	uint32_t id;
 	//	std::string image;
 	//	uint32_t imageheight;
@@ -523,8 +523,8 @@ struct TMXData {
 		std::string name;
 		WangSetTypes type = WangSetTypes::Corner;
 		uint32_t tile = 0;
-		std::vector<WangTile> wangtiles;
-		std::vector<WangColor> colors;
+		std::vector<WangTile> wangTiles;	// <wangtile
+		std::vector<WangColor> wangColors;	// <wangcolor
 		std::vector<xx::Shared<Property>> properties;
 	};
 
@@ -590,13 +590,13 @@ struct TMXData {
 		std::optional<RGBA8> backgroundColor;	// backgroundcolor
 		std::vector<xx::Shared<Property>> properties;
 
-		std::vector<xx::Shared<Image>> images;
-		std::vector<xx::Shared<Tileset>> tilesets;
-		std::vector<xx::Shared<Layer>> layers;
 		std::string version;
 		std::string tiledVersion;	// tiledversion
 		uint32_t nextLayerId = 0;	// nextlayerid
 		uint32_t nextObjectId = 0;	// nextobjectid
+		std::vector<xx::Shared<Tileset>> tilesets;
+		std::vector<xx::Shared<Layer>> layers;
+		std::vector<xx::Shared<Image>> images;
 	};
 
 
