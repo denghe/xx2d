@@ -3,9 +3,9 @@
 #include "tmxdata.h"
 
 void Logic::Init() {
-	TMXData t;
-	t.Fill(this, "res/tiledmap1/m1.tmx");
-	std::cout << t.map.version << std::endl;
+	TMX::Map m;
+	m.Fill(this, "res/tiledmap1/m1.tmx");
+	std::cout << m.version << std::endl;
 }
 
 int Logic::Update() {

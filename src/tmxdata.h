@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "pch.h"
+#include "pugixml.hpp"
 
 // tiled map xml version data loader & container. supported to version 1.9x. compress method only support zstandard
 // https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#
@@ -17,7 +18,7 @@
 // todo: + field: "class"
 // todo: handle path "../../". remove rootDir ( write global function for append path? test FS::path )
 
-struct TMXData {
+namespace TMX {
 
 	template<typename ET>
 	struct StrToEnumMappings {
@@ -449,7 +450,7 @@ struct TMXData {
 		std::vector<uint32_t> gids;
 		uint32_t height = 0;
 		uint32_t width = 0;
-		Pointi xy;	// x, y
+		Pointi pos;	// x, y
 	};
 
 	struct Layer_Tile : Layer {
@@ -475,7 +476,7 @@ struct TMXData {
 		xx::Shared<GLTexture> texture;
 	};
 
-	struct Layer_Image {
+	struct Layer_Image : Layer {
 		xx::Shared<Image> image;
 		std::optional<RGBA8> transparentColor;	// trans="ff00ff"
 		bool repeatX = false;	// repeatx
@@ -597,17 +598,22 @@ struct TMXData {
 		std::vector<xx::Shared<Tileset>> tilesets;
 		std::vector<xx::Shared<Layer>> layers;
 		std::vector<xx::Shared<Image>> images;
+
+
+		// fill data by .tmx file
+		int Fill(Engine* const& eg, std::string_view const& tmxfn);
+
+		// todo: get texture & rect info by gid for generate quad. looks like 
+
+	protected:
+		Engine* eg;
+		xx::Shared<pugi::xml_document> docTmx, docTsx, docTx;
+		std::string rootPath;
+		void TryFillProperties(std::vector<xx::Shared<Property>>& out, pugi::xml_node const& owner, bool needOverride = false);
+		void TryFillLayerBase(Layer& L, pugi::xml_node const& c);
+		void TryFillLayer(Layer_Tile& L, pugi::xml_node const& c);
+		void TryFillLayer(Layer_Image& L, pugi::xml_node const& c);
+		void TryFillLayer(Layer_Object& L, pugi::xml_node const& c);
+		void TryFillLayer(Layer_Group& L, pugi::xml_node const& c);
 	};
-
-
-	/*********************************************************************************************/
-	/*********************************************************************************************/
-	/*********************************************************************************************/
-
-	Map map;
-
-	// fill map data by .tmx file
-	int Fill(Engine* const& eg, std::string_view const& tmxfn);
-
-	// todo: get texture & rect info by gid for generate quad. looks like 
 };
