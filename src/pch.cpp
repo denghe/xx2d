@@ -1,5 +1,7 @@
 ﻿#include "pch.h"
 
+// todo: handle path "../../". remove rootDir ( write global function for append path? test FS::path )
+
 // todo: touch, joystick support
 // todo: button, scroll view
 // todo: node( with matrix )

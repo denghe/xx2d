@@ -18,38 +18,11 @@ namespace TMX {
 		MAX_VALUE_UNKNOWN
 	};
 
+	struct Object;
 	struct Property {
 		PropertyTypes type = PropertyTypes::MAX_VALUE_UNKNOWN;
 		std::string name;
-	};
-
-	struct Property_Bool : Property {
-		bool value = false;
-	};
-
-	struct Property_Color : Property {
-		RGBA8 value = { 0, 0, 0, 255 };
-	};
-
-	struct Property_Float : Property {
-		double value = 0;
-	};
-
-	struct Property_String : Property {
-		std::string value;
-	};
-
-	struct Property_File : Property_String {
-	};
-
-	struct Property_Int : Property {
-		int64_t value = 0;
-	};
-
-	struct Object;
-	struct Property_Object : Property {
-		xx::Shared<Object> value;
-		uint32_t objectId = 0;
+		std::variant<bool, RGBA8, int64_t, double, std::unique_ptr<std::string>, xx::Weak<Object>> value;
 	};
 
 	/**********************************************************************************/
@@ -73,7 +46,7 @@ namespace TMX {
 		double y = 0;
 		double rotation = false;
 		bool visible = true;
-		std::vector<xx::Shared<Property>> properties;	// <properties>
+		std::vector<Property> properties;	// <properties>
 	};
 
 	struct Object_Point : Object {
@@ -101,7 +74,7 @@ namespace TMX {
 
 	struct Tileset;
 	struct Object_Tile : Object_Rectangle {
-		uint32_t gid = 0;				// & 0x3FFFFFFFu;
+		uint32_t gid = 0;					// & 0x3FFFFFFFu;
 		bool flippingHorizontal = false;	// (gid >> 31) & 1
 		bool flippingVertical = false;		// (gid >> 30) & 1
 	};
@@ -158,7 +131,7 @@ namespace TMX {
 		double horizontalOffset = 0;	// offsetx
 		double verticalOffset = 0;	// offsety
 		Pointf parallaxFactor = {1, 1};	// parallaxx, parallaxy
-		std::vector<xx::Shared<Property>> properties;	// <properties>
+		std::vector<Property> properties;	// <properties>
 	};
 
 	struct Chunk {
@@ -205,26 +178,24 @@ namespace TMX {
 
 	/**********************************************************************************/
 
-	//struct Terrain {
-	//	std::string name;
-	//	uint32_t tile;
-	//	std::vector<xx::Shared<Property>> properties;	// <properties>
-	//};
+	struct Terrain {
+		std::string name;
+		uint32_t tile;
+		std::vector<Property> properties;	// <properties>
+	};
 
 	//struct AFrame {
 	//	uint32_t duration;
-	//	uint32_t tileid;
+	//	uint32_t tileId;	// tileid
 	//};
 
 	//struct Tile {
 	//	std::vector<AFrame> animation;
 	//	uint32_t id;
-	//	std::string image;
-	//	uint32_t imageheight;
-	//	uint32_t imagewidth;
+	// xx::Shared<Image> image;
 	//	Layer objectgroup;
 	//	double probability;
-	//	std::vector<xx::Shared<Property>> properties;	// <properties>
+	//	std::vector<Property> properties;	// <properties>
 	//	std::vector<uint32_t> terrain;
 	//	std::string type;
 	//};
@@ -239,7 +210,7 @@ namespace TMX {
 		RGBA8 color = { 0, 0, 0, 255 };
 		uint32_t tile = 0;
 		double probability = 1;
-		std::vector<xx::Shared<Property>> properties;	// <properties>
+		std::vector<Property> properties;	// <properties>
 	};
 
 	enum class WangSetTypes : uint8_t {
@@ -255,7 +226,7 @@ namespace TMX {
 		uint32_t tile = 0;
 		std::vector<WangTile> wangTiles;	// <wangtile
 		std::vector<WangColor> wangColors;	// <wangcolor
-		std::vector<xx::Shared<Property>> properties;	// <properties>
+		std::vector<Property> properties;	// <properties>
 	};
 
 	struct Transformations {
@@ -321,7 +292,7 @@ namespace TMX {
 		uint32_t tileheight = 0;
 		uint32_t margin = 0;
 		uint32_t spacing = 0;
-		std::vector<xx::Shared<Property>> properties;	// <properties>
+		std::vector<Property> properties;	// <properties>
 
 		std::string version;
 		std::string tiledversion;
@@ -330,7 +301,7 @@ namespace TMX {
 		std::vector<WangSet> wangSets;	// <wangsets>
 
 		// todo
-		//std::vector<Terrain> terrains;
+		std::vector<Terrain> terrains;
 		//std::vector<Tile> tiles;
 	};
 
@@ -389,7 +360,7 @@ namespace TMX {
 		RenderOrders renderOrder = RenderOrders::RightDown;	// renderorder
 		int32_t compressionLevel = -1;	// compressionlevel
 		std::optional<RGBA8> backgroundColor;	// backgroundcolor
-		std::vector<xx::Shared<Property>> properties;	// <properties>
+		std::vector<Property> properties;	// <properties>
 
 		std::string version;
 		std::string tiledVersion;	// tiledversion
@@ -412,8 +383,9 @@ namespace TMX {
 		std::string rootPath;
 
 		// for easy Fill
-		void TryFillProperties(std::vector<xx::Shared<Property>>& out, pugi::xml_node const& owner, bool needOverride = false);
+		void TryFillProperties(std::vector<Property>& out, pugi::xml_node const& owner, bool needOverride = false);
 		xx::Shared<Image> TryToImage(pugi::xml_node const& c);
+		Property* MakeProperty(std::vector<Property>& out, pugi::xml_node const& c, std::string&& name);
 		void TryFillTileset(Tileset& ts, pugi::xml_node const& c);
 		void TryFillLayerBase(Layer& L, pugi::xml_node const& c);
 		void TryFillLayer(Layer_Tile& L, pugi::xml_node const& c);

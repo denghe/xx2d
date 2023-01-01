@@ -3,17 +3,11 @@
 #include <zstd.h>
 
 // todo: double int uint check
-// todo: sort field by editor UI
-// todo: + if exists check
 // todo: set fields default value
 // todo: sort tiledset by firstgid ?
-// todo: texture ? frame ?
 // todo: gid to frame ?
-// todo: strong type refine
 // todo: fill step 2: ptrs by id, props obj by id
 // todo: vector reserve
-// todo: + field: "class"
-// todo: handle path "../../". remove rootDir ( write global function for append path? test FS::path )
 
 namespace TMX {
 	template<typename ET> struct StrToEnumMappings {
@@ -164,7 +158,7 @@ namespace TMX {
 	/**********************************************************************************/
 
 	inline void ZstdDecompress(std::string_view const& src, xx::Data& dst) {
-		auto siz = ZSTD_getFrameContentSize(src.data(), src.size());
+		auto&& siz = ZSTD_getFrameContentSize(src.data(), src.size());
 		if (ZSTD_CONTENTSIZE_UNKNOWN == siz) throw std::logic_error("ZstdDecompress error: unknown content size.");
 		if (ZSTD_CONTENTSIZE_ERROR == siz) throw std::logic_error("ZstdDecompress read content size error.");
 		dst.Resize(siz);
@@ -324,71 +318,64 @@ namespace TMX {
 		TryFill(chunk.height, cChunk.attribute("height"));
 	}
 
-	void Map::TryFillProperties(std::vector<xx::Shared<Property>>& out, pugi::xml_node const& owner, bool needOverride) {
-		auto&& cProperties = owner.child("properties");
-		for (auto&& cProperty : cProperties.children("property")) {
-			PropertyTypes pt = PropertyTypes::String;
-			TryFill(pt, cProperty.attribute("type"));
-			xx::Shared<Property> a;
-			switch (pt) {
+	Property* Map::MakeProperty(std::vector<Property>& out, pugi::xml_node const& c, std::string&& name) {
+		auto&& p = &out.emplace_back();
+		p->name = std::move(name);
+		p->type = PropertyTypes::String;
+		TryFill(p->type, c.attribute("type"));
+		return p;
+	}
+
+	void Map::TryFillProperties(std::vector<Property>& out, pugi::xml_node const& owner, bool needOverride) {
+		for (auto&& c : owner.child("properties").children("property")) {
+			Property* p;
+			if (needOverride) {
+				std::string name;
+				TryFill(name, c.attribute("name"));
+				auto&& iter = std::find_if(out.begin(), out.end(), [&](Property const& prop) {
+					return prop.name == name;
+				});
+				if (iter == out.end()) {
+					p = MakeProperty(out, c, std::move(name));
+				} else {
+					p = &*iter;
+				}
+			} else {
+				p = MakeProperty(out, c, c.attribute("name").as_string());
+			}
+			switch (p->type) {
 			case PropertyTypes::Bool: {
-				auto o = xx::Make<Property_Bool>();
-				o->value = cProperty.attribute("value").as_bool();
-				a = o;
+				p->value = c.attribute("value").as_bool();
 				break;
 			}
 			case PropertyTypes::Color: {
-				auto o = xx::Make<Property_Color>();
-				FillColorTo(o->value, cProperty.attribute("value"));
-				a = o;
+				RGBA8 o{ 0, 0, 0, 255 };
+				TryFill(o, c.attribute("value"));
+				p->value = o;
 				break;
 			}
 			case PropertyTypes::Float: {
-				auto o = xx::Make<Property_Float>();
-				o->value = cProperty.attribute("value").as_double();
-				a = o;
+				p->value = c.attribute("value").as_double();
 				break;
 			}
 			case PropertyTypes::File: {
-				auto o = xx::Make<Property_File>();
-				o->value = std::string(rootPath) + cProperty.attribute("value").as_string();
-				a = o;
+				p->value = std::make_unique<std::string>(c.attribute("value").as_string());
 				break;
 			}
 			case PropertyTypes::Int: {
-				auto o = xx::Make<Property_Int>();
-				o->value = cProperty.attribute("value").as_llong();
-				a = o;
+				p->value = c.attribute("value").as_llong();
 				break;
 			}
 			case PropertyTypes::Object: {
-				auto o = xx::Make<Property_Object>();
-				o->objectId = cProperty.attribute("value").as_uint();
-				a = o;
+				p->value = c.attribute("value").as_llong();	// convert to xx::Weak<Object> at fill step 2
 				break;
 			}
 			case PropertyTypes::String: {
-				auto o = xx::Make<Property_String>();
-				o->value = cProperty.attribute("value").as_string();
-				a = o;
+				p->value = std::make_unique<std::string>(c.attribute("value").as_string());
 				break;
 			}
 			default:
-				throw std::logic_error("FillPropertiesTo error: unhandled property type: " + std::to_string((int)pt));
-			}
-			a->type = pt;
-			a->name = cProperty.attribute("name").as_string();
-			if (needOverride) {
-				auto iter = std::find_if(out.begin(), out.end(), [&](xx::Shared<Property> const& p) {
-					return p->name == a->name;
-					});
-				if (iter == out.end()) {
-					out.emplace_back(std::move(a));
-				} else {
-					*iter = std::move(a);
-				}
-			} else {
-				out.emplace_back(std::move(a));
+				throw std::logic_error("FillPropertiesTo error: unhandled property type: " + std::to_string((int)p->type));
 			}
 		}
 	}
@@ -397,7 +384,7 @@ namespace TMX {
 		if (c.empty()) return {};
 		std::string s;
 		TryFill(s, c.attribute("source"));
-		auto fp = rootPath + s;	// to fullpath
+		auto&& fp = rootPath + s;	// to fullpath
 		if (fp.ends_with(".png"sv)) {			// hack: replace ext to pkm
 			fp.resize(fp.size() - 4);
 			fp.append(".pkm");
@@ -423,10 +410,10 @@ namespace TMX {
 		TryFill(ts.firstgid, c.attribute("firstgid"));
 		TryFill(ts.source, c.attribute("source"));
 
-		auto fp = rootPath + ts.source;	// to fullpath
+		auto&& fp = rootPath + ts.source;	// to fullpath
 		if (auto&& d = eg->ReadAllBytesWithFullPath(fp); !d) {
 			throw std::logic_error("read file error: " + fp);
-		} else if (auto r = docTsx->load_buffer(d.buf, d.len); r.status) {
+		} else if (auto&& r = docTsx->load_buffer(d.buf, d.len); r.status) {
 			throw std::logic_error("docTsx.load_buffer error: " + std::string(r.description()));
 		} else {
 			auto&& cTileset = docTsx->child("tileset");
@@ -525,7 +512,7 @@ namespace TMX {
 				for (auto&& cChunk : cData.children("chunk")) {
 					auto&& chunk = L.chunks.emplace_back();
 					TryFillChunkBase(chunk, cChunk);
-					auto bin = xx::Base64Decode(xx::Trim(cChunk.text().as_string()));
+					auto&& bin = xx::Base64Decode(xx::Trim(cChunk.text().as_string()));
 					switch (compression) {
 					case Compressions::Uncompressed: {
 						FillBinIntsTo(chunk.gids, { bin.data(), bin.size() });
@@ -564,7 +551,7 @@ namespace TMX {
 			}
 			case Encodings::Base64: {
 				xx::Data tmp;
-				auto bin = xx::Base64Decode(xx::Trim(cData.text().as_string()));
+				auto&& bin = xx::Base64Decode(xx::Trim(cData.text().as_string()));
 				switch (this->tileLayerFormat.second) {
 				case Compressions::Uncompressed: {
 					FillBinIntsTo(L.gids, { bin.data(), bin.size() });
@@ -706,10 +693,10 @@ namespace TMX {
 			};
 
 			if (auto&& aTemplate = cObject.attribute("template"); !aTemplate.empty()) {
-				auto fn = rootPath + aTemplate.as_string();
+				auto&& fn = rootPath + aTemplate.as_string();
 				if (auto&& [d, fp] = eg->ReadAllBytes(fn); !d) {
 					throw std::logic_error("read file error: " + fn);
-				} else if (auto r = docTx->load_buffer(d.buf, d.len); r.status) {
+				} else if (auto&& r = docTx->load_buffer(d.buf, d.len); r.status) {
 					throw std::logic_error("docTx.load_buffer error: " + std::string(r.description()));
 				} else {
 					auto&& cObj = docTx->child("template").child("object");
@@ -727,19 +714,19 @@ namespace TMX {
 			std::string_view name(c.name());
 			if (name == "properties"sv) continue;
 			if (name == "layer"sv) {
-				auto L = xx::Make<Layer_Tile>();
+				auto&& L = xx::Make<Layer_Tile>();
 				TryFillLayer(*L, c);
 				pL.layers.emplace_back(std::move(L));
 			} else if (name == "imagelayer"sv) {
-				auto L = xx::Make<Layer_Image>();
+				auto&& L = xx::Make<Layer_Image>();
 				TryFillLayer(*L, c);
 				pL.layers.emplace_back(std::move(L));
 			} else if (name == "objectgroup"sv) {
-				auto L = xx::Make<Layer_Object>();
+				auto&& L = xx::Make<Layer_Object>();
 				TryFillLayer(*L, c);
 				pL.layers.emplace_back(std::move(L));
 			} else if (name == "group"sv) {
-				auto L = xx::Make<Layer_Group>();
+				auto&& L = xx::Make<Layer_Group>();
 				TryFillLayer(*L, c);
 				pL.layers.emplace_back(std::move(L));
 			} else {
@@ -761,10 +748,10 @@ namespace TMX {
 		// load
 		if (auto&& [d, fp] = eg->ReadAllBytes(tmxfn); !d) {
 			throw std::logic_error("read file error: " + std::string(tmxfn));
-		} else if (auto r = docTmx->load_buffer(d.buf, d.len); r.status) {
+		} else if (auto&& r = docTmx->load_buffer(d.buf, d.len); r.status) {
 			throw std::logic_error("docTmx.load_buffer error: " + std::string(r.description()));
 		} else {
-			if (auto i = fp.find_last_of("/"); i != fp.npos) {
+			if (auto&& i = fp.find_last_of("/"); i != fp.npos) {
 				rootPath = fp.substr(0, i + 1);
 			}
 		}
@@ -808,23 +795,23 @@ namespace TMX {
 		for (auto&& c : cMap.children()) {
 			std::string_view name(c.name());
 			if (name == "tileset"sv) {
-				auto ts = xx::Make<Tileset>();
+				auto&& ts = xx::Make<Tileset>();
 				TryFillTileset(*ts, c);
 				this->tilesets.emplace_back(std::move(ts));
 			} else if (name == "layer"sv) {
-				auto L = xx::Make<Layer_Tile>();
+				auto&& L = xx::Make<Layer_Tile>();
 				TryFillLayer(*L, c);
 				this->layers.emplace_back(std::move(L));
 			} else if (name == "imagelayer"sv) {
-				auto L = xx::Make<Layer_Image>();
+				auto&& L = xx::Make<Layer_Image>();
 				TryFillLayer(*L, c);
 				this->layers.emplace_back(std::move(L));
 			} else if (name == "objectgroup"sv) {
-				auto L = xx::Make<Layer_Object>();
+				auto&& L = xx::Make<Layer_Object>();
 				TryFillLayer(*L, c);
 				this->layers.emplace_back(std::move(L));
 			} else if (name == "group"sv) {
-				auto L = xx::Make<Layer_Group>();
+				auto&& L = xx::Make<Layer_Group>();
 				TryFillLayer(*L, c);
 				this->layers.emplace_back(std::move(L));
 			} else {
