@@ -5,204 +5,7 @@
 // tiled map xml version data loader & container. supported to version 1.9x. compress method only support zstandard
 // https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#
 
-// todo: double int uint check
-// todo: sort field by editor UI
-// todo: + if exists check
-// todo: set fields default value
-// todo: sort tiledset by firstgid ?
-// todo: texture ? frame ?
-// todo: gid to frame ?
-// todo: strong type refine
-// todo: fill step 2: ptrs by id, props obj by id
-// todo: vector reserve
-// todo: + field: "class"
-// todo: handle path "../../". remove rootDir ( write global function for append path? test FS::path )
-
 namespace TMX {
-
-	template<typename ET>
-	struct StrToEnumMappings {
-		inline static constexpr std::string_view const* svs = nullptr;
-		inline static constexpr size_t count = 0;
-	};
-
-	/**********************************************************************************/
-
-	enum class Orientations : uint8_t {
-		Orthogonal,
-		Isometric,
-		Staggered,	// not for Tileset
-		Hexagonal,	// not for Tileset
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 4> enumTexts_Orientations = {
-		"orthogonal"sv,
-		"isometric"sv,
-		"staggered"sv,
-		"hexagonal"sv
-	};
-	template<>
-	struct StrToEnumMappings<Orientations> {
-		inline static constexpr std::string_view const* svs = enumTexts_Orientations.data();
-		inline static constexpr size_t count = enumTexts_Orientations.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class RenderOrders : uint8_t {
-		RightDown,
-		RightUp,
-		LeftDown,
-		LeftUp,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 4> enumTexts_RenderOrders = {
-		"right-down"sv,
-		"right-up"sv,
-		"left-down"sv,
-		"left-up"sv
-	};
-	template<>
-	struct StrToEnumMappings<RenderOrders> {
-		inline static constexpr std::string_view const* svs = enumTexts_RenderOrders.data();
-		inline static constexpr size_t count = enumTexts_RenderOrders.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class WangSetTypes : uint8_t {
-		Corner,
-		Edge,
-		Mixed,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 3> enumTexts_WangSetTypes = {
-		"corner"sv,
-		"edge"sv,
-		"mixed"sv,
-	};
-	template<>
-	struct StrToEnumMappings<WangSetTypes> {
-		inline static constexpr std::string_view const* svs = enumTexts_WangSetTypes.data();
-		inline static constexpr size_t count = enumTexts_WangSetTypes.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class Encodings : uint8_t {
-		Csv,
-		Base64,													// support Compressions
-		Xml,													// deprecated
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 3> enumTexts_Encodings = {
-		"csv"sv,
-		"base64"sv,
-		"xml"sv,
-	};
-	template<>
-	struct StrToEnumMappings<Encodings> {
-		inline static constexpr std::string_view const* svs = enumTexts_Encodings.data();
-		inline static constexpr size_t count = enumTexts_Encodings.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class Compressions : uint8_t {
-		Uncompressed,
-		Gzip,
-		Zlib,
-		Zstd,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 4> enumTexts_Compressions = {
-		"uncompressed"sv,
-		"gzip"sv,
-		"zlib"sv,
-		"zstd"sv,
-	};
-	template<>
-	struct StrToEnumMappings<Compressions> {
-		inline static constexpr std::string_view const* svs = enumTexts_Compressions.data();
-		inline static constexpr size_t count = enumTexts_Compressions.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class HAligns : uint8_t {
-		Left,
-		Center,
-		Right,
-		Justify,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 4> enumTexts_HAligns = {
-		"left"sv,
-		"center"sv,
-		"right"sv,
-		"justify"sv,
-	};
-	template<>
-	struct StrToEnumMappings<HAligns> {
-		inline static constexpr std::string_view const* svs = enumTexts_HAligns.data();
-		inline static constexpr size_t count = enumTexts_HAligns.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class StaggerAxiss : uint8_t {
-		X,
-		Y,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 2> enumTexts_StaggerAxiss = {
-		"x"sv,
-		"y"sv,
-	};
-	template<>
-	struct StrToEnumMappings<StaggerAxiss> {
-		inline static constexpr std::string_view const* svs = enumTexts_StaggerAxiss.data();
-		inline static constexpr size_t count = enumTexts_StaggerAxiss.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class StaggerIndexs : uint8_t {
-		Odd,
-		Even,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 2> enumTexts_StaggerIndexs = {
-		"odd"sv,
-		"even"sv,
-	};
-	template<>
-	struct StrToEnumMappings<StaggerIndexs> {
-		inline static constexpr std::string_view const* svs = enumTexts_StaggerIndexs.data();
-		inline static constexpr size_t count = enumTexts_StaggerIndexs.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class VAligns : uint8_t {
-		Top,
-		Center,
-		Bottom,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 3> enumTexts_VAligns = {
-		"top"sv,
-		"center"sv,
-		"bottom"sv,
-	};
-	template<>
-	struct StrToEnumMappings<VAligns> {
-		inline static constexpr std::string_view const* svs = enumTexts_VAligns.data();
-		inline static constexpr size_t count = enumTexts_VAligns.size();
-	};
-
-
-	/**********************************************************************************/
 
 	enum class PropertyTypes : uint8_t {
 		Bool,
@@ -214,129 +17,6 @@ namespace TMX {
 		String,
 		MAX_VALUE_UNKNOWN
 	};
-	inline static constexpr std::array<std::string_view, 7> enumTexts_PropertyTypes = {
-		"bool"sv,
-		"color"sv,
-		"float"sv,
-		"file"sv,
-		"int"sv,
-		"object"sv,
-		"string"sv,
-	};
-	template<>
-	struct StrToEnumMappings<PropertyTypes> {
-		inline static constexpr std::string_view const* svs = enumTexts_PropertyTypes.data();
-		inline static constexpr size_t count = enumTexts_PropertyTypes.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class DrawOrders : uint8_t {
-		TopDown,
-		Index,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 2> enumTexts_DrawOrders = {
-		"topdown"sv,
-		"index"sv,
-	};
-	template<>
-	struct StrToEnumMappings<DrawOrders> {
-		inline static constexpr std::string_view const* svs = enumTexts_DrawOrders.data();
-		inline static constexpr size_t count = enumTexts_DrawOrders.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class ObjectAlignment : uint8_t {
-		Unspecified,
-		TopLeft,
-		Top,
-		TopRight,
-		Left,
-		Center,
-		Right,
-		BottomLeft,
-		Bottom,
-		BottomRight,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 10> enumTexts_ObjectAlignment = {
-		"unspecified"sv,
-		"topleft"sv,
-		"top"sv,
-		"topright"sv,
-		"left"sv,
-		"center"sv,
-		"right"sv,
-		"bottomleft"sv,
-		"bottom"sv,
-		"bottomright"sv,
-	};
-	template<>
-	struct StrToEnumMappings<ObjectAlignment> {
-		inline static constexpr std::string_view const* svs = enumTexts_ObjectAlignment.data();
-		inline static constexpr size_t count = enumTexts_ObjectAlignment.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class TileRenderSizes : uint8_t {
-		TileSize,
-		MapGridSize,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 2> enumTexts_TileRenderSizes = {
-		"tile"sv,
-		"grid"sv,
-	};
-	template<>
-	struct StrToEnumMappings<TileRenderSizes> {
-		inline static constexpr std::string_view const* svs = enumTexts_TileRenderSizes.data();
-		inline static constexpr size_t count = enumTexts_TileRenderSizes.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class FillModes : uint8_t {
-		Stretch,
-		PreserveAspectFit,
-		MAX_VALUE_UNKNOWN
-	};
-	inline static constexpr std::array<std::string_view, 2> enumTexts_FillModes = {
-		"stretch"sv,
-		"preserve-aspect-fit"sv,
-	};
-	template<>
-	struct StrToEnumMappings<FillModes> {
-		inline static constexpr std::string_view const* svs = enumTexts_FillModes.data();
-		inline static constexpr size_t count = enumTexts_FillModes.size();
-	};
-
-	/**********************************************************************************/
-
-	enum class ObjectTypes : uint8_t {
-		Point,
-		Ellipse,
-		Polygon,
-		Rectangle,
-		Tile,
-		Text,
-		MAX_VALUE_UNKNOWN
-	};
-
-	/**********************************************************************************/
-
-	enum class LayerTypes : uint8_t {
-		Tile,
-		Object,
-		Image,
-		Group,
-		MAX_VALUE_UNKNOWN
-	};
-
-	/**********************************************************************************/
-
 
 	struct Property {
 		PropertyTypes type = PropertyTypes::MAX_VALUE_UNKNOWN;
@@ -372,6 +52,17 @@ namespace TMX {
 		uint32_t objectId = 0;
 	};
 
+	/**********************************************************************************/
+
+	enum class ObjectTypes : uint8_t {
+		Point,
+		Ellipse,
+		Polygon,
+		Rectangle,
+		Tile,
+		Text,
+		MAX_VALUE_UNKNOWN
+	};
 
 	struct Object {
 		ObjectTypes type = ObjectTypes::MAX_VALUE_UNKNOWN;
@@ -382,7 +73,7 @@ namespace TMX {
 		double y = 0;
 		double rotation = false;
 		bool visible = true;
-		std::vector<xx::Shared<Property>> properties;
+		std::vector<xx::Shared<Property>> properties;	// <properties>
 	};
 
 	struct Object_Point : Object {
@@ -415,6 +106,21 @@ namespace TMX {
 		bool flippingVertical = false;		// (gid >> 30) & 1
 	};
 
+	enum class HAligns : uint8_t {
+		Left,
+		Center,
+		Right,
+		Justify,
+		MAX_VALUE_UNKNOWN
+	};
+
+	enum class VAligns : uint8_t {
+		Top,
+		Center,
+		Bottom,
+		MAX_VALUE_UNKNOWN
+	};
+
 	struct Object_Text : Object_Rectangle {
 		std::string fontfamily;
 		uint32_t pixelsize = 16;
@@ -430,6 +136,15 @@ namespace TMX {
 		std::string text;
 	};
 
+	/**********************************************************************************/
+
+	enum class LayerTypes : uint8_t {
+		Tile,
+		Object,
+		Image,
+		Group,
+		MAX_VALUE_UNKNOWN
+	};
 
 	struct Layer {
 		LayerTypes type = LayerTypes::MAX_VALUE_UNKNOWN;
@@ -443,7 +158,7 @@ namespace TMX {
 		double horizontalOffset = 0;	// offsetx
 		double verticalOffset = 0;	// offsety
 		Pointf parallaxFactor = {1, 1};	// parallaxx, parallaxy
-		std::vector<xx::Shared<Property>> properties;
+		std::vector<xx::Shared<Property>> properties;	// <properties>
 	};
 
 	struct Chunk {
@@ -456,6 +171,12 @@ namespace TMX {
 	struct Layer_Tile : Layer {
 		std::vector<Chunk> chunks;	// when map.infinite == true
 		std::vector<uint32_t> gids;	// when map.infinite == false
+	};
+
+	enum class DrawOrders : uint8_t {
+		TopDown,
+		Index,
+		MAX_VALUE_UNKNOWN
 	};
 
 	struct Layer_Object : Layer {
@@ -478,15 +199,16 @@ namespace TMX {
 
 	struct Layer_Image : Layer {
 		xx::Shared<Image> image;
-		std::optional<RGBA8> transparentColor;	// trans="ff00ff"
 		bool repeatX = false;	// repeatx
 		bool repeatY = false;	// repeaty
 	};
 
+	/**********************************************************************************/
+
 	//struct Terrain {
 	//	std::string name;
 	//	uint32_t tile;
-	//	std::vector<xx::Shared<Property>> properties;
+	//	std::vector<xx::Shared<Property>> properties;	// <properties>
 	//};
 
 	//struct AFrame {
@@ -502,7 +224,7 @@ namespace TMX {
 	//	uint32_t imagewidth;
 	//	Layer objectgroup;
 	//	double probability;
-	//	std::vector<xx::Shared<Property>> properties;
+	//	std::vector<xx::Shared<Property>> properties;	// <properties>
 	//	std::vector<uint32_t> terrain;
 	//	std::string type;
 	//};
@@ -517,7 +239,14 @@ namespace TMX {
 		RGBA8 color = { 0, 0, 0, 255 };
 		uint32_t tile = 0;
 		double probability = 1;
-		std::vector<xx::Shared<Property>> properties;
+		std::vector<xx::Shared<Property>> properties;	// <properties>
+	};
+
+	enum class WangSetTypes : uint8_t {
+		Corner,
+		Edge,
+		Mixed,
+		MAX_VALUE_UNKNOWN
 	};
 
 	struct WangSet {
@@ -526,7 +255,7 @@ namespace TMX {
 		uint32_t tile = 0;
 		std::vector<WangTile> wangTiles;	// <wangtile
 		std::vector<WangColor> wangColors;	// <wangcolor
-		std::vector<xx::Shared<Property>> properties;
+		std::vector<xx::Shared<Property>> properties;	// <properties>
 	};
 
 	struct Transformations {
@@ -534,6 +263,40 @@ namespace TMX {
 		bool flipVertically = false;	// vflip
 		bool rotate = false;
 		bool preferUntransformedTiles = false;	// preferuntransformed
+	};
+
+	enum class Orientations : uint8_t {
+		Orthogonal,
+		Isometric,
+		Staggered,	// not for Tileset
+		Hexagonal,	// not for Tileset
+		MAX_VALUE_UNKNOWN
+	};
+
+	enum class ObjectAlignment : uint8_t {
+		Unspecified,
+		TopLeft,
+		Top,
+		TopRight,
+		Left,
+		Center,
+		Right,
+		BottomLeft,
+		Bottom,
+		BottomRight,
+		MAX_VALUE_UNKNOWN
+	};
+
+	enum class TileRenderSizes : uint8_t {
+		TileSize,
+		MapGridSize,
+		MAX_VALUE_UNKNOWN
+	};
+
+	enum class FillModes : uint8_t {
+		Stretch,
+		PreserveAspectFit,
+		MAX_VALUE_UNKNOWN
 	};
 
 	struct Tileset {
@@ -558,7 +321,7 @@ namespace TMX {
 		uint32_t tileheight = 0;
 		uint32_t margin = 0;
 		uint32_t spacing = 0;
-		std::vector<xx::Shared<Property>> properties;
+		std::vector<xx::Shared<Property>> properties;	// <properties>
 
 		std::string version;
 		std::string tiledversion;
@@ -569,6 +332,43 @@ namespace TMX {
 		// todo
 		//std::vector<Terrain> terrains;
 		//std::vector<Tile> tiles;
+	};
+
+	/**********************************************************************************/
+
+	enum class RenderOrders : uint8_t {
+		RightDown,
+		RightUp,
+		LeftDown,
+		LeftUp,
+		MAX_VALUE_UNKNOWN
+	};
+
+	enum class Encodings : uint8_t {
+		Csv,
+		Base64,	// support Compressions
+		Xml,	// deprecated
+		MAX_VALUE_UNKNOWN
+	};
+
+	enum class Compressions : uint8_t {
+		Uncompressed,
+		Gzip,
+		Zlib,
+		Zstd,
+		MAX_VALUE_UNKNOWN
+	};
+
+	enum class StaggerAxiss : uint8_t {
+		X,
+		Y,
+		MAX_VALUE_UNKNOWN
+	};
+
+	enum class StaggerIndexs : uint8_t {
+		Odd,
+		Even,
+		MAX_VALUE_UNKNOWN
 	};
 
 	struct Map {
@@ -589,7 +389,7 @@ namespace TMX {
 		RenderOrders renderOrder = RenderOrders::RightDown;	// renderorder
 		int32_t compressionLevel = -1;	// compressionlevel
 		std::optional<RGBA8> backgroundColor;	// backgroundcolor
-		std::vector<xx::Shared<Property>> properties;
+		std::vector<xx::Shared<Property>> properties;	// <properties>
 
 		std::string version;
 		std::string tiledVersion;	// tiledversion
@@ -606,10 +406,15 @@ namespace TMX {
 		// todo: get texture & rect info by gid for generate quad. looks like 
 
 	protected:
+		// tmp vars for easy Fill
 		Engine* eg;
 		xx::Shared<pugi::xml_document> docTmx, docTsx, docTx;
 		std::string rootPath;
+
+		// for easy Fill
 		void TryFillProperties(std::vector<xx::Shared<Property>>& out, pugi::xml_node const& owner, bool needOverride = false);
+		xx::Shared<Image> TryToImage(pugi::xml_node const& c);
+		void TryFillTileset(Tileset& ts, pugi::xml_node const& c);
 		void TryFillLayerBase(Layer& L, pugi::xml_node const& c);
 		void TryFillLayer(Layer_Tile& L, pugi::xml_node const& c);
 		void TryFillLayer(Layer_Image& L, pugi::xml_node const& c);

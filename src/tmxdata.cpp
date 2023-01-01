@@ -2,7 +2,166 @@
 #include "tmxdata.h"
 #include <zstd.h>
 
+// todo: double int uint check
+// todo: sort field by editor UI
+// todo: + if exists check
+// todo: set fields default value
+// todo: sort tiledset by firstgid ?
+// todo: texture ? frame ?
+// todo: gid to frame ?
+// todo: strong type refine
+// todo: fill step 2: ptrs by id, props obj by id
+// todo: vector reserve
+// todo: + field: "class"
+// todo: handle path "../../". remove rootDir ( write global function for append path? test FS::path )
+
 namespace TMX {
+	template<typename ET> struct StrToEnumMappings {
+		inline static constexpr std::string_view const* svs = nullptr;
+		inline static constexpr size_t count = 0;
+	};
+
+	/**********************************************************************************/
+
+	inline static constexpr std::array<std::string_view, 4> enumTexts_Orientations = {
+		"orthogonal"sv,
+		"isometric"sv,
+		"staggered"sv,
+		"hexagonal"sv
+	};
+	template<> struct StrToEnumMappings<Orientations> {
+		inline static constexpr std::string_view const* svs = enumTexts_Orientations.data();
+		inline static constexpr size_t count = enumTexts_Orientations.size();
+	};
+
+	inline static constexpr std::array<std::string_view, 4> enumTexts_RenderOrders = {
+		"right-down"sv,
+		"right-up"sv,
+		"left-down"sv,
+		"left-up"sv
+	};
+	template<> struct StrToEnumMappings<RenderOrders> {
+		inline static constexpr std::string_view const* svs = enumTexts_RenderOrders.data();
+		inline static constexpr size_t count = enumTexts_RenderOrders.size();
+	};
+	inline static constexpr std::array<std::string_view, 3> enumTexts_WangSetTypes = {
+		"corner"sv,
+		"edge"sv,
+		"mixed"sv,
+	};
+	template<> struct StrToEnumMappings<WangSetTypes> {
+		inline static constexpr std::string_view const* svs = enumTexts_WangSetTypes.data();
+		inline static constexpr size_t count = enumTexts_WangSetTypes.size();
+	};
+	inline static constexpr std::array<std::string_view, 3> enumTexts_Encodings = {
+		"csv"sv,
+		"base64"sv,
+		"xml"sv,
+	};
+	template<> struct StrToEnumMappings<Encodings> {
+		inline static constexpr std::string_view const* svs = enumTexts_Encodings.data();
+		inline static constexpr size_t count = enumTexts_Encodings.size();
+	};
+	inline static constexpr std::array<std::string_view, 4> enumTexts_Compressions = {
+		"uncompressed"sv,
+		"gzip"sv,
+		"zlib"sv,
+		"zstd"sv,
+	};
+	template<> struct StrToEnumMappings<Compressions> {
+		inline static constexpr std::string_view const* svs = enumTexts_Compressions.data();
+		inline static constexpr size_t count = enumTexts_Compressions.size();
+	};
+	inline static constexpr std::array<std::string_view, 4> enumTexts_HAligns = {
+		"left"sv,
+		"center"sv,
+		"right"sv,
+		"justify"sv,
+	};
+	template<> struct StrToEnumMappings<HAligns> {
+		inline static constexpr std::string_view const* svs = enumTexts_HAligns.data();
+		inline static constexpr size_t count = enumTexts_HAligns.size();
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_StaggerAxiss = {
+		"x"sv,
+		"y"sv,
+	};
+	template<> struct StrToEnumMappings<StaggerAxiss> {
+		inline static constexpr std::string_view const* svs = enumTexts_StaggerAxiss.data();
+		inline static constexpr size_t count = enumTexts_StaggerAxiss.size();
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_StaggerIndexs = {
+		"odd"sv,
+		"even"sv,
+	};
+	template<> struct StrToEnumMappings<StaggerIndexs> {
+		inline static constexpr std::string_view const* svs = enumTexts_StaggerIndexs.data();
+		inline static constexpr size_t count = enumTexts_StaggerIndexs.size();
+	};
+	inline static constexpr std::array<std::string_view, 3> enumTexts_VAligns = {
+		"top"sv,
+		"center"sv,
+		"bottom"sv,
+	};
+	template<> struct StrToEnumMappings<VAligns> {
+		inline static constexpr std::string_view const* svs = enumTexts_VAligns.data();
+		inline static constexpr size_t count = enumTexts_VAligns.size();
+	};
+	inline static constexpr std::array<std::string_view, 7> enumTexts_PropertyTypes = {
+		"bool"sv,
+		"color"sv,
+		"float"sv,
+		"file"sv,
+		"int"sv,
+		"object"sv,
+		"string"sv,
+	};
+	template<> struct StrToEnumMappings<PropertyTypes> {
+		inline static constexpr std::string_view const* svs = enumTexts_PropertyTypes.data();
+		inline static constexpr size_t count = enumTexts_PropertyTypes.size();
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_DrawOrders = {
+		"topdown"sv,
+		"index"sv,
+	};
+	template<> struct StrToEnumMappings<DrawOrders> {
+		inline static constexpr std::string_view const* svs = enumTexts_DrawOrders.data();
+		inline static constexpr size_t count = enumTexts_DrawOrders.size();
+	};
+	inline static constexpr std::array<std::string_view, 10> enumTexts_ObjectAlignment = {
+		"unspecified"sv,
+		"topleft"sv,
+		"top"sv,
+		"topright"sv,
+		"left"sv,
+		"center"sv,
+		"right"sv,
+		"bottomleft"sv,
+		"bottom"sv,
+		"bottomright"sv,
+	};
+	template<> struct StrToEnumMappings<ObjectAlignment> {
+		inline static constexpr std::string_view const* svs = enumTexts_ObjectAlignment.data();
+		inline static constexpr size_t count = enumTexts_ObjectAlignment.size();
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_TileRenderSizes = {
+		"tile"sv,
+		"grid"sv,
+	};
+	template<> struct StrToEnumMappings<TileRenderSizes> {
+		inline static constexpr std::string_view const* svs = enumTexts_TileRenderSizes.data();
+		inline static constexpr size_t count = enumTexts_TileRenderSizes.size();
+	};
+	inline static constexpr std::array<std::string_view, 2> enumTexts_FillModes = {
+		"stretch"sv,
+		"preserve-aspect-fit"sv,
+	};
+	template<> struct StrToEnumMappings<FillModes> {
+		inline static constexpr std::string_view const* svs = enumTexts_FillModes.data();
+		inline static constexpr size_t count = enumTexts_FillModes.size();
+	};
+
+	/**********************************************************************************/
 
 	inline void ZstdDecompress(std::string_view const& src, xx::Data& dst) {
 		auto siz = ZSTD_getFrameContentSize(src.data(), src.size());
@@ -14,6 +173,8 @@ namespace TMX {
 		if (ZSTD_isError(siz)) throw std::logic_error("ZstdDecompress decompress error.");
 		dst.Resize(siz);
 	}
+
+	/**********************************************************************************/
 
 	// example: <... color="#fefbfcfd" AARRGGBB ...  color="fbfcfd" RRGGBB
 	inline static void FillColorTo(RGBA8& out, pugi::xml_attribute const& a) {
@@ -232,6 +393,102 @@ namespace TMX {
 		}
 	}
 
+	xx::Shared<Image> Map::TryToImage(pugi::xml_node const& c) {
+		if (c.empty()) return {};
+		std::string s;
+		TryFill(s, c.attribute("source"));
+		s = rootPath + s;	// to fullpath
+		if (s.ends_with(".png"sv)) {			// hack: replace ext to pkm
+			s.resize(s.size() - 4);
+			s.append(".pkm");
+		}
+		auto&& iter = std::find_if(this->images.begin(), this->images.end(), [&](xx::Shared<Image> const& img) {
+			return img->source == s;
+			});
+		if (iter == this->images.end()) {
+			auto&& img = xx::Make<Image>();
+			img->source = std::move(s);
+			img->texture.Emplace(eg->LoadTexture(img->source));
+			TryFill(img->width, c.attribute("width"));
+			TryFill(img->height, c.attribute("height"));
+			TryFill(img->transparentColor, c.attribute("trans"));
+			return img;
+		} else {
+			return *iter;
+		}
+	}
+
+	void Map::TryFillTileset(Tileset& ts, pugi::xml_node const& c) {
+		TryFill(ts.firstgid, c.attribute("firstgid"));
+		TryFill(ts.source, c.attribute("source"));
+		ts.source = rootPath + ts.source;	// to fullpath
+
+		if (auto&& [d, fp] = eg->ReadAllBytes(ts.source); !d) {
+			throw std::logic_error("read file error: " + ts.source);
+		} else if (auto r = docTsx->load_buffer(d.buf, d.len); r.status) {
+			throw std::logic_error("docTsx.load_buffer error: " + std::string(r.description()));
+		} else {
+			auto&& cTileset = docTsx->child("tileset");
+			TryFill(ts.name, cTileset.attribute("name"));
+			TryFill(ts.class_, cTileset.attribute("class"));
+			TryFill(ts.objectAlignment, cTileset.attribute("objectalignment"));
+			if (auto&& cTileOffset = cTileset.child("tileoffset"); !cTileOffset.empty()) {
+				TryFill(ts.drawingOffset.x, cTileOffset.attribute("x"));
+				TryFill(ts.drawingOffset.y, cTileOffset.attribute("y"));
+			}
+			TryFill(ts.tileRenderSize, cTileset.attribute("tilerendersize"));
+			TryFill(ts.fillMode, cTileset.attribute("fillmode"));
+			TryFill(ts.backgroundColor, cTileset.attribute("backgroundcolor"));
+			if (auto&& cGrid = cTileset.child("grid"); !cGrid.empty()) {
+				TryFill(ts.orientation, cGrid.attribute("orientation"));
+				TryFill(ts.gridWidth, cGrid.attribute("width"));
+				TryFill(ts.gridHeight, cGrid.attribute("height"));
+			}
+			TryFill(ts.columns, cTileset.attribute("columns"));
+			if (auto&& cTran = cTileset.child("transformations"); !cTran.empty()) {
+				TryFill(ts.allowedTransformations.flipHorizontally, cTran.attribute("hflip"));
+				TryFill(ts.allowedTransformations.flipVertically, cTran.attribute("vflip"));
+				TryFill(ts.allowedTransformations.rotate, cTran.attribute("rotate"));
+				TryFill(ts.allowedTransformations.preferUntransformedTiles, cTran.attribute("preferuntransformed"));
+			}
+			if (auto&& cImage = cTileset.child("image"); !cImage.empty()) {
+				ts.image = TryToImage(cImage);
+			}
+			TryFill(ts.tilewidth, cTileset.attribute("tilewidth"));
+			TryFill(ts.tileheight, cTileset.attribute("tileheight"));
+			TryFill(ts.margin, cTileset.attribute("margin"));
+			TryFill(ts.spacing, cTileset.attribute("spacing"));
+			TryFillProperties(ts.properties, cTileset);
+
+			TryFill(ts.version, cTileset.attribute("version"));
+			TryFill(ts.tiledversion, cTileset.attribute("tiledversion"));
+			TryFill(ts.tilecount, cTileset.attribute("tilecount"));
+
+			for (auto&& cW : cTileset.child("wangsets").children("wangset")) {
+				auto&& w = ts.wangSets.emplace_back();
+				TryFill(w.name, cW.attribute("name"));
+				TryFill(w.type, cW.attribute("type"));
+				TryFill(w.tile, cW.attribute("tile"));
+				TryFillProperties(w.properties, cW);
+
+				for (auto&& cC : cW.children("wangcolor")) {
+					auto&& c = w.wangColors.emplace_back();
+					c.name = cC.attribute("name").as_string();
+					TryFill(c.color, cC.attribute("color"));
+					TryFill(c.tile, cC.attribute("tile"));
+					TryFill(c.probability, cC.attribute("probability"));
+					TryFillProperties(c.properties, cC);
+				}
+
+				for (auto&& cT : cW.children("wangtile")) {
+					auto&& t = w.wangTiles.emplace_back();
+					TryFill(t.tileId, cT.attribute("tileid"));
+					FillCsvIntsTo(t.wangIds, cT.attribute("wangid").as_string());
+				}
+			}
+		}
+	}
+
 	void Map::TryFillLayerBase(Layer& L, pugi::xml_node const& c) {
 		TryFill(L.id, c.attribute("id"));
 		TryFill(L.name, c.attribute("name"));
@@ -338,12 +595,17 @@ namespace TMX {
 	void Map::TryFillLayer(Layer_Image& L, pugi::xml_node const& c) {
 		L.type = LayerTypes::Image;
 		TryFillLayerBase(L, c);
-		// todo
+		TryFill(L.repeatX, c.attribute("repeatx"));
+		TryFill(L.repeatY, c.attribute("repeaty"));
+		if (auto&& cImage = c.child("image"); !cImage.empty()) {
+			L.image = TryToImage(cImage);
+		}
 	}
 
 	void Map::TryFillLayer(Layer_Object& L, pugi::xml_node const& c) {
 		L.type = LayerTypes::Object;
 		TryFillLayerBase(L, c);
+		TryFill(L.color, c.attribute("color"));
 		TryFill(L.draworder, c.attribute("draworder"));
 
 		for (auto&& cObject : c.children("object")) {
@@ -432,13 +694,13 @@ namespace TMX {
 					TryFill(a->height, cObj.attribute("height"));
 					o = std::move(a);
 				}
-				if (auto&& attr = cObj.attribute("id"); !attr.empty()) o->id = attr.as_uint();
-				if (auto&& attr = cObj.attribute("name"); !attr.empty()) o->name = attr.as_string();
-				if (auto&& attr = cObj.attribute("class"); !attr.empty()) o->class_ = attr.as_string();
-				if (auto&& attr = cObj.attribute("x"); !attr.empty()) o->x = attr.as_double();
-				if (auto&& attr = cObj.attribute("y"); !attr.empty()) o->y = attr.as_double();
-				if (auto&& attr = cObj.attribute("visible"); !attr.empty()) o->visible = attr.as_bool();
-				if (auto&& attr = cObj.attribute("rotation"); !attr.empty()) o->rotation = attr.as_double();
+				TryFill(o->id, cObj.attribute("id"));
+				TryFill(o->name, cObj.attribute("name"));
+				TryFill(o->class_, cObj.attribute("class"));
+				TryFill(o->x, cObj.attribute("x"));
+				TryFill(o->y, cObj.attribute("y"));
+				TryFill(o->rotation, cObj.attribute("rotation"));
+				TryFill(o->visible, cObj.attribute("visible"));
 				TryFillProperties(o->properties, cObj, needOverrideProperties);
 			};
 
@@ -457,18 +719,42 @@ namespace TMX {
 		}
 	}
 
-	void Map::TryFillLayer(Layer_Group& L, pugi::xml_node const& c) {
-		L.type = LayerTypes::Group;
-		TryFillLayerBase(L, c);
-		// ...
+	void Map::TryFillLayer(Layer_Group& pL, pugi::xml_node const& pC) {
+		pL.type = LayerTypes::Group;
+		TryFillLayerBase(pL, pC);
+		for (auto&& c : pC.children()) {
+			std::string_view name(c.name());
+			if (name == "layer"sv) {
+				auto L = xx::Make<Layer_Tile>();
+				TryFillLayer(*L, c);
+				pL.layers.emplace_back(std::move(L));
+			} else if (name == "imagelayer"sv) {
+				auto L = xx::Make<Layer_Image>();
+				TryFillLayer(*L, c);
+				pL.layers.emplace_back(std::move(L));
+			} else if (name == "objectgroup"sv) {
+				auto L = xx::Make<Layer_Object>();
+				TryFillLayer(*L, c);
+				pL.layers.emplace_back(std::move(L));
+			} else if (name == "group"sv) {
+				auto L = xx::Make<Layer_Group>();
+				TryFillLayer(*L, c);
+				pL.layers.emplace_back(std::move(L));
+			} else {
+				throw std::logic_error("unhandled layer type");
+			}
+		}
 	}
 
+	/**************************************************************************************************/
 
 	int Map::Fill(Engine* const& eg, std::string_view const& tmxfn) {
 		// cleanup
 		*this = {};
 		this->eg = eg;
-		
+		docTmx.Emplace();
+		docTsx.Emplace();
+		docTx.Emplace();
 
 		// load
 		if (auto&& [d, fp] = eg->ReadAllBytes(tmxfn); !d) {
@@ -480,7 +766,6 @@ namespace TMX {
 				rootPath = fp.substr(0, i + 1);
 			}
 		}
-
 
 		// fill map
 		auto&& cMap = docTmx->child("map");
@@ -521,95 +806,9 @@ namespace TMX {
 		for (auto&& c : cMap.children()) {
 			std::string_view name(c.name());
 			if (name == "tileset"sv) {
-				auto&& ts = *this->tilesets.emplace_back().Emplace();
-				TryFill(ts.firstgid, c.attribute("firstgid"));
-				TryFill(ts.source, c.attribute("source"));
-				ts.source = rootPath + ts.source;	// to fullpath
-
-				if (auto&& [d, fp] = eg->ReadAllBytes(ts.source); !d) {
-					throw std::logic_error("read file error: " + ts.source);
-				} else if (auto r = docTsx->load_buffer(d.buf, d.len); r.status) {
-					throw std::logic_error("docTsx.load_buffer error: " + std::string(r.description()));
-				} else {
-					auto&& cTileset = docTsx->child("tileset");
-					TryFill(ts.name, cTileset.attribute("name"));
-					TryFill(ts.class_, cTileset.attribute("class"));
-					TryFill(ts.objectAlignment, cTileset.attribute("objectalignment"));
-					if (auto&& cTileOffset = cTileset.child("tileoffset"); !cTileOffset.empty()) {
-						TryFill(ts.drawingOffset.x, cTileOffset.attribute("x"));
-						TryFill(ts.drawingOffset.y, cTileOffset.attribute("y"));
-					}
-					TryFill(ts.tileRenderSize, cTileset.attribute("tilerendersize"));
-					TryFill(ts.fillMode, cTileset.attribute("fillmode"));
-					TryFill(ts.backgroundColor, cTileset.attribute("backgroundcolor"));
-					if (auto&& cGrid = cTileset.child("grid"); !cGrid.empty()) {
-						TryFill(ts.orientation, cGrid.attribute("orientation"));
-						TryFill(ts.gridWidth, cGrid.attribute("width"));
-						TryFill(ts.gridHeight, cGrid.attribute("height"));
-					}
-					TryFill(ts.columns, cTileset.attribute("columns"));
-					if (auto&& cTran = cTileset.child("transformations"); !cTran.empty()) {
-						TryFill(ts.allowedTransformations.flipHorizontally, cTran.attribute("hflip"));
-						TryFill(ts.allowedTransformations.flipVertically, cTran.attribute("vflip"));
-						TryFill(ts.allowedTransformations.rotate, cTran.attribute("rotate"));
-						TryFill(ts.allowedTransformations.preferUntransformedTiles, cTran.attribute("preferuntransformed"));
-					}
-					if (auto&& cImage = cTileset.child("image"); !cImage.empty()) {
-						std::string s;
-						TryFill(s, cImage.attribute("source"));
-						s = rootPath + s;	// to fullpath
-						if (s.ends_with(".png"sv)) {			// hack: replace ext to pkm
-							s.resize(s.size() - 4);
-							s.append(".pkm");
-						}
-						auto&& iter = std::find_if(this->images.begin(), this->images.end(), [&](xx::Shared<Image> const& img) {
-							return img->source == s;
-							});
-						if (iter == this->images.end()) {
-							auto&& img = *ts.image.Emplace();
-							img.source = std::move(s);
-							img.texture.Emplace(eg->LoadTexture(img.source));
-							TryFill(img.width, cImage.attribute("width"));
-							TryFill(img.height, cImage.attribute("height"));
-							TryFill(img.transparentColor, cImage.attribute("trans"));
-							this->images.push_back(ts.image);
-						} else {
-							ts.image = *iter;
-						}
-					}
-					TryFill(ts.tilewidth, cTileset.attribute("tilewidth"));
-					TryFill(ts.tileheight, cTileset.attribute("tileheight"));
-					TryFill(ts.margin, cTileset.attribute("margin"));
-					TryFill(ts.spacing, cTileset.attribute("spacing"));
-					TryFillProperties(ts.properties, cTileset);
-
-					TryFill(ts.version, cTileset.attribute("version"));
-					TryFill(ts.tiledversion, cTileset.attribute("tiledversion"));
-					TryFill(ts.tilecount, cTileset.attribute("tilecount"));
-
-					for (auto&& cW : cTileset.child("wangsets").children("wangset")) {
-						auto&& w = ts.wangSets.emplace_back();
-						TryFill(w.name, cW.attribute("name"));
-						TryFill(w.type, cW.attribute("type"));
-						TryFill(w.tile, cW.attribute("tile"));
-						TryFillProperties(w.properties, cW);
-
-						for (auto&& cC : cW.children("wangcolor")) {
-							auto&& c = w.wangColors.emplace_back();
-							c.name = cC.attribute("name").as_string();
-							TryFill(c.color, cC.attribute("color"));
-							TryFill(c.tile, cC.attribute("tile"));
-							TryFill(c.probability, cC.attribute("probability"));
-							TryFillProperties(c.properties, cC);
-						}
-
-						for (auto&& cT : cW.children("wangtile")) {
-							auto&& t = w.wangTiles.emplace_back();
-							TryFill(t.tileId, cT.attribute("tileid"));
-							FillCsvIntsTo(t.wangIds, cT.attribute("wangid").as_string());
-						}
-					}
-				}
+				auto ts = xx::Make<Tileset>();
+				TryFillTileset(*ts, c);
+				this->tilesets.emplace_back(std::move(ts));
 			} else if (name == "layer"sv) {
 				auto L = xx::Make<Layer_Tile>();
 				TryFillLayer(*L, c);
@@ -631,255 +830,9 @@ namespace TMX {
 			}
 		}
 
-		// 
-		//// fill map/layer...
-		//for (auto&& cLayer : cMap.children("layer")) {
-		//	auto&& layer = map.layers.emplace_back();
-		//	layer.id = cLayer.attribute("id").as_uint();
-		//	layer.name = cLayer.attribute("name").as_string();
-		//	layer.width = cLayer.attribute("width").as_uint();
-		//	layer.height = cLayer.attribute("height").as_uint();
-		//	layer.visible = cLayer.attribute("visible").as_bool();
-		//	FillColorTo(layer.tintcolor, cLayer.attribute("tintcolor"));
-		//	FillColorTo(layer.transparentcolor, cLayer.attribute("transparentcolor"));
-		//	FillPropertiesTo(layer.properties, cLayer, rootPath);
-		//	// todo: layer type switch?
-
-		//	auto&& cData = cLayer.child("data");
-		//	FillEnumTo(layer.encoding, cData.attribute("encoding").as_string("xml"));
-		//	if (layer.encoding == Encodings::Base64) {
-		//		FillEnumTo(layer.compression, cData.attribute("compression").as_string("uncompressed"));
-		//	} else {
-		//		layer.compression = Compressions::Uncompressed;
-		//	}
-		//	if (map.infinite) {
-		//		switch (layer.encoding) {
-		//		case Encodings::Csv: {
-		//			for (auto&& cChunk : cData.children("chunk")) {
-		//				auto&& chunk = layer.chunks.emplace_back();
-		//				chunk.x = cChunk.attribute("x").as_uint();
-		//				chunk.y = cChunk.attribute("y").as_uint();
-		//				chunk.width = cChunk.attribute("width").as_uint();
-		//				chunk.height = cChunk.attribute("height").as_uint();
-		//				FillCsvIntsTo(chunk.gids, cChunk.text().as_string());
-		//			}
-		//			break;
-		//		}
-		//		case Encodings::Base64: {
-		//			xx::Data tmp;
-		//			for (auto&& cChunk : cData.children("chunk")) {
-		//				auto&& chunk = layer.chunks.emplace_back();
-		//				chunk.x = cChunk.attribute("x").as_uint();
-		//				chunk.y = cChunk.attribute("y").as_uint();
-		//				chunk.width = cChunk.attribute("width").as_uint();
-		//				chunk.height = cChunk.attribute("height").as_uint();
-		//				auto bin = xx::Base64Decode(xx::Trim(cChunk.text().as_string()));
-		//				switch (layer.compression) {
-		//				case Compressions::Uncompressed: {
-		//					FillBinIntsTo(chunk.gids, { bin.data(), bin.size() });
-		//					break;
-		//				}
-		//				case Compressions::Zstd: {
-		//					ZstdDecompress(bin, tmp);
-		//					FillBinIntsTo(chunk.gids, tmp);
-		//					break;
-		//				}
-		//				default: {
-		//					throw std::logic_error("unsupported compression: " + (int)layer.compression);
-		//				}
-		//				}
-		//			}
-		//			break;
-		//		}
-		//		case Encodings::Xml: {
-		//			for (auto&& cChunk : cData.children("chunk")) {
-		//				auto&& chunk = layer.chunks.emplace_back();
-		//				chunk.x = cChunk.attribute("x").as_uint();
-		//				chunk.y = cChunk.attribute("y").as_uint();
-		//				chunk.width = cChunk.attribute("width").as_uint();
-		//				chunk.height = cChunk.attribute("height").as_uint();
-		//				for (auto&& cTile : cChunk.children("tile")) {
-		//					chunk.gids.push_back(cTile.attribute("gid").as_uint());
-		//				}
-		//			}
-		//			break;
-		//		}
-		//		default:
-		//			throw std::logic_error("unsupported encoding: " + (int)layer.encoding);
-		//		};
-		//	} else {
-		//		switch (layer.encoding) {
-		//		case Encodings::Csv: {
-		//			FillCsvIntsTo(layer.gids, cData.text().as_string());
-		//			break;
-		//		}
-		//		case Encodings::Base64: {
-		//			xx::Data tmp;
-		//			auto bin = xx::Base64Decode(xx::Trim(cData.text().as_string()));
-		//			switch (layer.compression) {
-		//			case Compressions::Uncompressed: {
-		//				FillBinIntsTo(layer.gids, { bin.data(), bin.size() });
-		//				break;
-		//			}
-		//			case Compressions::Zstd: {
-		//				ZstdDecompress(bin, tmp);
-		//				FillBinIntsTo(layer.gids, tmp);
-		//				break;
-		//			}
-		//			default: {
-		//				throw std::logic_error("unsupported compression: " + (int)layer.compression);
-		//			}
-		//			}
-		//			break;
-		//		}
-		//		case Encodings::Xml: {
-		//			for (auto&& cTile : cData.children("tile")) {
-		//				layer.gids.push_back(cTile.attribute("gid").as_uint());
-		//			}
-		//			break;
-		//		}
-		//		default:
-		//			throw std::logic_error("unsupported encoding: " + (int)layer.encoding);
-		//		};
-		//	}
-		//}
-
-		//// fill map/objectgroup...
-		//for (auto&& cObjectgroup : cMap.children("objectgroup")) {
-		//	auto&& og = map.objectgroups.emplace_back();
-		//	og.id = cObjectgroup.attribute("id").as_uint();
-		//	og.name = cObjectgroup.attribute("name").as_string();
-		//	og.class_ = cObjectgroup.attribute("class").as_string();
-		//	og.locked = cObjectgroup.attribute("locked").as_bool();
-		//	og.opacity = cObjectgroup.attribute("opacity").as_double();
-		//	og.visible = cObjectgroup.attribute("visible").as_bool();
-		//	FillEnumTo(og.draworder, cObjectgroup.attribute("draworder").as_string("topdown"));
-		//	og.offsetx = cObjectgroup.attribute("offsetx").as_double();
-		//	og.offsety = cObjectgroup.attribute("offsety").as_double();
-		//	og.parallaxx = cObjectgroup.attribute("parallaxx").as_double();
-		//	og.parallaxy = cObjectgroup.attribute("parallaxy").as_double();
-		//	FillColorTo(og.tintcolor, cObjectgroup.attribute("tintcolor"));
-
-		//	for (auto&& cObject : cObjectgroup.children("object")) {
-		//		auto&& o = og.objects.emplace_back();
-		//		auto&& FillObj = [&](pugi::xml_node& cObj) {
-		//			bool needOverrideProperties = o;
-		//			if (auto&& cText = cObj.child("text"); o && o->type == ObjectTypes::Text || !cText.empty()) {
-		//				xx::Shared<ObjectText> a;
-		//				if (o) {
-		//					a = o.ReinterpretCast<ObjectText>();
-		//				} else {
-		//					a.Emplace();
-		//					a->type = ObjectTypes::Text;
-		//				}
-		//				if (auto&& attr = cObj.attribute("width"); !attr.empty()) a->width = attr.as_uint();
-		//				if (auto&& attr = cObj.attribute("height"); !attr.empty()) a->height = attr.as_uint();
-		//				if (auto&& attr = cObj.attribute("fontfamily"); !attr.empty()) a->fontfamily = attr.as_string();
-		//				if (auto&& attr = cObj.attribute("pixelsize"); !attr.empty()) a->pixelsize = attr.as_uint();
-		//				if (auto&& attr = cObj.attribute("wrap"); !attr.empty()) a->wrap = attr.as_bool();
-		//				if (auto&& attr = cObj.attribute("color"); !attr.empty()) FillColorTo(a->color, attr.as_string());
-		//				if (auto&& attr = cObj.attribute("bold"); !attr.empty()) a->bold = attr.as_bool();
-		//				if (auto&& attr = cObj.attribute("italic"); !attr.empty()) a->italic = attr.as_bool();
-		//				if (auto&& attr = cObj.attribute("underline"); !attr.empty()) a->underline = attr.as_bool();
-		//				if (auto&& attr = cObj.attribute("strikeout"); !attr.empty()) a->strikeout = attr.as_bool();
-		//				if (auto&& attr = cObj.attribute("kerning"); !attr.empty()) a->kerning = attr.as_bool();
-		//				if (auto&& attr = cObj.attribute("halign"); !attr.empty()) FillEnumTo(a->halign, attr);
-		//				if (auto&& attr = cObj.attribute("valign"); !attr.empty()) FillEnumTo(a->valign, attr);
-		//				if (!cText.empty()) a->text = cText.text().as_string();
-		//				o = std::move(a);
-		//			} else if (auto&& cPolygon = cObj.child("polygon"); o && o->type == ObjectTypes::Polygon || !cPolygon.empty()) {
-		//				xx::Shared<ObjectPolygon> a;
-		//				if (o) {
-		//					a = o.ReinterpretCast<ObjectPolygon>();
-		//				} else {
-		//					a.Emplace();
-		//					a->type = ObjectTypes::Polygon;
-		//				}
-		//				if (auto&& attr = cObj.attribute("points"); !attr.empty()) FillPointsTo(a->points, attr.as_string());
-		//				o = std::move(a);
-		//			} else if (auto&& cEllipse = cObj.child("ellipse"); o && o->type == ObjectTypes::Ellipse || !cEllipse.empty()) {
-		//				xx::Shared<ObjectEllipse> a;
-		//				if (o) {
-		//					a = o.ReinterpretCast<ObjectEllipse>();
-		//				} else {
-		//					a.Emplace();
-		//					a->type = ObjectTypes::Ellipse;
-		//				}
-		//				if (auto&& attr = cObj.attribute("width"); !attr.empty()) a->width = attr.as_uint();
-		//				if (auto&& attr = cObj.attribute("height"); !attr.empty()) a->height = attr.as_uint();
-		//				o = std::move(a);
-		//			} else if (auto&& cPoint = cObj.child("point"); o && o->type == ObjectTypes::Point || !cPoint.empty()) {
-		//				xx::Shared<ObjectPoint> a;
-		//				if (o) {
-		//					a = o.ReinterpretCast<ObjectPoint>();
-		//				} else {
-		//					a.Emplace();
-		//					a->type = ObjectTypes::Point;
-		//				}
-		//				o = std::move(a);
-		//			} else if (auto&& aGid = cObj.attribute("gid"); o && o->type == ObjectTypes::Tile || !aGid.empty()) {
-		//				xx::Shared<ObjectTile> a;
-		//				if (o) {
-		//					a = o.ReinterpretCast<ObjectTile>();
-		//				} else {
-		//					a.Emplace();
-		//					a->type = ObjectTypes::Tile;
-		//				}
-		//				if (auto&& attr = cObj.attribute("width"); !attr.empty()) a->width = attr.as_uint();
-		//				if (auto&& attr = cObj.attribute("height"); !attr.empty()) a->height = attr.as_uint();
-		//				if (auto&& attr = cObj.attribute("gid"); !attr.empty()) {
-		//					a->gid = attr.as_uint();
-		//					a->flippingHorizontal = (a->gid >> 31) & 1;
-		//					a->flippingVertical = (a->gid >> 30) & 1;
-		//					a->gid &= 0x3FFFFFFFu;
-		//				}
-		//				o = std::move(a);
-		//			} else {
-		//				xx::Shared<ObjectRectangle> a;
-		//				if (o) {
-		//					a = o.ReinterpretCast<ObjectRectangle>();
-		//				} else {
-		//					a.Emplace();
-		//					a->type = ObjectTypes::Rectangle;
-		//				}
-		//				if (auto&& attr = cObj.attribute("width"); !attr.empty()) a->width = attr.as_uint();
-		//				if (auto&& attr = cObj.attribute("height"); !attr.empty()) a->height = attr.as_uint();
-		//				o = std::move(a);
-		//			}
-		//			if (auto&& attr = cObj.attribute("id"); !attr.empty()) o->id = attr.as_uint();
-		//			if (auto&& attr = cObj.attribute("name"); !attr.empty()) o->name = attr.as_string();
-		//			if (auto&& attr = cObj.attribute("class"); !attr.empty()) o->class_ = attr.as_string();
-		//			if (auto&& attr = cObj.attribute("x"); !attr.empty()) o->x = attr.as_double();
-		//			if (auto&& attr = cObj.attribute("y"); !attr.empty()) o->y = attr.as_double();
-		//			if (auto&& attr = cObj.attribute("visible"); !attr.empty()) o->visible = attr.as_bool();
-		//			if (auto&& attr = cObj.attribute("rotation"); !attr.empty()) o->rotation = attr.as_double();
-		//			FillPropertiesTo(o->properties, cObj, rootPath, needOverrideProperties);
-		//		};
-
-		//		if (auto&& aTemplate = cObject.attribute("template"); !aTemplate.empty()) {
-		//			auto fn = rootPath + aTemplate.as_string();
-		//			if (auto&& [d, fp] = eg->ReadAllBytes(fn); !d) {
-		//				throw std::logic_error("read file error: " + fn);
-		//			} else if (auto r = docTx.load_buffer(d.buf, d.len); r.status) {
-		//				throw std::logic_error("docTx.load_buffer error: " + std::string(r.description()));
-		//			} else {
-		//				auto&& cObj = docTx.child("template").child("object");
-		//				FillObj(cObj);
-		//			}
-		//		}
-		//		FillObj(cObject);
-		//	}
-		//}
-
+		docTmx.Reset();
+		docTsx.Reset();
+		docTx.Reset();
 		return 0;
 	}
-
-
-	//auto&& cTileset = cTemplate.child("tileset");
-	//auto source = rootPath + cTileset.attribute("source").as_string();
-	//auto&& iter = std::find_if(map.tilesets.begin(), map.tilesets.end(), [&](xx::Shared<Tileset> const& item) { return item->source == source; });
-	//if (iter == map.tilesets.end()) {
-	//	throw std::logic_error("object.template.tileset.source can't find in map.tilesets: " + source);
-	//}
-
 }
