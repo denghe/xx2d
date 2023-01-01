@@ -27,7 +27,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class Orientations {
+	enum class Orientations : uint8_t {
 		Orthogonal,
 		Isometric,
 		Staggered,	// not for Tileset
@@ -48,7 +48,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class RenderOrders {
+	enum class RenderOrders : uint8_t {
 		RightDown,
 		RightUp,
 		LeftDown,
@@ -69,7 +69,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class WangSetTypes {
+	enum class WangSetTypes : uint8_t {
 		Corner,
 		Edge,
 		Mixed,
@@ -88,7 +88,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class Encodings {
+	enum class Encodings : uint8_t {
 		Csv,
 		Base64,													// support Compressions
 		Xml,													// deprecated
@@ -107,7 +107,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class Compressions {
+	enum class Compressions : uint8_t {
 		Uncompressed,
 		Gzip,
 		Zlib,
@@ -128,7 +128,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class HAligns {
+	enum class HAligns : uint8_t {
 		Left,
 		Center,
 		Right,
@@ -149,7 +149,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class StaggerAxiss {
+	enum class StaggerAxiss : uint8_t {
 		X,
 		Y,
 		MAX_VALUE_UNKNOWN
@@ -166,7 +166,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class StaggerIndexs {
+	enum class StaggerIndexs : uint8_t {
 		Odd,
 		Even,
 		MAX_VALUE_UNKNOWN
@@ -183,7 +183,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class VAligns {
+	enum class VAligns : uint8_t {
 		Top,
 		Center,
 		Bottom,
@@ -203,7 +203,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class PropertyTypes {
+	enum class PropertyTypes : uint8_t {
 		Bool,
 		Color,
 		Float,
@@ -230,7 +230,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class DrawOrders {
+	enum class DrawOrders : uint8_t {
 		TopDown,
 		Index,
 		MAX_VALUE_UNKNOWN
@@ -247,7 +247,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class ObjectAlignment {
+	enum class ObjectAlignment : uint8_t {
 		Unspecified,
 		TopLeft,
 		Top,
@@ -280,7 +280,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class TileRenderSizes {
+	enum class TileRenderSizes : uint8_t {
 		TileSize,
 		MapGridSize,
 		MAX_VALUE_UNKNOWN
@@ -297,7 +297,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class FillModes {
+	enum class FillModes : uint8_t {
 		Stretch,
 		PreserveAspectFit,
 		MAX_VALUE_UNKNOWN
@@ -314,7 +314,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class ObjectTypes {
+	enum class ObjectTypes : uint8_t {
 		Point,
 		Ellipse,
 		Polygon,
@@ -326,7 +326,7 @@ struct TMXData {
 
 	/**********************************************************************************/
 
-	enum class LayerTypes {
+	enum class LayerTypes : uint8_t {
 		Tile,
 		Object,
 		Image,
@@ -395,11 +395,16 @@ struct TMXData {
 	struct Object_Ellipse : Object_Rectangle {
 	};
 
-	struct Point {
+	struct Pointi {
 		int32_t x = 0, y = 0;
 	};
+
+	struct Pointf {
+		double x = 0, y = 0;
+	};
+
 	struct Object_Polygon : Object {
-		std::vector<Point> points;
+		std::vector<Pointi> points;
 	};
 
 	struct Tileset;
@@ -412,8 +417,8 @@ struct TMXData {
 	struct Object_Text : Object_Rectangle {
 		std::string fontfamily;
 		uint32_t pixelsize = 16;
-		bool wrap = false;
 		RGBA8 color = { 0, 0, 0, 255 };
+		bool wrap = false;
 		bool bold = false;
 		bool italic = false;
 		bool underline = false;
@@ -436,7 +441,7 @@ struct TMXData {
 		std::optional<RGBA8> tintColor;	// tintcolor
 		double horizontalOffset = 0;	// offsetx
 		double verticalOffset = 0;	// offsety
-		Point parallaxFactor = {1, 1};	// parallaxx, parallaxy
+		Pointf parallaxFactor = {1, 1};	// parallaxx, parallaxy
 		std::vector<xx::Shared<Property>> properties;
 	};
 
@@ -444,8 +449,9 @@ struct TMXData {
 		std::vector<uint32_t> gids;
 		uint32_t height = 0;
 		uint32_t width = 0;
-		Point xy;	// x, y
+		Pointi xy;	// x, y
 	};
+
 	struct Layer_Tile : Layer {
 		std::vector<Chunk> chunks;	// when map.infinite == true
 		std::vector<uint32_t> gids;	// when map.infinite == false
@@ -478,31 +484,31 @@ struct TMXData {
 
 	//struct Terrain {
 	//	std::string name;
-	//	int tile;
+	//	uint32_t tile;
 	//	std::vector<xx::Shared<Property>> properties;
 	//};
 
 	//struct Frame {
-	//	int duration;
-	//	int tileid;
+	//	uint32_t duration;
+	//	uint32_t tileid;
 	//};
 
 	//struct Tile {
 	//	std::vector<Frame> animation;
-	//	int id;
+	//	uint32_t id;
 	//	std::string image;
-	//	int imageheight;
-	//	int imagewidth;
+	//	uint32_t imageheight;
+	//	uint32_t imagewidth;
 	//	Layer objectgroup;
 	//	double probability;
 	//	std::vector<xx::Shared<Property>> properties;
-	//	std::vector<int> terrain;
+	//	std::vector<uint32_t> terrain;
 	//	std::string type;
 	//};
 
 	struct WangTile {
 		uint32_t tileId = 0;	// tileid
-		std::vector<byte> wangIds;	// wangid
+		std::vector<uint8_t> wangIds;	// wangid
 	};
 
 	struct WangColor {
@@ -530,10 +536,14 @@ struct TMXData {
 	};
 
 	struct Tileset {
+		uint32_t firstgid;	// .tmx map/tileset.firstgid
+		std::string source;	// .tmx map/tileset.source
+
+		// following fields in source .tsx file
 		std::string name;
 		std::string class_;	// class
 		ObjectAlignment objectAlignment = ObjectAlignment::Unspecified;	// objectalignment
-		Point drawingOffset;	// <tileoffset x= y=
+		Pointi drawingOffset;	// <tileoffset x= y=
 		TileRenderSizes tileRenderSize = TileRenderSizes::TileSize; // tilerendersize
 		FillModes fillMode = FillModes::Stretch;	// fillmode
 		std::optional<RGBA8> backgroundColor;	// backgroundcolor
@@ -555,6 +565,7 @@ struct TMXData {
 
 		std::vector<WangSet> wangSets;	// <wangsets>
 
+		// todo
 		//std::vector<Terrain> terrains;
 		//std::vector<Tile> tiles;
 	};
@@ -570,7 +581,7 @@ struct TMXData {
 		uint32_t tileSideLength = 0;	// hexsidelength
 		StaggerAxiss staggeraxis = StaggerAxiss::Y;	// staggeraxis
 		StaggerIndexs staggerindex = StaggerIndexs::Odd;	// staggerindex
-		Point parallaxOrigin;	// parallaxoriginx, parallaxoriginy
+		Pointf parallaxOrigin;	// parallaxoriginx, parallaxoriginy
 		std::pair<Encodings, Compressions> tileLayerFormat = { Encodings::Csv,  Compressions::Uncompressed };	// for every layer's data
 		uint32_t outputChunkWidth = 16;
 		uint32_t outputChunkHeight = 16;
@@ -597,4 +608,6 @@ struct TMXData {
 
 	// fill map data by .tmx file
 	int Fill(Engine* const& eg, std::string_view const& tmxfn);
+
+	// todo: get texture & rect info by gid for generate quad. looks like 
 };

@@ -31,14 +31,14 @@
         },
         "m1.tmx": {
             "expandedGroupLayers": [
-                5,
-                3
+                3,
+                5
             ],
-            "scale": 0.25,
-            "selectedLayer": 0,
+            "scale": 0.03125,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 14522,
-                "y": 9202
+                "x": 5088,
+                "y": 5456
             }
         },
         "tiles.tsx": {
@@ -61,8 +61,8 @@
     "property.type": "int",
     "recentFiles": [
         "tiles.tsx",
-        "eee.tsx",
         "m1.tmx",
+        "eee.tsx",
         "m1.js",
         "m1..tmj"
     ],
