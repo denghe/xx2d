@@ -112,10 +112,10 @@ namespace TMX {
 	/**********************************************************************************/
 
 	enum class LayerTypes : uint8_t {
-		Tile,
-		Object,
-		Image,
-		Group,
+		TileLayer,
+		ObjectLayer,
+		ImageLayer,
+		GroupLayer,
 		MAX_VALUE_UNKNOWN
 	};
 
@@ -178,27 +178,28 @@ namespace TMX {
 
 	/**********************************************************************************/
 
+	// todo
 	struct Terrain {
 		std::string name;
 		uint32_t tile;
 		std::vector<Property> properties;	// <properties>
 	};
-
-	//struct AFrame {
-	//	uint32_t duration;
-	//	uint32_t tileId;	// tileid
-	//};
-
-	//struct Tile {
-	//	std::vector<AFrame> animation;
-	//	uint32_t id;
-	// xx::Shared<Image> image;
-	//	Layer objectgroup;
-	//	double probability;
-	//	std::vector<Property> properties;	// <properties>
-	//	std::vector<uint32_t> terrain;
-	//	std::string type;
-	//};
+	// todo
+	struct AFrame {
+		uint32_t duration = 0;
+		uint32_t tileId = 0;	// tileid
+	};
+	// todo
+	struct Tile {
+		std::vector<AFrame> animation;
+		uint32_t id = 0;
+		xx::Shared<Image> image;
+		xx::Shared<Layer_Object> objectgroup;	// ???
+		double probability = 1;
+		std::vector<Property> properties;	// <properties>
+		std::vector<uint32_t> terrain;
+		std::string type;	// ???
+	};
 
 	struct WangTile {
 		uint32_t tileId = 0;	// tileid
@@ -299,10 +300,8 @@ namespace TMX {
 		uint32_t tilecount = 0;
 
 		std::vector<WangSet> wangSets;	// <wangsets>
-
-		// todo
 		std::vector<Terrain> terrains;
-		//std::vector<Tile> tiles;
+		std::vector<Tile> tiles;
 	};
 
 	/**********************************************************************************/
@@ -374,13 +373,15 @@ namespace TMX {
 		// fill data by .tmx file
 		int Fill(Engine* const& eg, std::string_view const& tmxfn);
 
-		// todo: get texture & rect info by gid for generate quad. looks like 
+		// todo: get texture & rect info by gid for generate quad ?
 
 	protected:
 		// tmp vars for easy Fill
-		Engine* eg;
+		Engine* eg = nullptr;
 		xx::Shared<pugi::xml_document> docTmx, docTsx, docTx;
 		std::string rootPath;
+		std::unordered_map<uint32_t, xx::Weak<Object>> objs;
+		std::vector<Layer*> layerPtrs;
 
 		// for easy Fill
 		void TryFillProperties(std::vector<Property>& out, pugi::xml_node const& owner, bool needOverride = false);
@@ -390,6 +391,7 @@ namespace TMX {
 		void TryFillLayerBase(Layer& L, pugi::xml_node const& c);
 		void TryFillLayer(Layer_Tile& L, pugi::xml_node const& c);
 		void TryFillLayer(Layer_Image& L, pugi::xml_node const& c);
+		void TryFillObject(xx::Shared<Object>& o, pugi::xml_node const& c);
 		void TryFillLayer(Layer_Object& L, pugi::xml_node const& c);
 		void TryFillLayer(Layer_Group& L, pugi::xml_node const& c);
 	};

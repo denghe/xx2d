@@ -2,6 +2,7 @@
 #include "tmxdata.h"
 #include <zstd.h>
 
+// todo: fill terrains tiles
 // todo: double int uint check
 // todo: set fields default value
 // todo: sort tiledset by firstgid ?
@@ -474,6 +475,8 @@ namespace TMX {
 					FillCsvIntsTo(t.wangIds, cT.attribute("wangid").as_string());
 				}
 			}
+
+			// todo: terrains tiles
 		}
 	}
 
@@ -490,10 +493,11 @@ namespace TMX {
 		TryFill(L.parallaxFactor.x, c.attribute("parallaxx"));
 		TryFill(L.parallaxFactor.y, c.attribute("parallaxy"));
 		TryFillProperties(L.properties, c);
+		layerPtrs.emplace_back(&L);
 	}
 
 	void Map::TryFillLayer(Layer_Tile& L, pugi::xml_node const& c) {
-		L.type = LayerTypes::Tile;
+		L.type = LayerTypes::TileLayer;
 		TryFillLayerBase(L, c);
 		auto&& [encoding, compression] = this->tileLayerFormat;
 		auto&& cData = c.child("data");
@@ -581,7 +585,7 @@ namespace TMX {
 	}
 
 	void Map::TryFillLayer(Layer_Image& L, pugi::xml_node const& c) {
-		L.type = LayerTypes::Image;
+		L.type = LayerTypes::ImageLayer;
 		TryFillLayerBase(L, c);
 		TryFill(L.repeatX, c.attribute("repeatx"));
 		TryFill(L.repeatY, c.attribute("repeaty"));
@@ -590,108 +594,111 @@ namespace TMX {
 		}
 	}
 
+	void Map::TryFillObject(xx::Shared<Object>& o, pugi::xml_node const& c) {
+		bool needOverrideProperties = o;
+		if (auto&& cText = c.child("text"); o && o->type == ObjectTypes::Text || !cText.empty()) {
+			xx::Shared<Object_Text> a;
+			if (o) {
+				a = o.ReinterpretCast<Object_Text>();
+			} else {
+				a.Emplace();
+				a->type = ObjectTypes::Text;
+			}
+			TryFill(a->width, c.attribute("width"));
+			TryFill(a->height, c.attribute("height"));
+			TryFill(a->fontfamily, c.attribute("fontfamily"));
+			TryFill(a->pixelsize, c.attribute("pixelsize"));
+			TryFill(a->wrap, c.attribute("wrap"));
+			TryFill(a->color, c.attribute("color"));
+			TryFill(a->bold, c.attribute("bold"));
+			TryFill(a->italic, c.attribute("italic"));
+			TryFill(a->underline, c.attribute("underline"));
+			TryFill(a->strikeout, c.attribute("strikeout"));
+			TryFill(a->kerning, c.attribute("kerning"));
+			TryFill(a->halign, c.attribute("halign"));
+			TryFill(a->valign, c.attribute("valign"));
+			if (!cText.empty()) a->text = cText.text().as_string();
+			o = std::move(a);
+		} else if (auto&& cPolygon = c.child("polygon"); o && o->type == ObjectTypes::Polygon || !cPolygon.empty()) {
+			xx::Shared<Object_Polygon> a;
+			if (o) {
+				a = o.ReinterpretCast<Object_Polygon>();
+			} else {
+				a.Emplace();
+				a->type = ObjectTypes::Polygon;
+			}
+			if (auto&& attr = c.attribute("points"); !attr.empty()) FillPointsTo(a->points, attr.as_string());
+			o = std::move(a);
+		} else if (auto&& cEllipse = c.child("ellipse"); o && o->type == ObjectTypes::Ellipse || !cEllipse.empty()) {
+			xx::Shared<Object_Ellipse> a;
+			if (o) {
+				a = o.ReinterpretCast<Object_Ellipse>();
+			} else {
+				a.Emplace();
+				a->type = ObjectTypes::Ellipse;
+			}
+			TryFill(a->width, c.attribute("width"));
+			TryFill(a->height, c.attribute("height"));
+			o = std::move(a);
+		} else if (auto&& cPoint = c.child("point"); o && o->type == ObjectTypes::Point || !cPoint.empty()) {
+			xx::Shared<Object_Point> a;
+			if (o) {
+				a = o.ReinterpretCast<Object_Point>();
+			} else {
+				a.Emplace();
+				a->type = ObjectTypes::Point;
+			}
+			o = std::move(a);
+		} else if (auto&& aGid = c.attribute("gid"); o && o->type == ObjectTypes::Tile || !aGid.empty()) {
+			xx::Shared<Object_Tile> a;
+			if (o) {
+				a = o.ReinterpretCast<Object_Tile>();
+			} else {
+				a.Emplace();
+				a->type = ObjectTypes::Tile;
+			}
+			TryFill(a->width, c.attribute("width"));
+			TryFill(a->height, c.attribute("height"));
+			if (auto&& attr = c.attribute("gid"); !attr.empty()) {
+				a->gid = attr.as_uint();
+				a->flippingHorizontal = (a->gid >> 31) & 1;
+				a->flippingVertical = (a->gid >> 30) & 1;
+				a->gid &= 0x3FFFFFFFu;
+			}
+			o = std::move(a);
+		} else {
+			xx::Shared<Object_Rectangle> a;
+			if (o) {
+				a = o.ReinterpretCast<Object_Rectangle>();
+			} else {
+				a.Emplace();
+				a->type = ObjectTypes::Rectangle;
+			}
+			TryFill(a->width, c.attribute("width"));
+			TryFill(a->height, c.attribute("height"));
+			o = std::move(a);
+		}
+		TryFill(o->id, c.attribute("id"));
+		TryFill(o->name, c.attribute("name"));
+		TryFill(o->class_, c.attribute("class"));
+		TryFill(o->x, c.attribute("x"));
+		TryFill(o->y, c.attribute("y"));
+		TryFill(o->rotation, c.attribute("rotation"));
+		TryFill(o->visible, c.attribute("visible"));
+		TryFillProperties(o->properties, c, needOverrideProperties);
+		if (o->id) {	// not a template
+			this->objs[o->id] = o;
+		}
+	}
+
 	void Map::TryFillLayer(Layer_Object& L, pugi::xml_node const& c) {
-		L.type = LayerTypes::Object;
+		L.type = LayerTypes::ObjectLayer;
 		TryFillLayerBase(L, c);
 		TryFill(L.color, c.attribute("color"));
 		TryFill(L.draworder, c.attribute("draworder"));
 
 		for (auto&& cObject : c.children("object")) {
 			auto&& o = L.objects.emplace_back();
-			auto&& FillObj = [&](pugi::xml_node& cObj) {
-				bool needOverrideProperties = o;
-				if (auto&& cText = cObj.child("text"); o && o->type == ObjectTypes::Text || !cText.empty()) {
-					xx::Shared<Object_Text> a;
-					if (o) {
-						a = o.ReinterpretCast<Object_Text>();
-					} else {
-						a.Emplace();
-						a->type = ObjectTypes::Text;
-					}
-					TryFill(a->width, cObj.attribute("width"));
-					TryFill(a->height, cObj.attribute("height"));
-					TryFill(a->fontfamily, cObj.attribute("fontfamily"));
-					TryFill(a->pixelsize, cObj.attribute("pixelsize"));
-					TryFill(a->wrap, cObj.attribute("wrap"));
-					TryFill(a->color, cObj.attribute("color"));
-					TryFill(a->bold, cObj.attribute("bold"));
-					TryFill(a->italic, cObj.attribute("italic"));
-					TryFill(a->underline, cObj.attribute("underline"));
-					TryFill(a->strikeout, cObj.attribute("strikeout"));
-					TryFill(a->kerning, cObj.attribute("kerning"));
-					TryFill(a->halign, cObj.attribute("halign"));
-					TryFill(a->valign, cObj.attribute("valign"));
-					if (!cText.empty()) a->text = cText.text().as_string();
-					o = std::move(a);
-				} else if (auto&& cPolygon = cObj.child("polygon"); o && o->type == ObjectTypes::Polygon || !cPolygon.empty()) {
-					xx::Shared<Object_Polygon> a;
-					if (o) {
-						a = o.ReinterpretCast<Object_Polygon>();
-					} else {
-						a.Emplace();
-						a->type = ObjectTypes::Polygon;
-					}
-					if (auto&& attr = cObj.attribute("points"); !attr.empty()) FillPointsTo(a->points, attr.as_string());
-					o = std::move(a);
-				} else if (auto&& cEllipse = cObj.child("ellipse"); o && o->type == ObjectTypes::Ellipse || !cEllipse.empty()) {
-					xx::Shared<Object_Ellipse> a;
-					if (o) {
-						a = o.ReinterpretCast<Object_Ellipse>();
-					} else {
-						a.Emplace();
-						a->type = ObjectTypes::Ellipse;
-					}
-					TryFill(a->width, cObj.attribute("width"));
-					TryFill(a->height, cObj.attribute("height"));
-					o = std::move(a);
-				} else if (auto&& cPoint = cObj.child("point"); o && o->type == ObjectTypes::Point || !cPoint.empty()) {
-					xx::Shared<Object_Point> a;
-					if (o) {
-						a = o.ReinterpretCast<Object_Point>();
-					} else {
-						a.Emplace();
-						a->type = ObjectTypes::Point;
-					}
-					o = std::move(a);
-				} else if (auto&& aGid = cObj.attribute("gid"); o && o->type == ObjectTypes::Tile || !aGid.empty()) {
-					xx::Shared<Object_Tile> a;
-					if (o) {
-						a = o.ReinterpretCast<Object_Tile>();
-					} else {
-						a.Emplace();
-						a->type = ObjectTypes::Tile;
-					}
-					TryFill(a->width, cObj.attribute("width"));
-					TryFill(a->height, cObj.attribute("height"));
-					if (auto&& attr = cObj.attribute("gid"); !attr.empty()) {
-						a->gid = attr.as_uint();
-						a->flippingHorizontal = (a->gid >> 31) & 1;
-						a->flippingVertical = (a->gid >> 30) & 1;
-						a->gid &= 0x3FFFFFFFu;
-					}
-					o = std::move(a);
-				} else {
-					xx::Shared<Object_Rectangle> a;
-					if (o) {
-						a = o.ReinterpretCast<Object_Rectangle>();
-					} else {
-						a.Emplace();
-						a->type = ObjectTypes::Rectangle;
-					}
-					TryFill(a->width, cObj.attribute("width"));
-					TryFill(a->height, cObj.attribute("height"));
-					o = std::move(a);
-				}
-				TryFill(o->id, cObj.attribute("id"));
-				TryFill(o->name, cObj.attribute("name"));
-				TryFill(o->class_, cObj.attribute("class"));
-				TryFill(o->x, cObj.attribute("x"));
-				TryFill(o->y, cObj.attribute("y"));
-				TryFill(o->rotation, cObj.attribute("rotation"));
-				TryFill(o->visible, cObj.attribute("visible"));
-				TryFillProperties(o->properties, cObj, needOverrideProperties);
-			};
-
 			if (auto&& aTemplate = cObject.attribute("template"); !aTemplate.empty()) {
 				auto&& fn = rootPath + aTemplate.as_string();
 				if (auto&& [d, fp] = eg->ReadAllBytes(fn); !d) {
@@ -700,15 +707,15 @@ namespace TMX {
 					throw std::logic_error("docTx.load_buffer error: " + std::string(r.description()));
 				} else {
 					auto&& cObj = docTx->child("template").child("object");
-					FillObj(cObj);
+					TryFillObject(o, cObj);
 				}
 			}
-			FillObj(cObject);
+			TryFillObject(o, cObject);
 		}
 	}
 
 	void Map::TryFillLayer(Layer_Group& pL, pugi::xml_node const& pC) {
-		pL.type = LayerTypes::Group;
+		pL.type = LayerTypes::GroupLayer;
 		TryFillLayerBase(pL, pC);
 		for (auto&& c : pC.children()) {
 			std::string_view name(c.name());
@@ -738,14 +745,14 @@ namespace TMX {
 	/**************************************************************************************************/
 
 	int Map::Fill(Engine* const& eg, std::string_view const& tmxfn) {
-		// cleanup
+		// init
 		*this = {};
 		this->eg = eg;
 		docTmx.Emplace();
 		docTsx.Emplace();
 		docTx.Emplace();
 
-		// load
+		// load file & calc rootPath
 		if (auto&& [d, fp] = eg->ReadAllBytes(tmxfn); !d) {
 			throw std::logic_error("read file error: " + std::string(tmxfn));
 		} else if (auto&& r = docTmx->load_buffer(d.buf, d.len); r.status) {
@@ -756,7 +763,7 @@ namespace TMX {
 			}
 		}
 
-		// fill map
+		// fill step 1
 		auto&& cMap = docTmx->child("map");
 		TryFill(this->class_, cMap.attribute("class"));
 		TryFill(this->orientation, cMap.attribute("orientation"));
@@ -822,6 +829,52 @@ namespace TMX {
 		docTmx.Reset();
 		docTsx.Reset();
 		docTx.Reset();
+
+		// fill step 2
+		auto FillPsObj = [&](std::vector<Property>& ps) {
+			for (auto& p : ps) {
+				if (p.type == PropertyTypes::Object) {
+					p.value = objs[std::get<int64_t>(p.value)];
+				}
+			}
+		};
+
+		FillPsObj(this->properties);
+
+		for (auto& ts : this->tilesets) {
+			FillPsObj(ts->properties);
+			for (auto& ws : ts->wangSets) {
+				FillPsObj(ws.properties);
+				for (auto& wc : ws.wangColors) {
+					FillPsObj(wc.properties);
+				}
+			}
+			for (auto& t : ts->terrains) {
+				FillPsObj(t.properties);
+			}
+			for (auto& t : ts->tiles) {
+				FillPsObj(t.properties);
+				if (t.objectgroup) {
+					FillPsObj(t.objectgroup->properties);
+				}
+			}
+		}
+
+		for (auto& L : this->layerPtrs) {
+			FillPsObj(L->properties);
+			if (L->type == LayerTypes::ObjectLayer) {
+				for (auto&& o : ((Layer_Object*)L)->objects) {
+					FillPsObj(o->properties);
+				}
+			}
+		}
+
+		this->objs.clear();
+		this->layerPtrs.clear();
+
+		// todo: fill frame by gid?
+		// images.clear();	??
+
 		return 0;
 	}
 }
