@@ -333,7 +333,7 @@ namespace TMX {
 		Tileset* tileset;
 		Tile* tile;	// maybe nullptr
 		GLTexture* texture;
-		int16_t x, y, w, h;	// uv box
+		uint16_t x, y, w, h;	// uv box
 	};
 
 	struct Map {

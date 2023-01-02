@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 
-void Engine::AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qv) {
+XX_INLINE QuadVerts& Engine::AutoBatchDrawQuadBegin(GLTexture& tex) {
 	if (autoBatchQuadVertsCount == maxQuadNums) {
 		AutoBatchCommit();
 	}
@@ -12,8 +12,17 @@ void Engine::AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qv) {
 	} else {
 		autoBatchTexs[autoBatchTexsCount - 1].second += 1;
 	}
-	memcpy(&autoBatchQuadVerts[autoBatchQuadVertsCount], qv.data(), sizeof(qv));
+	//memcpy(&autoBatchQuadVerts[autoBatchQuadVertsCount], qv.data(), sizeof(qv));
+	return autoBatchQuadVerts[autoBatchQuadVertsCount];
+}
+XX_INLINE void Engine::AutoBatchDrawQuadEnd() {
 	++autoBatchQuadVertsCount;
+}
+
+void Engine::AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qv) {
+	auto&& tar = AutoBatchDrawQuadBegin(tex);
+	memcpy(&tar, qv.data(), sizeof(qv));
+	AutoBatchDrawQuadEnd();
 };
 
 void Engine::AutoBatchCommit() {

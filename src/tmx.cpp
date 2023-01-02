@@ -2,7 +2,7 @@
 #include "tmx.h"
 #include <zstd.h>
 
-// todo: gid to frame ?
+// todo: vector reserve
 
 namespace TMX {
 	template<typename ET> struct StrToEnumMappings {
