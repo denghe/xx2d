@@ -49,9 +49,9 @@ int Logic::Update() {
 			qv[3].u = i.x + i.w;
 			qv[3].v = i.y;
 
-			qv[0].r = qv[0].g = qv[0].b = qv[0].a = 255;
-			qv[1].r = qv[1].g = qv[1].b = qv[1].a = 255;
-			qv[2].r = qv[2].g = qv[2].b = qv[2].a = 255;
+			qv[0].r = qv[0].g = qv[0].b = qv[0].a = 
+			qv[1].r = qv[1].g = qv[1].b = qv[1].a = 
+			qv[2].r = qv[2].g = qv[2].b = qv[2].a = 
 			qv[3].r = qv[3].g = qv[3].b = qv[3].a = 255;
 
 			AutoBatchDrawQuadEnd();

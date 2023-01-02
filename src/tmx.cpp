@@ -2,8 +2,6 @@
 #include "tmx.h"
 #include <zstd.h>
 
-// todo: vector reserve
-
 namespace TMX {
 	template<typename ET> struct StrToEnumMappings {
 		inline static constexpr std::string_view const* svs = nullptr;
@@ -250,6 +248,7 @@ namespace TMX {
 
 	template<typename T = uint32_t>
 	inline static void FillBinIntsTo(std::vector<T>& out, xx::Data_r dr) {
+		out.reserve(dr.len / 4);
 		T v;
 		while (dr.HasLeft()) {
 			if (int r = dr.ReadFixed(v)) throw std::logic_error("read int error. r = " + std::to_string(r));
