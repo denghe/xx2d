@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "tmxdata.h"
+#include "tmx.h"
 #include <zstd.h>
 
 // todo: fill terrains tiles
@@ -476,7 +476,15 @@ namespace TMX {
 				}
 			}
 
-			// todo: terrains tiles
+			for (auto&& cT : cTileset.children("tile")) {
+				auto&& t = ts.tiles.emplace_back();
+				TryFill(t.id, cT.attribute("id"));
+				TryFill(t.class_, cT.attribute("class"));
+				TryFillProperties(t.properties, cT);
+				if (auto&& cObjs = cT.child("objectgroup"); !cObjs.empty()) {
+					TryFillLayer(*t.collisions.Emplace(), cObjs);
+				}
+			}
 		}
 	}
 
@@ -849,14 +857,8 @@ namespace TMX {
 					FillPsObj(wc.properties);
 				}
 			}
-			for (auto& t : ts->terrains) {
-				FillPsObj(t.properties);
-			}
 			for (auto& t : ts->tiles) {
 				FillPsObj(t.properties);
-				if (t.objectgroup) {
-					FillPsObj(t.objectgroup->properties);
-				}
 			}
 		}
 

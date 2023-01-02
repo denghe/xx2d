@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+ <object name="asf" class="qwe" width="44" height="40">
+  <properties>
+   <property name="o" type="object" value="1"/>
+  </properties>
+  <ellipse/>
+ </object>
+</template>

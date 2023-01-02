@@ -2,7 +2,7 @@
 #include "pch.h"
 
 // texture packer's data container. fill data from export for cocos 3.x .plist file
-struct TPData {
+struct TP {
 	std::vector<xx::Shared<Frame>> frames;
 	bool premultiplyAlpha;
 	std::string realTextureFileName;

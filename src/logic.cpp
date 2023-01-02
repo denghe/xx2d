@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "logic.h"
-#include "tmxdata.h"
+#include "tmx.h"
 
 void Logic::Init() {
 	TMX::Map m;

@@ -37,8 +37,8 @@
             "scale": 0.03125,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 5088,
-                "y": 5456
+                "x": 9136,
+                "y": 7888
             }
         },
         "tiles.tsx": {
@@ -47,6 +47,7 @@
         }
     },
     "last.exportedFilePath": "C:/Users/xx/Documents/xx2d/res/tiledmap1",
+    "last.externalTilesetPath": "C:/Code/xx2d/res/tiledmap1",
     "last.imagePath": "C:/Code/xx2d/res/tiledmap1",
     "last.objectTemplatePath": "C:/Code/xx2d/res/tiledmap1",
     "map.height": 200,
@@ -58,14 +59,15 @@
     "openFiles": [
     ],
     "project": "test1.tiled-project",
-    "property.type": "int",
+    "property.type": "string",
     "recentFiles": [
-        "tiles.tsx",
-        "m1.tmx",
         "eee.tsx",
+        "m1.tmx",
+        "tiles.tsx",
         "m1.js",
         "m1..tmj"
     ],
+    "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",
     "tileset.margin": 2,
     "tileset.spacing": 2,

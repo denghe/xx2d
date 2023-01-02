@@ -1,8 +1,8 @@
 ﻿#include "pch.h"
 
-TPData Engine::LoadTPData(std::string_view const& fn) {
+TP Engine::LoadTPData(std::string_view const& fn) {
 	auto [d, p] = ReadAllBytes(fn);
-	TPData c;
+	TP c;
 	std::string rootPath;
 	if (auto i = p.find_last_of("/"); i != p.npos) {
 		rootPath = p.substr(0, i + 1);
@@ -12,7 +12,7 @@ TPData Engine::LoadTPData(std::string_view const& fn) {
 }
 
 
-void Engine::LoadFramesFromCache(TPData const& tpd) {
+void Engine::LoadFramesFromCache(TP const& tpd) {
 	auto t = xx::Make<GLTexture>(LoadTexture(tpd.realTextureFileName));
 	for (auto& o : tpd.frames) {
 		auto&& result = frameCache.emplace(o->key, o);
@@ -22,7 +22,7 @@ void Engine::LoadFramesFromCache(TPData const& tpd) {
 }
 
 
-void Engine::UnloadFramesFromCache(TPData const& tpd) {
+void Engine::UnloadFramesFromCache(TP const& tpd) {
 	for (auto const& o : tpd.frames) {
 		frameCache.erase(o->key);
 	}

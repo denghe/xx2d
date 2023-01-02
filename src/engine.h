@@ -54,19 +54,19 @@ struct Engine {
 
 
 	/**********************************************************************************/
-	// TPData & frame cache( texture does not insert into textureCache )
+	// TP & frame cache( texture does not insert into textureCache )
 
 	// key: frame key in plist( texture packer export .plist )
 	std::unordered_map<std::string, xx::Shared<Frame>, xx::StringHasher<>, std::equal_to<void>> frameCache;
 
 	// load texture packer's plist content from file & return
-	TPData LoadTPData(std::string_view const& fn);
+	TP LoadTPData(std::string_view const& fn);
 
 	// load plist frames into cache. duplicate key name will throw exception. auto get texture from cache if exists.
-	void LoadFramesFromCache(TPData const& tpd);
+	void LoadFramesFromCache(TP const& tpd);
 
 	// unload plist frames from cache
-	void UnloadFramesFromCache(TPData const& tpd);
+	void UnloadFramesFromCache(TP const& tpd);
 
 	// delete from cache where sharedCount == 1. return removed frame count
 	size_t RemoveUnusedFromFrameCache();

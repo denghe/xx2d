@@ -16,7 +16,7 @@
 
 #include "globalutils.h"
 #include "prims.h"
-#include "tpdata.h"
+#include "tp.h"
 #include "bmfont.h"
 #include "engine.h"
 #include "sprite.h"
