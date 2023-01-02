@@ -328,6 +328,14 @@ namespace TMX {
 		MAX_VALUE_UNKNOWN
 	};
 
+	// ext for fast search gid & get texture & quad data
+	struct GidInfo {
+		Tileset* tileset;
+		Tile* tile;	// maybe nullptr
+		GLTexture* texture;
+		int16_t x, y, w, h;	// uv box
+	};
+
 	struct Map {
 		std::string class_;	// class
 		Orientations orientation = Orientations::Orthogonal;
@@ -354,13 +362,15 @@ namespace TMX {
 		uint32_t nextObjectId = 0;	// nextobjectid
 		std::vector<xx::Shared<Tileset>> tilesets;
 		std::vector<xx::Shared<Layer>> layers;
-		std::vector<xx::Shared<Image>> images;
 
+		/********************************************************************************************************************************/
+
+		// ext
+		std::vector<xx::Shared<Image>> images;
+		std::vector<GidInfo> gidInfos;	// for search by index: gid
 
 		// fill data by .tmx file
 		int Fill(Engine* const& eg, std::string_view const& tmxfn);
-
-		// todo: get texture & rect info by gid for generate quad ?
 
 	protected:
 		// tmp vars for easy Fill

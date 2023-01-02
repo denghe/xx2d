@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "eee.tsx",
     "expandedProjectPaths": [
         "."
     ],
@@ -35,10 +35,10 @@
                 5
             ],
             "scale": 0.03125,
-            "selectedLayer": 1,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 9136,
-                "y": 7888
+                "x": 8160,
+                "y": 1680
             }
         },
         "tiles.tsx": {
@@ -57,13 +57,14 @@
     "map.tileWidth": 64,
     "map.width": 300,
     "openFiles": [
+        "eee.tsx"
     ],
     "project": "test1.tiled-project",
     "property.type": "string",
     "recentFiles": [
         "eee.tsx",
-        "m1.tmx",
         "tiles.tsx",
+        "m1.tmx",
         "m1.js",
         "m1..tmj"
     ],

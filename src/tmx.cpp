@@ -2,13 +2,7 @@
 #include "tmx.h"
 #include <zstd.h>
 
-// todo: fill terrains tiles
-// todo: double int uint check
-// todo: set fields default value
-// todo: sort tiledset by firstgid ?
 // todo: gid to frame ?
-// todo: fill step 2: ptrs by id, props obj by id
-// todo: vector reserve
 
 namespace TMX {
 	template<typename ET> struct StrToEnumMappings {
@@ -386,7 +380,7 @@ namespace TMX {
 		if (c.empty()) return {};
 		std::string s;
 		TryFill(s, c.attribute("source"));
-		auto&& fp = rootPath + s;	// to fullpath
+		auto&& fp = this->rootPath + s;	// to fullpath
 		if (fp.ends_with(".png"sv)) {			// hack: replace ext to pkm
 			fp.resize(fp.size() - 4);
 			fp.append(".pkm");
@@ -397,7 +391,7 @@ namespace TMX {
 		if (iter == this->images.end()) {
 			auto&& img = xx::Make<Image>();
 			img->source = std::move(s);
-			img->texture.Emplace(eg->LoadTexture(fp));
+			img->texture.Emplace(this->eg->LoadTexture(fp));
 			TryFill(img->width, c.attribute("width"));
 			TryFill(img->height, c.attribute("height"));
 			TryFill(img->transparentColor, c.attribute("trans"));
@@ -412,8 +406,8 @@ namespace TMX {
 		TryFill(ts.firstgid, c.attribute("firstgid"));
 		TryFill(ts.source, c.attribute("source"));
 
-		auto&& fp = rootPath + ts.source;	// to fullpath
-		if (auto&& d = eg->ReadAllBytesWithFullPath(fp); !d) {
+		auto&& fp = this->rootPath + ts.source;	// to fullpath
+		if (auto&& d = this->eg->ReadAllBytesWithFullPath(fp); !d) {
 			throw std::logic_error("read file error: " + fp);
 		} else if (auto&& r = docTsx->load_buffer(d.buf, d.len); r.status) {
 			throw std::logic_error("docTsx.load_buffer error: " + std::string(r.description()));
@@ -708,8 +702,8 @@ namespace TMX {
 		for (auto&& cObject : c.children("object")) {
 			auto&& o = L.objects.emplace_back();
 			if (auto&& aTemplate = cObject.attribute("template"); !aTemplate.empty()) {
-				auto&& fn = rootPath + aTemplate.as_string();
-				if (auto&& [d, fp] = eg->ReadAllBytes(fn); !d) {
+				auto&& fn = this->rootPath + aTemplate.as_string();
+				if (auto&& [d, fp] = this->eg->ReadAllBytes(fn); !d) {
 					throw std::logic_error("read file error: " + fn);
 				} else if (auto&& r = docTx->load_buffer(d.buf, d.len); r.status) {
 					throw std::logic_error("docTx.load_buffer error: " + std::string(r.description()));
@@ -756,23 +750,23 @@ namespace TMX {
 		// init
 		*this = {};
 		this->eg = eg;
-		docTmx.Emplace();
-		docTsx.Emplace();
-		docTx.Emplace();
+		this->docTmx.Emplace();
+		this->docTsx.Emplace();
+		this->docTx.Emplace();
 
 		// load file & calc rootPath
-		if (auto&& [d, fp] = eg->ReadAllBytes(tmxfn); !d) {
+		if (auto&& [d, fp] = this->eg->ReadAllBytes(tmxfn); !d) {
 			throw std::logic_error("read file error: " + std::string(tmxfn));
-		} else if (auto&& r = docTmx->load_buffer(d.buf, d.len); r.status) {
+		} else if (auto&& r = this->docTmx->load_buffer(d.buf, d.len); r.status) {
 			throw std::logic_error("docTmx.load_buffer error: " + std::string(r.description()));
 		} else {
 			if (auto&& i = fp.find_last_of("/"); i != fp.npos) {
-				rootPath = fp.substr(0, i + 1);
+				this->rootPath = fp.substr(0, i + 1);
 			}
 		}
 
-		// fill step 1
-		auto&& cMap = docTmx->child("map");
+		// fill step 1: parse xml to struct
+		auto&& cMap = this->docTmx->child("map");
 		TryFill(this->class_, cMap.attribute("class"));
 		TryFill(this->orientation, cMap.attribute("orientation"));
 		TryFill(this->width, cMap.attribute("width"));
@@ -834,21 +828,53 @@ namespace TMX {
 			}
 		}
 
-		docTmx.Reset();
-		docTsx.Reset();
-		docTx.Reset();
+		this->docTmx.Reset();
+		this->docTsx.Reset();
+		this->docTx.Reset();
 
-		// fill step 2
-		for (auto&& [ps, idx] : objProps) {
+
+		// fill step 2: fix object ref
+
+		for (auto&& [ps, idx] : this->objProps) {
 			auto& p = (*ps)[idx];
-			p.value = objs[std::get<int64_t>(p.value)];
+			p.value = this->objs[std::get<int64_t>(p.value)];
 		}
-
 		this->objs.clear();
 		this->objProps.clear();
 
-		// todo: fill frame by gid?
-		// images.clear();	??
+
+		// fill step 3: fill gid info
+		if (this->tilesets.empty()) return 0;
+
+		uint32_t numCells = 0;
+		for (auto&& tileset : this->tilesets) {
+			numCells += tileset->tilecount;
+		}
+		gidInfos.resize(numCells + this->tilesets[0]->firstgid);
+
+		for (auto&& tileset : this->tilesets) {
+			GLTexture* tex = tileset->image->texture;
+			for (uint32_t y = 0; y < tileset->tilecount / tileset->columns; ++y) {
+				for (uint32_t x = 0; x < tileset->columns; ++x) {
+					auto id = y * tileset->columns + x;
+					auto gid = tileset->firstgid + id;
+					auto& info = gidInfos[gid];
+					info.tileset = tileset;
+					info.tile = nullptr;
+					for (auto& t : tileset->tiles) {
+						if (t->id == id) {
+							info.tile = t.get();
+							break;
+						}
+					}
+					info.texture = tex;
+					info.x = tileset->margin + (tileset->spacing + tileset->tilewidth) * x;
+					info.y = tileset->margin + (tileset->spacing + tileset->tileheight) * y;
+					info.w = tileset->tilewidth;
+					info.h = tileset->tileheight;
+				}
+			}
+		}
 
 		return 0;
 	}
