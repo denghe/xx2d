@@ -369,6 +369,7 @@ namespace TMX {
 			}
 			case PropertyTypes::Object: {
 				p->value = c.attribute("value").as_llong();	// convert to xx::Weak<Object> at fill step 2
+				objProps.emplace_back(&out, out.size() - 1);
 				break;
 			}
 			case PropertyTypes::String: {
@@ -454,14 +455,14 @@ namespace TMX {
 			TryFill(ts.tilecount, cTileset.attribute("tilecount"));
 
 			for (auto&& cW : cTileset.child("wangsets").children("wangset")) {
-				auto&& w = ts.wangSets.emplace_back();
+				auto&& w = *ts.wangSets.emplace_back(std::make_unique<WangSet>());
 				TryFill(w.name, cW.attribute("name"));
 				TryFill(w.type, cW.attribute("type"));
 				TryFill(w.tile, cW.attribute("tile"));
 				TryFillProperties(w.properties, cW);
 
 				for (auto&& cC : cW.children("wangcolor")) {
-					auto&& c = w.wangColors.emplace_back();
+					auto&& c = *w.wangColors.emplace_back(std::make_unique<WangColor>());
 					c.name = cC.attribute("name").as_string();
 					TryFill(c.color, cC.attribute("color"));
 					TryFill(c.tile, cC.attribute("tile"));
@@ -477,7 +478,7 @@ namespace TMX {
 			}
 
 			for (auto&& cT : cTileset.children("tile")) {
-				auto&& t = ts.tiles.emplace_back();
+				auto&& t = *ts.tiles.emplace_back(std::make_unique<Tile>());
 				TryFill(t.id, cT.attribute("id"));
 				TryFill(t.class_, cT.attribute("class"));
 				TryFillProperties(t.properties, cT);
@@ -501,7 +502,6 @@ namespace TMX {
 		TryFill(L.parallaxFactor.x, c.attribute("parallaxx"));
 		TryFill(L.parallaxFactor.y, c.attribute("parallaxy"));
 		TryFillProperties(L.properties, c);
-		layerPtrs.emplace_back(&L);
 	}
 
 	void Map::TryFillLayer(Layer_Tile& L, pugi::xml_node const& c) {
@@ -839,40 +839,13 @@ namespace TMX {
 		docTx.Reset();
 
 		// fill step 2
-		auto FillPsObj = [&](std::vector<Property>& ps) {
-			for (auto& p : ps) {
-				if (p.type == PropertyTypes::Object) {
-					p.value = objs[std::get<int64_t>(p.value)];
-				}
-			}
-		};
-
-		FillPsObj(this->properties);
-
-		for (auto& ts : this->tilesets) {
-			FillPsObj(ts->properties);
-			for (auto& ws : ts->wangSets) {
-				FillPsObj(ws.properties);
-				for (auto& wc : ws.wangColors) {
-					FillPsObj(wc.properties);
-				}
-			}
-			for (auto& t : ts->tiles) {
-				FillPsObj(t.properties);
-			}
-		}
-
-		for (auto& L : this->layerPtrs) {
-			FillPsObj(L->properties);
-			if (L->type == LayerTypes::ObjectLayer) {
-				for (auto&& o : ((Layer_Object*)L)->objects) {
-					FillPsObj(o->properties);
-				}
-			}
+		for (auto&& [ps, idx] : objProps) {
+			auto& p = (*ps)[idx];
+			p.value = objs[std::get<int64_t>(p.value)];
 		}
 
 		this->objs.clear();
-		this->layerPtrs.clear();
+		this->objProps.clear();
 
 		// todo: fill frame by gid?
 		// images.clear();	??

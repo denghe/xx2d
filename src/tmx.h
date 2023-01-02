@@ -22,7 +22,7 @@ namespace TMX {
 	struct Property {
 		PropertyTypes type = PropertyTypes::MAX_VALUE_UNKNOWN;
 		std::string name;
-		std::variant<bool, RGBA8, int64_t, double, std::unique_ptr<std::string>, xx::Weak<Object>> value;
+		std::variant<bool, RGBA8, int64_t, double, std::unique_ptr<std::string>, Object*> value;
 	};
 
 	/**********************************************************************************/
@@ -46,7 +46,7 @@ namespace TMX {
 		double y = 0;
 		double rotation = false;
 		bool visible = true;
-		std::vector<Property> properties;	// <properties>
+		std::vector<Property> properties;	// <properties> <property <property
 	};
 
 	struct Object_Point : Object {
@@ -72,7 +72,6 @@ namespace TMX {
 		std::vector<Pointi> points;
 	};
 
-	struct Tileset;
 	struct Object_Tile : Object_Rectangle {
 		uint32_t gid = 0;					// & 0x3FFFFFFFu;
 		bool flippingHorizontal = false;	// (gid >> 31) & 1
@@ -131,7 +130,7 @@ namespace TMX {
 		double horizontalOffset = 0;	// offsetx
 		double verticalOffset = 0;	// offsety
 		Pointf parallaxFactor = {1, 1};	// parallaxx, parallaxy
-		std::vector<Property> properties;	// <properties>
+		std::vector<Property> properties;	// <properties> <property <property
 	};
 
 	struct Chunk {
@@ -200,7 +199,7 @@ namespace TMX {
 		RGBA8 color = { 0, 0, 0, 255 };
 		uint32_t tile = 0;
 		double probability = 1;
-		std::vector<Property> properties;	// <properties>
+		std::vector<Property> properties;	// <properties> <property <property
 	};
 
 	enum class WangSetTypes : uint8_t {
@@ -215,8 +214,8 @@ namespace TMX {
 		WangSetTypes type = WangSetTypes::Corner;
 		uint32_t tile = 0;
 		std::vector<WangTile> wangTiles;	// <wangtile
-		std::vector<WangColor> wangColors;	// <wangcolor
-		std::vector<Property> properties;	// <properties>
+		std::vector<std::unique_ptr<WangColor>> wangColors;	// <wangcolor
+		std::vector<Property> properties;	// <properties> <property <property
 	};
 
 	struct Transformations {
@@ -282,14 +281,14 @@ namespace TMX {
 		uint32_t tileheight = 0;
 		uint32_t margin = 0;
 		uint32_t spacing = 0;
-		std::vector<Property> properties;	// <properties>
+		std::vector<Property> properties;	// <properties> <property <property
 
 		std::string version;
 		std::string tiledversion;
 		uint32_t tilecount = 0;
 
-		std::vector<WangSet> wangSets;	// <wangsets>
-		std::vector<Tile> tiles;	// <tile <tile <tile
+		std::vector<std::unique_ptr<WangSet>> wangSets;	// <wangsets>
+		std::vector<std::unique_ptr<Tile>> tiles;	// <tile <tile <tile
 	};
 
 	/**********************************************************************************/
@@ -347,7 +346,7 @@ namespace TMX {
 		RenderOrders renderOrder = RenderOrders::RightDown;	// renderorder
 		int32_t compressionLevel = -1;	// compressionlevel
 		std::optional<RGBA8> backgroundColor;	// backgroundcolor
-		std::vector<Property> properties;	// <properties>
+		std::vector<Property> properties;	// <properties> <property <property
 
 		std::string version;
 		std::string tiledVersion;	// tiledversion
@@ -368,8 +367,8 @@ namespace TMX {
 		Engine* eg = nullptr;
 		xx::Shared<pugi::xml_document> docTmx, docTsx, docTx;
 		std::string rootPath;
-		std::unordered_map<uint32_t, xx::Weak<Object>> objs;
-		std::vector<Layer*> layerPtrs;
+		std::unordered_map<uint32_t, Object*> objs;	// store all objs cross Layer_Object
+		std::vector<std::pair<std::vector<Property>*, size_t>> objProps;	// store properties[ idx ] need replace id to obj
 
 		// for easy Fill
 		void TryFillProperties(std::vector<Property>& out, pugi::xml_node const& owner, bool needOverride = false);
