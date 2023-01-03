@@ -184,6 +184,7 @@ namespace TMX {
 	struct Tile {
 		uint32_t id = 0;
 		std::string class_;
+		xx::Shared<Image> image;	// <image ...>
 		xx::Shared<Layer_Object> collisions;	// <objectgroup> <object <object
 		std::vector<Frame> animation;	// <animation> <frame <frame
 		std::vector<Property> properties;	// <properties> <property <property
@@ -382,7 +383,7 @@ namespace TMX {
 
 		// for easy Fill
 		void TryFillProperties(std::vector<Property>& out, pugi::xml_node const& owner, bool needOverride = false);
-		xx::Shared<Image> TryToImage(pugi::xml_node const& c);
+		void TryFillImage(xx::Shared<Image>& out, pugi::xml_node const& c);
 		Property* MakeProperty(std::vector<Property>& out, pugi::xml_node const& c, std::string&& name);
 		void TryFillTileset(Tileset& ts, pugi::xml_node const& c);
 		void TryFillLayerBase(Layer& L, pugi::xml_node const& c);

@@ -375,8 +375,9 @@ namespace TMX {
 		}
 	}
 
-	xx::Shared<Image> Map::TryToImage(pugi::xml_node const& c) {
-		if (c.empty()) return {};
+	void Map::TryFillImage(xx::Shared<Image>& out, pugi::xml_node const& c) {
+		out.Reset();
+		if (c.empty()) return;
 		std::string s;
 		TryFill(s, c.attribute("source"));
 		auto&& fp = this->rootPath + s;	// to fullpath
@@ -388,16 +389,15 @@ namespace TMX {
 			return img->source == s;
 			});
 		if (iter == this->images.end()) {
-			auto&& img = xx::Make<Image>();
+			auto&& img = out.Emplace();
 			img->source = std::move(s);
 			img->texture.Emplace(this->eg->LoadTexture(fp));
 			TryFill(img->width, c.attribute("width"));
 			TryFill(img->height, c.attribute("height"));
 			TryFill(img->transparentColor, c.attribute("trans"));
 			this->images.push_back(img);
-			return img;
 		} else {
-			return *iter;
+			out = *iter;
 		}
 	}
 
@@ -434,9 +434,7 @@ namespace TMX {
 				TryFill(ts.allowedTransformations.rotate, cTran.attribute("rotate"));
 				TryFill(ts.allowedTransformations.preferUntransformedTiles, cTran.attribute("preferuntransformed"));
 			}
-			if (auto&& cImage = cTileset.child("image"); !cImage.empty()) {
-				ts.image = TryToImage(cImage);
-			}
+			TryFillImage(ts.image, cTileset.child("image"));
 			TryFill(ts.tilewidth, cTileset.attribute("tilewidth"));
 			TryFill(ts.tileheight, cTileset.attribute("tileheight"));
 			TryFill(ts.margin, cTileset.attribute("margin"));
@@ -474,9 +472,17 @@ namespace TMX {
 				auto&& t = *ts.tiles.emplace_back(std::make_unique<Tile>());
 				TryFill(t.id, cT.attribute("id"));
 				TryFill(t.class_, cT.attribute("class"));
+				TryFillImage(t.image, cT.child("image"));
 				TryFillProperties(t.properties, cT);
 				if (auto&& cObjs = cT.child("objectgroup"); !cObjs.empty()) {
 					TryFillLayer(*t.collisions.Emplace(), cObjs);
+				}
+				if (auto&& cAnims = cT.child("animation"); !cAnims.empty()) {
+					for (auto&& cFrame : cAnims.children("frame")) {
+						auto& f = t.animation.emplace_back();
+						TryFill(f.tileId, cFrame.attribute("tileid"));
+						TryFill(f.duration, cFrame.attribute("duration"));
+					}
 				}
 			}
 		}
@@ -590,9 +596,7 @@ namespace TMX {
 		TryFillLayerBase(L, c);
 		TryFill(L.repeatX, c.attribute("repeatx"));
 		TryFill(L.repeatY, c.attribute("repeaty"));
-		if (auto&& cImage = c.child("image"); !cImage.empty()) {
-			L.image = TryToImage(cImage);
-		}
+		TryFillImage(L.image, c.child("image"));
 	}
 
 	void Map::TryFillObject(xx::Shared<Object>& o, pugi::xml_node const& c) {
@@ -852,21 +856,30 @@ namespace TMX {
 		gidInfos.resize(numCells + this->tilesets[0]->firstgid);
 
 		for (auto&& tileset : this->tilesets) {
-			GLTexture* tex = tileset->image->texture;
-			for (uint32_t y = 0; y < tileset->tilecount / tileset->columns; ++y) {
-				for (uint32_t x = 0; x < tileset->columns; ++x) {
-					auto id = y * tileset->columns + x;
+			uint32_t numRows = 1, numCols = tileset->tilecount;
+			GLTexture* tex = nullptr;
+			if (tileset->image) {
+				numCols = tileset->columns;
+				numRows = tileset->tilecount / numCols;
+				tex = tileset->image->texture;
+			}
+			for (uint32_t y = 0; y < numRows; ++y) {
+				for (uint32_t x = 0; x < numCols; ++x) {
+					auto id = y * numCols + x;
 					auto gid = tileset->firstgid + id;
 					auto& info = gidInfos[gid];
 					info.tileset = tileset;
 					info.tile = nullptr;
+					info.texture = tex;
 					for (auto& t : tileset->tiles) {
 						if (t->id == id) {
 							info.tile = t.get();
+							if (t->image) {
+								info.texture = t->image->texture;
+							}
 							break;
 						}
 					}
-					info.texture = tex;
 					info.x = tileset->margin + (tileset->spacing + tileset->tilewidth) * x;
 					info.y = tileset->margin + (tileset->spacing + tileset->tileheight) * y;
 					info.w = tileset->tilewidth;

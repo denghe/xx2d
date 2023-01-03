@@ -3,13 +3,14 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "eee.tsx",
+    "activeFile": "tiles.tsx",
     "expandedProjectPaths": [
         "."
     ],
     "file.lastUsedOpenFilter": "全部文件 (*)",
     "fileStates": {
         "eee.tsx": {
+            "dynamicWrapping": false,
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
@@ -30,25 +31,27 @@
             }
         },
         "m1.tmx": {
-            "expandedGroupLayers": [
-                3,
-                5
-            ],
-            "scale": 0.03125,
+            "scale": 0.0625,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 8160,
-                "y": 1680
+                "x": 9616,
+                "y": 6416
             }
         },
+        "multi pics.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "tiles.tsx": {
-            "scaleInDock": 0.5,
-            "scaleInEditor": 1.5
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 3
         }
     },
     "last.exportedFilePath": "C:/Users/xx/Documents/xx2d/res/tiledmap1",
-    "last.externalTilesetPath": "C:/Code/xx2d/res/tiledmap1",
-    "last.imagePath": "C:/Code/xx2d/res/tiledmap1",
+    "last.externalTilesetPath": "C:/Users/xx/Documents/xx2d/res/tiledmap1",
+    "last.imagePath": "C:/Users/xx/Documents/xx2d/res/tiledmap1",
     "last.objectTemplatePath": "C:/Code/xx2d/res/tiledmap1",
     "map.height": 200,
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
@@ -57,14 +60,16 @@
     "map.tileWidth": 64,
     "map.width": 300,
     "openFiles": [
-        "eee.tsx"
+        "m1.tmx",
+        "tiles.tsx"
     ],
     "project": "test1.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "multi pics.tsx",
         "eee.tsx",
-        "tiles.tsx",
         "m1.tmx",
+        "tiles.tsx",
         "m1.js",
         "m1..tmj"
     ],
@@ -76,5 +81,6 @@
         "height": 64,
         "width": 64
     },
+    "tileset.type": 1,
     "tileset.useTransparentColor": true
 }
