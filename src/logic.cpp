@@ -2,7 +2,7 @@
 #include "logic.h"
 
 void Logic::Init() {
-	m.Fill(this, "res/tiledmap1/m1.tmx");
+	TMX::FillTo(m, this, "res/tiledmap1/m1.tmx");
 }
 
 int Logic::Update() {

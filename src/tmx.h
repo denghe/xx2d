@@ -1,8 +1,7 @@
 ﻿#pragma once
 #include "pch.h"
-#include "pugixml.hpp"
 
-// tiled map xml version data loader & container. supported to version 1.9x. compress method only support zstandard
+// tiled map xml version data loader & container. full supported to version 1.9x( compress algorithm only support zstandard )
 // https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#
 
 namespace TMX {
@@ -364,33 +363,12 @@ namespace TMX {
 		std::vector<xx::Shared<Tileset>> tilesets;
 		std::vector<xx::Shared<Layer>> layers;
 
-		/********************************************************************************************************************************/
-
 		// ext
 		std::vector<xx::Shared<Image>> images;
 		std::vector<GidInfo> gidInfos;	// for search by index: gid
-
-		// fill data by .tmx file
-		int Fill(Engine* const& eg, std::string_view const& tmxfn);
-
-	protected:
-		// tmp vars for easy Fill
-		Engine* eg = nullptr;
-		xx::Shared<pugi::xml_document> docTmx, docTsx, docTx;
-		std::string rootPath;
-		std::unordered_map<uint32_t, Object*> objs;	// store all objs cross Layer_Object
-		std::vector<std::pair<std::vector<Property>*, size_t>> objProps;	// store properties[ idx ] need replace id to obj
-
-		// for easy Fill
-		void TryFillProperties(std::vector<Property>& out, pugi::xml_node const& owner, bool needOverride = false);
-		void TryFillImage(xx::Shared<Image>& out, pugi::xml_node const& c);
-		Property* MakeProperty(std::vector<Property>& out, pugi::xml_node const& c, std::string&& name);
-		void TryFillTileset(Tileset& ts, pugi::xml_node const& c);
-		void TryFillLayerBase(Layer& L, pugi::xml_node const& c);
-		void TryFillLayer(Layer_Tile& L, pugi::xml_node const& c);
-		void TryFillLayer(Layer_Image& L, pugi::xml_node const& c);
-		void TryFillObject(xx::Shared<Object>& o, pugi::xml_node const& c);
-		void TryFillLayer(Layer_Object& L, pugi::xml_node const& c);
-		void TryFillLayer(Layer_Group& L, pugi::xml_node const& c);
 	};
+
+	/**********************************************************************************/
+
+	void FillTo(Map& map, Engine* eg, std::string_view const& tmxfn);
 };

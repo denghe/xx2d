@@ -1,8 +1,36 @@
 ﻿#include "pch.h"
 #include "tmx.h"
+#include "pugixml.hpp"
 #include <zstd.h>
 
 namespace TMX {
+
+	struct Filler {
+		// fill data by .tmx file
+		Filler(Map& map, Engine* eg, std::string_view tmxfn);
+
+		int rtv = 0;
+		Map& map;
+		Engine* eg;
+		pugi::xml_document docTmx, docTsx, docTx;
+		std::string rootPath;
+		std::unordered_map<uint32_t, Object*> objs;	// store all objs cross Layer_Object
+		std::vector<std::pair<std::vector<Property>*, size_t>> objProps;	// store properties[ idx ] need replace id to obj
+
+		// for easy Fill
+		void TryFillProperties(std::vector<Property>& out, pugi::xml_node const& owner, bool needOverride = false);
+		void TryFillImage(xx::Shared<Image>& out, pugi::xml_node const& c);
+		Property* MakeProperty(std::vector<Property>& out, pugi::xml_node const& c, std::string&& name);
+		void TryFillTileset(Tileset& ts, pugi::xml_node const& c);
+		void TryFillLayerBase(Layer& L, pugi::xml_node const& c);
+		void TryFillLayer(Layer_Tile& L, pugi::xml_node const& c);
+		void TryFillLayer(Layer_Image& L, pugi::xml_node const& c);
+		void TryFillObject(xx::Shared<Object>& o, pugi::xml_node const& c);
+		void TryFillLayer(Layer_Object& L, pugi::xml_node const& c);
+		void TryFillLayer(Layer_Group& L, pugi::xml_node const& c);
+	};
+
+
 	template<typename ET> struct StrToEnumMappings {
 		inline static constexpr std::string_view const* svs = nullptr;
 		inline static constexpr size_t count = 0;
@@ -312,7 +340,7 @@ namespace TMX {
 		TryFill(chunk.height, cChunk.attribute("height"));
 	}
 
-	Property* Map::MakeProperty(std::vector<Property>& out, pugi::xml_node const& c, std::string&& name) {
+	Property* Filler::MakeProperty(std::vector<Property>& out, pugi::xml_node const& c, std::string&& name) {
 		auto&& p = &out.emplace_back();
 		p->name = std::move(name);
 		p->type = PropertyTypes::String;
@@ -320,7 +348,7 @@ namespace TMX {
 		return p;
 	}
 
-	void Map::TryFillProperties(std::vector<Property>& out, pugi::xml_node const& owner, bool needOverride) {
+	void Filler::TryFillProperties(std::vector<Property>& out, pugi::xml_node const& owner, bool needOverride) {
 		for (auto&& c : owner.child("properties").children("property")) {
 			Property* p;
 			if (needOverride) {
@@ -375,43 +403,43 @@ namespace TMX {
 		}
 	}
 
-	void Map::TryFillImage(xx::Shared<Image>& out, pugi::xml_node const& c) {
+	void Filler::TryFillImage(xx::Shared<Image>& out, pugi::xml_node const& c) {
 		out.Reset();
 		if (c.empty()) return;
 		std::string s;
 		TryFill(s, c.attribute("source"));
-		auto&& fp = this->rootPath + s;	// to fullpath
+		auto&& fp = rootPath + s;	// to fullpath
 		if (fp.ends_with(".png"sv)) {			// hack: replace ext to pkm
 			fp.resize(fp.size() - 4);
 			fp.append(".pkm");
 		}
-		auto&& iter = std::find_if(this->images.begin(), this->images.end(), [&](xx::Shared<Image> const& img) {
+		auto&& iter = std::find_if(map.images.begin(), map.images.end(), [&](xx::Shared<Image> const& img) {
 			return img->source == s;
 			});
-		if (iter == this->images.end()) {
+		if (iter == map.images.end()) {
 			auto&& img = out.Emplace();
 			img->source = std::move(s);
-			img->texture.Emplace(this->eg->LoadTexture(fp));
+			img->texture.Emplace(eg->LoadTexture(fp));
 			TryFill(img->width, c.attribute("width"));
 			TryFill(img->height, c.attribute("height"));
 			TryFill(img->transparentColor, c.attribute("trans"));
-			this->images.push_back(img);
+			map.images.push_back(img);
 		} else {
 			out = *iter;
 		}
 	}
 
-	void Map::TryFillTileset(Tileset& ts, pugi::xml_node const& c) {
+	void Filler::TryFillTileset(Tileset& ts, pugi::xml_node const& c) {
 		TryFill(ts.firstgid, c.attribute("firstgid"));
 		TryFill(ts.source, c.attribute("source"));
 
-		auto&& fp = this->rootPath + ts.source;	// to fullpath
-		if (auto&& d = this->eg->ReadAllBytesWithFullPath(fp); !d) {
+		auto&& fp = rootPath + ts.source;	// to fullpath
+		if (auto&& d = eg->ReadAllBytesWithFullPath(fp); !d) {
 			throw std::logic_error("read file error: " + fp);
-		} else if (auto&& r = docTsx->load_buffer(d.buf, d.len); r.status) {
+		} else if (auto&& r = docTsx.load_buffer(d.buf, d.len); r.status) {
 			throw std::logic_error("docTsx.load_buffer error: " + std::string(r.description()));
 		} else {
-			auto&& cTileset = docTsx->child("tileset");
+			auto&& cTileset = docTsx.child("tileset");
 			TryFill(ts.name, cTileset.attribute("name"));
 			TryFill(ts.class_, cTileset.attribute("class"));
 			TryFill(ts.objectAlignment, cTileset.attribute("objectalignment"));
@@ -488,7 +516,7 @@ namespace TMX {
 		}
 	}
 
-	void Map::TryFillLayerBase(Layer& L, pugi::xml_node const& c) {
+	void Filler::TryFillLayerBase(Layer& L, pugi::xml_node const& c) {
 		TryFill(L.id, c.attribute("id"));
 		TryFill(L.name, c.attribute("name"));
 		TryFill(L.class_, c.attribute("class"));
@@ -503,12 +531,12 @@ namespace TMX {
 		TryFillProperties(L.properties, c);
 	}
 
-	void Map::TryFillLayer(Layer_Tile& L, pugi::xml_node const& c) {
+	void Filler::TryFillLayer(Layer_Tile& L, pugi::xml_node const& c) {
 		L.type = LayerTypes::TileLayer;
 		TryFillLayerBase(L, c);
-		auto&& [encoding, compression] = this->tileLayerFormat;
+		auto&& [encoding, compression] = map.tileLayerFormat;
 		auto&& cData = c.child("data");
-		if (this->infinite) {
+		if (map.infinite) {
 			switch (encoding) {
 			case Encodings::Csv: {
 				for (auto&& cChunk : cData.children("chunk")) {
@@ -555,7 +583,7 @@ namespace TMX {
 				throw std::logic_error("unsupported encoding: " + (int)encoding);
 			};
 		} else {
-			switch (this->tileLayerFormat.first) {
+			switch (map.tileLayerFormat.first) {
 			case Encodings::Csv: {
 				FillCsvIntsTo(L.gids, cData.text().as_string());
 				break;
@@ -563,7 +591,7 @@ namespace TMX {
 			case Encodings::Base64: {
 				xx::Data tmp;
 				auto&& bin = xx::Base64Decode(xx::Trim(cData.text().as_string()));
-				switch (this->tileLayerFormat.second) {
+				switch (map.tileLayerFormat.second) {
 				case Compressions::Uncompressed: {
 					FillBinIntsTo(L.gids, { bin.data(), bin.size() });
 					break;
@@ -591,7 +619,7 @@ namespace TMX {
 		}
 	}
 
-	void Map::TryFillLayer(Layer_Image& L, pugi::xml_node const& c) {
+	void Filler::TryFillLayer(Layer_Image& L, pugi::xml_node const& c) {
 		L.type = LayerTypes::ImageLayer;
 		TryFillLayerBase(L, c);
 		TryFill(L.repeatX, c.attribute("repeatx"));
@@ -599,7 +627,7 @@ namespace TMX {
 		TryFillImage(L.image, c.child("image"));
 	}
 
-	void Map::TryFillObject(xx::Shared<Object>& o, pugi::xml_node const& c) {
+	void Filler::TryFillObject(xx::Shared<Object>& o, pugi::xml_node const& c) {
 		bool needOverrideProperties = o;
 		if (auto&& cText = c.child("text"); o && o->type == ObjectTypes::Text || !cText.empty()) {
 			xx::Shared<Object_Text> a;
@@ -692,11 +720,11 @@ namespace TMX {
 		TryFill(o->visible, c.attribute("visible"));
 		TryFillProperties(o->properties, c, needOverrideProperties);
 		if (o->id) {	// not a template
-			this->objs[o->id] = o;
+			objs[o->id] = o;
 		}
 	}
 
-	void Map::TryFillLayer(Layer_Object& L, pugi::xml_node const& c) {
+	void Filler::TryFillLayer(Layer_Object& L, pugi::xml_node const& c) {
 		L.type = LayerTypes::ObjectLayer;
 		TryFillLayerBase(L, c);
 		TryFill(L.color, c.attribute("color"));
@@ -705,13 +733,13 @@ namespace TMX {
 		for (auto&& cObject : c.children("object")) {
 			auto&& o = L.objects.emplace_back();
 			if (auto&& aTemplate = cObject.attribute("template"); !aTemplate.empty()) {
-				auto&& fn = this->rootPath + aTemplate.as_string();
-				if (auto&& [d, fp] = this->eg->ReadAllBytes(fn); !d) {
+				auto&& fn = rootPath + aTemplate.as_string();
+				if (auto&& [d, fp] = eg->ReadAllBytes(fn); !d) {
 					throw std::logic_error("read file error: " + fn);
-				} else if (auto&& r = docTx->load_buffer(d.buf, d.len); r.status) {
+				} else if (auto&& r = docTx.load_buffer(d.buf, d.len); r.status) {
 					throw std::logic_error("docTx.load_buffer error: " + std::string(r.description()));
 				} else {
-					auto&& cObj = docTx->child("template").child("object");
+					auto&& cObj = docTx.child("template").child("object");
 					TryFillObject(o, cObj);
 				}
 			}
@@ -719,7 +747,7 @@ namespace TMX {
 		}
 	}
 
-	void Map::TryFillLayer(Layer_Group& pL, pugi::xml_node const& pC) {
+	void Filler::TryFillLayer(Layer_Group& pL, pugi::xml_node const& pC) {
 		pL.type = LayerTypes::GroupLayer;
 		TryFillLayerBase(pL, pC);
 		for (auto&& c : pC.children()) {
@@ -748,114 +776,104 @@ namespace TMX {
 	}
 
 	/**************************************************************************************************/
-
-	int Map::Fill(Engine* const& eg, std::string_view const& tmxfn) {
-		// init
-		*this = {};
-		this->eg = eg;
-		this->docTmx.Emplace();
-		this->docTsx.Emplace();
-		this->docTx.Emplace();
+	Filler::Filler(Map& map, Engine* eg, std::string_view tmxfn)
+		: map(map)
+		, eg(eg) {
 
 		// load file & calc rootPath
-		if (auto&& [d, fp] = this->eg->ReadAllBytes(tmxfn); !d) {
+		if (auto&& [d, fp] = eg->ReadAllBytes(tmxfn); !d) {
 			throw std::logic_error("read file error: " + std::string(tmxfn));
-		} else if (auto&& r = this->docTmx->load_buffer(d.buf, d.len); r.status) {
+		} else if (auto&& r = docTmx.load_buffer(d.buf, d.len); r.status) {
 			throw std::logic_error("docTmx.load_buffer error: " + std::string(r.description()));
 		} else {
 			if (auto&& i = fp.find_last_of("/"); i != fp.npos) {
-				this->rootPath = fp.substr(0, i + 1);
+				rootPath = fp.substr(0, i + 1);
 			}
 		}
 
 		// fill step 1: parse xml to struct
-		auto&& cMap = this->docTmx->child("map");
-		TryFill(this->class_, cMap.attribute("class"));
-		TryFill(this->orientation, cMap.attribute("orientation"));
-		TryFill(this->width, cMap.attribute("width"));
-		TryFill(this->height, cMap.attribute("height"));
-		TryFill(this->tileWidth, cMap.attribute("tilewidth"));
-		TryFill(this->tileHeight, cMap.attribute("tileheight"));
-		TryFill(this->infinite, cMap.attribute("infinite"));
-		TryFill(this->tileSideLength, cMap.attribute("hexsidelength"));
-		TryFill(this->staggeraxis, cMap.attribute("staggeraxis"));
-		TryFill(this->staggerindex, cMap.attribute("staggerindex"));
-		TryFill(this->parallaxOrigin.x, cMap.attribute("parallaxoriginx"));
-		TryFill(this->parallaxOrigin.y, cMap.attribute("parallaxoriginy"));
+		auto&& cMap = docTmx.child("map");
+		TryFill(map.class_, cMap.attribute("class"));
+		TryFill(map.orientation, cMap.attribute("orientation"));
+		TryFill(map.width, cMap.attribute("width"));
+		TryFill(map.height, cMap.attribute("height"));
+		TryFill(map.tileWidth, cMap.attribute("tilewidth"));
+		TryFill(map.tileHeight, cMap.attribute("tileheight"));
+		TryFill(map.infinite, cMap.attribute("infinite"));
+		TryFill(map.tileSideLength, cMap.attribute("hexsidelength"));
+		TryFill(map.staggeraxis, cMap.attribute("staggeraxis"));
+		TryFill(map.staggerindex, cMap.attribute("staggerindex"));
+		TryFill(map.parallaxOrigin.x, cMap.attribute("parallaxoriginx"));
+		TryFill(map.parallaxOrigin.y, cMap.attribute("parallaxoriginy"));
 		if (auto&& cLayer = cMap.child("layer"); !cLayer.empty()) {
 			if (auto&& cData = cLayer.child("data"); !cData.empty()) {
-				TryFill(this->tileLayerFormat.first, cData.attribute("encoding"));
-				TryFill(this->tileLayerFormat.second, cData.attribute("compression"));
+				TryFill(map.tileLayerFormat.first, cData.attribute("encoding"));
+				TryFill(map.tileLayerFormat.second, cData.attribute("compression"));
 			}
 		}
 		if (auto&& cEditorSettings = cMap.child("editorsettings"); !cEditorSettings.empty()) {
 			if (auto&& cChunkSize = cEditorSettings.child("chunksize"); !cChunkSize.empty()) {
-				TryFill(this->outputChunkWidth, cChunkSize.attribute("width"));
-				TryFill(this->outputChunkHeight, cChunkSize.attribute("height"));
+				TryFill(map.outputChunkWidth, cChunkSize.attribute("width"));
+				TryFill(map.outputChunkHeight, cChunkSize.attribute("height"));
 			}
 		}
-		TryFill(this->renderOrder, cMap.attribute("renderorder"));
-		TryFill(this->compressionLevel, cMap.attribute("compressionlevel"));
-		TryFill(this->backgroundColor, cMap.attribute("backgroundcolor"));
-		TryFillProperties(this->properties, cMap);
+		TryFill(map.renderOrder, cMap.attribute("renderorder"));
+		TryFill(map.compressionLevel, cMap.attribute("compressionlevel"));
+		TryFill(map.backgroundColor, cMap.attribute("backgroundcolor"));
+		TryFillProperties(map.properties, cMap);
 
-		TryFill(this->version, cMap.attribute("version"));
-		TryFill(this->tiledVersion, cMap.attribute("tiledversion"));
-		TryFill(this->nextLayerId, cMap.attribute("nextlayerid"));
-		TryFill(this->nextObjectId, cMap.attribute("nextobjectid"));
+		TryFill(map.version, cMap.attribute("version"));
+		TryFill(map.tiledVersion, cMap.attribute("tiledversion"));
+		TryFill(map.nextLayerId, cMap.attribute("nextlayerid"));
+		TryFill(map.nextObjectId, cMap.attribute("nextobjectid"));
 
 		for (auto&& c : cMap.children()) {
 			std::string_view name(c.name());
 			if (name == "tileset"sv) {
 				auto&& ts = xx::Make<Tileset>();
 				TryFillTileset(*ts, c);
-				this->tilesets.emplace_back(std::move(ts));
+				map.tilesets.emplace_back(std::move(ts));
 			} else if (name == "layer"sv) {
 				auto&& L = xx::Make<Layer_Tile>();
 				TryFillLayer(*L, c);
-				this->layers.emplace_back(std::move(L));
+				map.layers.emplace_back(std::move(L));
 			} else if (name == "imagelayer"sv) {
 				auto&& L = xx::Make<Layer_Image>();
 				TryFillLayer(*L, c);
-				this->layers.emplace_back(std::move(L));
+				map.layers.emplace_back(std::move(L));
 			} else if (name == "objectgroup"sv) {
 				auto&& L = xx::Make<Layer_Object>();
 				TryFillLayer(*L, c);
-				this->layers.emplace_back(std::move(L));
+				map.layers.emplace_back(std::move(L));
 			} else if (name == "group"sv) {
 				auto&& L = xx::Make<Layer_Group>();
 				TryFillLayer(*L, c);
-				this->layers.emplace_back(std::move(L));
+				map.layers.emplace_back(std::move(L));
 			} else {
 				throw std::logic_error("unhandled layer type");
 			}
 		}
 
-		this->docTmx.Reset();
-		this->docTsx.Reset();
-		this->docTx.Reset();
-
-
 		// fill step 2: fix object ref
 
-		for (auto&& [ps, idx] : this->objProps) {
+		for (auto&& [ps, idx] : objProps) {
 			auto& p = (*ps)[idx];
-			p.value = this->objs[std::get<int64_t>(p.value)];
+			p.value = objs[std::get<int64_t>(p.value)];
 		}
-		this->objs.clear();
-		this->objProps.clear();
+		objs.clear();
+		objProps.clear();
 
 
 		// fill step 3: fill gid info
-		if (this->tilesets.empty()) return 0;
+		if (map.tilesets.empty()) return;
 
 		uint32_t numCells = 0;
-		for (auto&& tileset : this->tilesets) {
+		for (auto&& tileset : map.tilesets) {
 			numCells += tileset->tilecount;
 		}
-		gidInfos.resize(numCells + this->tilesets[0]->firstgid);
+		map.gidInfos.resize(numCells + map.tilesets[0]->firstgid);
 
-		for (auto&& tileset : this->tilesets) {
+		for (auto&& tileset : map.tilesets) {
 			uint32_t numRows = 1, numCols = tileset->tilecount;
 			GLTexture* tex = nullptr;
 			if (tileset->image) {
@@ -867,7 +885,7 @@ namespace TMX {
 				for (uint32_t x = 0; x < numCols; ++x) {
 					auto id = y * numCols + x;
 					auto gid = tileset->firstgid + id;
-					auto& info = gidInfos[gid];
+					auto& info = map.gidInfos[gid];
 					info.tileset = tileset;
 					info.tile = nullptr;
 					info.texture = tex;
@@ -887,7 +905,10 @@ namespace TMX {
 				}
 			}
 		}
-
-		return 0;
 	}
+
+	void FillTo(Map& map, Engine* eg, std::string_view const& tmxfn) {
+		Filler(map, eg, tmxfn);
+	}
+
 }
