@@ -1,62 +1,95 @@
 ﻿#include "pch.h"
 #include "logic.h"
 
+void TmxCamera::SetRange(Engine* eg, TMX::Map& map, Rect const& rect) {
+	this->rect = rect;
+	size.w = eg->w / rect.w;
+	size.h = eg->h / rect.h;
+	scale.x = size.w / map.tileWidth;
+	scale.y = size.h / map.tileHeight;
+}
+
+void TmxCamera::SetPos(XY const& xy) {
+	rect.x = xy.x;
+	rect.y = xy.y;
+}
+
 void Logic::Init() {
-	TMX::FillTo(m, this, "res/tiledmap1/m1.tmx");
+	// for display drawcall
+	fnt1 = LoadBMFont("res/font1/basechars.fnt"sv);
+	lbCount.SetPositon(ninePoints[1] + XY{ 10, 10 });
+	lbCount.SetAnchor({0, 0});
+
+	// load map
+	TMX::FillTo(map, this, "res/tiledmap1/m1.tmx");
+
+	// todo: recursive scan & findout all tile layer & draw
+	assert(m.layers[0]->type == TMX::LayerTypes::TileLayer);
+	auto&& lt = *map.layers[0].ReinterpretCast<TMX::Layer_Tile>();
+	assert(!m.infinite && lt.gids.size() == map.width * map.height);
+
+	// convert all gids to sprites
+	ss.resize(lt.gids.size());
+	for (uint32_t cy = 0; cy < map.height; ++cy) {
+		for (uint32_t cx = 0; cx < map.width; ++cx) {
+			auto&& idx = cy * map.width + cx;
+			auto&& gid = lt.gids[idx];
+			assert(gid < map.gidInfos.size());
+			auto&& i = map.gidInfos[gid];
+			assert(i.texture);
+			auto f = xx::Make<Frame>();
+			f->tex = i.texture;
+			f->anchor = { 0, 1 };
+			f->spriteSize = { float(i.w), float(i.h) };
+			f->textureRect = { float(i.x), float(i.y), f->spriteSize };
+			auto& s = ss[idx];
+			s.SetTexture(std::move(f));
+			s.SetColor({ 255, 255, 255, 255 });
+		}
+	}
+
+	// init camera
+	cam.SetRange(this, map, { 0, 0, 200, 112.5 });	// 1920:1080 400:225
 }
 
 int Logic::Update() {
 	if (Pressed(KbdKeys::Escape)) return 1;
 
-	assert(m.layers[0]->type == TMX::LayerTypes::TileLayer);
-	auto&& lt = *m.layers[0].ReinterpretCast<TMX::Layer_Tile>();
-	assert(!m.infinite && lt.gids.size() == m.width * m.height);
-
-	// calc display pixel width & height
-	auto cw = this->w / m.width;
-	auto ch = this->h / m.height;
-
-	for (uint32_t cy = 0; cy < m.height; ++cy) {
-		for (uint32_t cx = 0; cx < m.width; ++cx) {
-			auto&& idx = cy * m.width + cx;
-			assert(idx < lt.gids.size());
-			auto&& gid = lt.gids[idx];
-			assert(gid < m.gidInfos.size());
-			auto&& i = m.gidInfos[gid];
-			assert(i.texture);
-			auto& qv = AutoBatchDrawQuadBegin(*i.texture);
-
-			auto x = cx * cw - w / 2;
-			auto y = h / 2 - cy * ch;
-
-			qv[0].x = x;
-			qv[0].y = y;
-			qv[0].u = i.x;
-			qv[0].v = i.y;
-
-			qv[1].x = x;
-			qv[1].y = y - ch;
-			qv[1].u = i.x;
-			qv[1].v = i.y + i.h;
-
-			qv[2].x = x + cw;
-			qv[2].y = y - ch;
-			qv[2].u = i.x + i.w;
-			qv[2].v = i.y + i.h;
-
-			qv[3].x = x + cw;
-			qv[3].y = y;
-			qv[3].u = i.x + i.w;
-			qv[3].v = i.y;
-
-			qv[0].r = qv[0].g = qv[0].b = qv[0].a = 
-			qv[1].r = qv[1].g = qv[1].b = qv[1].a = 
-			qv[2].r = qv[2].g = qv[2].b = qv[2].a = 
-			qv[3].r = qv[3].g = qv[3].b = qv[3].a = 255;
-
-			AutoBatchDrawQuadEnd();
+	auto now = xx::NowSteadyEpochSeconds();
+	if (now - secs > 0.01) {
+		secs = now;
+		auto& r = cam.rect;
+		if ((Pressed(KbdKeys::Up) || Pressed(KbdKeys::W)) && r.y > 0) {
+			cam.SetPos({ r.x, r.y - 1 });
+		}
+		if ((Pressed(KbdKeys::Down) || Pressed(KbdKeys::S)) && r.y + r.h + 1 < map.height) {
+			cam.SetPos({r.x, r.y + 1});
+		}
+		if ((Pressed(KbdKeys::Left) || Pressed(KbdKeys::A)) && r.x > 0) {
+			cam.SetPos({r.x - 1, r.y});
+		}
+		if ((Pressed(KbdKeys::Right) || Pressed(KbdKeys::D)) && r.x + r.w + 1 < map.width) {
+			cam.SetPos({r.x + 1, r.y});
+		}
+		if (Pressed(KbdKeys::Z) && r.w > 1) {
+			cam.SetRange(this, map, { r.x, r.y, r.w - 1, (r.w - 1) * (h / w) });
+		}
+		if (Pressed(KbdKeys::X) && r.w + r.x + 1 < map.width) {
+			cam.SetRange(this, map, { r.x, r.y, r.w + 1, (r.w + 1) * (h / w) });
 		}
 	}
 
+	for (uint32_t y = 0; y < cam.rect.h; ++y) {
+		for (uint32_t x = 0; x < cam.rect.w; ++x) {
+			auto& s = ss[(y + cam.rect.y) * map.width + cam.rect.x + x];
+			s.SetScale(cam.scale);
+			s.SetPositon({ x * cam.size.w - w / 2 , h / 2 - y * cam.size.h });
+			s.Draw(this);
+		}
+	}
+
+	// display draw call
+	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", quad count = ", GetDrawQuads()));
+	lbCount.Draw(this);
 	return 0;
 }

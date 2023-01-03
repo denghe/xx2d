@@ -74,10 +74,10 @@ void Sprite::Draw(Engine* eg) {
 			auto h = frame->spriteSize.h * scale.y;
 			auto x = pos.x + frame->spriteOffset.x * scale.x - w * anchor.x;
 			auto y = pos.y + frame->spriteOffset.y * scale.y - h * anchor.y;
-			qv[0].x = x + w;				qv[0].y = y;
-			qv[1].x = x + w;				qv[1].y = y + h;
-			qv[2].x = x;					qv[2].y = y + h;
-			qv[3].x = x;					qv[3].y = y;
+			qv[0].x = x;				qv[0].y = y;
+			qv[1].x = x;				qv[1].y = y + h;
+			qv[2].x = x + w;			qv[2].y = y + h;
+			qv[3].x = x + w;			qv[3].y = y;
 
 			// todo: rotate support?
 		}
