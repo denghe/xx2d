@@ -79,8 +79,8 @@ int Logic::Update() {
 		}
 	}
 
-	for (uint32_t y = 0; y < cam.rect.h; ++y) {
-		for (uint32_t x = 0; x < cam.rect.w; ++x) {
+	for (uint32_t y = 0, ye = cam.rect.h; y < ye; ++y) {
+		for (uint32_t x = 0, xe = cam.rect.w; x < xe; ++x) {
 			auto& s = ss[(y + cam.rect.y) * map.width + cam.rect.x + x];
 			s.SetScale(cam.scale);
 			s.SetPositon({ x * cam.size.w - w / 2 , h / 2 - y * cam.size.h });

@@ -40,8 +40,8 @@ in vec2 aPos;
 in vec2 aTexCoord;
 in vec4 aColor;
 
-out mediump vec4 vColor;
-out mediump vec2 vTexCoord;
+out highp vec4 vColor;
+out highp vec2 vTexCoord;
 
 void main() {
 	gl_Position = vec4(aPos / uCxy, 0, 1);
@@ -50,7 +50,7 @@ void main() {
 })"sv;
 
 std::string_view Shaders::fsSrc = R"(#version 300 es
-precision mediump float;
+precision highp float;
 uniform sampler2D uTex0;
 
 in vec4 vColor;
