@@ -24,9 +24,9 @@ void Logic::Init() {
 	TMX::FillTo(map, this, "res/tiledmap1/m1.tmx");
 
 	// todo: recursive scan & findout all tile layer & draw
-	assert(m.layers[0]->type == TMX::LayerTypes::TileLayer);
+	assert(map.layers[0]->type == TMX::LayerTypes::TileLayer);
 	auto&& lt = *map.layers[0].ReinterpretCast<TMX::Layer_Tile>();
-	assert(!m.infinite && lt.gids.size() == map.width * map.height);
+	assert(!map.infinite && lt.gids.size() == map.width * map.height);
 
 	// convert all gids to sprites
 	ss.resize(lt.gids.size());
