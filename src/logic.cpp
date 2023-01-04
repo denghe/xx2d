@@ -2,16 +2,16 @@
 #include "logic.h"
 
 void TmxCamera::SetRange(Engine* eg, TMX::Map& map, Rect const& rect) {
-	this->rect = rect;
-	size.w = eg->w / rect.w;
-	size.h = eg->h / rect.h;
-	scale.x = size.w / map.tileWidth;
-	scale.y = size.h / map.tileHeight;
+	this->gridRect = rect;
+	spriteSize.w = eg->w / rect.w;
+	spriteSize.h = eg->h / rect.h;
+	spriteScale.x = spriteSize.w / map.tileWidth;
+	spriteScale.y = spriteSize.h / map.tileHeight;
 }
 
 void TmxCamera::SetPos(XY const& xy) {
-	rect.x = xy.x;
-	rect.y = xy.y;
+	gridRect.x = xy.x;
+	gridRect.y = xy.y;
 }
 
 void Logic::Init() {
@@ -48,8 +48,10 @@ void Logic::Init() {
 		}
 	}
 
-	// init camera
-	cam.SetRange(this, map, { 0, 0, 200, 112.5 });	// 1920:1080 400:225
+	// init camera for pixel 1:1 display
+	auto nCols = uint32_t(w / map.tileWidth);
+	auto nRows = uint32_t(nCols * (h / w));
+	cam.SetRange(this, map, { 0, 0, float(nCols), (float)nRows });
 }
 
 int Logic::Update() {
@@ -58,7 +60,7 @@ int Logic::Update() {
 	auto now = xx::NowSteadyEpochSeconds();
 	if (now - secs > 0.01) {
 		secs = now;
-		auto& r = cam.rect;
+		auto& r = cam.gridRect;
 		if ((Pressed(KbdKeys::Up) || Pressed(KbdKeys::W)) && r.y > 0) {
 			cam.SetPos({ r.x, r.y - 1 });
 		}
@@ -79,11 +81,11 @@ int Logic::Update() {
 		}
 	}
 
-	for (uint32_t y = 0, ye = cam.rect.h; y < ye; ++y) {
-		for (uint32_t x = 0, xe = cam.rect.w; x < xe; ++x) {
-			auto& s = ss[(y + cam.rect.y) * map.width + cam.rect.x + x];
-			s.SetScale(cam.scale);
-			s.SetPositon({ x * cam.size.w - w / 2 , h / 2 - y * cam.size.h });
+	for (uint32_t y = 0, ye = cam.gridRect.h; y < ye; ++y) {
+		for (uint32_t x = 0, xe = cam.gridRect.w; x < xe; ++x) {
+			auto& s = ss[(y + cam.gridRect.y) * map.width + cam.gridRect.x + x];
+			s.SetScale(cam.spriteScale);
+			s.SetPositon({ x * cam.spriteSize.w - w / 2 , h / 2 - y * cam.spriteSize.h });
 			s.Draw(this);
 		}
 	}

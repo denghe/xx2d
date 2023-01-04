@@ -32,6 +32,7 @@ void main() {
 
 #else
 
+// known issue: mediump tiled map will be blank line issue
 std::string_view Shaders::vsSrc = R"(#version 300 es
 precision highp float;
 uniform vec2 uCxy;	// center x y
@@ -40,8 +41,8 @@ in vec2 aPos;
 in vec2 aTexCoord;
 in vec4 aColor;
 
-out highp vec4 vColor;
-out highp vec2 vTexCoord;
+out vec4 vColor;
+out vec2 vTexCoord;
 
 void main() {
 	gl_Position = vec4(aPos / uCxy, 0, 1);

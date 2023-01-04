@@ -2,12 +2,11 @@
 #include "pch.h"
 #include "tmx.h"
 
-// todo: Camera
+// todo: pixel move
 struct TmxCamera {
-	// sprite add AssignCamera: if cameraVersion != tar  dirty ...
-	Rect rect;
-	Size size;
-	XY scale;
+	Rect gridRect;
+	Size spriteSize;
+	XY spriteScale;
 
 	void SetRange(Engine* eg, TMX::Map& map, Rect const& rect);
 	void SetPos(XY const& xy);
