@@ -75,6 +75,13 @@ struct Frame {
 	std::vector<float> verticesUV;
 };
 
+struct Frame_Duration {
+    xx::Shared<Frame> frame;
+    float durationSeconds;
+};
+
+struct FrameAnim : std::vector<Frame_Duration> {
+};
 
 // following enums reference from raylib.h
 

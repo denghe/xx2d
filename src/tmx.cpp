@@ -491,6 +491,7 @@ namespace TMX {
 				for (auto&& cT : cW.children("wangtile")) {
 					auto&& t = w.wangTiles.emplace_back();
 					TryFill(t.tileId, cT.attribute("tileid"));
+					t.gid = ts.firstgid + t.tileId;
 					FillCsvIntsTo(t.wangIds, cT.attribute("wangid").as_string());
 				}
 			}
@@ -508,6 +509,7 @@ namespace TMX {
 					for (auto&& cFrame : cAnims.children("frame")) {
 						auto& f = t.animation.emplace_back();
 						TryFill(f.tileId, cFrame.attribute("tileid"));
+						f.gid = ts.firstgid + f.tileId;
 						TryFill(f.duration, cFrame.attribute("duration"));
 					}
 				}

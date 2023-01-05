@@ -49,11 +49,8 @@ namespace TMX {
 
 		// call after set xxxx ...
 		void Commit();
-
-		void Draw(Engine* eg, std::vector<Sprite>& ss);
 	};
 
-	void Fill(std::vector<Sprite>& ss, Map const& map, Layer_Tile const& lt);
 
 	template<typename LT>
 	constexpr LayerTypes GetLayerType() {

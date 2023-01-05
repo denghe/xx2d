@@ -1,5 +1,9 @@
 ﻿#include "pch.h"
 
+bool Sprite::Empty() const {
+	return !frame;
+}
+
 void Sprite::SetTexture(xx::Shared<GLTexture> t) {
 	if (!frame) {
 		frame.Emplace();
@@ -14,10 +18,10 @@ void Sprite::SetTexture(xx::Shared<GLTexture> t) {
 	frame->tex = std::move(t);
 }
 
-void Sprite::SetTexture(xx::Shared<Frame> f) {
+void Sprite::SetTexture(xx::Shared<Frame> f, bool overrideAnchor) {
 	dirtyFrame = 1;
 	frame = std::move(f);
-	if (frame->anchor.has_value() && anchor != *frame->anchor) {
+	if (overrideAnchor && frame->anchor.has_value() && anchor != *frame->anchor) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		anchor = *frame->anchor;
 	}

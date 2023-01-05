@@ -21,10 +21,11 @@ struct Sprite {
 	float rotate{ 0 };
 	RGBA8 color{ 255, 255, 255, 255 };
 
+	bool Empty() const;	// return !frame
 
-	void SetTexture(xx::Shared<GLTexture> t);
+	void SetTexture(xx::Shared<GLTexture> t);	// do not override anchor
 
-	void SetTexture(xx::Shared<Frame> f);
+	void SetTexture(xx::Shared<Frame> f, bool overrideAnchor = true);
 
 	void SetAnchor(XY const& a);
 

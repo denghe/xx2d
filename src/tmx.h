@@ -179,6 +179,7 @@ namespace TMX {
 
 	struct Frame {
 		uint32_t tileId = 0;	// tileid
+		uint32_t gid = 0;
 		uint32_t duration = 0;
 	};
 	struct Tile {
@@ -192,6 +193,7 @@ namespace TMX {
 
 	struct WangTile {
 		uint32_t tileId = 0;	// tileid
+		uint32_t gid = 0;
 		std::vector<uint8_t> wangIds;	// wangid
 	};
 

@@ -62,43 +62,4 @@ namespace TMX {
 		this->pos = xy;
 		dirty = true;
 	}
-
-
-	void Fill(std::vector<Sprite>& ss, Map const& map, Layer_Tile const& lt) {
-		// convert all gids to sprites
-		ss.resize(lt.gids.size());
-		for (int cy = 0; cy < (int)map.height; ++cy) {
-			for (int cx = 0; cx < (int)map.width; ++cx) {
-				auto&& idx = cy * (int)map.width + cx;
-				auto&& gid = lt.gids[idx];
-				assert(gid < map.gidInfos.size());
-				if (!gid) continue;
-
-				auto&& i = map.gidInfos[gid];
-				assert(i.image);
-				auto f = xx::Make<::Frame>();
-				f->tex = i.image->texture;
-				f->anchor = { 0, 1 };
-				f->spriteSize = { (float)i.w, (float)i.h };
-				f->textureRect = { (float)i.u, (float)i.v, (float)i.w, (float)i.h };
-
-				auto& s = ss[idx];
-				s.SetTexture(std::move(f));
-				s.SetColor({ 255, 255, 255, 255 });
-				s.SetScale({ 1, 1 });
-				s.SetPositon({ float(cx * (int)map.tileWidth), float(-cy * (int)map.tileHeight) });
-				s.Commit();
-			}
-		}
-	}
-
-	void Camera::Draw(Engine* eg, std::vector<Sprite>& ss) {
-		for (uint32_t y = rowFrom; y < rowTo; ++y) {
-			for (uint32_t x = columnFrom; x < columnTo; ++x) {
-				auto&& s = ss[y * worldColumnCount + x];
-				if (!s.frame) continue;
-				s.Draw(eg, *this);
-			}
-		}
-	}
 }
