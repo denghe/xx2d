@@ -72,6 +72,8 @@ namespace TMX {
 				auto&& idx = cy * (int)map.width + cx;
 				auto&& gid = lt.gids[idx];
 				assert(gid < map.gidInfos.size());
+				if (!gid) continue;
+
 				auto&& i = map.gidInfos[gid];
 				assert(i.image);
 				auto f = xx::Make<::Frame>();
@@ -79,6 +81,7 @@ namespace TMX {
 				f->anchor = { 0, 1 };
 				f->spriteSize = { (float)i.w, (float)i.h };
 				f->textureRect = { (float)i.u, (float)i.v, (float)i.w, (float)i.h };
+
 				auto& s = ss[idx];
 				s.SetTexture(std::move(f));
 				s.SetColor({ 255, 255, 255, 255 });
@@ -93,6 +96,7 @@ namespace TMX {
 		for (uint32_t y = rowFrom; y < rowTo; ++y) {
 			for (uint32_t x = columnFrom; x < columnTo; ++x) {
 				auto&& s = ss[y * worldColumnCount + x];
+				if (!s.frame) continue;
 				s.Draw(eg, *this);
 			}
 		}

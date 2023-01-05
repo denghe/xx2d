@@ -9,11 +9,9 @@ performance ~= raylib, much more faster than cocos2dx 3.x
 
 search path
 
-texture format: pkm
+texture ( .pkm only ) cache
 
-texture cache
-
-texture packer frame cache
+texture packer ( 7.0 limit support ) loader & frame cache
 
 quad with auto batch
 
@@ -25,6 +23,7 @@ label
 
 keyboard, mouse
 
+tiled map ( 1.92 full support ) loader & helpers( cam, util funcs )
 
 # compile requires
 
@@ -40,17 +39,15 @@ https://github.com/zeux/pugixml.git
 
 https://github.com/facebook/zstd.git
 
-
-
 # todo
-
-tiledmap loader
 
 touch, joystick
 
-node / translate support( matrix manager )
-
 button, scroll view
+
+node ( recursive trans calc )
+
+edit box, rich text
 
 Program manager? ready for shader switch
 

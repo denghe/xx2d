@@ -1,7 +1,6 @@
 ﻿#include "pch.h"
 #include "logic.h"
 
-
 void Logic::Init() {
 	// for display drawcall
 	fnt1 = LoadBMFont("res/font1/basechars.fnt"sv);
@@ -11,13 +10,17 @@ void Logic::Init() {
 	// load map
 	TMX::FillTo(map, this, "res/tiledmap1/m1.tmx");
 
-	// todo: recursive scan & findout all tile layer & draw
-	assert(map.layers[0]->type == TMX::LayerTypes::TileLayer);
-	auto&& lt = *map.layers[0].ReinterpretCast<TMX::Layer_Tile>();
-	assert(!map.infinite && lt.gids.size() == map.width * map.height);
+	// recursive scan & findout all tile layer & draw
+	std::vector<TMX::Layer_Tile*> lts;
+	TMX::Fill(lts, map.layers);
+	for (auto& lt : lts) {
+		tileLayers[lt] = {};
+	}
 
 	// init sprites
-	TMX::Fill(ss, map, lt);
+	for (auto& kv : tileLayers) {
+		TMX::Fill(kv.second, map, *kv.first);
+	}
 
 	// init camera
 	cam.Init({w, h}, map);
@@ -50,7 +53,9 @@ int Logic::Update() {
 		cam.Commit();
 	}
 
-	cam.Draw(this, ss);
+	for (auto& kv : tileLayers) {
+		cam.Draw(this, kv.second);
+	}
 
 	// display draw call
 	lbCount.SetText(fnt1, std::format("draw call = {}, quad count = {}, cam.pos = {},{}", GetDrawCall(), GetDrawQuads(), cam.pos.x, cam.pos.y ));

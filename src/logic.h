@@ -5,8 +5,7 @@ struct Logic : Engine {
 	double secs = 0;
 	TMX::Camera cam;
 	TMX::Map map;
-	std::vector<Sprite> ss;
-
+	std::map<TMX::Layer_Tile*, std::vector<Sprite>> tileLayers;
 
 	BMFont fnt1;
 	Label lbCount;

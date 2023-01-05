@@ -55,4 +55,34 @@ namespace TMX {
 
 	void Fill(std::vector<Sprite>& ss, Map const& map, Layer_Tile const& lt);
 
+	template<typename LT>
+	constexpr LayerTypes GetLayerType() {
+		if constexpr (std::is_same_v<LT, Layer_Tile>) {
+			return LayerTypes::TileLayer;
+		}
+		else if constexpr (std::is_same_v<LT, Layer_Object>) {
+			return LayerTypes::ObjectLayer;
+		}
+		else if constexpr (std::is_same_v<LT, Layer_Image>) {
+			return LayerTypes::ImageLayer;
+		}
+		else if constexpr (std::is_same_v<LT, Layer_Group>) {
+			return LayerTypes::GroupLayer;
+		}
+		else return LayerTypes::MAX_VALUE_UNKNOWN;
+	}
+	template<typename LT>
+	constexpr LayerTypes LayerTypeEnum_v = GetLayerType<LT>();
+
+	template<typename LT>
+	void Fill(std::vector<LT*>& out, std::vector<xx::Shared<Layer>>& ls) {
+		for (auto& l : ls) {
+			if (l->type == LayerTypes::GroupLayer) {
+				Fill(out, ((Layer_Group&)*l).layers);
+			} else if (l->type == LayerTypeEnum_v<LT>) {
+				out.push_back((LT*)&*l);
+			}
+		}
+	}
+
 }
