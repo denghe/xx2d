@@ -40,7 +40,8 @@ struct Label {
 
 	void SetColor(RGBA8 const& c);
 
+	void Commit();
 
-	// todo: matrix version
+	// todo: support trans
 	void Draw(Engine* eg);
 };

@@ -52,17 +52,24 @@ struct Size {
 //
 struct Rect : XY, Size {};
 
+// for node, cam, ... ( maybe convert to 3 * 2/3 matrix ? )
+struct Translate {
+    // todo: angle
+    XY scale = { 1, 1 };
+    XY offset = { 0, 0 };
+};
+
 
 struct Frame {
 	xx::Shared<GLTexture> tex;
 	std::string key;
 	// std::vector<std::string> aliases;	// unused
 	std::optional<XY> anchor;
-	XY spriteOffset;
-	Size spriteSize;		// content size
-	Size spriteSourceSize;	// original pic size
-	Rect textureRect;
-	bool textureRotated;
+    XY spriteOffset{};
+    Size spriteSize{};		// content size
+    Size spriteSourceSize{};	// original pic size
+    Rect textureRect{};
+    bool textureRotated{};
 	std::vector<uint16_t> triangles;
 	std::vector<float> vertices;
 	std::vector<float> verticesUV;

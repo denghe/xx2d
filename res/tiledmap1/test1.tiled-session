@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "tiles.tsx",
+    "activeFile": "m1.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -31,11 +31,11 @@
             }
         },
         "m1.tmx": {
-            "scale": 0.0625,
+            "scale": 0.125,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 9616,
-                "y": 6416
+                "x": 12460,
+                "y": 4452
             }
         },
         "multi pics.tsx": {
@@ -60,15 +60,14 @@
     "map.tileWidth": 64,
     "map.width": 300,
     "openFiles": [
-        "m1.tmx",
-        "tiles.tsx"
+        "m1.tmx"
     ],
     "project": "test1.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "m1.tmx",
         "multi pics.tsx",
         "eee.tsx",
-        "m1.tmx",
         "tiles.tsx",
         "m1.js",
         "m1..tmj"

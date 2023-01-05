@@ -74,7 +74,7 @@ void Label::SetColor(RGBA8 const& c) {
 	color = c;
 }
 
-void Label::Draw(Engine* eg) {
+void Label::Commit() {
 	if (dirty) {
 		if (dirtyTextSizeAnchorPosScaleRotate) {
 			auto x = pos.x - maxSize.w * scale.x * anchor.x;
@@ -96,7 +96,9 @@ void Label::Draw(Engine* eg) {
 		}
 		dirty = 0;
 	}
+}
 
+void Label::Draw(Engine* eg) {
 	for (auto& c : chars) {
 		eg->AutoBatchDrawQuad(*c.tex, c.qv);		// todo: batch version
 	}

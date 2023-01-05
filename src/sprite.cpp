@@ -52,7 +52,7 @@ void Sprite::SetColor(RGBA8 const& c) {
 	color = c;
 }
 
-void Sprite::Draw(Engine* eg) {
+void Sprite::Commit() {
 	if (dirty) {
 		if (dirtyFrame) {
 			auto& r = frame->textureRect;
@@ -88,5 +88,21 @@ void Sprite::Draw(Engine* eg) {
 		}
 		dirty = 0;
 	}
+}
+
+void Sprite::Draw(Engine* eg) {
 	eg->AutoBatchDrawQuad(*frame->tex, qv);
+}
+
+void Sprite::Draw(Engine* eg, Translate const& trans) {
+	auto&& q = eg->AutoBatchDrawQuadBegin(*frame->tex);
+	q[0].x = qv[0].x * trans.scale.x + trans.offset.x; q[0].y = qv[0].y * trans.scale.y + trans.offset.y;
+	q[1].x = qv[1].x * trans.scale.x + trans.offset.x; q[1].y = qv[1].y * trans.scale.y + trans.offset.y;
+	q[2].x = qv[2].x * trans.scale.x + trans.offset.x; q[2].y = qv[2].y * trans.scale.y + trans.offset.y;
+	q[3].x = qv[3].x * trans.scale.x + trans.offset.x; q[3].y = qv[3].y * trans.scale.y + trans.offset.y;
+	memcpy(&q[0].u, &qv[0].u, 8);	// 8: uv & color
+	memcpy(&q[1].u, &qv[1].u, 8);
+	memcpy(&q[2].u, &qv[2].u, 8);
+	memcpy(&q[3].u, &qv[3].u, 8);
+	eg->AutoBatchDrawQuadEnd();
 }

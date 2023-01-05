@@ -332,8 +332,10 @@ namespace TMX {
 	struct GidInfo {
 		Tileset* tileset;
 		Tile* tile;	// maybe nullptr
-		GLTexture* texture;
+		Image* image;
 		uint16_t x, y, w, h;	// uv box
+
+		bool IsSingleImage() const;	// return image == tile->image
 	};
 
 	struct Map {

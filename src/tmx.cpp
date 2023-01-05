@@ -875,11 +875,11 @@ namespace TMX {
 
 		for (auto&& tileset : map.tilesets) {
 			uint32_t numRows = 1, numCols = tileset->tilecount;
-			GLTexture* tex = nullptr;
+			Image* img = nullptr;
 			if (tileset->image) {
 				numCols = tileset->columns;
 				numRows = tileset->tilecount / numCols;
-				tex = tileset->image->texture;
+				img = tileset->image;
 			}
 			for (uint32_t y = 0; y < numRows; ++y) {
 				for (uint32_t x = 0; x < numCols; ++x) {
@@ -888,12 +888,12 @@ namespace TMX {
 					auto& info = map.gidInfos[gid];
 					info.tileset = tileset;
 					info.tile = nullptr;
-					info.texture = tex;
+					info.image = img;
 					for (auto& t : tileset->tiles) {
 						if (t->id == id) {
 							info.tile = t.get();
 							if (t->image) {
-								info.texture = t->image->texture;
+								info.image = t->image;
 							}
 							break;
 						}
@@ -911,4 +911,8 @@ namespace TMX {
 		Filler(map, eg, tmxfn);
 	}
 
+
+	bool GidInfo::IsSingleImage() const {
+		return tile && tile->image == image;
+	}
 }

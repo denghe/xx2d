@@ -38,6 +38,9 @@ struct Sprite {
 	void SetColor(RGBA8 const& c);
 
 
-	// todo: matrix version
+	void Commit();
+
+	// need commit
 	void Draw(Engine* eg);
+	void Draw(Engine* eg, Translate const& trans);
 };
