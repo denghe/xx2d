@@ -4,6 +4,7 @@
 // tiled map xml version data loader & container. full supported to version 1.9x( compress algorithm only support zstandard )
 // https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#
 
+struct Engine;
 namespace TMX {
 
 	enum class PropertyTypes : uint8_t {

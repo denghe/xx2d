@@ -17,10 +17,12 @@
 #include "globalutils.h"
 #include "prims.h"
 #include "tp.h"
+#include "tmx.h"
 #include "bmfont.h"
 #include "engine.h"
 #include "sprite.h"
 #include "label.h"
+#include "tmx_ex.h"
 // ...
 
 #include <omp.h>

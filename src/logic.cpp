@@ -1,67 +1,6 @@
 ﻿#include "pch.h"
 #include "logic.h"
 
-void TmxCamera::Init(Size const& screenSize, TMX::Map& map) {
-	tileWidth = map.tileWidth;
-	tileHeight = map.tileHeight;
-
-	worldRowCount = map.height;
-	worldColumnCount = map.width;
-
-	worldPixel.w = tileWidth * worldColumnCount;
-	worldPixel.h = tileHeight * worldRowCount;
-
-	this->screenSize = screenSize;
-
-	Commit();
-}
-
-void TmxCamera::Commit() {
-	if (!dirty) return;
-	dirty = false;
-
-	// todo: scale
-
-	auto halfNumRows = screenSize.h / tileHeight / 2;
-	int32_t posRowIndex = pos.y / tileWidth;
-	rowFrom = posRowIndex - halfNumRows;
-	rowTo = posRowIndex + halfNumRows + 2;
-	if (rowFrom < 0) {
-		rowFrom = 0;
-	}
-	if (rowTo > worldRowCount) {
-		rowTo = worldRowCount;
-	}
-
-	auto halfNumColumns = screenSize.w / tileWidth / 2;
-	int32_t posColumnIndex = pos.x / tileHeight;
-	columnFrom = posColumnIndex - halfNumColumns;
-	columnTo = posColumnIndex + halfNumColumns + 1;
-	if (columnFrom < 0) {
-		columnFrom = 0;
-	}
-	if (columnTo > worldColumnCount) {
-		columnTo = worldColumnCount;
-	}
-
-	offset = { -pos.x, pos.y };
-}
-
-void TmxCamera::SetScale(float const& scale) {
-	this->scale = { scale, scale };
-	dirty = true;
-}
-
-void TmxCamera::SetScreenSize(Size const& wh) {
-	this->screenSize = wh;
-	dirty = true;
-}
-
-void TmxCamera::SetPos(XY const& xy) {
-	this->pos = xy;
-	dirty = true;
-}
-
 
 void Logic::Init() {
 	// for display drawcall
@@ -77,28 +16,8 @@ void Logic::Init() {
 	auto&& lt = *map.layers[0].ReinterpretCast<TMX::Layer_Tile>();
 	assert(!map.infinite && lt.gids.size() == map.width * map.height);
 
-	// convert all gids to sprites
-	ss.resize(lt.gids.size());
-	for (int cy = 0; cy < (int)map.height; ++cy) {
-		for (int cx = 0; cx < (int)map.width; ++cx) {
-			auto&& idx = cy * (int)map.width + cx;
-			auto&& gid = lt.gids[idx];
-			assert(gid < map.gidInfos.size());
-			auto&& i = map.gidInfos[gid];
-			assert(i.image);
-			auto f = xx::Make<Frame>();
-			f->tex = i.image->texture;
-			f->anchor = { 0, 1 };
-			f->spriteSize = { (float)i.w, (float)i.h };
-			f->textureRect = { (float)i.u, (float)i.v, (float)i.w, (float)i.h };
-			auto& s = ss[idx];
-			s.SetTexture(std::move(f));
-			s.SetColor({ 255, 255, 255, 255 });
-			s.SetScale({ 1, 1 });
-			s.SetPositon({ float(cx * i.w), float(-cy * i.h) });
-			s.Commit();
-		}
-	}
+	// init sprites
+	TMX::Fill(ss, map, lt);
 
 	// init camera
 	cam.Init({w, h}, map);
@@ -131,12 +50,7 @@ int Logic::Update() {
 		cam.Commit();
 	}
 
-	for (uint32_t y = cam.rowFrom; y < cam.rowTo; ++y) {
-		for (uint32_t x = cam.columnFrom; x < cam.columnTo; ++x) {
-			auto&& s = ss[y * cam.worldColumnCount + x];
-			s.Draw(this, cam);
-		}
-	}
+	cam.Draw(this, ss);
 
 	// display draw call
 	lbCount.SetText(fnt1, std::format("draw call = {}, quad count = {}, cam.pos = {},{}", GetDrawCall(), GetDrawQuads(), cam.pos.x, cam.pos.y ));
