@@ -89,13 +89,8 @@ void Logic::Init() {
 			auto f = xx::Make<Frame>();
 			f->tex = i.image->texture;
 			f->anchor = { 0, 1 };
-			if (i.IsSingleImage()) {
-				f->spriteSize = { float(i.image->width), float(i.image->height) };
-				f->textureRect = { 0, 0, f->spriteSize };
-			} else {
-				f->spriteSize = { float(i.w), float(i.h) };
-				f->textureRect = { float(i.x), float(i.y), f->spriteSize };
-			}
+			f->spriteSize = { (float)i.w, (float)i.h };
+			f->textureRect = { (float)i.u, (float)i.v, (float)i.w, (float)i.h };
 			auto& s = ss[idx];
 			s.SetTexture(std::move(f));
 			s.SetColor({ 255, 255, 255, 255 });

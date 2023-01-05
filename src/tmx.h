@@ -333,7 +333,7 @@ namespace TMX {
 		Tileset* tileset;
 		Tile* tile;	// maybe nullptr
 		Image* image;
-		uint16_t x, y, w, h;	// uv box
+		uint16_t u, v, w, h;	// uv box
 
 		bool IsSingleImage() const;	// return image == tile->image
 	};

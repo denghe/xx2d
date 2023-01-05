@@ -898,10 +898,17 @@ namespace TMX {
 							break;
 						}
 					}
-					info.x = tileset->margin + (tileset->spacing + tileset->tilewidth) * x;
-					info.y = tileset->margin + (tileset->spacing + tileset->tileheight) * y;
-					info.w = tileset->tilewidth;
-					info.h = tileset->tileheight;
+					if (info.IsSingleImage()) {
+						info.u = 0;
+						info.v = 0;
+						info.w = info.image->width;
+						info.h = info.image->height;
+					} else {
+						info.u = tileset->margin + (tileset->spacing + tileset->tilewidth) * x;
+						info.v = tileset->margin + (tileset->spacing + tileset->tileheight) * y;
+						info.w = tileset->tilewidth;
+						info.h = tileset->tileheight;
+					}
 				}
 			}
 		}
