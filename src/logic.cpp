@@ -1,22 +1,21 @@
 ﻿#include "pch.h"
 #include "logic.h"
 
-Frame_Duration const& Sprite_FrameAnim::GetCurrentFrame_Duration() const {
-	return (*frameAnim)[cursor];
+Frame_Duration const& Anim::GetCurrentFrame_Duration() const {
+	return fa[cursor];
 }
 
-xx::Shared<Frame> const& Sprite_FrameAnim::GetCurrentFrame() const {
-	return (*frameAnim)[cursor].frame;
+xx::Shared<Frame> const& Anim::GetCurrentFrame() const {
+	return fa[cursor].frame;
 }
 
-void Sprite_FrameAnim::Step() {
-	if (++cursor == frameAnim->size()) {
+void Anim::Step() {
+	if (++cursor == fa.size()) {
 		cursor = 0;
 	}
 }
 
-bool Sprite_FrameAnim::Update(float const& delta) {
-	if (!frameAnim) return false;
+bool Anim::Update(float const& delta) {
 	auto bak = cursor;
 	timePool += delta;
 LabBegin:
@@ -29,6 +28,18 @@ LabBegin:
 	return bak != cursor;
 }
 
+
+void Sprite_Anim::Draw(Engine* eg, TMX::Camera& cam) {
+	if (anim) {
+		if (auto&& f = anim->GetCurrentFrame(); sprite->frame != f) {
+			sprite->SetTexture(f);
+			sprite->Commit();
+		}
+	}
+	sprite->Draw(eg, cam);
+}
+
+
 void Logic::Init() {
 	// for display drawcall
 	fnt1 = LoadBMFont("res/font1/basechars.fnt"sv);
@@ -39,10 +50,10 @@ void Logic::Init() {
 	TMX::FillTo(map, this, "res/tiledmap1/m1.tmx");
 
 	// fill frames
-	gidFrames.resize(map.gidInfos.size());
+	gidFAs.resize(map.gidInfos.size());
 	for(size_t gid = 1, siz = map.gidInfos.size(); gid < siz; ++gid) {
 		auto& i = map.gidInfos[gid];
-		auto& f = *gidFrames[gid].Emplace();
+		auto& f = *gidFAs[gid].frame.Emplace();
 		f.tex = i.image->texture;
 		f.anchor = { 0, 1 };
 		f.spriteSize = { (float)i.w, (float)i.h };
@@ -50,41 +61,40 @@ void Logic::Init() {
 	}
 
 	// fill anims
-	gidFrameAnims.resize(map.gidInfos.size());
 	for (size_t gid = 1, siz = map.gidInfos.size(); gid < siz; ++gid) {
 		auto& i = map.gidInfos[gid];
 		if (i.tile) {
 			auto& tas = i.tile->animation;
 			if (auto&& numAnims = tas.size()) {
-				auto& a = *gidFrameAnims[gid].Emplace();
-				a.resize(numAnims);
+				auto& fa = gidFAs[gid].anim.Emplace()->fa;
+				fa.resize(numAnims);
 				for (size_t x = 0; x < numAnims; ++x) {
-					a[x].frame = gidFrames[tas[x].gid];
-					a[x].durationSeconds = tas[x].duration / 1000.f;
+					fa[x].frame = gidFAs[tas[x].gid].frame;
+					fa[x].durationSeconds = tas[x].duration / 1000.f;
 				}
+				anims.emplace_back(gidFAs[gid].anim);
 			}
 		}
 	}
 
-	// recursive scan & find out all tile layer & gen sprites
+	// recursive find all tile layer & gen sprites
 	std::vector<TMX::Layer_Tile*> lts;
 	TMX::Fill(lts, map.layers);
 	for (auto& lt : lts) {
-		std::vector<Sprite_FrameAnim> sfas;
-		sfas.resize(lt->gids.size());
+		SAs sas;
+		sas.resize(lt->gids.size());
 		for (int cy = 0; cy < (int)map.height; ++cy) {
 			for (int cx = 0; cx < (int)map.width; ++cx) {
 				auto&& idx = cy * (int)map.width + cx;
 				auto&& gid = lt->gids[idx];
 				if (!gid) continue;
 
-				auto& sfa = sfas[idx];
-				auto&& s = *sfa.sprite.Emplace();
-				if (sfa.frameAnim = gidFrameAnims[gid]) {
-					s.SetTexture(sfa.GetCurrentFrame());
-					allSfas.push_back(&sfa);
+				auto& sa = sas[idx];
+				auto&& s = *sa.sprite.Emplace();
+				if (sa.anim = gidFAs[gid].anim) {
+					s.SetTexture(sa.anim->GetCurrentFrame());
 				} else {
-					s.SetTexture(gidFrames[gid]);
+					s.SetTexture(gidFAs[gid].frame);
 				}
 				s.SetColor({ 255, 255, 255, 255 });
 				s.SetScale({ 1, 1 });
@@ -92,7 +102,7 @@ void Logic::Init() {
 				s.Commit();
 			}
 		}
-		tileLayer_Sprites.emplace(lt, std::move(sfas));
+		layerSprites.emplace(lt, std::move(sas));
 	}
 
 	// init camera
@@ -126,26 +136,18 @@ int Logic::Update() {
 
 	// update all anims
 	auto delta = xx::NowSteadyEpochSeconds(secs);
-	for (auto&& sfa : allSfas) {
-		if (sfa->Update(delta)) {
-			sfa->sprite->SetTexture(sfa->GetCurrentFrame());
-			sfa->sprite->Commit();
-		}
+	for (auto&& a : anims) {
+		a->Update(delta);
 	}
 
 	// draw screen range sprites
-	for (auto& [layer, sfas] : tileLayer_Sprites) {
+	for (auto& [layer, sas] : layerSprites) {
 		for (uint32_t y = cam.rowFrom; y < cam.rowTo; ++y) {
 			for (uint32_t x = cam.columnFrom; x < cam.columnTo; ++x) {
 				auto&& idx = y * cam.worldColumnCount + x;
-				auto&& sfa = sfas[idx];
-				if (!sfa.sprite) continue;
-
-				//if (sfa.Update(delta)) {
-				//	sfa.sprite->SetTexture(sfa.GetCurrentFrame());
-				//	sfa.sprite->Commit();
-				//}
-				sfa.sprite->Draw(this, cam);
+				auto&& sa = sas[idx];
+				if (!sa.sprite) continue;
+				sa.Draw(this, cam);
 			}
 		}
 	}

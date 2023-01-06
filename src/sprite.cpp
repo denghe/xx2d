@@ -5,17 +5,14 @@ bool Sprite::Empty() const {
 }
 
 void Sprite::SetTexture(xx::Shared<GLTexture> t) {
-	if (!frame) {
-		frame.Emplace();
-	}
-	if (frame->tex == t) return;
 	dirtyFrame = 1;
-	frame->anchor = { 0.5, 0.5 };
-	frame->textureRotated = false;
-	frame->spriteSize = frame->spriteSourceSize = { (float)std::get<1>(t->vs), (float)std::get<2>(t->vs) };
-	frame->spriteOffset = { 0, 0 };
-	frame->textureRect = { 0, 0, frame->spriteSize };
-	frame->tex = std::move(t);
+	auto&& f = *frame.Emplace();
+	f.anchor = { 0.5, 0.5 };
+	f.textureRotated = false;
+	f.spriteSize = frame->spriteSourceSize = { (float)std::get<1>(t->vs), (float)std::get<2>(t->vs) };
+	f.spriteOffset = { 0, 0 };
+	f.textureRect = { 0, 0, frame->spriteSize };
+	f.tex = std::move(t);
 }
 
 void Sprite::SetTexture(xx::Shared<Frame> f, bool overrideAnchor) {
@@ -95,10 +92,12 @@ void Sprite::Commit() {
 }
 
 void Sprite::Draw(Engine* eg) {
+	assert(!dirty);
 	eg->AutoBatchDrawQuad(*frame->tex, qv);
 }
 
 void Sprite::Draw(Engine* eg, Translate const& trans) {
+	assert(!dirty);
 	auto&& q = eg->AutoBatchDrawQuadBegin(*frame->tex);
 	q[0].x = qv[0].x * trans.scale.x + trans.offset.x; q[0].y = qv[0].y * trans.scale.y + trans.offset.y;
 	q[1].x = qv[1].x * trans.scale.x + trans.offset.x; q[1].y = qv[1].y * trans.scale.y + trans.offset.y;

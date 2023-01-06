@@ -80,8 +80,7 @@ struct Frame_Duration {
     float durationSeconds;
 };
 
-struct FrameAnim : std::vector<Frame_Duration> {
-};
+using FrameAnim = std::vector<Frame_Duration>;
 
 // following enums reference from raylib.h
 

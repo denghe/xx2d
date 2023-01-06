@@ -1,9 +1,8 @@
 ﻿#pragma once
 #include "pch.h"
 
-struct Sprite_FrameAnim {
-	xx::Shared<Sprite> sprite;
-	xx::Shared<FrameAnim> frameAnim;
+struct Anim {
+	FrameAnim fa;
 	size_t cursor = 0;
 	float timePool = 0;
 	void Step();
@@ -12,24 +11,32 @@ struct Sprite_FrameAnim {
 	xx::Shared<Frame> const& GetCurrentFrame() const;
 };
 
+struct Frame_Anim {
+	xx::Shared<Frame> frame;
+	xx::Shared<Anim> anim;
+};
+
+struct Sprite_Anim {
+	xx::Shared<Sprite> sprite;
+	Anim* anim;
+	void Draw(Engine* eg, TMX::Camera& cam);
+};
+using SAs = std::vector<Sprite_Anim>;
+
 struct Logic : Engine {
 	double secs = 0;
 
-	// todo: move following fields to TMXManager ?
 	TMX::Camera cam;
 	TMX::Map map;
 
-	// mapping to map.gidInfos for every static tile
-	std::vector<xx::Shared<Frame>> gidFrames;
-
-	// mapping to map.gidInfos for tile anim
-	std::vector<xx::Shared<FrameAnim>> gidFrameAnims;
+	// mapping to map.gidInfos
+	std::vector<Frame_Anim> gidFAs;
+	// for easy update
+	std::vector<Anim*> anims;
 
 	// mapping to layer.gids
-	std::map<TMX::Layer_Tile*, std::vector<Sprite_FrameAnim>> tileLayer_Sprites;
+	std::map<TMX::Layer_Tile*, SAs> layerSprites;
 
-	// for sync update
-	std::vector<Sprite_FrameAnim*> allSfas;
 
 	BMFont fnt1;
 	Label lbCount;
