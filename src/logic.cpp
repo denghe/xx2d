@@ -82,19 +82,19 @@ int Logic::Update() {
 	XY inc{ 1 / cam.scale.x, 1 / cam.scale.y };
 	if ((Pressed(KbdKeys::Up) || Pressed(KbdKeys::W))) {
 		auto y = cam.pos.y - inc.y;
-		cam.SetPos({ cam.pos.x, y < 0 ? 0 : y });
+		cam.SetPosY(y < 0 ? 0 : y);
 	}
 	if ((Pressed(KbdKeys::Down) || Pressed(KbdKeys::S))) {
 		auto y = cam.pos.y + inc.y;
-		cam.SetPos({ cam.pos.x, y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y });
+		cam.SetPosY(y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y);
 	}
 	if ((Pressed(KbdKeys::Left) || Pressed(KbdKeys::A))) {
 		auto x = cam.pos.x - inc.x;
-		cam.SetPos({ x < 0 ? 0 : x, cam.pos.y });
+		cam.SetPosX(x < 0 ? 0 : x);
 	}
 	if ((Pressed(KbdKeys::Right) || Pressed(KbdKeys::D))) {
 		auto x = cam.pos.x + inc.x;
-		cam.SetPos({ x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x, cam.pos.y });
+		cam.SetPosX(x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x);
 	}
 	if (Pressed(KbdKeys::Z)) {
 		auto x = cam.scale.x + 0.001f;
