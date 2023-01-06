@@ -1,47 +1,6 @@
 ﻿#include "pch.h"
 #include "logic.h"
 
-// known issue: sometimes no display anim	// todo: fix
-
-Frame_Duration const& Anim::GetCurrentFrame_Duration() const {
-	return fa[cursor];
-}
-
-xx::Shared<Frame> const& Anim::GetCurrentFrame() const {
-	return fa[cursor].frame;
-}
-
-void Anim::Step() {
-	if (++cursor == fa.size()) {
-		cursor = 0;
-	}
-}
-
-bool Anim::Update(float const& delta) {
-	auto&& bak = cursor;
-	timePool += delta;
-LabBegin:
-	auto&& fd = GetCurrentFrame_Duration();
-	if (timePool >= fd.durationSeconds) {
-		timePool -= fd.durationSeconds;
-		Step();
-		goto LabBegin;
-	}
-	return bak != cursor;
-}
-
-
-void Sprite_Anim::Draw(Engine* eg, TMX::Camera& cam) {
-	if (anim) {
-		if (auto&& f = anim->GetCurrentFrame(); sprite->frame != f) {
-			sprite->SetTexture(f);
-			sprite->Commit();
-		}
-	}
-	sprite->Draw(eg, cam);
-}
-
-
 void Logic::Init() {
 	// for display drawcall
 	fnt1 = LoadBMFont("res/font1/basechars.fnt"sv);
@@ -68,11 +27,11 @@ void Logic::Init() {
 		if (i.tile) {
 			auto& tas = i.tile->animation;
 			if (auto&& numAnims = tas.size()) {
-				auto& fa = gidFAs[gid].anim.Emplace()->fa;
-				fa.resize(numAnims);
+				auto& afs = gidFAs[gid].anim.Emplace()->afs;
+				afs.resize(numAnims);
 				for (size_t x = 0; x < numAnims; ++x) {
-					fa[x].frame = gidFAs[tas[x].gid].frame;
-					fa[x].durationSeconds = tas[x].duration / 1000.f;
+					afs[x].frame = gidFAs[tas[x].gid].frame;
+					afs[x].durationSeconds = tas[x].duration / 1000.f;
 				}
 				anims.emplace_back(gidFAs[gid].anim);
 			}
@@ -98,7 +57,7 @@ void Logic::Init() {
 				auto& sa = sas[idx];
 				auto&& s = *sa.sprite.Emplace();
 				if (sa.anim = gidFAs[gid].anim) {
-					s.SetTexture(sa.anim->GetCurrentFrame());
+					s.SetTexture(sa.anim->GetCurrentAnimFrame().frame);
 				} else {
 					s.SetTexture(gidFAs[gid].frame);
 				}
@@ -153,7 +112,15 @@ int Logic::Update() {
 				auto&& idx = y * cam.worldColumnCount + x;
 				auto&& sa = sas[idx];
 				if (!sa.sprite) continue;
-				sa.Draw(this, cam);
+
+				// update frame by anim
+				if (sa.anim) {
+					if (auto&& f = sa.anim->GetCurrentAnimFrame().frame; sa.sprite->frame != f) {
+						sa.sprite->SetTexture(f);
+						sa.sprite->Commit();
+					}
+				}
+				sa.sprite->Draw(this, cam);
 			}
 		}
 	}
