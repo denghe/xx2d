@@ -91,6 +91,10 @@ struct Anim {
     AnimFrame& GetCurrentAnimFrame() const;
 };
 
+void ZstdDecompress(std::string_view const& src, xx::Data& dst);
+
+
+
 // following enums reference from raylib.h
 
 enum class KbdKeys : int16_t {

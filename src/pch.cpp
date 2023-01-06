@@ -2,9 +2,11 @@
 
 // todo: handle path "../../". remove rootDir ( write global function for append path? test FS::path )
 
+// todo: label support cam
+// todo: cam support mouse pos space convert
 // todo: touch, joystick support
 // todo: button, scroll view
-// todo: node( with matrix )
+// todo: node( trans -> matrix, rotate support )
 
 // todo: Program manager? ready for shader switch
 // todo: draw no alpha without blend but discard shader ?

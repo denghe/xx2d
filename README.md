@@ -9,7 +9,9 @@ performance ~= raylib, much more faster than cocos2dx 3.x
 
 search path
 
-texture ( .pkm only ) cache
+auto decompress zstd file( detect by header: 28 B5 2F FD )
+
+texture ( current .pkm only, detect by header "PKM 20" ) cache
 
 texture packer ( 7.0 limit support ) loader & frame cache
 
@@ -61,6 +63,6 @@ draw instance for particle system?
 
 texture array support?
 
-more texture format support?
+more texture format support? astc?
 
 spine? webassembly? lua? 

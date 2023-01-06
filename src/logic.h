@@ -30,6 +30,8 @@ struct Logic : Engine {
 	// mapping to layer.gids
 	std::vector<Layer_SAs> lsass;
 
+	// player char plist container
+	TP tp;
 
 	BMFont fnt1;
 	Label lbCount;

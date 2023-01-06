@@ -7,8 +7,11 @@ void Logic::Init() {
 	lbCount.SetPositon(ninePoints[1] + XY{ 10, 10 });
 	lbCount.SetAnchor({0, 0});
 
+	// load plist
+	tp.Fill(this, "res/ww.plist"sv);
+
 	// load map
-	TMX::FillTo(map, this, "res/tiledmap1/m1.tmx");
+	TMX::FillTo(map, this, "res/tiledmap1/m1.tmx"sv);
 
 	// fill frames
 	gidFAs.resize(map.gidInfos.size());
