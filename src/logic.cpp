@@ -79,23 +79,30 @@ void Logic::Init() {
 int Logic::Update() {
 	if (Pressed(KbdKeys::Escape)) return 1;
 
-	if ((Pressed(KbdKeys::Up) || Pressed(KbdKeys::W)) && cam.pos.y > 0) {
-		cam.SetPos({ cam.pos.x, cam.pos.y - 1 });
+	XY inc{ 1 / cam.scale.x, 1 / cam.scale.y };
+	if ((Pressed(KbdKeys::Up) || Pressed(KbdKeys::W))) {
+		auto y = cam.pos.y - inc.y;
+		cam.SetPos({ cam.pos.x, y < 0 ? 0 : y });
 	}
-	if ((Pressed(KbdKeys::Down) || Pressed(KbdKeys::S)) && cam.pos.y + 1 < cam.worldPixel.h) {
-		cam.SetPos({ cam.pos.x, cam.pos.y + 1 });
+	if ((Pressed(KbdKeys::Down) || Pressed(KbdKeys::S))) {
+		auto y = cam.pos.y + inc.y;
+		cam.SetPos({ cam.pos.x, y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y });
 	}
-	if ((Pressed(KbdKeys::Left) || Pressed(KbdKeys::A)) && cam.pos.x > 0) {
-		cam.SetPos({ cam.pos.x - 1, cam.pos.y });
+	if ((Pressed(KbdKeys::Left) || Pressed(KbdKeys::A))) {
+		auto x = cam.pos.x - inc.x;
+		cam.SetPos({ x < 0 ? 0 : x, cam.pos.y });
 	}
-	if ((Pressed(KbdKeys::Right) || Pressed(KbdKeys::D)) && cam.pos.x + 1 < cam.worldPixel.w) {
-		cam.SetPos({ cam.pos.x + 1, cam.pos.y });
+	if ((Pressed(KbdKeys::Right) || Pressed(KbdKeys::D))) {
+		auto x = cam.pos.x + inc.x;
+		cam.SetPos({ x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x, cam.pos.y });
 	}
-	if (Pressed(KbdKeys::Z) && cam.scale.x < 100) {
-		cam.SetScale(cam.scale.x + 0.01);
+	if (Pressed(KbdKeys::Z)) {
+		auto x = cam.scale.x + 0.001f;
+		cam.SetScale(x < 100 ? x : 100);
 	}
-	if (Pressed(KbdKeys::X) && cam.scale.x > 0.01) {
-		cam.SetScale(cam.scale.x - 0.01);
+	if (Pressed(KbdKeys::X)) {
+		auto x = cam.scale.x - 0.001f;
+		cam.SetScale(x > 0.001 ? x : 0.001);
 	}
 	cam.Commit();
 
@@ -126,7 +133,7 @@ int Logic::Update() {
 	}
 
 	// display draw call
-	lbCount.SetText(fnt1, std::format("draw call = {}, quad count = {}, cam.pos = {},{}", GetDrawCall(), GetDrawQuads(), cam.pos.x, cam.pos.y ));
+	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", quad count = ", GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));
 	lbCount.Commit();
 	lbCount.Draw(this);
 	return 0;

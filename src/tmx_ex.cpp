@@ -23,8 +23,8 @@ namespace TMX {
 
 		// todo: scale
 
-		auto halfNumRows = screenSize.h / tileHeight / 2;
-		int32_t posRowIndex = pos.y / tileWidth;
+		auto halfNumRows = screenSize.h / scale.y / tileHeight / 2;
+		int32_t posRowIndex = pos.y / tileHeight;
 		rowFrom = posRowIndex - halfNumRows;
 		rowTo = posRowIndex + halfNumRows + 2;
 		if (rowFrom < 0) {
@@ -34,10 +34,10 @@ namespace TMX {
 			rowTo = worldRowCount;
 		}
 
-		auto halfNumColumns = screenSize.w / tileWidth / 2;
-		int32_t posColumnIndex = pos.x / tileHeight;
+		auto halfNumColumns = screenSize.w / scale.x / tileWidth / 2;
+		int32_t posColumnIndex = pos.x / tileWidth;
 		columnFrom = posColumnIndex - halfNumColumns;
-		columnTo = posColumnIndex + halfNumColumns + 1;
+		columnTo = posColumnIndex + halfNumColumns + 2;
 		if (columnFrom < 0) {
 			columnFrom = 0;
 		}
