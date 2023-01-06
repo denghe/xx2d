@@ -15,6 +15,8 @@ int main() {
 
 	SetConsoleOutputCP(65001);
 
+	std::cout << "working dir = " << xx::GetPath_Current().string() << std::endl;
+
 	glfwSetErrorCallback([](int error, const char* description) {
 		throw new std::exception(description, error);
 	});

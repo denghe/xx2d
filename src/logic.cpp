@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 #include "logic.h"
 
+// known issue: sometimes no display anim	// todo: fix
+
 Frame_Duration const& Anim::GetCurrentFrame_Duration() const {
 	return fa[cursor];
 }
@@ -16,10 +18,10 @@ void Anim::Step() {
 }
 
 bool Anim::Update(float const& delta) {
-	auto bak = cursor;
+	auto&& bak = cursor;
 	timePool += delta;
 LabBegin:
-	auto fd = GetCurrentFrame_Duration();
+	auto&& fd = GetCurrentFrame_Duration();
 	if (timePool >= fd.durationSeconds) {
 		timePool -= fd.durationSeconds;
 		Step();
@@ -80,9 +82,13 @@ void Logic::Init() {
 	// recursive find all tile layer & gen sprites
 	std::vector<TMX::Layer_Tile*> lts;
 	TMX::Fill(lts, map.layers);
-	for (auto& lt : lts) {
-		SAs sas;
-		sas.resize(lt->gids.size());
+	lsass.resize(lts.size());
+	for(size_t i = 0, ie = lts.size(); i < ie; ++i) {
+		auto&& lt = lts[i];
+		auto&& lsas = lsass[i];
+		auto&& sas = lsas.sas;
+		lsas.layer = lt;
+		lsas.sas.resize(lt->gids.size());
 		for (int cy = 0; cy < (int)map.height; ++cy) {
 			for (int cx = 0; cx < (int)map.width; ++cx) {
 				auto&& idx = cy * (int)map.width + cx;
@@ -102,12 +108,12 @@ void Logic::Init() {
 				s.Commit();
 			}
 		}
-		layerSprites.emplace(lt, std::move(sas));
 	}
 
 	// init camera
 	cam.Init({w, h}, map);
 
+	// update for anim
 	secs = xx::NowSteadyEpochSeconds();
 }
 
@@ -135,13 +141,13 @@ int Logic::Update() {
 	cam.Commit();
 
 	// update all anims
-	auto delta = xx::NowSteadyEpochSeconds(secs);
+	auto&& delta = xx::NowSteadyEpochSeconds(secs);
 	for (auto&& a : anims) {
 		a->Update(delta);
 	}
 
 	// draw screen range sprites
-	for (auto& [layer, sas] : layerSprites) {
+	for (auto& [layer, sas] : lsass) {
 		for (uint32_t y = cam.rowFrom; y < cam.rowTo; ++y) {
 			for (uint32_t x = cam.columnFrom; x < cam.columnTo; ++x) {
 				auto&& idx = y * cam.worldColumnCount + x;

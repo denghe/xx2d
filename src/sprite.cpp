@@ -71,10 +71,10 @@ void Sprite::Commit() {
 			}
 		}
 		if (dirtySizeAnchorPosScaleRotate) {
-			auto w = frame->spriteSize.w * scale.x;
-			auto h = frame->spriteSize.h * scale.y;
-			auto x = pos.x + frame->spriteOffset.x * scale.x - w * anchor.x;
-			auto y = pos.y + frame->spriteOffset.y * scale.y - h * anchor.y;
+			auto&& w = frame->spriteSize.w * scale.x;
+			auto&& h = frame->spriteSize.h * scale.y;
+			auto&& x = pos.x + frame->spriteOffset.x * scale.x - w * anchor.x;
+			auto&& y = pos.y + frame->spriteOffset.y * scale.y - h * anchor.y;
 			qv[0].x = x;				qv[0].y = y;
 			qv[1].x = x;				qv[1].y = y + h;
 			qv[2].x = x + w;			qv[2].y = y + h;

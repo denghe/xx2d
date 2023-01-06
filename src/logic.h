@@ -18,10 +18,15 @@ struct Frame_Anim {
 
 struct Sprite_Anim {
 	xx::Shared<Sprite> sprite;
-	Anim* anim;
+	Anim* anim = nullptr;
 	void Draw(Engine* eg, TMX::Camera& cam);
 };
 using SAs = std::vector<Sprite_Anim>;
+
+struct Layer_SAs {
+	TMX::Layer_Tile* layer;
+	SAs sas;
+};
 
 struct Logic : Engine {
 	double secs = 0;
@@ -35,7 +40,7 @@ struct Logic : Engine {
 	std::vector<Anim*> anims;
 
 	// mapping to layer.gids
-	std::map<TMX::Layer_Tile*, SAs> layerSprites;
+	std::vector<Layer_SAs> lsass;
 
 
 	BMFont fnt1;
