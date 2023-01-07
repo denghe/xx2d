@@ -1,8 +1,7 @@
 ﻿#pragma once
 #include "pch.h"
 
-void TP::Fill(Engine* eg, std::string_view plistFn) {
-	// load file & calc rootPath
+void TP::Fill(Engine* eg, std::string_view plistFn, bool sortByName) {
 	std::string rootPath;
 	if (auto&& [d, fp] = eg->ReadAllBytes(plistFn); !d) {
 		throw std::logic_error("read file error: " + std::string(plistFn));
@@ -13,6 +12,17 @@ void TP::Fill(Engine* eg, std::string_view plistFn) {
 		if (int r = Fill(d, rootPath)) {
 			throw std::logic_error(xx::ToString("parse plist file content error: r = ", r, ", fn = ", fp));
 		}
+	}
+
+	if (sortByName) {
+		std::sort(frames.begin(), frames.end(), [](xx::Shared<Frame> const& a, xx::Shared<Frame> const& b) {
+			return xx::InnerNumberToFixed(a->key) < xx::InnerNumberToFixed(b->key);
+		});
+	}
+
+	auto tex = xx::Make<GLTexture>(eg->LoadTexture(realTextureFileName));
+	for (auto& f : frames) {
+		f->tex = tex;
 	}
 }
 

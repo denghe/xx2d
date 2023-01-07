@@ -1,4 +1,54 @@
 ﻿/*
+
+
+
+#version 300 es
+uniform 	vec4 map_ST;	// 1, 1, 0, 0
+
+in highp vec2 in_TEXCOORD0;
+out highp vec2 vs_TEXCOORD0;
+
+void main() {
+	vs_TEXCOORD0.xy = in_TEXCOORD0.xy * map_ST.xy + map_ST.zw;
+	gl_Position = ...
+}
+
+
+#version 300 es
+precision highp float;
+precision highp int;
+
+uniform float _BlockSizeUv;
+uniform float _SampleSizeUv;
+uniform sampler2D map;
+uniform sampler2D tileset;
+
+in highp vec2 vs_TEXCOORD0;
+out mediump vec4 SV_Target0;
+
+vec2 overflowUv;
+vec2 trueUv;
+mediump vec4 detailTileMapCol;
+mediump vec2 mappingUv;
+
+void main() {
+	detailTileMapCol = texture(map, vs_TEXCOORD0.xy);
+	overflowUv.xy = vs_TEXCOORD0.xy - detailTileMapCol.xy;
+	trueUv.xy = overflowUv.xy / vec2(_BlockSizeUv);
+	mappingUv.xy = trueUv.xy * vec2(vec2(_SampleSizeUv, _SampleSizeUv)) + detailTileMapCol.zw;
+	SV_Target0 = texture(tileset, mappingUv.xy);
+}
+
+
+
+
+
+
+
+
+
+
+
 // logic.h
 
 #pragma once

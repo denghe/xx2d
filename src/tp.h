@@ -8,7 +8,7 @@ struct TP {
 	bool premultiplyAlpha;
 	std::string realTextureFileName;
 
-	void Fill(Engine* eg, std::string_view plistFn);
+	void Fill(Engine* eg, std::string_view plistFn, bool sortByName = true);
 
 	int Fill(std::string_view text, std::string_view const& rootPath);
 

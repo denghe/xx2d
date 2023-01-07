@@ -60,7 +60,7 @@ std::string Engine::GetFullPath(std::string_view fn) {
 xx::Data Engine::ReadAllBytesWithFullPath(std::string_view const& fp, bool autoDecompress) {
 	xx::Data d;
 	if (int r = xx::ReadAllBytes(fp, d)) throw std::logic_error(xx::ToString("file read error. r = ", r, ", fn = ", fp));
-	if(d.len == 0) throw std::logic_error(xx::ToString("file content is empty. fn = ", fp));
+	if (d.len == 0) throw std::logic_error(xx::ToString("file content is empty. fn = ", fp));
 	if (autoDecompress && d.len >= 4) {
 		if (d[0] == 0x28 && d[1] == 0xB5 && d[2] == 0x2F && d[3] == 0xFD) {	// zstd
 			xx::Data d2;

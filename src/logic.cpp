@@ -7,8 +7,6 @@ void Logic::Init() {
 	lbCount.SetPositon(ninePoints[1] + XY{ 10, 10 });
 	lbCount.SetAnchor({0, 0});
 
-	// load plist
-	tp.Fill(this, "res/ww.plist"sv);
 
 	// load map
 	TMX::FillTo(map, this, "res/tiledmap1/m1.tmx"sv);
@@ -60,13 +58,13 @@ void Logic::Init() {
 				auto& sa = sas[idx];
 				auto&& s = *sa.sprite.Emplace();
 				if (sa.anim = gidFAs[gid].anim) {
-					s.SetTexture(sa.anim->GetCurrentAnimFrame().frame);
+					s.SetFrame(sa.anim->GetCurrentAnimFrame().frame);
 				} else {
-					s.SetTexture(gidFAs[gid].frame);
+					s.SetFrame(gidFAs[gid].frame);
 				}
 				s.SetColor({ 255, 255, 255, 255 });
 				s.SetScale({ 1, 1 });
-				s.SetPositon({ float(cx * (int)map.tileWidth), float(-cy * (int)map.tileHeight) });
+				s.SetPosition({ float(cx * (int)map.tileWidth), float(-cy * (int)map.tileHeight) });
 				s.Commit();
 			}
 		}
@@ -77,28 +75,63 @@ void Logic::Init() {
 
 	// update for anim
 	secs = xx::NowSteadyEpochSeconds();
+
+
+	// load plist
+	player.tp.Fill(this, "res/ww.plist"sv);
+	for (auto& f : player.tp.frames) {
+		player.anim.afs.push_back({ f, 1.f/60 });
+	}
+	player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame);
+	player.sprite.Commit();
 }
 
 int Logic::Update() {
 	if (Pressed(KbdKeys::Escape)) return 1;
 
 	XY inc{ 1 / cam.scale.x, 1 / cam.scale.y };
-	if ((Pressed(KbdKeys::Up) || Pressed(KbdKeys::W))) {
+	if ((Pressed(KbdKeys::Up))) {
 		auto y = cam.pos.y - inc.y;
-		cam.SetPosY(y < 0 ? 0 : y);
+		cam.SetPositionY(y < 0 ? 0 : y);
 	}
-	if ((Pressed(KbdKeys::Down) || Pressed(KbdKeys::S))) {
+	if ((Pressed(KbdKeys::Down))) {
 		auto y = cam.pos.y + inc.y;
-		cam.SetPosY(y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y);
+		cam.SetPositionY(y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y);
 	}
-	if ((Pressed(KbdKeys::Left) || Pressed(KbdKeys::A))) {
+	if ((Pressed(KbdKeys::Left))) {
 		auto x = cam.pos.x - inc.x;
-		cam.SetPosX(x < 0 ? 0 : x);
+		cam.SetPositionX(x < 0 ? 0 : x);
 	}
-	if ((Pressed(KbdKeys::Right) || Pressed(KbdKeys::D))) {
+	if ((Pressed(KbdKeys::Right))) {
 		auto x = cam.pos.x + inc.x;
-		cam.SetPosX(x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x);
+		cam.SetPositionX(x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x);
 	}
+
+	if (Pressed(KbdKeys::W)) {
+		auto y = player.pos.y - inc.y;
+		player.pos.y = y < 0 ? 0 : y;
+		player.dirty = true;
+		player.sprite.SetFlipY(false);
+	}
+	if (Pressed(KbdKeys::S)) {
+		auto y = player.pos.y + inc.y;
+		player.pos.y = y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y;
+		player.dirty = true;
+		player.sprite.SetFlipY(true);
+	}
+	if (Pressed(KbdKeys::A)) {
+		auto x = player.pos.x - inc.x;
+		player.pos.x = x < 0 ? 0 : x;
+		player.dirty = true;
+		player.sprite.SetFlipX(false);
+	}
+	if (Pressed(KbdKeys::D)) {
+		auto x = player.pos.x + inc.x;
+		player.pos.x = x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x;
+		player.dirty = true;
+		player.sprite.SetFlipX(true);
+	}
+
 	if (Pressed(KbdKeys::Z)) {
 		auto x = cam.scale.x + 0.001f;
 		cam.SetScale(x < 100 ? x : 100);
@@ -126,7 +159,7 @@ int Logic::Update() {
 				// update frame by anim
 				if (sa.anim) {
 					if (auto&& f = sa.anim->GetCurrentAnimFrame().frame; sa.sprite->frame != f) {
-						sa.sprite->SetTexture(f);
+						sa.sprite->SetFrame(f);
 						sa.sprite->Commit();
 					}
 				}
@@ -134,6 +167,18 @@ int Logic::Update() {
 			}
 		}
 	}
+
+	// draw player
+	if (player.dirty) {
+		player.dirty = false;
+		player.sprite.SetPosition({ player.pos.x, -player.pos.y });
+		player.anim.Update(delta);
+		if (auto&& f = player.anim.GetCurrentAnimFrame().frame; player.sprite.frame != f) {
+			player.sprite.SetFrame(f);
+		}
+		player.sprite.Commit();
+	}
+	player.sprite.Draw(this, cam);
 
 	// display draw call
 	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", quad count = ", GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));

@@ -45,9 +45,9 @@ namespace TMX {
 
 		void SetScreenSize(Size const& wh);
 		void SetScale(float const& scale);
-		void SetPos(XY const& xy);
-		void SetPosX(float const& x);
-		void SetPosY(float const& y);
+		void SetPosition(XY const& xy);
+		void SetPositionX(float const& x);
+		void SetPositionY(float const& y);
 
 		// call after set xxxx ...
 		void Commit();

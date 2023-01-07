@@ -58,17 +58,17 @@ namespace TMX {
 		dirty = true;
 	}
 
-	void Camera::SetPos(XY const& xy) {
+	void Camera::SetPosition(XY const& xy) {
 		this->pos = xy;
 		dirty = true;
 	}
 
-	void Camera::SetPosX(float const& x) {
+	void Camera::SetPositionX(float const& x) {
 		this->pos.x = x;
 		dirty = true;
 	}
 
-	void Camera::SetPosY(float const& y) {
+	void Camera::SetPositionY(float const& y) {
 		this->pos.y = y;
 		dirty = true;
 	}

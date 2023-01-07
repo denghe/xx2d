@@ -15,13 +15,22 @@ void Sprite::SetTexture(xx::Shared<GLTexture> t) {
 	f.tex = std::move(t);
 }
 
-void Sprite::SetTexture(xx::Shared<Frame> f, bool overrideAnchor) {
+void Sprite::SetFrame(xx::Shared<Frame> f, bool overrideAnchor) {
 	dirtyFrame = 1;
 	frame = std::move(f);
 	if (overrideAnchor && frame->anchor.has_value() && anchor != *frame->anchor) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		anchor = *frame->anchor;
 	}
+}
+
+void Sprite::SetFlipX(bool const& fx) {
+	dirtyFrame = 1;
+	flipX = fx;
+}
+void Sprite::SetFlipY(bool const& fy) {
+	dirtyFrame = 1;
+	flipY = fy;
 }
 
 void Sprite::SetAnchor(XY const& a) {
@@ -43,9 +52,17 @@ void Sprite::SetScale(float const& s) {
 	scale = { s, s };
 }
 
-void Sprite::SetPositon(XY const& p) {
+void Sprite::SetPosition(XY const& p) {
 	dirtySizeAnchorPosScaleRotate = 1;
 	pos = p;
+}
+void Sprite::SetPositionX(float const& x) {
+	dirtySizeAnchorPosScaleRotate = 1;
+	pos.x = x;
+}
+void Sprite::SetPositionY(float const& y) {
+	dirtySizeAnchorPosScaleRotate = 1;
+	pos.y = y;
 }
 
 void Sprite::SetColor(RGBA8 const& c) {
@@ -58,16 +75,51 @@ void Sprite::Commit() {
 		if (dirtyFrame) {
 			auto& r = frame->textureRect;
 			if (frame->textureRotated) {
-				qv[0].u = r.x;				qv[0].v = r.y + r.w;
-				qv[1].u = r.x + r.h;        qv[1].v = r.y + r.w;
-				qv[2].u = r.x + r.h;        qv[2].v = r.y;
-				qv[3].u = r.x;				qv[3].v = r.y;
-			}
-			else {
-				qv[0].u = r.x;              qv[0].v = r.y + r.h;
-				qv[1].u = r.x;              qv[1].v = r.y;
-				qv[2].u = r.x + r.w;        qv[2].v = r.y;
-				qv[3].u = r.x + r.w;        qv[3].v = r.y + r.h;
+				if (flipX) {
+					qv[0].v = r.y + r.w;
+					qv[1].v = r.y + r.w;
+					qv[2].v = r.y;
+					qv[3].v = r.y;
+				} else {
+					qv[0].v = r.y;
+					qv[1].v = r.y;
+					qv[2].v = r.y + r.w;
+					qv[3].v = r.y + r.w;
+				}
+				if (flipY) {
+					qv[0].u = r.x + r.h;
+					qv[1].u = r.x;
+					qv[2].u = r.x;
+					qv[3].u = r.x + r.h;
+				} else {
+					qv[0].u = r.x;
+					qv[1].u = r.x + r.h;
+					qv[2].u = r.x + r.h;
+					qv[3].u = r.x;
+				}
+			} else {
+				if (flipX) {
+					qv[0].u = r.x + r.w;
+					qv[1].u = r.x + r.w;
+					qv[2].u = r.x;
+					qv[3].u = r.x;
+				} else {
+					qv[0].u = r.x;
+					qv[1].u = r.x;
+					qv[2].u = r.x + r.w;
+					qv[3].u = r.x + r.w;
+				}
+				if (flipY) {
+					qv[0].v = r.y;
+					qv[1].v = r.y + r.h;
+					qv[2].v = r.y + r.h;
+					qv[3].v = r.y;
+				} else {
+					qv[0].v = r.y + r.h;
+					qv[1].v = r.y;
+					qv[2].v = r.y;
+					qv[3].v = r.y + r.h;
+				}
 			}
 		}
 		if (dirtySizeAnchorPosScaleRotate) {

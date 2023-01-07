@@ -16,6 +16,14 @@ struct Layer_SAs {
 	std::vector<Sprite_Anim> sas;
 };
 
+struct Player {
+	TP tp;
+	Anim anim;
+	Sprite sprite;
+	bool dirty = true;
+	XY pos{};
+};
+
 struct Logic : Engine {
 	double secs = 0;
 
@@ -30,8 +38,7 @@ struct Logic : Engine {
 	// mapping to layer.gids
 	std::vector<Layer_SAs> lsass;
 
-	// player char plist container
-	TP tp;
+	Player player;
 
 	BMFont fnt1;
 	Label lbCount;

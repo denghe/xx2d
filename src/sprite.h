@@ -18,6 +18,7 @@ struct Sprite {
 	XY pos{ 0, 0 };
 	XY anchor{ 0.5, 0.5 };	// will be auto set by frame if included
 	XY scale{ 1, 1 };
+	bool flipX = false, flipY = false;
 	float rotate{ 0 };
 	RGBA8 color{ 255, 255, 255, 255 };
 
@@ -25,7 +26,10 @@ struct Sprite {
 
 	void SetTexture(xx::Shared<GLTexture> t);	// do not override anchor
 
-	void SetTexture(xx::Shared<Frame> f, bool overrideAnchor = true);
+	void SetFrame(xx::Shared<Frame> f, bool overrideAnchor = true);
+
+	void SetFlipX(bool const& fx);
+	void SetFlipY(bool const& fy);
 
 	void SetAnchor(XY const& a);
 
@@ -34,7 +38,9 @@ struct Sprite {
 	void SetScale(XY const& s);
 	void SetScale(float const& s);
 
-	void SetPositon(XY const& p);
+	void SetPosition(XY const& p);
+	void SetPositionX(float const& x);
+	void SetPositionY(float const& y);
 
 	void SetColor(RGBA8 const& c);
 

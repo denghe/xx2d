@@ -571,7 +571,7 @@ namespace TMX {
 				throw std::logic_error("unsupported encoding: " + (int)encoding);
 			};
 		} else {
-			switch (map.tileLayerFormat.first) {
+			switch (map.tileLayerFormat.encoding) {
 			case Encodings::Csv: {
 				FillCsvIntsTo(L.gids, cData.text().as_string());
 				break;
@@ -579,7 +579,7 @@ namespace TMX {
 			case Encodings::Base64: {
 				xx::Data tmp;
 				auto&& bin = xx::Base64Decode(xx::Trim(cData.text().as_string()));
-				switch (map.tileLayerFormat.second) {
+				switch (map.tileLayerFormat.compression) {
 				case Compressions::Uncompressed: {
 					FillBinIntsTo(L.gids, { bin.data(), bin.size() });
 					break;
@@ -795,8 +795,8 @@ namespace TMX {
 		TryFill(map.parallaxOrigin.y, cMap.attribute("parallaxoriginy"));
 		if (auto&& cLayer = cMap.child("layer"); !cLayer.empty()) {
 			if (auto&& cData = cLayer.child("data"); !cData.empty()) {
-				TryFill(map.tileLayerFormat.first, cData.attribute("encoding"));
-				TryFill(map.tileLayerFormat.second, cData.attribute("compression"));
+				TryFill(map.tileLayerFormat.encoding, cData.attribute("encoding"));
+				TryFill(map.tileLayerFormat.compression, cData.attribute("compression"));
 			}
 		}
 		if (auto&& cEditorSettings = cMap.child("editorsettings"); !cEditorSettings.empty()) {

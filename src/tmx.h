@@ -341,6 +341,11 @@ namespace TMX {
 		bool IsSingleImage() const;	// return image == tile->image
 	};
 
+	struct TileLayerFormat {
+		Encodings encoding;
+		Compressions compression;
+	};
+
 	struct Map {
 		std::string class_;	// class
 		Orientations orientation = Orientations::Orthogonal;
@@ -353,7 +358,7 @@ namespace TMX {
 		StaggerAxiss staggeraxis = StaggerAxiss::Y;	// staggeraxis
 		StaggerIndexs staggerindex = StaggerIndexs::Odd;	// staggerindex
 		Pointf parallaxOrigin;	// parallaxoriginx, parallaxoriginy
-		std::pair<Encodings, Compressions> tileLayerFormat = { Encodings::Csv,  Compressions::Uncompressed };	// for every layer's data
+		TileLayerFormat tileLayerFormat = { Encodings::Csv,  Compressions::Uncompressed };	// for every layer's data
 		uint32_t outputChunkWidth = 16;
 		uint32_t outputChunkHeight = 16;
 		RenderOrders renderOrder = RenderOrders::RightDown;	// renderorder
