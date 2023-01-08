@@ -17,7 +17,7 @@ void Logic::Init() {
 		auto& i = map.gidInfos[gid];
 		auto& f = *gidFAs[gid].frame.Emplace();
 		f.tex = i.image->texture;
-		f.anchor = { 0, 1 };
+		f.anchor = { 0.5, 0.25 };	// original: 0, 1. known issue: move to edge check need calc anchor*size
 		f.spriteSize = { (float)i.w, (float)i.h };
 		f.textureRect = { (float)i.u, (float)i.v, (float)i.w, (float)i.h };
 	}
@@ -39,23 +39,26 @@ void Logic::Init() {
 		}
 	}
 
-	// recursive find all tile layer & gen sprites
+	// recursive find all tile layer
 	std::vector<TMX::Layer_Tile*> lts;
 	TMX::Fill(lts, map.layers);
-	lsass.resize(lts.size());
-	for(size_t i = 0, ie = lts.size(); i < ie; ++i) {
-		auto&& lt = lts[i];
-		auto&& lsas = lsass[i];
-		auto&& sas = lsas.sas;
-		lsas.layer = lt;
-		lsas.sas.resize(lt->gids.size());
+
+	// locate & store
+	layerBG.layer = TMX::FindLayer(lts, "bg"sv);
+	assert(layerBG.layer);
+	layer2.layer = TMX::FindLayer(lts, "Tile Layer 2"sv);
+	assert(layer2.layer);
+
+	// func for make sprites
+	auto&& MakeSprites = [&](Layer_SAs& lsas) {
+		lsas.sas.resize(lsas.layer->gids.size());
 		for (int cy = 0; cy < (int)map.height; ++cy) {
 			for (int cx = 0; cx < (int)map.width; ++cx) {
 				auto&& idx = cy * (int)map.width + cx;
-				auto&& gid = lt->gids[idx];
+				auto&& gid = lsas.layer->gids[idx];
 				if (!gid) continue;
 
-				auto& sa = sas[idx];
+				auto& sa = lsas.sas[idx];
 				auto&& s = *sa.sprite.Emplace();
 				if (sa.anim = gidFAs[gid].anim) {
 					s.SetFrame(sa.anim->GetCurrentAnimFrame().frame);
@@ -68,94 +71,115 @@ void Logic::Init() {
 				s.Commit();
 			}
 		}
-	}
+	};
+
+	// make bg & others layer's sprites
+	MakeSprites(layerBG);
+	MakeSprites(layer2);
 
 	// init camera
 	cam.Init({w, h}, map);
+	cam.SetPosition({ 1130, 930 });
 
 	// update for anim
-	secs = xx::NowSteadyEpochSeconds();
+	nowSecs = xx::NowSteadyEpochSeconds();
 
 
 	// load plist
 	player.tp.Fill(this, "res/ww.plist"sv);
 	for (auto& f : player.tp.frames) {
+		f->anchor = { 0.5, 0 };
 		player.anim.afs.push_back({ f, 1.f/60 });
 	}
 	player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame);
+	player.sprite.SetScale(0.25);
+	player.pos = cam.pos;
 	player.sprite.Commit();
 }
 
 int Logic::Update() {
 	if (Pressed(KbdKeys::Escape)) return 1;
+	auto&& delta = xx::NowSteadyEpochSeconds(nowSecs);
 
-	XY inc{ 1 / cam.scale.x, 1 / cam.scale.y };
-	if ((Pressed(KbdKeys::Up))) {
-		auto y = cam.pos.y - inc.y;
-		cam.SetPositionY(y < 0 ? 0 : y);
-	}
-	if ((Pressed(KbdKeys::Down))) {
-		auto y = cam.pos.y + inc.y;
-		cam.SetPositionY(y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y);
-	}
-	if ((Pressed(KbdKeys::Left))) {
-		auto x = cam.pos.x - inc.x;
-		cam.SetPositionX(x < 0 ? 0 : x);
-	}
-	if ((Pressed(KbdKeys::Right))) {
-		auto x = cam.pos.x + inc.x;
-		cam.SetPositionX(x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x);
-	}
+	timePool += delta;
+	auto timePoolBak = timePool;
+LabBegin:
+	// limit control frequency
+	if (timePool >= 1.f / 60) {
+		timePool -= 1.f / 60;
 
-	if (Pressed(KbdKeys::W)) {
-		auto y = player.pos.y - inc.y;
-		player.pos.y = y < 0 ? 0 : y;
-		player.dirty = true;
-		player.sprite.SetFlipY(false);
-	}
-	if (Pressed(KbdKeys::S)) {
-		auto y = player.pos.y + inc.y;
-		player.pos.y = y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y;
-		player.dirty = true;
-		player.sprite.SetFlipY(true);
-	}
-	if (Pressed(KbdKeys::A)) {
-		auto x = player.pos.x - inc.x;
-		player.pos.x = x < 0 ? 0 : x;
-		player.dirty = true;
-		player.sprite.SetFlipX(false);
-	}
-	if (Pressed(KbdKeys::D)) {
-		auto x = player.pos.x + inc.x;
-		player.pos.x = x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x;
-		player.dirty = true;
-		player.sprite.SetFlipX(true);
-	}
+		XY camInc{ 10 / cam.scale.x, 10 / cam.scale.y };
+		if ((Pressed(KbdKeys::Up))) {
+			auto y = cam.pos.y - camInc.y;
+			cam.SetPositionY(y < 0 ? 0 : y);
+		}
+		if ((Pressed(KbdKeys::Down))) {
+			auto y = cam.pos.y + camInc.y;
+			cam.SetPositionY(y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y);
+		}
+		if ((Pressed(KbdKeys::Left))) {
+			auto x = cam.pos.x - camInc.x;
+			cam.SetPositionX(x < 0 ? 0 : x);
+		}
+		if ((Pressed(KbdKeys::Right))) {
+			auto x = cam.pos.x + camInc.x;
+			cam.SetPositionX(x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x);
+		}
 
-	if (Pressed(KbdKeys::Z)) {
-		auto x = cam.scale.x + 0.001f;
-		cam.SetScale(x < 100 ? x : 100);
-	}
-	if (Pressed(KbdKeys::X)) {
-		auto x = cam.scale.x - 0.001f;
-		cam.SetScale(x > 0.001 ? x : 0.001);
+		XY playerInc{ 8 * player.sprite.scale.x, 8 * player.sprite.scale.y };
+		if (Pressed(KbdKeys::W)) {
+			auto y = player.pos.y - playerInc.y;
+			player.pos.y = y < 0 ? 0 : y;
+			player.dirty = true;
+			//player.sprite.SetFlipY(false);
+		}
+		if (Pressed(KbdKeys::S)) {
+			auto y = player.pos.y + playerInc.y;
+			player.pos.y = y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y;
+			player.dirty = true;
+			//player.sprite.SetFlipY(true);
+		}
+		if (Pressed(KbdKeys::A)) {
+			auto x = player.pos.x - playerInc.x;
+			player.pos.x = x < 0 ? 0 : x;
+			player.dirty = true;
+			player.sprite.SetFlipX(false);
+		}
+		if (Pressed(KbdKeys::D)) {
+			auto x = player.pos.x + playerInc.x;
+			player.pos.x = x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x;
+			player.dirty = true;
+			player.sprite.SetFlipX(true);
+		}
+
+		if (Pressed(KbdKeys::Z)) {
+			auto x = cam.scale.x + 0.001f;
+			cam.SetScale(x < 100 ? x : 100);
+		}
+		if (Pressed(KbdKeys::X)) {
+			auto x = cam.scale.x - 0.001f;
+			cam.SetScale(x > 0.001 ? x : 0.001);
+		}
 	}
 	cam.Commit();
 
+	// if delta >= 1.f / 60 then elapsedSecs > 0, mean need update anims
+	auto elapsedSecs = timePoolBak - timePool;
+
 	// update all anims
-	auto&& delta = xx::NowSteadyEpochSeconds(secs);
-	for (auto&& a : anims) {
-		a->Update(delta);
+	if (elapsedSecs > 0) {
+		for (auto&& a : anims) {
+			a->Update(elapsedSecs);
+		}
 	}
 
 	// draw screen range sprites
-	for (auto& [layer, sas] : lsass) {
-		for (uint32_t y = cam.rowFrom; y < cam.rowTo; ++y) {
-			for (uint32_t x = cam.columnFrom; x < cam.columnTo; ++x) {
-				auto&& idx = y * cam.worldColumnCount + x;
-				auto&& sa = sas[idx];
-				if (!sa.sprite) continue;
+	for (uint32_t y = cam.rowFrom; y < cam.rowTo; ++y) {
+		for (uint32_t x = cam.columnFrom; x < cam.columnTo; ++x) {
+			auto&& idx = y * cam.worldColumnCount + x;
 
+			// bg: draw immediately
+			if (auto&& sa = layerBG.sas[idx]; sa.sprite) {
 				// update frame by anim
 				if (sa.anim) {
 					if (auto&& f = sa.anim->GetCurrentAnimFrame().frame; sa.sprite->frame != f) {
@@ -165,20 +189,46 @@ int Logic::Update() {
 				}
 				sa.sprite->Draw(this, cam);
 			}
+
+			// others: need sort with player
+			if (auto&& sa = layer2.sas[idx]; sa.sprite) {
+				// update frame by anim
+				if (sa.anim) {
+					if (auto&& f = sa.anim->GetCurrentAnimFrame().frame; sa.sprite->frame != f) {
+						sa.sprite->SetFrame(f);
+						sa.sprite->Commit();
+					}
+				}
+				tmpSprites.emplace_back(sa.sprite.pointer);
+			}
 		}
 	}
 
-	// draw player
+	// calc player
 	if (player.dirty) {
 		player.dirty = false;
 		player.sprite.SetPosition({ player.pos.x, -player.pos.y });
-		player.anim.Update(delta);
-		if (auto&& f = player.anim.GetCurrentAnimFrame().frame; player.sprite.frame != f) {
-			player.sprite.SetFrame(f);
+		if (elapsedSecs > 0) {
+			if (player.anim.Update(elapsedSecs)) {
+				player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame);
+			}
 		}
 		player.sprite.Commit();
 	}
-	player.sprite.Draw(this, cam);
+	tmpSprites.emplace_back(&player.sprite);
+
+	// sort by y
+	std::sort(tmpSprites.begin(), tmpSprites.end(), [](Sprite* const& a, Sprite* const& b) {
+		return a->pos.y > b->pos.y;
+	});
+
+	// draw non bg layer sprites + player
+	for (auto& spr : tmpSprites) {
+		spr->Draw(this, cam);
+	}
+
+	// cleanup for next use
+	tmpSprites.clear();
 
 	// display draw call
 	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", quad count = ", GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));

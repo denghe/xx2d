@@ -84,4 +84,11 @@ namespace TMX {
 		}
 	}
 
+	template<typename LT>
+	LT* FindLayer(std::vector<LT*> ls, std::string_view const& name) {
+		for (auto& l : ls) {
+			if (l->name == name) return l;
+		}
+		return nullptr;
+	}
 }

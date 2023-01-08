@@ -25,7 +25,7 @@ void Anim::Step() {
 }
 
 bool Anim::Update(float const& delta) {
-	auto&& bak = cursor;
+	auto bak = cursor;
 	timePool += delta;
 LabBegin:
 	auto&& af = afs[cursor];

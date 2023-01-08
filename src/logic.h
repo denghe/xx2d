@@ -13,6 +13,7 @@ struct Sprite_Anim {
 
 struct Layer_SAs {
 	TMX::Layer_Tile* layer;
+	// mapping to layer.gids
 	std::vector<Sprite_Anim> sas;
 };
 
@@ -25,7 +26,8 @@ struct Player {
 };
 
 struct Logic : Engine {
-	double secs = 0;
+	double nowSecs = 0;
+	float timePool = 0;
 
 	TMX::Camera cam;
 	TMX::Map map;
@@ -35,10 +37,11 @@ struct Logic : Engine {
 	// for easy update
 	std::vector<Anim*> anims;
 
-	// mapping to layer.gids
-	std::vector<Layer_SAs> lsass;
-
+	Layer_SAs layerBG;	// "bg"
+	Layer_SAs layer2;	// "Tile Layer 2"
 	Player player;
+
+	std::vector<Sprite*> tmpSprites;	// for sort
 
 	BMFont fnt1;
 	Label lbCount;
