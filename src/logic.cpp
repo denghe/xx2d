@@ -175,6 +175,9 @@ LabBegin:
 
 	// draw screen range sprites
 	for (uint32_t y = cam.rowFrom; y < cam.rowTo; ++y) {
+
+		// todo: calc player y map to row index by cam. 
+
 		for (uint32_t x = cam.columnFrom; x < cam.columnTo; ++x) {
 			auto&& idx = y * cam.worldColumnCount + x;
 
@@ -199,7 +202,7 @@ LabBegin:
 						sa.sprite->Commit();
 					}
 				}
-				tmpSprites.emplace_back(sa.sprite.pointer);
+				//tmpSprites.emplace_back(sa.sprite.pointer);
 			}
 		}
 	}
@@ -215,20 +218,22 @@ LabBegin:
 		}
 		player.sprite.Commit();
 	}
-	tmpSprites.emplace_back(&player.sprite);
 
-	// sort by y
-	std::sort(tmpSprites.begin(), tmpSprites.end(), [](Sprite* const& a, Sprite* const& b) {
-		return a->pos.y > b->pos.y;
-	});
 
-	// draw non bg layer sprites + player
-	for (auto& spr : tmpSprites) {
-		spr->Draw(this, cam);
-	}
+	//tmpSprites.emplace_back(&player.sprite);
 
-	// cleanup for next use
-	tmpSprites.clear();
+	//// sort by y
+	//std::sort(tmpSprites.begin(), tmpSprites.end(), [](Sprite* const& a, Sprite* const& b) {
+	//	return a->pos.y > b->pos.y;
+	//});
+
+	//// draw non bg layer sprites + player
+	//for (auto& spr : tmpSprites) {
+	//	spr->Draw(this, cam);
+	//}
+
+	//// cleanup for next use
+	//tmpSprites.clear();
 
 	// display draw call
 	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", quad count = ", GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));
