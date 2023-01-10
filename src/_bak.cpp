@@ -44,6 +44,22 @@ void main() {
 
 
 
+//tmpSprites.emplace_back(&player.sprite);
+
+//// sort by y
+//std::sort(tmpSprites.begin(), tmpSprites.end(), [](Sprite* const& a, Sprite* const& b) {
+//	return a->pos.y > b->pos.y;
+//});
+
+//// draw non bg layer sprites + player
+//for (auto& spr : tmpSprites) {
+//	spr->Draw(this, cam);
+//}
+
+//// cleanup for next use
+//tmpSprites.clear();
+
+
 
 
 

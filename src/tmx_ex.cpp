@@ -21,8 +21,6 @@ namespace TMX {
 		if (!dirty) return;
 		dirty = false;
 
-		// todo: scale
-
 		auto halfNumRows = screenSize.h / scale.y / tileHeight / 2;
 		int32_t posRowIndex = pos.y / tileHeight;
 		rowFrom = posRowIndex - halfNumRows;

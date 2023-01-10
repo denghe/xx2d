@@ -17,7 +17,7 @@ void Logic::Init() {
 		auto& i = map.gidInfos[gid];
 		auto& f = *gidFAs[gid].frame.Emplace();
 		f.tex = i.image->texture;
-		f.anchor = { 0.5, 0.25 };	// original: 0, 1. known issue: move to edge check need calc anchor*size
+		f.anchor = { 0, 1 };
 		f.spriteSize = { (float)i.w, (float)i.h };
 		f.textureRect = { (float)i.u, (float)i.v, (float)i.w, (float)i.h };
 	}
@@ -87,12 +87,17 @@ void Logic::Init() {
 
 	// load plist
 	player.tp.Fill(this, "res/ww.plist"sv);
+	float maxSpriteHeight{}, anchor{ 0.5 };
 	for (auto& f : player.tp.frames) {
-		f->anchor = { 0.5, 0 };
+		f->anchor = { anchor, anchor };
 		player.anim.afs.push_back({ f, 1.f/60 });
+		if (f->spriteSize.h > maxSpriteHeight) {
+			maxSpriteHeight = f->spriteSize.h;
+		}
 	}
+	player.yOffset = maxSpriteHeight * player.scale * anchor + map.tileHeight * mapTileLogicAnchorY;
 	player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame);
-	player.sprite.SetScale(0.25);
+	player.sprite.SetScale(player.scale);
 	player.pos = cam.pos;
 	player.sprite.Commit();
 }
@@ -166,48 +171,7 @@ LabBegin:
 	// if delta >= 1.f / 60 then elapsedSecs > 0, mean need update anims
 	auto elapsedSecs = timePoolBak - timePool;
 
-	// update all anims
-	if (elapsedSecs > 0) {
-		for (auto&& a : anims) {
-			a->Update(elapsedSecs);
-		}
-	}
-
-	// draw screen range sprites
-	for (uint32_t y = cam.rowFrom; y < cam.rowTo; ++y) {
-
-		// todo: calc player y map to row index by cam. 
-
-		for (uint32_t x = cam.columnFrom; x < cam.columnTo; ++x) {
-			auto&& idx = y * cam.worldColumnCount + x;
-
-			// bg: draw immediately
-			if (auto&& sa = layerBG.sas[idx]; sa.sprite) {
-				// update frame by anim
-				if (sa.anim) {
-					if (auto&& f = sa.anim->GetCurrentAnimFrame().frame; sa.sprite->frame != f) {
-						sa.sprite->SetFrame(f);
-						sa.sprite->Commit();
-					}
-				}
-				sa.sprite->Draw(this, cam);
-			}
-
-			// others: need sort with player
-			if (auto&& sa = layer2.sas[idx]; sa.sprite) {
-				// update frame by anim
-				if (sa.anim) {
-					if (auto&& f = sa.anim->GetCurrentAnimFrame().frame; sa.sprite->frame != f) {
-						sa.sprite->SetFrame(f);
-						sa.sprite->Commit();
-					}
-				}
-				//tmpSprites.emplace_back(sa.sprite.pointer);
-			}
-		}
-	}
-
-	// calc player
+	// update player
 	if (player.dirty) {
 		player.dirty = false;
 		player.sprite.SetPosition({ player.pos.x, -player.pos.y });
@@ -219,21 +183,46 @@ LabBegin:
 		player.sprite.Commit();
 	}
 
+	// update all anims
+	if (elapsedSecs > 0) {
+		for (auto&& a : anims) {
+			a->Update(elapsedSecs);
+		}
+	}
 
-	//tmpSprites.emplace_back(&player.sprite);
+	// draw screen range layer's sprites
+	auto&& DrawLayerSprites = [&](std::vector<Sprite_Anim>& sas, int32_t const& rowFrom, int32_t const& rowTo) {
+		for (auto y = rowFrom; y < rowTo; ++y) {
+			for (auto x = cam.columnFrom; x < cam.columnTo; ++x) {
+				auto&& idx = y * cam.worldColumnCount + x;
+				if (auto&& sa = sas[idx]; sa.sprite) {
+					// update frame by anim
+					if (sa.anim) {
+						if (auto&& f = sa.anim->GetCurrentAnimFrame().frame; sa.sprite->frame != f) {
+							sa.sprite->SetFrame(f);
+							sa.sprite->Commit();
+						}
+					}
+					sa.sprite->Draw(this, cam);
+				}
+			}
+		}
+	};
 
-	//// sort by y
-	//std::sort(tmpSprites.begin(), tmpSprites.end(), [](Sprite* const& a, Sprite* const& b) {
-	//	return a->pos.y > b->pos.y;
-	//});
+	// draw bg first
+	DrawLayerSprites(layerBG.sas, cam.rowFrom, cam.rowTo);
 
-	//// draw non bg layer sprites + player
-	//for (auto& spr : tmpSprites) {
-	//	spr->Draw(this, cam);
-	//}
+	// calc player y map to row index by cam. 
+	int32_t posRowIndex = (player.pos.y + player.yOffset) / cam.tileHeight;
 
-	//// cleanup for next use
-	//tmpSprites.clear();
+	// draw above player rows
+	DrawLayerSprites(layer2.sas, cam.rowFrom, posRowIndex);
+
+	// draw player( override above rows )
+	player.sprite.Draw(this, cam);
+
+	// draw after player rows
+	DrawLayerSprites(layer2.sas, posRowIndex, cam.rowTo);
 
 	// display draw call
 	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", quad count = ", GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));

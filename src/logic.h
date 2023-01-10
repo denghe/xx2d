@@ -23,6 +23,8 @@ struct Player {
 	Sprite sprite;
 	bool dirty = true;
 	XY pos{};
+	float yOffset{};	// for calc rowIndex
+	static constexpr float scale = 0.25f;	// by res size
 };
 
 struct Logic : Engine {
@@ -31,6 +33,7 @@ struct Logic : Engine {
 
 	TMX::Camera cam;
 	TMX::Map map;
+	static constexpr float mapTileLogicAnchorY = 0.25f;	// by res content "base line"
 
 	// mapping to map.gidInfos
 	std::vector<Frame_Anim> gidFAs;
