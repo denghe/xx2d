@@ -9,7 +9,7 @@
  </layer>
  <layer id="2" name="trees" width="32" height="20">
   <data encoding="base64" compression="zstd">
-   KLUv/WAACV0BAFAAAwMAAwADAwMAC4Dw2gHP4X4M6P7MOWBuPCwlhwZ9BygPTAA0sxEO1Z0=
+   KLUv/WAACYUBAGAAAwMAAwADAwMDAwAMgJDyAc/hfhJQDE2q+zXh0ZoATng0KHaAYmAKQDObcKjuBA==
   </data>
  </layer>
 </map>

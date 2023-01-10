@@ -10,6 +10,7 @@ void Logic::Init() {
 
 	// load map
 	TMX::FillTo(map, this, "res/tiledmap2/m.tmx"sv);
+	mapTileYOffset = map.tileHeight * mapTileLogicAnchorY;
 
 	// fill frames
 	gidFAs.resize(map.gidInfos.size());
@@ -17,7 +18,7 @@ void Logic::Init() {
 		auto& i = map.gidInfos[gid];
 		auto& f = *gidFAs[gid].frame.Emplace();
 		f.tex = i.image->texture;
-		f.anchor = { 0, 1 };
+		f.anchor = { 0, float(map.tileHeight) / i.h };
 		f.spriteSize = { (float)i.w, (float)i.h };
 		f.textureRect = { (float)i.u, (float)i.v, (float)i.w, (float)i.h };
 	}
@@ -95,10 +96,10 @@ void Logic::Init() {
 			maxSpriteHeight = f->spriteSize.h;
 		}
 	}
-	player.yOffset = maxSpriteHeight * player.scale * anchor + map.tileHeight * mapTileLogicAnchorY;
+	player.yOffset = maxSpriteHeight * player.scale * anchor;
 	player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame);
 	player.sprite.SetScale(player.scale);
-	player.pos = cam.pos;
+	player.footPos = cam.pos;
 	player.sprite.Commit();
 }
 
@@ -133,26 +134,26 @@ LabBegin:
 
 		XY playerInc{ 8 * player.sprite.scale.x, 8 * player.sprite.scale.y };
 		if (Pressed(KbdKeys::W)) {
-			auto y = player.pos.y - playerInc.y;
-			player.pos.y = y < 0 ? 0 : y;
+			auto y = player.footPos.y - playerInc.y;
+			player.footPos.y = y < 0 ? 0 : y;
 			player.dirty = true;
 			//player.sprite.SetFlipY(false);
 		}
 		if (Pressed(KbdKeys::S)) {
-			auto y = player.pos.y + playerInc.y;
-			player.pos.y = y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y;
+			auto y = player.footPos.y + playerInc.y;
+			player.footPos.y = y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y;
 			player.dirty = true;
 			//player.sprite.SetFlipY(true);
 		}
 		if (Pressed(KbdKeys::A)) {
-			auto x = player.pos.x - playerInc.x;
-			player.pos.x = x < 0 ? 0 : x;
+			auto x = player.footPos.x - playerInc.x;
+			player.footPos.x = x < 0 ? 0 : x;
 			player.dirty = true;
 			player.sprite.SetFlipX(false);
 		}
 		if (Pressed(KbdKeys::D)) {
-			auto x = player.pos.x + playerInc.x;
-			player.pos.x = x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x;
+			auto x = player.footPos.x + playerInc.x;
+			player.footPos.x = x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x;
 			player.dirty = true;
 			player.sprite.SetFlipX(true);
 		}
@@ -174,7 +175,7 @@ LabBegin:
 	// update player
 	if (player.dirty) {
 		player.dirty = false;
-		player.sprite.SetPosition({ player.pos.x, -player.pos.y });
+		player.sprite.SetPosition({ player.footPos.x, player.yOffset - player.footPos.y });
 		if (elapsedSecs > 0) {
 			if (player.anim.Update(elapsedSecs)) {
 				player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame);
@@ -212,8 +213,8 @@ LabBegin:
 	// draw bg first
 	DrawLayerSprites(layerBG.sas, cam.rowFrom, cam.rowTo);
 
-	// calc player y map to row index by cam. 
-	int32_t posRowIndex = (player.pos.y + player.yOffset) / cam.tileHeight;
+	// calc player's row index
+	int32_t posRowIndex = (player.footPos.y + mapTileYOffset) / cam.tileHeight;
 
 	// draw above player rows
 	DrawLayerSprites(layerTrees.sas, cam.rowFrom, posRowIndex);

@@ -8,11 +8,11 @@ struct Frame_Anim {
 
 struct Sprite_Anim {
 	xx::Shared<Sprite> sprite;
-	Anim* anim = nullptr;
+	Anim* anim{};
 };
 
 struct Layer_SAs {
-	TMX::Layer_Tile* layer;
+	TMX::Layer_Tile* layer{};
 	// mapping to layer.gids
 	std::vector<Sprite_Anim> sas;
 };
@@ -21,19 +21,20 @@ struct Player {
 	TP tp;
 	Anim anim;
 	Sprite sprite;
-	bool dirty = true;
-	XY pos{};
-	float yOffset{};	// for calc rowIndex
-	static constexpr float scale = 0.25f;	// by res size
+	bool dirty{ true };
+	XY footPos{};
+	float yOffset{};	// for display sprite by center
+	static constexpr float scale{ 0.25f };	// by res size
 };
 
 struct Logic : Engine {
-	double nowSecs = 0;
-	float timePool = 0;
+	double nowSecs{};
+	float timePool{};
 
 	TMX::Camera cam;
 	TMX::Map map;
-	static constexpr float mapTileLogicAnchorY = 0.25f;	// by res content "base line"
+	static constexpr float mapTileLogicAnchorY{ 0.25f };	// by res content "base line"
+	float mapTileYOffset{};
 
 	// mapping to map.gidInfos
 	std::vector<Frame_Anim> gidFAs;
