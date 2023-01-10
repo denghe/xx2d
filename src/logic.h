@@ -41,7 +41,7 @@ struct Logic : Engine {
 	std::vector<Anim*> anims;
 
 	Layer_SAs layerBG;	// "bg"
-	Layer_SAs layer2;	// "Tile Layer 2"
+	Layer_SAs layerTrees;	// "trees"
 	Player player;
 
 	std::vector<Sprite*> tmpSprites;	// for sort

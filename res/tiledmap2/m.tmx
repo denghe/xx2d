@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="32" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="3" nextobjectid="1">
+ <tileset firstgid="1" source="tiles.tsx"/>
+ <tileset firstgid="3" source="pics.tsx"/>
+ <layer id="1" name="bg" width="32" height="20">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAACR0EAJABAAAAAgICAgICAgEBAgICAgJGoKCvBkCDCZodjTQum748DmcpN9YmcXpObjG+SxKce3zdM7AvZZ15qk1RJOHgchqy4xDB/4MyGGINxHyVcXAck2R2X8sHSz6k8ud8xvw0Aue5rHS60Z66rolm6OKsPEiqv5VyVQpgkCoh9Sb5IywF
+  </data>
+ </layer>
+ <layer id="2" name="trees" width="32" height="20">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAACV0BAFAAAwMAAwADAwMAC4Dw2gHP4X4M6P7MOWBuPCwlhwZ9BygPTAA0sxEO1Z0=
+  </data>
+ </layer>
+</map>

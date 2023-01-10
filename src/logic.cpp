@@ -9,7 +9,7 @@ void Logic::Init() {
 
 
 	// load map
-	TMX::FillTo(map, this, "res/tiledmap1/m1.tmx"sv);
+	TMX::FillTo(map, this, "res/tiledmap2/m.tmx"sv);
 
 	// fill frames
 	gidFAs.resize(map.gidInfos.size());
@@ -46,8 +46,8 @@ void Logic::Init() {
 	// locate & store
 	layerBG.layer = TMX::FindLayer(lts, "bg"sv);
 	assert(layerBG.layer);
-	layer2.layer = TMX::FindLayer(lts, "Tile Layer 2"sv);
-	assert(layer2.layer);
+	layerTrees.layer = TMX::FindLayer(lts, "trees"sv);
+	assert(layerTrees.layer);
 
 	// func for make sprites
 	auto&& MakeSprites = [&](Layer_SAs& lsas) {
@@ -75,11 +75,11 @@ void Logic::Init() {
 
 	// make bg & others layer's sprites
 	MakeSprites(layerBG);
-	MakeSprites(layer2);
+	MakeSprites(layerTrees);
 
 	// init camera
 	cam.Init({w, h}, map);
-	cam.SetPosition({ 1130, 930 });
+	cam.SetPosition({ 830, 510 });
 
 	// update for anim
 	nowSecs = xx::NowSteadyEpochSeconds();
@@ -216,13 +216,13 @@ LabBegin:
 	int32_t posRowIndex = (player.pos.y + player.yOffset) / cam.tileHeight;
 
 	// draw above player rows
-	DrawLayerSprites(layer2.sas, cam.rowFrom, posRowIndex);
+	DrawLayerSprites(layerTrees.sas, cam.rowFrom, posRowIndex);
 
 	// draw player( override above rows )
 	player.sprite.Draw(this, cam);
 
 	// draw after player rows
-	DrawLayerSprites(layer2.sas, posRowIndex, cam.rowTo);
+	DrawLayerSprites(layerTrees.sas, posRowIndex, cam.rowTo);
 
 	// display draw call
 	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", quad count = ", GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));
