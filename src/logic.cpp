@@ -78,6 +78,17 @@ void Logic::Init() {
 	MakeSprites(layerBG);
 	MakeSprites(layerTrees);
 
+	// fill wall flags
+	auto&& bgGids = layerBG.layer->gids;
+	auto&& numGids = bgGids.size();
+	walls.resize(numGids);
+	for (size_t i = 0; i < numGids; ++i) {
+		assert(bgGids[i]);
+		if (auto&& tile = map.gidInfos[bgGids[i]].tile) {
+			walls[i] = tile->class_ == "w"sv;
+		}
+	}
+
 	// init camera
 	cam.Init({w, h}, map);
 	cam.SetPosition({ 830, 510 });
@@ -131,19 +142,26 @@ LabBegin:
 			auto x = cam.pos.x + camInc.x;
 			cam.SetPositionX(x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x);
 		}
+		if (Pressed(KbdKeys::Z)) {
+			auto x = cam.scale.x + 0.001f;
+			cam.SetScale(x < 100 ? x : 100);
+		}
+		if (Pressed(KbdKeys::X)) {
+			auto x = cam.scale.x - 0.001f;
+			cam.SetScale(x > 0.001 ? x : 0.001);
+		}
+		cam.Commit();
 
 		XY playerInc{ 8 * player.sprite.scale.x, 8 * player.sprite.scale.y };
 		if (Pressed(KbdKeys::W)) {
 			auto y = player.footPos.y - playerInc.y;
 			player.footPos.y = y < 0 ? 0 : y;
 			player.dirty = true;
-			//player.sprite.SetFlipY(false);
 		}
 		if (Pressed(KbdKeys::S)) {
 			auto y = player.footPos.y + playerInc.y;
 			player.footPos.y = y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y;
 			player.dirty = true;
-			//player.sprite.SetFlipY(true);
 		}
 		if (Pressed(KbdKeys::A)) {
 			auto x = player.footPos.x - playerInc.x;
@@ -158,16 +176,7 @@ LabBegin:
 			player.sprite.SetFlipX(true);
 		}
 
-		if (Pressed(KbdKeys::Z)) {
-			auto x = cam.scale.x + 0.001f;
-			cam.SetScale(x < 100 ? x : 100);
-		}
-		if (Pressed(KbdKeys::X)) {
-			auto x = cam.scale.x - 0.001f;
-			cam.SetScale(x > 0.001 ? x : 0.001);
-		}
 	}
-	cam.Commit();
 
 	// if delta >= 1.f / 60 then elapsedSecs > 0, mean need update anims
 	auto elapsedSecs = timePoolBak - timePool;
@@ -213,17 +222,15 @@ LabBegin:
 	// draw bg first
 	DrawLayerSprites(layerBG.sas, cam.rowFrom, cam.rowTo);
 
-	// calc player's row index
-	int32_t posRowIndex = (player.footPos.y + mapTileYOffset) / cam.tileHeight;
-
 	// draw above player rows
-	DrawLayerSprites(layerTrees.sas, cam.rowFrom, posRowIndex);
+	int32_t playerRowIdx = (player.footPos.y + mapTileYOffset) / cam.tileHeight;
+	DrawLayerSprites(layerTrees.sas, cam.rowFrom, playerRowIdx);
 
 	// draw player( override above rows )
 	player.sprite.Draw(this, cam);
 
 	// draw after player rows
-	DrawLayerSprites(layerTrees.sas, posRowIndex, cam.rowTo);
+	DrawLayerSprites(layerTrees.sas, playerRowIdx, cam.rowTo);
 
 	// display draw call
 	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", quad count = ", GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));

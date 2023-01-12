@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "m.tmx",
+    "activeFile": "",
     "expandedProjectPaths": [
         "."
     ],
@@ -12,8 +12,8 @@
             "scale": 0.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 900,
-                "y": 519
+                "x": 896,
+                "y": 517
             }
         },
         "pics.tsx": {
@@ -39,13 +39,12 @@
     "map.tileWidth": 64,
     "map.width": 32,
     "openFiles": [
-        "m.tmx"
     ],
     "project": "tm2.tiled-project",
     "recentFiles": [
+        "tiles.tsx",
         "m.tmx",
         "pics.tsx",
-        "tiles.tsx",
         "tileset.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",

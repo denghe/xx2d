@@ -25,6 +25,7 @@ struct Player {
 	XY footPos{};
 	float yOffset{};	// for display sprite by center
 	static constexpr float scale{ 0.25f };	// by res size
+	static constexpr int32_t radius{ 48 };	// by res size
 };
 
 struct Logic : Engine {
@@ -40,12 +41,12 @@ struct Logic : Engine {
 	std::vector<Frame_Anim> gidFAs;
 	// for easy update
 	std::vector<Anim*> anims;
+	// mapping to "bg".gidInfos
+	std::vector<bool> walls;
 
 	Layer_SAs layerBG;	// "bg"
 	Layer_SAs layerTrees;	// "trees"
 	Player player;
-
-	std::vector<Sprite*> tmpSprites;	// for sort
 
 	BMFont fnt1;
 	Label lbCount;

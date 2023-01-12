@@ -1,6 +1,80 @@
 ﻿/*
 
 
+//// calc player's row index
+//playerRowIdx = (player.footPos.y + mapTileYOffset) / cam.tileHeight;
+//int32_t playerColIdx = player.footPos.x / cam.tileWidth;
+// todo: check wall. player can't move on wall
+// find walls around player
+//auto rowFrom = playerRowIdx - 1;
+//auto rowTo = playerRowIdx + 1;
+//auto colFrom = playerColIdx - 1;
+//auto colTo = playerColIdx + 1;
+//if (rowFrom < 0) rowFrom = 0;
+//if (rowTo > map.height) rowTo = map.height;
+//if (colFrom < 0) colFrom = 0;
+//if (colTo > map.width) colTo = map.width;
+//for (auto y = rowFrom; y < rowTo; ++y) {
+//	for (auto x = colFrom; x < colTo; ++x) {
+//	}
+//}
+
+//bool checkOverlap(int R, int Xc, int Yc, int X1, int Y1, int X2, int Y2) {
+//	int Xn = std::max(X1, std::min(Xc, X2));
+//	int Yn = std::max(Y1, std::min(Yc, Y2));
+//	int Dx = Xn - Xc;
+//	int Dy = Yn - Yc;
+//	return (Dx * Dx + Dy * Dy) <= R * R;
+//}
+//
+//boolean intersects(float cx, float cy, float radius, float left, float top, float right, float bottom) {
+//	float closestX = (cx < left ? left : (cx > right ? right : cx));
+//	float closestY = (cy < top ? top : (cy > bottom ? bottom : cy));
+//	float dx = closestX - cx;
+//	float dy = closestY - cy;
+//	return (dx * dx + dy * dy) <= radius * radius;
+//}
+//
+//bool doesSquareCircleOverlap(float squareCenterX, float squareCenterY, float squareHalfSize, float circleCenterX, float circleCenterY, float circleRadius) {
+//	float x = fabs(circleCenterX - squareCenterX) - squareHalfSize;
+//	float y = fabs(circleCenterY - squareCenterY) - squareHalfSize;
+//
+//	if (x > 0) {
+//		if (y > 0) {
+//			return x * x + y * y < circleRadius* circleRadius;
+//		} else {
+//			return x < circleRadius;
+//		}
+//	} else {
+//		return y < circleRadius;
+//	}
+//}
+
+//boolean intersect(Rectangle r, Circle c) {
+//	float cx = Math.abs(c.x - r.x - r.halfWidth);
+//	float xDist = r.halfWidth + c.radius;
+//	if (cx > xDist)
+//		return false;
+//	float cy = Math.abs(c.y - r.y - r.halfHeight);
+//	float yDist = r.halfHeight + c.radius;
+//	if (cy > yDist)
+//		return false;
+//	if (cx <= r.halfWidth || cy <= r.halfHeight)
+//		return true;
+//	float xCornerDist = cx - r.halfWidth;
+//	float yCornerDist = cy - r.halfHeight;
+//	float xCornerDistSq = xCornerDist * xCornerDist;
+//	float yCornerDistSq = yCornerDist * yCornerDist;
+//	float maxCornerDistSq = c.radius * c.radius;
+//	return xCornerDistSq + yCornerDistSq <= maxCornerDistSq;
+//}
+
+
+
+
+
+
+
 
 #version 300 es
 uniform 	vec4 map_ST;	// 1, 1, 0, 0
