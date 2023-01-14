@@ -1,14 +1,12 @@
 ﻿// https://learnopengl-cn.github.io/01%20Getting%20started/03%20Hello%20Window/
 
-#include "../../3rd/xxlib/xx_helpers.h"
+#include "xx_helpers.h"
 
 #define GLAD_MALLOC(sz)       malloc(sz)
 #define GLAD_FREE(ptr)        free(ptr)
 #define GLAD_GL_IMPLEMENTATION
-#include "../../3rd/glad/include/glad/glad.h"
-
-#include "../../_bak/glfw/glfw3.h"
-#pragma comment(lib, "../../_bak/glfw/glfw3.lib")
+#include "glad.h"
+#include "glfw3.h"
 
 #ifndef NDEBUG
 inline void CheckGLErrorAt(const char* file, int line, const char* func) {
@@ -67,6 +65,26 @@ int main()
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
