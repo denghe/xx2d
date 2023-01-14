@@ -92,7 +92,7 @@ void Engine::EngineUpdateBegin() {
 	glUniform2f(uCxy, w / 2, h / 2);
 
 	glBindVertexArray(va);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);	// 已知问题：这句不加要出错
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 }
 
 void Engine::EngineUpdateEnd() {
