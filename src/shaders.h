@@ -1,13 +1,6 @@
 ﻿#pragma once
 #include "pch.h"
 
-struct Shaders {
-	static std::string_view vsSrc;
-	static std::string_view fsSrc;
-};
-
-/***************************************************************************************************/
-
 struct ShaderManager;
 struct Shader {
 	static const size_t index = -1;	// index at sm->shaders
@@ -20,35 +13,41 @@ struct Shader {
 
 	virtual void Init(ShaderManager*) = 0;
 	virtual void Begin() = 0;
-	virtual void Commit() = 0;
+	virtual void End() = 0;
 	virtual ~Shader() {}
 };
 
 /***************************************************************************************************/
 
+struct Engine;
 struct ShaderManager {
+	// owner engine
+	Engine* eg{};
+
 	// all shader instance container
 	std::array<xx::Shared<Shader>, 2> shaders{};
 
 	// store current shaders index
 	size_t cursor = -1;
 
-	// performance counters
-	size_t drawCall{}, drawQuads{}, drawLines{};	// set zero by begin
-
 	// make & call all shaders Init
-	void Init();
+	void Init(Engine*);
 
 	// zero counters & begin default shader
 	void Begin();
 
-	// commit current shader
-	void Commit();
+	// end current shader
+	void End();
+
+	// performance counters
+	size_t drawCall{}, drawQuads{}, drawLines{};	// set zero by begin
+	size_t GetDrawCall();
+	size_t GetDrawQuads();
 
 	template<typename T, typename ENABLED = std::enable_if_t<std::is_base_of_v<Shader, T>>>
-	T& Get() {
+	T& GetShader() {
 		if (cursor != T::index) {
-			shaders[cursor]->Commit();
+			shaders[cursor]->End();
 			cursor = T::index;
 			shaders[T::index]->Begin();
 		}
@@ -77,10 +76,11 @@ struct Shader_XyUvC : Shader {
 
 	void Init(ShaderManager*) override;
 	void Begin() override;
-	void Commit() override;
+	void End() override;
 
+	void Commit();
 	QuadVerts& DrawQuadBegin(GLTexture& tex);	// need fill & commit
-	void DrawQuadCommit();
+	void DrawQuadEnd();
 
 	void DrawQuad(GLTexture& tex, QuadVerts const& qv);	// memcpy & commit
 };
@@ -99,10 +99,10 @@ struct Shader_XyC : Shader {
 
 	void Init(ShaderManager*) override;
 	void Begin() override;
-	void Commit() override;
+	void End() override;
 
 	XYRGBA8* DrawLineBegin(int numPoints);	// need fill & commit
-	void DrawLineCommit();
+	void DrawLineEnd();
 };
 
 

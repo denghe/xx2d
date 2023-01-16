@@ -1,41 +1,30 @@
 ﻿#include "pch.h"
 
-std::string_view Shaders::vsSrc = R"(#version 300 es
-precision highp float;
-uniform vec2 uCxy;	// center x y
+void ShaderManager::Init(Engine* eg) {
+	this->eg = eg;
 
-in vec2 aPos;
-in vec2 aTexCoord;
-in vec4 aColor;
-
-out vec4 vColor;
-out vec2 vTexCoord;
-
-void main() {
-	gl_Position = vec4(aPos / uCxy, 0, 1);
-	vTexCoord = aTexCoord;
-	vColor = aColor;
-})"sv;
-
-std::string_view Shaders::fsSrc = R"(#version 300 es
-precision highp float;
-uniform sampler2D uTex0;
-
-in vec4 vColor;
-in vec2 vTexCoord;
-
-out vec4 oColor;
-
-void main() {
-	oColor = vColor * texture(uTex0, vTexCoord / vec2(textureSize(uTex0, 0)));
-})"sv;
-
-
-void ShaderManager::Init() {
 	// set gl global env for all shaders
+
 	glEnable(GL_PRIMITIVE_RESTART);
 	glPrimitiveRestartIndex(65535);
 	glPointSize(5);
+
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
+	glDisable(GL_CULL_FACE);
+
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(false);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+	glActiveTexture(GL_TEXTURE0);
+
+	CheckGLError();
+
 
 	// make all
 	shaders[Shader_XyUvC::index] = xx::Make<Shader_XyUvC>();
@@ -56,6 +45,20 @@ void ShaderManager::Begin() {
 	shaders[cursor]->Begin();
 }
 
-void ShaderManager::Commit() {
-	shaders[cursor]->Commit();
+void ShaderManager::End() {
+	shaders[cursor]->End();
+}
+
+size_t ShaderManager::GetDrawCall() {
+	auto& s = *shaders[Shader_XyUvC::index].ReinterpretCast<Shader_XyUvC>();
+	return drawCall + s.texsCount;
+}
+
+size_t ShaderManager::GetDrawQuads() {
+	auto& s = *shaders[Shader_XyUvC::index].ReinterpretCast<Shader_XyUvC>();
+	size_t j = 0;
+	for (size_t i = 0; i < s.texsCount; i++) {
+		j += s.texs[i].second;
+	}
+	return drawQuads + j;
 }

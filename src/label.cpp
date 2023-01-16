@@ -99,7 +99,8 @@ void Label::Commit() {
 }
 
 void Label::Draw(Engine* eg) {
+	auto& s = eg->sm.GetShader<Shader_XyUvC>();
 	for (auto& c : chars) {
-		eg->AutoBatchDrawQuad(*c.tex, c.qv);		// todo: batch version
+		s.DrawQuad(*c.tex, c.qv);		// todo: batch version
 	}
 }

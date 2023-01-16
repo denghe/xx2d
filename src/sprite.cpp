@@ -145,12 +145,13 @@ void Sprite::Commit() {
 
 void Sprite::Draw(Engine* eg) {
 	assert(!dirty);
-	eg->AutoBatchDrawQuad(*frame->tex, qv);
+	eg->sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
 }
 
 void Sprite::Draw(Engine* eg, Translate const& trans) {
 	assert(!dirty);
-	auto&& q = eg->AutoBatchDrawQuadBegin(*frame->tex);
+	auto& s = eg->sm.GetShader<Shader_XyUvC>();
+	auto&& q = s.DrawQuadBegin(*frame->tex);
 	q[0].x = (qv[0].x + trans.offset.x) * trans.scale.x; q[0].y = (qv[0].y + trans.offset.y) * trans.scale.y;
 	q[1].x = (qv[1].x + trans.offset.x) * trans.scale.x; q[1].y = (qv[1].y + trans.offset.y) * trans.scale.y;
 	q[2].x = (qv[2].x + trans.offset.x) * trans.scale.x; q[2].y = (qv[2].y + trans.offset.y) * trans.scale.y;
@@ -159,5 +160,5 @@ void Sprite::Draw(Engine* eg, Translate const& trans) {
 	memcpy(&q[1].u, &qv[1].u, 8);
 	memcpy(&q[2].u, &qv[2].u, 8);
 	memcpy(&q[3].u, &qv[3].u, 8);
-	eg->AutoBatchDrawQuadEnd();
+	s.DrawQuadEnd();
 }

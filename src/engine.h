@@ -92,37 +92,7 @@ struct Engine {
 	/**********************************************************************************/
 	// shader
 
-	GLShader v, f;
-	GLProgram p;
-	GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
-	GLVertexArrays va;
-	GLBuffer vb, ib;
-
-
-
-	/**********************************************************************************/
-	// auto batch
-
-	static const size_t maxVertNums = 65536;
-	static const size_t maxQuadNums = maxVertNums / 4;
-	static const size_t maxIndexNums = maxQuadNums * 6;
-
-	GLuint autoBatchLastTextureId = 0;
-	size_t autoBatchTexsCount = 0;
-	size_t autoBatchQuadVertsCount = 0;
-	size_t drawCall = 0, drawQuads = 0;	// cleanup when EngineUpdateBegin. +1 when glDrawXxxxx
-	size_t GetDrawCall();
-	size_t GetDrawQuads();
-
-	std::unique_ptr<std::pair<GLuint, int>[]> autoBatchTexs = std::make_unique<std::pair<GLuint, int>[]>(maxQuadNums);	// tex id + count
-	std::unique_ptr<QuadVerts[]> autoBatchQuadVerts = std::make_unique<QuadVerts[]>(maxQuadNums);
-
-	void AutoBatchBegin();
-	QuadVerts& AutoBatchDrawQuadBegin(GLTexture& tex);
-	void AutoBatchDrawQuadEnd();
-	void AutoBatchDrawQuad(GLTexture& tex, QuadVerts const& qv);
-	void AutoBatchCommit();
-
+	ShaderManager sm;
 
 	/**********************************************************************************/
 	// game loop

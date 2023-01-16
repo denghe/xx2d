@@ -79,7 +79,12 @@ void main() {
 }
 
 void Shader_XyUvC::Begin() {
-	// todo
+	glUseProgram(p);
+	glUniform1i(uTex0, 0);
+	glUniform2f(uCxy, sm->eg->w / 2, sm->eg->h / 2);
+
+	glBindVertexArray(va);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 }
 
 XX_INLINE QuadVerts& Shader_XyUvC::DrawQuadBegin(GLTexture& tex) {
@@ -96,14 +101,14 @@ XX_INLINE QuadVerts& Shader_XyUvC::DrawQuadBegin(GLTexture& tex) {
 	}
 	return quadVerts[quadVertsCount];
 }
-XX_INLINE void Shader_XyUvC::DrawQuadCommit() {
+XX_INLINE void Shader_XyUvC::DrawQuadEnd() {
 	++quadVertsCount;
 }
 
 void Shader_XyUvC::DrawQuad(GLTexture& tex, QuadVerts const& qv) {
 	auto&& tar = DrawQuadBegin(tex);
 	memcpy(&tar, qv.data(), sizeof(qv));
-	DrawQuadCommit();
+	DrawQuadEnd();
 };
 
 void Shader_XyUvC::Commit() {
@@ -125,4 +130,14 @@ void Shader_XyUvC::Commit() {
 	lastTextureId = 0;
 	texsCount = 0;
 	quadVertsCount = 0;
+}
+
+void Shader_XyUvC::End() {
+	if (quadVertsCount) {
+		Commit();
+	}
+	// todo: cleanup buf & shader?
+	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	// glBindVertexArray(0);
+	// glUseProgram(0);
 }

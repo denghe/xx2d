@@ -10,11 +10,9 @@ in vec2 aPos;
 in vec4 aColor;
 
 out vec4 vColor;
-out vec2 vTexCoord;
 
 void main() {
 	gl_Position = vec4(aPos / uCxy, 0, 1);
-	vTexCoord = aTexCoord;
 	vColor = aColor;
 })"sv });
 
@@ -43,7 +41,7 @@ void Shader_XyC::Begin() {
 	// todo
 }
 
-void Shader_XyC::Commit() {
+void Shader_XyC::End() {
 	// todo
 }
 
@@ -52,6 +50,6 @@ XYRGBA8* Shader_XyC::DrawLineBegin(int numPoints) {
 	return 0;
 }
 
-void Shader_XyC::DrawLineCommit() {
+void Shader_XyC::DrawLineEnd() {
 	// todo
 }

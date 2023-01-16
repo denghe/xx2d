@@ -233,7 +233,7 @@ LabBegin:
 	DrawLayerSprites(layerTrees.sas, playerRowIdx, cam.rowTo);
 
 	// display draw call
-	lbCount.SetText(fnt1, xx::ToString("draw call = ", GetDrawCall(), ", quad count = ", GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));
+	lbCount.SetText(fnt1, xx::ToString("draw call = ", sm.GetDrawCall(), ", quad count = ", sm.GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));
 	lbCount.Commit();
 	lbCount.Draw(this);
 	return 0;
