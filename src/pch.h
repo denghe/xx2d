@@ -12,10 +12,9 @@
 
 #include "glres.h"
 #include "glutils.h"
-#include "glshaders.h"
 
-#include "globalutils.h"
 #include "prims.h"
+#include "shaders.h"
 #include "tp.h"
 #include "tmx.h"
 #include "bmfont.h"

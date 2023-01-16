@@ -36,6 +36,11 @@ struct XYUVRGBA8 : XY, UV, RGBA8 {};
 */
 using QuadVerts = std::array<XYUVRGBA8, 4>;
 
+// 1 point data ( for draw line strip )
+struct XYRGBA8 : XY, RGBA8 {};
+
+
+
 //
 struct Size {
 	float w, h; 

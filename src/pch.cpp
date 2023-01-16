@@ -221,4 +221,46 @@ https://github.com/vulkanprogrammingguide/examples
 
 
 
+
+
+
+
+
+
+
+
+
+#version 330
+uniform vec2 uCxy;	// center x y
+
+in vec2 aPos;
+in vec2 aTexCoord;
+in vec4 aColor;
+
+out vec4 vColor;
+out vec2 vTexCoord;
+
+void main() {
+	gl_Position = vec4(aPos / uCxy, 0, 1);
+	vTexCoord = aTexCoord;
+	vColor = aColor;
+})"sv;
+
+
+
+#version 330
+uniform sampler2D uTex0;
+
+in vec4 vColor;
+in vec2 vTexCoord;
+
+out vec4 oColor;
+
+void main() {
+	oColor = vColor * texture(uTex0, vTexCoord / vec2(textureSize(uTex0, 0)));
+})"sv;
+
+//#ifdef GL_ES
+
+
 */
