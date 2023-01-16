@@ -61,18 +61,17 @@ struct ShaderManager {
 struct Shader_XyUvC : Shader {
 	static const size_t index = 0;	// index at sm->shaders
 
-	static const size_t maxQuadNums = maxVertNums / 4;
-	static const size_t maxIndexNums = maxQuadNums * 6;
-
 	GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
 	GLVertexArrays va;
 	GLBuffer vb, ib;
 
+	static const size_t maxQuadNums = maxVertNums / 4;
+	static const size_t maxIndexNums = maxQuadNums * 6;
 	GLuint lastTextureId = 0;
-	size_t texsCount = 0;
-	size_t quadVertsCount = 0;
 	std::unique_ptr<std::pair<GLuint, int>[]> texs = std::make_unique<std::pair<GLuint, int>[]>(maxQuadNums);	// tex id + count
+	size_t texsCount = 0;
 	std::unique_ptr<QuadVerts[]> quadVerts = std::make_unique<QuadVerts[]>(maxQuadNums);
+	size_t quadVertsCount = 0;
 
 	void Init(ShaderManager*) override;
 	void Begin() override;
@@ -91,18 +90,24 @@ struct Shader_XyUvC : Shader {
 struct Shader_XyC : Shader {
 	static const size_t index = 1;	// index at sm->shaders
 
-	static const size_t maxIndexNums = maxVertNums * 1.5;
-
 	GLint uCxy = -1, aPos = -1, aColor = -1;
 	GLVertexArrays va;
 	GLBuffer vb, ib;
+
+	static const size_t maxIndexNums = maxVertNums * 1.5;
+	size_t linesCount = 0;
+	std::unique_ptr<XYRGBA8[]> points = std::make_unique<XYRGBA8[]>(maxVertNums);
+	size_t pointsCount = 0;
+	std::unique_ptr<uint16_t[]> indexs = std::make_unique<uint16_t[]>(maxIndexNums);
+	size_t indexsCount = 0;
 
 	void Init(ShaderManager*) override;
 	void Begin() override;
 	void End() override;
 
-	XYRGBA8* DrawLineBegin(int numPoints);	// need fill & commit
-	void DrawLineEnd();
+	void Commit();
+	XYRGBA8* DrawLineStrip(size_t const& pointsCount);	// fill
+	void DrawLineStrip(XYRGBA8* pointsBuf, size_t const& pointsCount);	// memcpy
 };
 
 

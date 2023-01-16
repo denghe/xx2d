@@ -44,8 +44,8 @@ void main() {
 
 	glGenVertexArrays(1, &va.Ref());
 	glBindVertexArray(va);
-	assert((GLuint*)&vb + 1 == (GLuint*)&ib);
-	glGenBuffers(2, (GLuint*)&vb);
+	glGenBuffers(1, (GLuint*)&vb);
+	glGenBuffers(1, (GLuint*)&ib);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
 	glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVRGBA8), 0);
@@ -56,20 +56,18 @@ void main() {
 	glEnableVertexAttribArray(aColor);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-	{
-		auto idxs = std::make_unique<GLushort[]>(maxIndexNums);
-		for (size_t i = 0; i < maxVertNums / 4; i++) {
-			auto p = idxs.get() + i * 6;
-			auto v = i * 4;
-			p[0] = uint16_t(v + 0);
-			p[1] = uint16_t(v + 1);
-			p[2] = uint16_t(v + 2);
-			p[3] = uint16_t(v + 0);
-			p[4] = uint16_t(v + 2);
-			p[5] = uint16_t(v + 3);
-		}
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * maxIndexNums, idxs.get(), GL_STATIC_DRAW);
+	auto idxs = std::make_unique<GLushort[]>(maxIndexNums);
+	for (size_t i = 0; i < maxVertNums / 4; i++) {
+		auto p = idxs.get() + i * 6;
+		auto v = i * 4;
+		p[0] = uint16_t(v + 0);
+		p[1] = uint16_t(v + 1);
+		p[2] = uint16_t(v + 2);
+		p[3] = uint16_t(v + 0);
+		p[4] = uint16_t(v + 2);
+		p[5] = uint16_t(v + 3);
 	}
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * maxIndexNums, idxs.get(), GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -87,29 +85,15 @@ void Shader_XyUvC::Begin() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 }
 
-XX_INLINE QuadVerts& Shader_XyUvC::DrawQuadBegin(GLTexture& tex) {
-	if (quadVertsCount == maxQuadNums) {
+void Shader_XyUvC::End() {
+	if (quadVertsCount) {
 		Commit();
 	}
-	if (lastTextureId != tex) {
-		lastTextureId = tex;
-		texs[texsCount].first = tex;
-		texs[texsCount].second = 1;
-		++texsCount;
-	} else {
-		texs[texsCount - 1].second += 1;
-	}
-	return quadVerts[quadVertsCount];
+	// todo: cleanup buf & shader?
+	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	// glBindVertexArray(0);
+	// glUseProgram(0);
 }
-XX_INLINE void Shader_XyUvC::DrawQuadEnd() {
-	++quadVertsCount;
-}
-
-void Shader_XyUvC::DrawQuad(GLTexture& tex, QuadVerts const& qv) {
-	auto&& tar = DrawQuadBegin(tex);
-	memcpy(&tar, qv.data(), sizeof(qv));
-	DrawQuadEnd();
-};
 
 void Shader_XyUvC::Commit() {
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
@@ -132,12 +116,27 @@ void Shader_XyUvC::Commit() {
 	quadVertsCount = 0;
 }
 
-void Shader_XyUvC::End() {
-	if (quadVertsCount) {
+QuadVerts& Shader_XyUvC::DrawQuadBegin(GLTexture& tex) {
+	if (quadVertsCount == maxQuadNums) {
 		Commit();
 	}
-	// todo: cleanup buf & shader?
-	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	// glBindVertexArray(0);
-	// glUseProgram(0);
+	if (lastTextureId != tex) {
+		lastTextureId = tex;
+		texs[texsCount].first = tex;
+		texs[texsCount].second = 1;
+		++texsCount;
+	} else {
+		texs[texsCount - 1].second += 1;
+	}
+	return quadVerts[quadVertsCount];
 }
+
+void Shader_XyUvC::DrawQuadEnd() {
+	++quadVertsCount;
+}
+
+void Shader_XyUvC::DrawQuad(GLTexture& tex, QuadVerts const& qv) {
+	auto&& tar = DrawQuadBegin(tex);
+	memcpy(&tar, qv.data(), sizeof(qv));
+	DrawQuadEnd();
+};
