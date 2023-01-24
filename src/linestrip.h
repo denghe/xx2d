@@ -15,6 +15,8 @@ struct LineStrip {
 
 	std::vector<XY>& SetPoints();
 
+	void FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle = {}, int const& segments = 100, XY const& scale = { 1,1 });
+
 	void SetSize(Size const& s);
 
 	void SetAnchor(XY const& a);

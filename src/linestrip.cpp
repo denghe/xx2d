@@ -5,6 +5,22 @@ std::vector<XY>& LineStrip::SetPoints() {
 	return points;
 }
 
+void LineStrip::FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle, int const& segments, XY const& scale) {
+	dirty = true;
+	points.reserve(segments + 2);
+	points.resize(segments + 1);
+	auto coef = 2.0f * (float)M_PI / segments;
+	auto a = angle.has_value() ? *angle : 0;
+	for (int i = 0; i <= segments; ++i) {
+		auto rads = i * coef + a;
+		points[i].x = radius * cosf(rads) * scale.x + center.x;
+		points[i].y = radius * sinf(rads) * scale.y + center.y;
+	}
+	if (angle.has_value()) {
+		points.push_back(center);
+	}
+}
+
 void LineStrip::SetSize(Size const& s) {
 	dirty = true;
 	size = s;

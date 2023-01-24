@@ -235,8 +235,9 @@ LabBegin:
 	// test line strip
 	if (Pressed(Mbtns::Left)) {
 		auto&& ls = lineStrips.emplace_back();
-		ls.SetSize({ 20, 20 });
-		ls.SetPoints() = { {0,0}, {0,20}, {20,20}, {20,0}, {0,0} };
+		ls.SetSize({ 30, 30 });
+		//ls.SetPoints() = { {0,0}, {0,30}, {30,30}, {30,0}, {0,0} };
+		ls.FillCirclePoints({ 15,15 }, 15, {}, 12);
 		ls.SetColor({ 255, 0, 0, 255 });
 		ls.SetPositon(mousePosition);
 		ls.Commit();
