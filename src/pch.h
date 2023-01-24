@@ -21,6 +21,7 @@
 #include "engine.h"
 #include "sprite.h"
 #include "label.h"
+#include "linestrip.h"
 #include "tmx_ex.h"
 // ...
 

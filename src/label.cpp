@@ -1,5 +1,4 @@
 ﻿#include "pch.h"
-#include "label.h"
 
 void Label::SetText(BMFont bmf, std::string_view const& text, float const& fontSize) {
 	dirty = 0xFFFFFFFFu;

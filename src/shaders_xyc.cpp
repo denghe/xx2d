@@ -82,29 +82,30 @@ void Shader_XyC::Commit() {
 
 	glDrawElements(GL_LINE_STRIP, indexsCount, GL_UNSIGNED_SHORT, 0);
 
-	sm->drawLines += linesCount;
+	sm->drawLines += indexsCount;
 	sm->drawCall += 1;
 
-	linesCount = 0;
 	pointsCount = 0;
 	indexsCount = 0;
 }
 
 XYRGBA8* Shader_XyC::DrawLineStrip(size_t const& pc) {
-	assert(pc <= maxIndexNums);
-	if (indexsCount + pc + 1 > maxIndexNums) {
+	assert(pc <= maxVertNums);
+	auto&& c = pointsCount + pc;
+	if (c > maxVertNums) {
 		Commit();
+		c = pc;
 	}
 	auto rtv = &points[pointsCount];
-	for (size_t i = pointsCount, e = pointsCount + pc; i < e; ++i) {
+	for (size_t i = pointsCount; i < c; ++i) {
 		indexs[indexsCount++] = i;
 	}
-	indexs[indexsCount++] = 65535;
-	linesCount += pc - 1;
-	pointsCount += pc;
+	indexs[indexsCount++] = 65535;	// primitive restart
+	assert(indexsCount <= maxIndexNums);
+	pointsCount = c;
 	return rtv;
 }
 
-void Shader_XyC::DrawLineStrip(XYRGBA8* pointsBuf, size_t const& pointsCount) {
-	memcpy(DrawLineStrip(pointsCount), pointsBuf, sizeof(XYRGBA8) * pointsCount);
+void Shader_XyC::DrawLineStrip(XYRGBA8* pointsBuf, size_t const& pc) {
+	memcpy(DrawLineStrip(pc), pointsBuf, sizeof(XYRGBA8) * pc);
 }

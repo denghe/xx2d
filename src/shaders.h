@@ -43,6 +43,7 @@ struct ShaderManager {
 	size_t drawCall{}, drawQuads{}, drawLines{};	// set zero by begin
 	size_t GetDrawCall();
 	size_t GetDrawQuads();
+	size_t GetDrawLines();
 
 	template<typename T, typename ENABLED = std::enable_if_t<std::is_base_of_v<Shader, T>>>
 	T& GetShader() {
@@ -95,7 +96,6 @@ struct Shader_XyC : Shader {
 	GLBuffer vb, ib;
 
 	static const size_t maxIndexNums = maxVertNums * 1.5;
-	size_t linesCount = 0;
 	std::unique_ptr<XYRGBA8[]> points = std::make_unique<XYRGBA8[]>(maxVertNums);
 	size_t pointsCount = 0;
 	std::unique_ptr<uint16_t[]> indexs = std::make_unique<uint16_t[]>(maxIndexNums);

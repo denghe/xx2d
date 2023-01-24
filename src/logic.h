@@ -48,6 +48,8 @@ struct Logic : Engine {
 	Layer_SAs layerTrees;	// "trees"
 	Player player;
 
+	std::vector<LineStrip> lineStrips;
+
 	BMFont fnt1;
 	Label lbCount;
 	void Init();

@@ -232,8 +232,22 @@ LabBegin:
 	// draw after player rows
 	DrawLayerSprites(layerTrees.sas, playerRowIdx, cam.rowTo);
 
+	// test line strip
+	if (Pressed(Mbtns::Left)) {
+		auto&& ls = lineStrips.emplace_back();
+		ls.SetSize({ 20, 20 });
+		ls.SetPoints() = { {0,0}, {0,20}, {20,20}, {20,0}, {0,0} };
+		ls.SetColor({ 255, 0, 0, 255 });
+		ls.SetPositon(mousePosition);
+		ls.Commit();
+	}
+	for (auto& ls : lineStrips) {
+		ls.Draw(this);
+	}
+
 	// display draw call
-	lbCount.SetText(fnt1, xx::ToString("draw call = ", sm.GetDrawCall(), ", quad count = ", sm.GetDrawQuads(), ", cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));
+	//lbCount.SetText(fnt1, xx::ToString("cam.scale = ", cam.scale.x, ", cam.pos = ", cam.pos.x, ",", cam.pos.y));
+	lbCount.SetText(fnt1, xx::ToString("draw call = ", sm.GetDrawCall(), ", quad count = ", sm.GetDrawQuads(), ", line point count = ", sm.GetDrawLines()));
 	lbCount.Commit();
 	lbCount.Draw(this);
 	return 0;
