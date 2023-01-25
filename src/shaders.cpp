@@ -41,7 +41,7 @@ void ShaderManager::Init(Engine* eg) {
 }
 
 void ShaderManager::Begin() {
-	drawCall = drawQuads = drawLines = 0;
+	drawCall = drawQuads = drawLinePoints = 0;
 	shaders[cursor]->Begin();
 }
 
@@ -65,5 +65,5 @@ size_t ShaderManager::GetDrawQuads() {
 
 size_t ShaderManager::GetDrawLines() {
 	auto& s = *shaders[Shader_XyC::index].ReinterpretCast<Shader_XyC>();
-	return drawLines + s.indexsCount;
+	return drawLinePoints + s.indexsCount;
 }

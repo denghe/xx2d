@@ -77,6 +77,12 @@ void main() {
 }
 
 void Shader_XyUvC::Begin() {
+	if (sm->cursor != index) {
+		// here can check shader type for combine batch
+		sm->shaders[sm->cursor]->End();
+		sm->cursor = index;
+	}
+
 	glUseProgram(p);
 	glUniform1i(uTex0, 0);
 	glUniform2f(uCxy, sm->eg->w / 2, sm->eg->h / 2);

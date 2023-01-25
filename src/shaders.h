@@ -40,19 +40,16 @@ struct ShaderManager {
 	void End();
 
 	// performance counters
-	size_t drawCall{}, drawQuads{}, drawLines{};	// set zero by begin
+	size_t drawCall{}, drawQuads{}, drawLinePoints{};	// set zero by begin
 	size_t GetDrawCall();
 	size_t GetDrawQuads();
 	size_t GetDrawLines();
 
 	template<typename T, typename ENABLED = std::enable_if_t<std::is_base_of_v<Shader, T>>>
 	T& GetShader() {
-		if (cursor != T::index) {
-			shaders[cursor]->End();
-			cursor = T::index;
-			shaders[T::index]->Begin();
-		}
-		return *shaders[T::index].ReinterpretCast<T>();
+		auto&& r = *shaders[T::index].ReinterpretCast<T>();
+		r.Begin();
+		return r;
 	}
 };
 

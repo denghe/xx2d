@@ -56,6 +56,12 @@ void main() {
 }
 
 void Shader_XyC::Begin() {
+	if (sm->cursor != index) {
+		// here can check shader type for combine batch
+		sm->shaders[sm->cursor]->End();
+		sm->cursor = index;
+	}
+
 	glUseProgram(p);
 	glUniform2f(uCxy, sm->eg->w / 2, sm->eg->h / 2);
 
@@ -82,7 +88,7 @@ void Shader_XyC::Commit() {
 
 	glDrawElements(GL_LINE_STRIP, indexsCount, GL_UNSIGNED_SHORT, 0);
 
-	sm->drawLines += indexsCount;
+	sm->drawLinePoints += indexsCount;
 	sm->drawCall += 1;
 
 	pointsCount = 0;

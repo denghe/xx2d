@@ -112,6 +112,17 @@ void Logic::Init() {
 	player.sprite.SetScale(player.scale);
 	player.footPos = cam.pos;
 	player.sprite.Commit();
+
+	// test line strip
+	for (size_t i = 0; i < 100000; i++) {
+		XY v(float(rand() % (1920 - 30)) + 15 - hw, float(rand() % (1080 - 30)) + 15 - hh);
+
+		auto&& ls = lineStrips.emplace_back();
+		ls.FillCirclePoints({ 0,0 }, 15, {}, 12);
+		ls.SetColor({ 255, 255, 0, 255 });
+		ls.SetPositon(v);
+		ls.Commit();
+	}
 }
 
 int Logic::Update() {
