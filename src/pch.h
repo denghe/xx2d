@@ -19,6 +19,7 @@
 #include "tmx.h"
 #include "bmfont.h"
 #include "engine.h"
+#include "event_listeners.h"
 #include "sprite.h"
 #include "label.h"
 #include "linestrip.h"

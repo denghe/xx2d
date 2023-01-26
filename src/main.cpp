@@ -50,7 +50,7 @@ int main() {
 	});
 
 	glfwSetMouseButtonCallback(wnd, [](GLFWwindow* wnd, int button, int action, int mods) {
-		::logic->mbtnStatus[button] = action;
+		::logic->mbtnStates[button] = action;
 	});
 
 	glfwSetFramebufferSizeCallback(wnd, [](GLFWwindow* wnd, int w, int h) {

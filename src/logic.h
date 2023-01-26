@@ -28,6 +28,15 @@ struct Player {
 	static constexpr int32_t radius{ 48 };	// by res size
 };
 
+struct DragableCircle : LineStrip {
+	using LineStrip::LineStrip;
+	bool HandleMouseDown(MouseEventListener<DragableCircle>* L);
+	int HandleMouseMove(MouseEventListener<DragableCircle>* L);
+	void HandleMouseUp(MouseEventListener<DragableCircle>* L);
+	void Init(XY const& pos, float const& radius, int const& segments);
+	float radius_square{};
+};
+
 struct Logic : Engine {
 	double nowSecs{};
 	float timePool{};
@@ -48,7 +57,8 @@ struct Logic : Engine {
 	Layer_SAs layerTrees;	// "trees"
 	Player player;
 
-	std::vector<LineStrip> lineStrips;
+	std::vector<DragableCircle> circles;
+	MouseEventListener<DragableCircle> meListener;
 
 	BMFont fnt1;
 	Label lbCount;

@@ -82,8 +82,8 @@ struct Engine {
 	XY mousePosition{ (float)w/2, (float)h/2 };
 	std::vector<char32_t> kbdInputs;		// for store keyboard typed chars
 	std::array<uint8_t, 512> kbdStates{};	// release: 0   pressed: 1   repeat: 2
-	std::array<uint8_t, 32> mbtnStatus{};	// mouse button states
-	bool Pressed(Mbtns const& b);	// return mbtnStatus[(size_t)b];
+	std::array<uint8_t, 32> mbtnStates{};	// mouse button states
+	bool Pressed(Mbtns const& b);	// return mbtnStates[(size_t)b];
 	bool Pressed(KbdKeys const& k);	// return kbdStates[(size_t)k];
 
 	double lastTime{}, lastDelta{};	// seconds. update before call Update()
