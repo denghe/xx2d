@@ -2,14 +2,26 @@
 #include "pch.h"
 
 /*
-
 example:
 
+struct Foo;
+using FooMouseEventListener = MouseEventListener<Foo*>;
+
 struct Foo {
-	bool HandleMouseDown(MouseEventListener<Foo>* L);
-	int HandleMouseMove(MouseEventListener<Foo>* L);
-	void HandleMouseUp(MouseEventListener<Foo>* L);
+	bool HandleMouseDown(FooMouseEventListener& L);
+	int HandleMouseMove(FooMouseEventListener& L);
+	void HandleMouseUp(FooMouseEventListener& L);
 };
+...
+FooMouseEventListener meListener;
+...
+meListener.Init(this, Mbtns::Left);
+...
+meListener.Update();
+auto&& iter = foos.begin();
+while (meListener.eventId && iter != foos.end()) {
+	meListener.Dispatch(&*iter++);
+}
 
 */
 
@@ -22,7 +34,7 @@ struct MouseEventListener {
 	double downTime{};
 
 	uint8_t lastState{};
-	Handler* handler{};
+	Handler handler{};
 	int eventId{};	// 0: no event   1: down  2: move  3: up  4: cancel?
 
 	// todo: helper funcs?
@@ -43,24 +55,28 @@ struct MouseEventListener {
 				eventId = 1;	// need search handler
 			} else {	// up
 				if (handler) {
-					handler->HandleMouseUp(this);
+					handler->HandleMouseUp(*this);
 					handler = {};
 					eventId = {};
 				}
 			}
 		} else {
 			if (handler && lastPos != eg->mousePosition) {	// move
-				eventId = handler->HandleMouseMove(this);	// 1? search next handler?
-				lastPos = eg->mousePosition;
+				if (eventId = handler->HandleMouseMove(*this)) {
+					handler = {};
+				} else {
+					lastPos = eg->mousePosition;
+				}
 			}
 		}
 	}
 
 	// eventId > 0: need Dispatch next handler
-	void Dispatch(Handler* h) {
+	template<typename H>
+	void Dispatch(H&& h) {
 		assert(!handler);
-		if (h->HandleMouseDown(this)) {
-			handler = h;
+		if (h->HandleMouseDown(*this)) {
+			handler = std::forward<H>(h);
 			eventId = {};
 		}
 	}

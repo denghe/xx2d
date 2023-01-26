@@ -263,20 +263,20 @@ LabBegin:
 	return 0;
 }
 
-bool DragableCircle::HandleMouseDown(MouseEventListener<DragableCircle>* L) {
-	auto dx = pos.x - L->downPos.x;
-	auto dy = pos.y - L->downPos.y;
+bool DragableCircle::HandleMouseDown(DragableCircleMouseEventListener& L) {
+	auto dx = pos.x - L.downPos.x;
+	auto dy = pos.y - L.downPos.y;
 	return dx * dx + dy * dy < radius_square;
 }
 
-int DragableCircle::HandleMouseMove(MouseEventListener<DragableCircle>* L) {
-	this->SetPositon(this->pos + (L->eg->mousePosition - L->lastPos));
+int DragableCircle::HandleMouseMove(DragableCircleMouseEventListener& L) {
+	this->SetPositon(this->pos + (L.eg->mousePosition - L.lastPos));
 	this->Commit();
 	return 0;
 }
 
-void DragableCircle::HandleMouseUp(MouseEventListener<DragableCircle>* L) {
-	std::cout << "L->downPos.x = " << L->downPos.x << ", L->downPos.y = " << L->downPos.y << std::endl;
+void DragableCircle::HandleMouseUp(DragableCircleMouseEventListener& L) {
+	std::cout << "L.downPos.x = " << L.downPos.x << ", L.downPos.y = " << L.downPos.y << std::endl;
 }
 
 void DragableCircle::Init(XY const& pos, float const& radius, int const& segments) {
