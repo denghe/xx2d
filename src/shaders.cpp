@@ -50,12 +50,14 @@ void ShaderManager::End() {
 }
 
 size_t ShaderManager::GetDrawCall() {
-	auto& s = *shaders[Shader_XyUvC::index].ReinterpretCast<Shader_XyUvC>();
-	return drawCall + s.texsCount;
+	return drawCall
+		+ (RefShader<Shader_XyC>().pointsCount > 0 ? 1 : 0)
+		+ RefShader<Shader_XyUvC>().texsCount
+		;
 }
 
 size_t ShaderManager::GetDrawQuads() {
-	auto& s = *shaders[Shader_XyUvC::index].ReinterpretCast<Shader_XyUvC>();
+	auto& s = RefShader<Shader_XyUvC>();
 	size_t j = 0;
 	for (size_t i = 0; i < s.texsCount; i++) {
 		j += s.texs[i].second;
@@ -64,6 +66,6 @@ size_t ShaderManager::GetDrawQuads() {
 }
 
 size_t ShaderManager::GetDrawLines() {
-	auto& s = *shaders[Shader_XyC::index].ReinterpretCast<Shader_XyC>();
+	auto& s = RefShader<Shader_XyC>();
 	return drawLinePoints + s.indexsCount;
 }

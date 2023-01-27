@@ -45,9 +45,16 @@ struct ShaderManager {
 	size_t GetDrawQuads();
 	size_t GetDrawLines();
 
+	// direct ref to shader instance
 	template<typename T, typename ENABLED = std::enable_if_t<std::is_base_of_v<Shader, T>>>
+	T& RefShader() {
+		return *shaders[T::index].ReinterpretCast<T>();
+	}
+
+	// for logic: switch + ref to shader instance
+	template<typename T>
 	T& GetShader() {
-		auto&& r = *shaders[T::index].ReinterpretCast<T>();
+		auto&& r = RefShader<T>();
 		r.Begin();
 		return r;
 	}
