@@ -6,7 +6,6 @@ void Logic::Init() {
 
 	lbInfo.SetPositon(ninePoints[1] + XY{ 10, 10 });
 	lbInfo.SetAnchor({0, 0});
-	lbInfo.SetColor({ 255, 255, 0, 255 });
 
 	nowSecs = xx::NowSteadyEpochSeconds();
 
@@ -29,7 +28,13 @@ int Logic::Update() {
 		fpsCounter = 0;
 	}
 	lbInfo.SetText(fnt1, xx::ToString("fps = ", fps, ", draw call = ", sm.GetDrawCall(), ", quad count = ", sm.GetDrawQuads(), ", line point count = ", sm.GetDrawLines()));
+	lbInfo.SetPositon({ lbInfo.pos.x + 2, lbInfo.pos.y - 2 });
+	lbInfo.SetColor({ 0, 0, 255, 255 });
 	lbInfo.Commit();
 	lbInfo.Draw(this);
+	lbInfo.SetPositon({ lbInfo.pos.x - 2, lbInfo.pos.y + 2 });
+	lbInfo.SetColor({ 255, 0, 0, 255 });
+	lbInfo.Commit();
+	lbInfo.Draw(this);	// shadow
 	return r;
 }

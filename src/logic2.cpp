@@ -10,7 +10,7 @@ void Logic2::Init(Logic* eg) {
 	meListener.Init(eg, Mbtns::Left);
 
 	// test line strip
-	for (size_t i = 0; i < 1000; i++) {
+	for (size_t i = 0; i < 10000; i++) {
 		XY v{ float(rand() % (1920 - 30)) + 15 - eg->hw, float(rand() % (1080 - 30)) + 15 - eg->hh };
 
 		auto&& c = circles.emplace_back();
