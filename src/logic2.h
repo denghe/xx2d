@@ -13,13 +13,10 @@ struct DragableCircle : LineStrip {
 	float radius_square{};
 };
 
-struct Logic;
-struct Logic2 {
-	Logic* eg{};
+struct Logic2 : LogicBase {
+	void Init(Logic* eg) override;
+	int Update() override;
 
 	std::vector<DragableCircle> circles;
 	DragableCircleMouseEventListener meListener;
-
-	void Init(Logic* eg);
-	int Update();
 };

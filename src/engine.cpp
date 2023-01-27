@@ -21,6 +21,13 @@ void Engine::EngineUpdateBegin() {
 
 void Engine::EngineUpdateEnd() {
 	sm.End();
+
+	if (!delayFuncs.empty()) {
+		for (auto& f : delayFuncs) {
+			f();
+		}
+		delayFuncs.clear();
+	}
 }
 
 void Engine::EngineDestroy() {

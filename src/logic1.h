@@ -28,9 +28,9 @@ struct Player {
 	static constexpr int32_t radius{ 48 };	// by res size
 };
 
-struct Logic;
-struct Logic1 {
-	Logic* eg{};
+struct Logic1 : LogicBase {
+	void Init(Logic* eg) override;
+	int Update() override;
 
 	double nowSecs{};
 	float timePool{};
@@ -50,7 +50,4 @@ struct Logic1 {
 	Layer_SAs layerBG;	// "bg"
 	Layer_SAs layerTrees;	// "trees"
 	Player player;
-
-	void Init(Logic* eg);
-	int Update();
 };

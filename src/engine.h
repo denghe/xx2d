@@ -95,6 +95,17 @@ struct Engine {
 	ShaderManager sm;
 
 	/**********************************************************************************/
+	// delay funcs
+
+	std::vector<std::function<void()>> delayFuncs;	// call + clear at EngineUpdateEnd
+
+	// add delay execute func to queue.
+	template<typename F>
+	void DelayExecute(F&& f) {
+		delayFuncs.emplace_back(std::forward<F>(f));
+	}
+
+	/**********************************************************************************/
 	// game loop
 
 	void EngineInit();
