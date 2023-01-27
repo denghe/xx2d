@@ -7,9 +7,11 @@ void Logic0::Init(Logic* eg) {
 	std::cout << "Logic0 Init( main menu )" << std::endl;
 
 	meListener.Init(eg, Mbtns::Left);
-	menus.emplace_back().Init(eg, { -300, 0 }, "logic1", 64);
-	menus.emplace_back().Init(eg, { 0, 0 }, "logic2", 64);
-	menus.emplace_back().Init(eg, { 300, 0 }, "logic3", 64);
+	menus.emplace_back().Init(eg, { -300, 100 }, "logic1", 64);
+	menus.emplace_back().Init(eg, { 0, 100 }, "logic2", 64);
+	menus.emplace_back().Init(eg, { 300, 100 }, "logic3", 64);
+
+	menus.emplace_back().Init(eg, { -300, -100 }, "logic4", 64);
 }
 
 int Logic0::Update() {
@@ -44,6 +46,8 @@ void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 			eg->DelaySwitchTo<Logic2>();
 		} else if (txt == "logic3"sv) {
 			eg->DelaySwitchTo<Logic3>();
+		} else if (txt == "logic4"sv) {
+			eg->DelaySwitchTo<Logic4>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}

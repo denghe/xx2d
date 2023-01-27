@@ -32,7 +32,7 @@ struct Logic1 : LogicBase {
 	void Init(Logic* eg) override;
 	int Update() override;
 
-	float timePool{};
+	double timePool{};
 
 	TMX::Camera cam;
 	TMX::Map map;

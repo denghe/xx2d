@@ -13,12 +13,13 @@ struct LogicBase {
 #include "logic1.h"
 #include "logic2.h"
 #include "logic3.h"
+#include "logic4.h"
 
 struct Logic : Engine {
 	BMFont fnt1;
 	Label lbInfo;
 	int fps{}, fpsCounter{};
-	double nowSecs{}, delta{}, fpsTimePool{};
+	double nowSecs{}, delta{}, fpsTimePool{}, timePool{};
 
 	xx::Shared<LogicBase> lg;
 

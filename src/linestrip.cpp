@@ -72,8 +72,22 @@ void LineStrip::Commit() {
 }
 
 void LineStrip::Draw(Engine* eg) {
+	assert(!dirty);
 	if (auto&& ps = pointsBuf.size()) {
 		auto&& s = eg->sm.GetShader<Shader_XyC>();
 		memcpy(s.DrawLineStrip(ps), pointsBuf.data(), ps * sizeof(XYRGBA8));
+	}
+}
+
+void LineStrip::Draw(Engine* eg, Translate const& trans) {
+	assert(!dirty);
+	if (auto&& ps = pointsBuf.size()) {
+		auto&& s = eg->sm.GetShader<Shader_XyC>();
+		auto&& buf = s.DrawLineStrip(ps);
+		for (size_t i = 0; i < ps; ++i) {
+			buf[i].x = (pointsBuf[i].x + trans.offset.x) * trans.scale.x;
+			buf[i].y = (pointsBuf[i].y + trans.offset.y) * trans.scale.y;
+			memcpy(&buf[i].r, &color.r, sizeof(color));
+		}
 	}
 }

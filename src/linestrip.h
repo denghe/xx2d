@@ -32,6 +32,6 @@ struct LineStrip {
 
 	void Commit();
 
-	// todo: support trans
 	void Draw(Engine* eg);
+	void Draw(Engine* eg, Translate const& trans);
 };
