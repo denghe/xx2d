@@ -91,10 +91,6 @@ void Logic1::Init(Logic* eg) {
 	cam.Init({ eg->w, eg->h}, map);
 	cam.SetPosition({ 830, 510 });
 
-	// update for anim
-	nowSecs = xx::NowSteadyEpochSeconds();
-
-
 	// load plist
 	player.tp.Fill(eg, "res/ww.plist"sv);
 	float maxSpriteHeight{}, anchor{ 0.5 };
@@ -113,9 +109,7 @@ void Logic1::Init(Logic* eg) {
 }
 
 int Logic1::Update() {
-	auto&& delta = xx::NowSteadyEpochSeconds(nowSecs);
-
-	timePool += delta;
+	timePool += eg->delta;
 	auto timePoolBak = timePool;
 LabBegin:
 	// limit control frequency

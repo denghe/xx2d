@@ -32,7 +32,6 @@ struct Logic1 : LogicBase {
 	void Init(Logic* eg) override;
 	int Update() override;
 
-	double nowSecs{};
 	float timePool{};
 
 	TMX::Camera cam;

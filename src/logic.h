@@ -16,7 +16,9 @@ struct LogicBase {
 
 struct Logic : Engine {
 	BMFont fnt1;
-	Label lbCount;
+	Label lbInfo;
+	int fps{}, fpsCounter{};
+	double nowSecs{}, delta{}, fpsTimePool{};
 
 	xx::Shared<LogicBase> lg;
 
