@@ -2,7 +2,9 @@
 
 this is a simple 2d game engine based by opengl es 3.0 & c++20
 
-performance ~= raylib, much more faster than cocos2dx 3.x
+GPU & CPU cache friendly, manual control draw order
+
+performance ~= raylib, much more faster than cocos2dx
 
 
 # feature
@@ -10,6 +12,8 @@ performance ~= raylib, much more faster than cocos2dx 3.x
 search path
 
 auto decompress zstd file( detect by header: 28 B5 2F FD )
+
+shader manager
 
 texture ( current .pkm only, detect by header "PKM 20" ) cache
 
@@ -23,7 +27,11 @@ bmfont
 
 label
 
-keyboard, mouse
+line strip
+
+keyboard, mouse ( with event listener )
+
+button( simulate )
 
 tiled map ( 1.92 full support ) loader & helpers( cam, util funcs )
 
@@ -45,13 +53,11 @@ https://github.com/facebook/zstd.git
 
 touch, joystick
 
-button, scroll view
+scroll view
 
-node ( recursive trans calc )
+matrix translate
 
-edit box, rich text
-
-Program manager? ready for shader switch
+edit box, rich text?
 
 draw no alpha without blend but discard shader ?
 
