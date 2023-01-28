@@ -111,9 +111,7 @@ void Logic1::Init(Logic* eg) {
 int Logic1::Update() {
 	timePool += eg->delta;
 	auto timePoolBak = timePool;
-LabBegin:
-	// limit control frequency
-	if (timePool >= 1.f / 60) {
+	while (timePool >= 1.f / 60) {
 		timePool -= 1.f / 60;
 
 		XY camInc{ 10 / cam.scale.x, 10 / cam.scale.y };

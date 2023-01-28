@@ -1,6 +1,101 @@
 ﻿#include "pch.h"
 #include "logic.h"
 
+void Circle::Init(CircleGrid* const& grid_, int32_t const& x, int32_t const& y, int32_t const& r) {
+	assert(!grid);
+	assert(!border);
+	grid = grid_;
+	xy.x = x;
+	xy.y = y;
+	radius = r;
+	grid->Add(this);
+	border = std::make_unique<LineStrip>();
+	border->FillCirclePoints({ 0,0 }, radius, {}, 16);
+	border->SetPositon({ (float)xy.x, (float)-xy.y });
+	border->Commit();
+}
+
+void Circle::Update(Rnd& rnd) {
+	int foreachLimit = Logic4::foreachLimit, numCross{};
+	xx::XY<int32_t> v;
+
+	grid->Foreach9NeighborCells<true>(this, [&](Circle* const& c) {
+		assert(c != this);
+		// fully cross?
+		if (c->xy == this->xy) {
+			++numCross;
+			return;
+		}
+		// prepare cross check. (r1 + r2) * (r1 + r2) > (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)
+		auto r12 = (c->radius + this->radius) * (c->radius + this->radius);
+		auto p12 = (c->xy.x - this->xy.x) * (c->xy.x - this->xy.x) + (c->xy.y - this->xy.y) * (c->xy.y - this->xy.y);
+		// cross?
+		if (r12 > p12) {
+			auto a = xx::GetAngle<(Logic4::maxDiameter * 2 >= 1024)>(c->xy, this->xy);
+			auto inc = xx::Rotate(xx::XY<int32_t>{ Logic4::speed * r12 / p12, 0 }, a);
+			v += inc;
+			++numCross;
+		}
+	}, &foreachLimit);
+
+	// cross?
+	if (numCross) {
+		auto xy = this->xy;
+		// no force: random move?
+		if (v.IsZero()) {
+			auto a = rnd.Next() % xx::table_num_angles;
+			auto inc = xx::Rotate(xx::XY<int32_t>{ Logic4::speed, 0 }, a);
+			xy += inc;
+		}
+		// move by v?
+		else {
+			// speed scale limit
+			if (numCross > Logic4::speedMaxScale) {
+				numCross = Logic4::speedMaxScale;
+			}
+			auto a = xx::GetAngleXY(v.x, v.y);
+			auto inc = xx::Rotate(xx::XY<int32_t>{ Logic4::speed * numCross, 0 }, a);
+			xy += inc;
+		}
+
+		// 边缘限定( 当前逻辑有重叠才移动，故边界检测放在这里 )
+		if (xy.x < 0) xy.x = 0;
+		else if (xy.x >= Logic4::maxX) xy.x = Logic4::maxX - 1;
+		if (xy.y < 0) xy.y = 0;
+		else if (xy.y >= Logic4::maxY) xy.y = Logic4::maxY - 1;
+
+		xy2 = xy;
+	} else {
+		xy2 = xy;
+	}
+}
+
+void Circle::Update2() {
+	if (xy2 != xy) {
+		xy = xy2;
+		grid->Update(this);
+		border->SetColor({255, 0, 0, 255});
+		border->SetPositon({ (float)xy.x, (float)-xy.y });
+		border->Commit();
+		++grid->numActives;
+	}
+	else {
+		if (border->color != RGBA8{ 255, 255, 255, 255 }) {
+			border->SetColor({ 255, 255, 255, 255 });
+			border->Commit();
+		}
+	}
+}
+
+Circle::~Circle() {
+	if (grid) {
+		if (cellIndex > -1) {
+			grid->Remove(this);
+		}
+		grid = {};
+	}
+}
+
 void CircleGrid::Init(int const& numRows_, int const& numCols_, int const& maxDiameter_) {
 	numRows = numRows_;
 	numCols = numCols_;
@@ -13,24 +108,29 @@ void CircleGrid::Init(int const& numRows_, int const& numCols_, int const& maxDi
 
 void CircleGrid::Add(Circle* const& c) {
 	assert(c);
-	//assert(c->grid == this);
+	assert(c->grid == this);
 	assert(c->cellIndex == -1);
-	assert(c->prev == nullptr);
-	assert(c->next == nullptr);
-	assert(c->x >= 0 && c->x < maxX);
-	assert(c->y >= 0 && c->y < maxY);
+	assert(!c->prev);
+	assert(!c->next);
+	assert(c->xy.x >= 0 && c->xy.x < maxX);
+	assert(c->xy.y >= 0 && c->xy.y < maxY);
 
 	// calc rIdx & cIdx
-	int rIdx = c->y / maxDiameter, cIdx = c->x / maxDiameter;
+	int rIdx = c->xy.y / maxDiameter, cIdx = c->xy.x / maxDiameter;
 	int idx = rIdx * numCols + cIdx;
 	assert(idx <= cells.size());
+	assert(!cells[idx] || !cells[idx]->prev);
 
 	// link
 	if (cells[idx]) {
 		cells[idx]->prev = c;
-		c->next = cells[idx];
 	}
+	c->next = cells[idx];
+	c->cellIndex = idx;
 	cells[idx] = c;
+	assert(!cells[idx]->prev);
+	assert(c->next != c);
+	assert(c->prev != c);
 
 	// stat
 	++numItems;
@@ -38,23 +138,30 @@ void CircleGrid::Add(Circle* const& c) {
 
 void CircleGrid::Remove(Circle* const& c) {
 	assert(c);
-	//assert(c->grid == this);
+	assert(c->grid == this);
+	assert(!c->prev && cells[c->cellIndex] == c || c->prev->next == c && cells[c->cellIndex] != c);
+	assert(!c->next || c->next->prev == c);
 	//assert(cells[c->cellIndex] include c);
 
 	// unlink
-	if (c->prev) {
+	if (c->prev) {	// isn't header
+		assert(cells[c->cellIndex] != c);
 		c->prev->next = c->next;
+		if (c->next) {
+			c->next->prev = c->prev;
+			c->next = {};
+		}
+		c->prev = {};
 	} else {
+		assert(cells[c->cellIndex] == c);
 		cells[c->cellIndex] = c->next;
+		if (c->next) {
+			c->next->prev = {};
+			c->next = {};
+		}
 	}
-	if (c->next) {
-		c->next->prev = c->prev;
-	}
-
-	// cleanup
 	c->cellIndex = -1;
-	c->prev = {};
-	c->next = {};
+	assert(cells[c->cellIndex] != c);
 
 	// stat
 	--numItems;
@@ -64,33 +171,59 @@ void CircleGrid::Update(Circle* const& c) {
 	assert(c);
 	//assert(c->grid == this);
 	assert(c->cellIndex > -1);
-	assert(c->x >= 0 && c->x < maxX);
-	assert(c->y >= 0 && c->y < maxY);
+	assert(c->next != c);
+	assert(c->prev != c);
 	//assert(cells[c->cellIndex] include c);
 
-	// calc rIdx & cIdx
-	int rIdx = c->y / maxDiameter, cIdx = c->x / maxDiameter;
-	int idx = rIdx * numCols + cIdx;
-	assert(idx <= cells.size());
+	auto idx = CalcIndexByPosition(c->xy.x, c->xy.y);
 	if (idx == c->cellIndex) return;	// no change
+	assert(!cells[idx] || !cells[idx]->prev);
+	assert(!cells[c->cellIndex] || !cells[c->cellIndex]->prev);
 
 	// unlink
-	if (c->prev) {
+	if (c->prev) {	// isn't header
+		assert(cells[c->cellIndex] != c);
 		c->prev->next = c->next;
+		if (c->next) {
+			c->next->prev = c->prev;
+			//c->next = {};
+		}
+		//c->prev = {};
 	} else {
+		assert(cells[c->cellIndex] == c);
 		cells[c->cellIndex] = c->next;
+		if (c->next) {
+			c->next->prev = {};
+			//c->next = {};
+		}
 	}
-	if (c->next) {
-		c->next->prev = c->prev;
-	}
+	//c->cellIndex = -1;
+	assert(cells[c->cellIndex] != c);
+	assert(idx != c->cellIndex);
 
 	// link
 	if (cells[idx]) {
 		cells[idx]->prev = c;
-		c->next = cells[idx];
 	}
+	c->prev = {};
+	c->next = cells[idx];
 	cells[idx] = c;
+	c->cellIndex = idx;
+	assert(!cells[idx]->prev);
+	assert(c->next != c);
+	assert(c->prev != c);
 }
+
+int32_t CircleGrid::CalcIndexByPosition(int32_t const& x, int32_t const& y) {
+	assert(x >= 0 && x < maxX);
+	assert(y >= 0 && y < maxY);
+	int32_t rIdx = y / maxDiameter, cIdx = x / maxDiameter;
+	auto idx = rIdx * numCols + cIdx;
+	assert(idx <= cells.size());
+	return idx;
+}
+
+
 
 
 void CircleGridCamera::Init(Size const& screenSize_, CircleGrid* const& cg_) {
@@ -159,37 +292,30 @@ void CircleGridCamera::SetPositionY(float const& y) {
 void Logic4::Init(Logic* eg) {
 	this->eg = eg;
 
-	std::cout << "Logic4 Init( test xy index design )" << std::endl;
+	std::cout << "Logic4 Init( test xy index design performance )" << std::endl;
 
-	cg.Init(numRows, numCols, maxDiameter);
+	grid.Init(numRows, numCols, maxDiameter);
 
-	cs.resize(10000);
-	for (auto& c : cs) {
-		//c.grid = &cg;
-		c.x = rnd.Next(0, maxX - 1);
-		c.y = rnd.Next(0, maxY - 1);
-		c.radius = rnd.Next(minRadius, maxRadius);
-		cg.Add(&c);
-
-		c.border = std::make_unique<LineStrip>();
-		c.border->SetPositon({ (float)c.x, (float)-c.y });
-		c.border->FillCirclePoints({ 0,0 }, c.radius, {}, 16);
-		c.border->Commit();
+	cs.reserve(capacity);
+	for (size_t i = 0; i < numRandCircles; i++) {
+		auto&& c = cs.emplace_back();
+		c.Emplace()->Init(&grid, rnd.Next(0, maxX - 1), rnd.Next(0, maxY - 1), rnd.Next(minRadius, maxRadius));
+		c->csIndex = i;
 	}
 
-	cam.Init({ eg->w, eg->h }, &cg);
+	cam.Init({ eg->w, eg->h }, &grid);
+	cam.SetPosition({ maxX - 1, maxY - 1 });
 }
 
 int Logic4::Update() {
+
+	// fixed fps
 	timePool += eg->delta;
-	auto timePoolBak = timePool;
-LabBegin:
-	// limit control frequency
-	if (timePool >= 1.f / 60) {
+	while (timePool >= 1.f / 60) {
 		timePool -= 1.f / 60;
 
 		XY camInc{ 10 / cam.scale.x, 10 / cam.scale.y };
-		float mX = cg.maxX, mY = cg.maxY;
+		float mX = grid.maxX, mY = grid.maxY;
 		if ((eg->Pressed(KbdKeys::Up))) {
 			auto y = cam.pos.y - camInc.y;
 			cam.SetPositionY(y < 0 ? 0 : y);
@@ -207,23 +333,81 @@ LabBegin:
 			cam.SetPositionX(x >= mX ? (mX - std::numeric_limits<float>::epsilon()) : x);
 		}
 		if (eg->Pressed(KbdKeys::Z)) {
-			auto x = cam.scale.x + 0.001f;
+			auto x = cam.scale.x + 0.01f;
 			cam.SetScale(x < 100 ? x : 100);
 		}
 		if (eg->Pressed(KbdKeys::X)) {
-			auto x = cam.scale.x - 0.001f;
+			auto x = cam.scale.x - 0.01f;
 			cam.SetScale(x > 0.001 ? x : 0.001);
 		}
-		cam.Commit();
+
+		if (eg->Pressed(Mbtns::Left)) {	// insert
+			auto xy = GetMousePosInGrid();
+			int32_t idx = cs.size();
+			auto&& c = cs.emplace_back();
+			c.Emplace()->Init(&grid, xy.x, xy.y, rnd.Next(minRadius, maxRadius));
+			c->csIndex = idx;
+		}
+
+		if (eg->Pressed(Mbtns::Right)) {	// erase
+			auto xy = GetMousePosInGrid();
+			auto idx = grid.CalcIndexByPosition(xy.x, xy.y);
+			// find nearest in mouse pos cell
+			Circle* t{};
+			float distPow2 = maxDiameter * maxDiameter;
+			grid.Foreach9NeighborCells(idx, [&](Circle* const& c) {
+				auto rr = c->radius * c->radius;	// mouse circle radius == 0
+				auto dx = c->xy.x - xy.x;
+				auto dy = c->xy.y - xy.y;
+				auto dd = dx * dx + dy * dy;
+				if (dd < rr) {	// cross
+					if (dd < distPow2) {
+						t = c;
+						distPow2 = dd;
+					}
+				}
+			});
+			if (t) {	// swap remove
+				cs.back()->csIndex = t->csIndex;
+				cs[t->csIndex] = std::move(cs.back());
+				cs.pop_back();
+			}
+		}
+
+		// update physics
+		for (auto& c : cs) {
+			c->Update(rnd);
+		}
+		// assign new pos
+		grid.numActives = 0;
+		for (auto& c : cs) {
+			c->Update2();
+		}
+		if (grid.numActives) {
+			//std::cout << "grid.numActives = " << grid.numActives << std::endl;
+		}
 	}
 
+	// draw
+	cam.Commit();
 	for (auto rIdx = cam.rowFrom; rIdx < cam.rowTo; ++rIdx) {
 		for (auto cIdx = cam.columnFrom; cIdx < cam.columnTo; ++cIdx) {
-			cg.Foreach(rIdx, cIdx, [&](Circle* const& c) {
+			grid.Foreach(rIdx, cIdx, [&](Circle* const& c) {
 				c->border->Draw(eg, cam);
 			});
 		}
 	}
 
 	return 0;
+}
+
+
+XY Logic4::GetMousePosInGrid() {
+	auto x = cam.pos.x + eg->mousePosition.x / cam.scale.x;
+	if (x < 0) x = 0;
+	else if (x >= maxX) x = maxX - 1;
+	auto y = cam.pos.y - eg->mousePosition.y / cam.scale.y;
+	if (y < 0) y = 0;
+	else if (y >= maxY) y = maxY - 1;
+	return { x, y };
 }
