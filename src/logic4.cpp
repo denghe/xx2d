@@ -10,7 +10,7 @@ void Circle::Init(CircleGrid* const& grid_, int32_t const& x, int32_t const& y, 
 	radius = r;
 	grid->Add(this);
 	border = std::make_unique<LineStrip>();
-	border->FillCirclePoints({ 0,0 }, radius, {}, 16);
+	border->FillCirclePoints({ 0,0 }, radius, {}, 12);
 	border->SetPositon({ (float)xy.x, (float)-xy.y });
 	border->Commit();
 }
@@ -304,7 +304,8 @@ void Logic4::Init(Logic* eg) {
 	}
 
 	cam.Init({ eg->w, eg->h }, &grid);
-	cam.SetPosition({ maxX - 1, maxY - 1 });
+	cam.SetPosition({ maxX / 2, maxY / 2 });
+	cam.SetScale(0.5);
 }
 
 int Logic4::Update() {
@@ -316,19 +317,19 @@ int Logic4::Update() {
 
 		XY camInc{ 10 / cam.scale.x, 10 / cam.scale.y };
 		float mX = grid.maxX, mY = grid.maxY;
-		if ((eg->Pressed(KbdKeys::Up))) {
+		if ((eg->Pressed(KbdKeys::W))) {
 			auto y = cam.pos.y - camInc.y;
 			cam.SetPositionY(y < 0 ? 0 : y);
 		}
-		if ((eg->Pressed(KbdKeys::Down))) {
+		if ((eg->Pressed(KbdKeys::S))) {
 			auto y = cam.pos.y + camInc.y;
 			cam.SetPositionY(y >= mY ? (mY - std::numeric_limits<float>::epsilon()) : y);
 		}
-		if ((eg->Pressed(KbdKeys::Left))) {
+		if ((eg->Pressed(KbdKeys::A))) {
 			auto x = cam.pos.x - camInc.x;
 			cam.SetPositionX(x < 0 ? 0 : x);
 		}
-		if ((eg->Pressed(KbdKeys::Right))) {
+		if ((eg->Pressed(KbdKeys::D))) {
 			auto x = cam.pos.x + camInc.x;
 			cam.SetPositionX(x >= mX ? (mX - std::numeric_limits<float>::epsilon()) : x);
 		}
@@ -343,35 +344,34 @@ int Logic4::Update() {
 
 		if (eg->Pressed(Mbtns::Left)) {	// insert
 			auto xy = GetMousePosInGrid();
-			int32_t idx = cs.size();
-			auto&& c = cs.emplace_back();
-			c.Emplace()->Init(&grid, xy.x, xy.y, rnd.Next(minRadius, maxRadius));
-			c->csIndex = idx;
+			for (size_t i = 0; i < numEveryInsert; i++) {
+				int32_t idx = cs.size();
+				auto&& c = cs.emplace_back();
+				c.Emplace()->Init(&grid, xy.x, xy.y, rnd.Next(minRadius, maxRadius));
+				c->csIndex = idx;
+			}
 		}
 
 		if (eg->Pressed(Mbtns::Right)) {	// erase
 			auto xy = GetMousePosInGrid();
 			auto idx = grid.CalcIndexByPosition(xy.x, xy.y);
-			// find nearest in mouse pos cell
-			Circle* t{};
-			float distPow2 = maxDiameter * maxDiameter;
+			// find cross with mouse circle
 			grid.Foreach9NeighborCells(idx, [&](Circle* const& c) {
-				auto rr = c->radius * c->radius;	// mouse circle radius == 0
+				auto rr = (c->radius + Logic4::maxRadius) * (c->radius + Logic4::maxRadius);	// mouse circle radius == maxRadius
 				auto dx = c->xy.x - xy.x;
 				auto dy = c->xy.y - xy.y;
 				auto dd = dx * dx + dy * dy;
 				if (dd < rr) {	// cross
-					if (dd < distPow2) {
-						t = c;
-						distPow2 = dd;
-					}
+					tmpcs.push_back(c);
 				}
 			});
-			if (t) {	// swap remove
-				cs.back()->csIndex = t->csIndex;
-				cs[t->csIndex] = std::move(cs.back());
+			for(auto& c : tmpcs) {
+				// swap remove
+				cs.back()->csIndex = c->csIndex;
+				cs[c->csIndex] = std::move(cs.back());
 				cs.pop_back();
 			}
+			tmpcs.clear();
 		}
 
 		// update physics

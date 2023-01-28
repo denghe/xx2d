@@ -155,11 +155,13 @@ struct Logic4 : LogicBase {
 	inline static constexpr int32_t speed = 5, speedMaxScale = 5;
 	inline static constexpr int32_t foreachLimit = 15;
 	inline static constexpr int32_t numRandCircles = 50000, capacity = numRandCircles * 2;
+	inline static constexpr int32_t numEveryInsert = 10;
 	CircleGrid grid;
 	CircleGridCamera cam;
 	std::vector<xx::Shared<Circle>> cs;
 	Rnd rnd;
 	double timePool{};
+	std::vector<Circle*> tmpcs;
 
 	XY GetMousePosInGrid();
 };
