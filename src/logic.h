@@ -18,6 +18,7 @@ struct LogicBase {
 struct Logic : Engine {
 	BMFont fnt1;
 	Label lbInfo;
+	std::string moreInfo;
 	int fps{}, fpsCounter{};
 	double nowSecs{}, delta{}, fpsTimePool{}, timePool{};
 

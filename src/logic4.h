@@ -1,5 +1,10 @@
 ﻿#pragma once
 #include "pch.h"
+#include "xx_threadpool.h"
+
+#define ENABLE_MULTITHREAD_UPDATE
+#define THREAD_POOL_USE_RUN_ONCE
+#define NUM_UPDATE_THREADS 16
 
 struct Circle {
 	/*********************************************/
@@ -25,17 +30,23 @@ struct Logic4 : LogicBase {
 	void Init(Logic* eg) override;
 	int32_t Update() override;
 
-	inline static constexpr int32_t numRows = 200, numCols = 200, minRadius = 16, maxRadius = 32;
+	inline static constexpr int32_t numRows = 400, numCols = 400, minRadius = 16, maxRadius = 32;
 	inline static constexpr int32_t maxDiameter = maxRadius * 2;
 	inline static constexpr int32_t maxX = maxDiameter * numCols, maxY = maxDiameter * numRows;
 	inline static constexpr int32_t speed = 5, speedMaxScale = 5;
-	inline static constexpr int32_t foreachLimit = 15;
-	inline static constexpr int32_t numRandCircles = 50000, capacity = numRandCircles * 2;
-	inline static constexpr int32_t numEveryInsert = 10;
+	inline static constexpr int32_t numCircleSegments = 8;
+	inline static constexpr int32_t foreachLimit = 12;
+	inline static constexpr int32_t numRandCircles = 200000, capacity = numRandCircles * 2;
+	inline static constexpr int32_t numEveryInsert = 1000;
 	SpaceGrid<Circle> grid;
 	SpaceGridCamera<Circle> cam;
 	std::vector<xx::Shared<Circle>> cs;
-	Rnd rnd;
 	double timePool{};
 	std::vector<Circle*> tmpcs;
+	
+	std::array<Rnd, NUM_UPDATE_THREADS> rnds;
+
+#ifdef ENABLE_MULTITHREAD_UPDATE
+	xx::ToggleThreadPool ttp;
+#endif
 };

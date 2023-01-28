@@ -2,7 +2,7 @@
 #include "logic.h"
 
 void Circle::Init(SpaceGrid<Circle>* const& grid_, int32_t const& x, int32_t const& y, int32_t const& r) {
-	assert(!grid);
+	assert(!_sgrid);
 	assert(!border);
 	_sgrid = grid_;
 	_sgridPos.x = x;
@@ -11,7 +11,7 @@ void Circle::Init(SpaceGrid<Circle>* const& grid_, int32_t const& x, int32_t con
 
 	radius = r;
 	border = std::make_unique<LineStrip>();
-	border->FillCirclePoints({ 0,0 }, radius, {}, 12);
+	border->FillCirclePoints({ 0,0 }, radius, {}, Logic4::numCircleSegments);
 	border->SetPositon({ (float)_sgridPos.x, (float)-_sgridPos.y });
 	border->Commit();
 }
@@ -110,21 +110,28 @@ void Logic4::Init(Logic* eg) {
 	cs.reserve(capacity);
 	for (size_t i = 0; i < numRandCircles; i++) {
 		auto&& c = cs.emplace_back();
-		c.Emplace()->Init(&grid, rnd.Next(0, maxX - 1), rnd.Next(0, maxY - 1), rnd.Next(minRadius, maxRadius));
+		c.Emplace()->Init(&grid, rnds[0].Next(0, maxX - 1), rnds[0].Next(0, maxY - 1), rnds[0].Next(minRadius, maxRadius));
 		c->csIndex = i;
 	}
 
 	cam.Init({ eg->w, eg->h }, &grid);
 	cam.SetPosition({ maxX / 2, maxY / 2 });
 	cam.SetScale(0.5);
+
+#ifdef ENABLE_MULTITHREAD_UPDATE
+	ttp.Init(NUM_UPDATE_THREADS);
+#   ifndef THREAD_POOL_USE_RUN_ONCE
+	ttp.Start();
+#   endif
+#endif
 }
 
 int Logic4::Update() {
 
 	// fixed fps
 	timePool += eg->delta;
-	while (timePool >= 1.f / 60) {
-		timePool -= 1.f / 60;
+	if (timePool >= 1.f / 60) {
+		timePool = 0;
 
 		XY camInc{ 10 / cam.scale.x, 10 / cam.scale.y };
 		float mX = grid.maxX, mY = grid.maxY;
@@ -158,7 +165,7 @@ int Logic4::Update() {
 			for (size_t i = 0; i < numEveryInsert; i++) {
 				int32_t idx = cs.size();
 				auto&& c = cs.emplace_back();
-				c.Emplace()->Init(&grid, xy.x, xy.y, rnd.Next(minRadius, maxRadius));
+				c.Emplace()->Init(&grid, xy.x, xy.y, rnds[0].Next(minRadius, maxRadius));
 				c->csIndex = idx;
 			}
 		}
@@ -186,17 +193,44 @@ int Logic4::Update() {
 		}
 
 		// update physics
-		for (auto& c : cs) {
-			c->Update(rnd);
+
+		auto secs = xx::NowSteadyEpochSeconds();
+#ifdef ENABLE_MULTITHREAD_UPDATE
+		auto total = cs.size();
+		auto step = total / NUM_UPDATE_THREADS;
+		int32_t to = step + total - step * NUM_UPDATE_THREADS;
+		ttp.AddTo(0, [&cs = this->cs, &rnd = rnds[0], from = 0, to = to] {
+			for (int i = from; i < to; ++i) {
+				cs[i]->Update(rnd);
+			}
+		});
+		for (int i = 1; i < NUM_UPDATE_THREADS; i++) {
+			ttp.AddTo(i, [&cs = this->cs, &rnd = rnds[i], from = to, to = to + step] {
+				for (int i = from; i < to; ++i) {
+					cs[i]->Update(rnd);
+				}
+			});
+			to += step;
 		}
+#   ifdef THREAD_POOL_USE_RUN_ONCE
+		ttp.RunOnce();
+#   else
+		ttp.Go();
+#   endif
+#else
+		for (auto& c : cs) {
+			c->Update(rnds[0]);
+		}
+#endif
+
 		// assign new pos
 		grid.numActives = 0;
 		for (auto& c : cs) {
 			c->Update2();
 		}
-		if (grid.numActives) {
-			//std::cout << "grid.numActives = " << grid.numActives << std::endl;
-		}
+
+		// output log
+		eg->moreInfo = xx::ToString(", numCircles = ",cs.size(), ", numActives = ", grid.numActives, ", update elapsed secs = ", xx::NowSteadyEpochSeconds(secs));
 	}
 
 	// draw
@@ -211,4 +245,3 @@ int Logic4::Update() {
 
 	return 0;
 }
-
