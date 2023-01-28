@@ -24,6 +24,7 @@
 #include "label.h"
 #include "linestrip.h"
 #include "tmx_ex.h"
+#include "spacegrid.h"
 // ...
 
 #include <omp.h>
