@@ -2,10 +2,11 @@
 #include "logic.h"
 #include "logic5.h"
 
-void Foo::Init(SpaceGridAB<Foo>* grid, int32_t x, int32_t y, int32_t w, int32_t h) {
+void Foo::Init(SpaceGridAB<Foo>* grid, int32_t x, int32_t y, int32_t w, int32_t h, RGBA8 c) {
 	SGABInit(grid);
 	SGABSetPosSiz({ x,y }, { w,h });
 	SGABAdd();
+	color = c;
 	SyncBorder();
 }
 
@@ -14,6 +15,7 @@ void Foo::SyncBorder() {
 	border.Emplace();
 	border->SetPoints() = { {-hw, hh}, {hw, hh}, {hw, -hh}, {-hw, -hh}, {-hw, hh} };
 	border->SetPositon({ (float)_sgabPos.x, -(float)_sgabPos.y });	// flip y to gl coordinate
+	border->SetColor(color);
 	border->Commit();
 }
 
@@ -35,6 +37,28 @@ void Foo::SetPosY(int32_t y) {
 	SetPos(_sgabPos.x, y);
 }
 
+void Foo::MoveUp(int32_t inc) {
+	auto y = _sgabPos.y - inc;
+	if (y - _sgabHalfSize.y < 0) y = _sgabHalfSize.y;
+	SetPosY(y);
+}
+void Foo::MoveDown(int32_t inc) {
+	auto y = _sgabPos.y + inc;
+	if (y + _sgabHalfSize.y >= _sgab->maxY) y = _sgab->maxY - _sgabHalfSize.y - 1;
+	SetPosY(y);
+}
+void Foo::MoveLeft(int32_t inc) {
+	auto x = _sgabPos.x - inc;
+	if (x - _sgabHalfSize.x < 0) x = _sgabHalfSize.x;
+	SetPosX(x);
+}
+void Foo::MoveRight(int32_t inc) {
+	auto x = _sgabPos.x + inc;
+	if (x + _sgabHalfSize.x >= _sgab->maxX) x = _sgab->maxX - _sgabHalfSize.x - 1;
+	SetPosX(x);
+}
+
+
 void Logic5::Init(Logic* eg) {
 	this->eg = eg;
 
@@ -42,42 +66,40 @@ void Logic5::Init(Logic* eg) {
 
 	cam.offset = eg->ninePoints[7];	// (0,0) at top left
 
-	grid.Init(100, 100, 64, 64);
+	grid.Init(50, 50, 256, 256);
 
-	foos.emplace_back().Emplace()->Init(&grid, 200, 200, 100, 100);
-	foos.emplace_back().Emplace()->Init(&grid, 210, 210, 100, 100);
+	for (size_t i = 0; i < 100000; i++) {
+		auto w = rnd.Next(30, 300);
+		auto h = rnd.Next(30, 300);
+		auto x = rnd.Next(w / 2, grid.maxX - 1 - w / 2);
+		auto y = rnd.Next(h / 2, grid.maxY - 1 - h / 2);
+		auto c = rnd.Get();
+		foos.emplace_back().Emplace()->Init(&grid, x, y, w, h, (RGBA8&)c);
+	}
 }
 
 int Logic5::Update() {
 
 	timePool += eg->delta;
 	auto timePoolBak = timePool;
-	while (timePool >= 1.f / 200) {
-		timePool -= 1.f / 200;
-
-		auto& f1 = *foos[0];
-		if ((eg->Pressed(KbdKeys::Up))) {
-			auto y = f1._sgabPos.y - 1;
-			if (y - f1._sgabHalfSize.y < 0) y = f1._sgabHalfSize.y;
-			f1.SetPosY(y);
+	if (timePool >= 1.f / 60) {
+		timePool = 0;
+		constexpr int32_t moveSpeed = 3;
+		if ((eg->Pressed(KbdKeys::W))) {
+			for (auto& f : foos) f->MoveUp(moveSpeed);
 		}
-		if ((eg->Pressed(KbdKeys::Down))) {
-			auto y = f1._sgabPos.y + 1;
-			if (y + f1._sgabHalfSize.y >= grid.maxY) y = grid.maxY - f1._sgabHalfSize.y - 1;
-			f1.SetPosY(y);
+		if ((eg->Pressed(KbdKeys::S))) {
+			for (auto& f : foos) f->MoveDown(moveSpeed);
 		}
-		if ((eg->Pressed(KbdKeys::Left))) {
-			auto x = f1._sgabPos.x - 1;
-			if (x - f1._sgabHalfSize.x < 0) x = f1._sgabHalfSize.x;
-			f1.SetPosX(x);
+		if ((eg->Pressed(KbdKeys::A))) {
+			for (auto& f : foos) f->MoveLeft(moveSpeed);
 		}
-		if ((eg->Pressed(KbdKeys::Right))) {
-			auto x = f1._sgabPos.x + 1;
-			if (x + f1._sgabHalfSize.x >= grid.maxX) x = grid.maxX - f1._sgabHalfSize.x - 1;
-			f1.SetPosX(x);
+		if ((eg->Pressed(KbdKeys::D))) {
+			for (auto& f : foos) f->MoveRight(moveSpeed);
 		}
-
 	}
+
+	// todo: cam control
 
 	//for (auto& f : foos) {
 	//	f->border->Draw(eg, cam);
@@ -87,7 +109,9 @@ int Logic5::Update() {
 	for (auto& f : grid.results) {
 		f->border->Draw(eg, cam);
 	}
+	eg->moreInfo = xx::ToString(", numAllBoxs = ", foos.size(), ", numScreenBoxs = ", grid.results.size());
 	grid.ClearResults();
+
 
 	return 0;
 }
