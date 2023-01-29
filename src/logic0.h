@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "pch.h"
+#include "logic_base.h"
 
 struct Menu;
 using MenuMouseEventListener = MouseEventListener<Menu*>;

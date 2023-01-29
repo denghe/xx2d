@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "pch.h"
+#include "logic_base.h"
 #include "xx_threadpool.h"
 
 #define ENABLE_MULTITHREAD_UPDATE
@@ -8,10 +9,10 @@
 
 struct Circle {
 	/*********************************************/
-	SpaceGrid<Circle>* _sgrid{};
-	Circle* _sgridPrev{}, * _sgridNext{};
-	int32_t _sgridIdx{ -1 };
-	xx::XY<int32_t> _sgridPos;
+	SpaceGridC<Circle>* _sgc{};
+	Circle* _sgcPrev{}, * _sgcNext{};
+	int32_t _sgcIdx{ -1 };
+	xx::XY<int32_t> _sgcPos;
 	/*********************************************/
 
 	xx::XY<int32_t> newPos;	// calc result
@@ -20,7 +21,7 @@ struct Circle {
 	int32_t csIndex{ -1 };	// fill when push to cs, update when swap remove
 	std::unique_ptr<LineStrip> border;
 
-	void Init(SpaceGrid<Circle>* const& grid_, int32_t const& x, int32_t const& y, int32_t const& r);	// grid.Add
+	void Init(SpaceGridC<Circle>* const& grid_, int32_t const& x, int32_t const& y, int32_t const& r);	// grid.Add
 	void Update(Rnd& rnd);	// calc ( parallelable )
 	void Update2();	// grid.Update
 	~Circle();	// grid.Remove
@@ -38,8 +39,8 @@ struct Logic4 : LogicBase {
 	inline static constexpr int32_t foreachLimit = 12;
 	inline static constexpr int32_t numRandCircles = 200000, capacity = numRandCircles * 2;
 	inline static constexpr int32_t numEveryInsert = 1000;
-	SpaceGrid<Circle> grid;
-	SpaceGridCamera<Circle> cam;
+	SpaceGridC<Circle> grid;
+	SpaceGridCCamera<Circle> cam;
 	std::vector<xx::Shared<Circle>> cs;
 	double timePool{};
 	std::vector<Circle*> tmpcs;

@@ -1,5 +1,11 @@
 ﻿#include "pch.h"
 #include "logic.h"
+#include "logic0.h"
+#include "logic1.h"
+#include "logic2.h"
+#include "logic3.h"
+#include "logic4.h"
+#include "logic5.h"
 
 void Logic0::Init(Logic* eg) {
 	this->eg = eg;
@@ -12,6 +18,7 @@ void Logic0::Init(Logic* eg) {
 	menus.emplace_back().Init(eg, { 300, 100 }, "logic3", 64);
 
 	menus.emplace_back().Init(eg, { -300, -100 }, "logic4", 64);
+	menus.emplace_back().Init(eg, { 0, -100 }, "logic5", 64);
 }
 
 int Logic0::Update() {
@@ -48,6 +55,8 @@ void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 			eg->DelaySwitchTo<Logic3>();
 		} else if (txt == "logic4"sv) {
 			eg->DelaySwitchTo<Logic4>();
+		} else if (txt == "logic5"sv) {
+			eg->DelaySwitchTo<Logic5>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}

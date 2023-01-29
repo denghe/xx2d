@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "logic.h"
+#include "logic0.h"
 
 void Logic::Init() {
 	fnt1 = LoadBMFont("res/font1/basechars.fnt"sv);

@@ -1,18 +1,19 @@
 ﻿#include "pch.h"
 #include "logic.h"
+#include "logic4.h"
 
-void Circle::Init(SpaceGrid<Circle>* const& grid_, int32_t const& x, int32_t const& y, int32_t const& r) {
-	assert(!_sgrid);
+void Circle::Init(SpaceGridC<Circle>* const& grid_, int32_t const& x, int32_t const& y, int32_t const& r) {
+	assert(!_sgc);
 	assert(!border);
-	_sgrid = grid_;
-	_sgridPos.x = x;
-	_sgridPos.y = y;
-	_sgrid->Add(this);
+	_sgc = grid_;
+	_sgcPos.x = x;
+	_sgcPos.y = y;
+	_sgc->Add(this);
 
 	radius = r;
 	border = std::make_unique<LineStrip>();
 	border->FillCirclePoints({ 0,0 }, radius, {}, Logic4::numCircleSegments);
-	border->SetPositon({ (float)_sgridPos.x, (float)-_sgridPos.y });
+	border->SetPositon({ (float)_sgcPos.x, (float)-_sgcPos.y });
 	border->Commit();
 }
 
@@ -20,9 +21,9 @@ void Circle::Update(Rnd& rnd) {
 	int foreachLimit = Logic4::foreachLimit, numCross{};
 	xx::XY<int32_t> v;
 
-	_sgrid->Foreach9NeighborCells<true>(this, [&](Circle* const& c) {
+	_sgc->Foreach9NeighborCells<true>(this, [&](Circle* const& c) {
 		assert(c != this);
-		auto& cxy = c->_sgridPos, txy = this->_sgridPos;
+		auto& cxy = c->_sgcPos, txy = this->_sgcPos;
 		// fully cross?
 		if (cxy == txy) {
 			++numCross;
@@ -42,7 +43,7 @@ void Circle::Update(Rnd& rnd) {
 
 	// cross?
 	if (numCross) {
-		auto pos = this->_sgridPos;
+		auto pos = this->_sgcPos;
 		// no force: random move?
 		if (v.IsZero()) {
 			auto a = rnd.Next() % xx::table_num_angles;
@@ -68,18 +69,18 @@ void Circle::Update(Rnd& rnd) {
 
 		newPos = pos;
 	} else {
-		newPos = _sgridPos;
+		newPos = _sgcPos;
 	}
 }
 
 void Circle::Update2() {
-	if (_sgridPos != newPos) {
-		_sgridPos = newPos;
-		_sgrid->Update(this);
+	if (_sgcPos != newPos) {
+		_sgcPos = newPos;
+		_sgc->Update(this);
 		border->SetColor({255, 0, 0, 255});
-		border->SetPositon({ (float)_sgridPos.x, (float)-_sgridPos.y });
+		border->SetPositon({ (float)_sgcPos.x, (float)-_sgcPos.y });
 		border->Commit();
-		++_sgrid->numActives;
+		++_sgc->numActives;
 	}
 	else {
 		if (border->color != RGBA8{ 255, 255, 255, 255 }) {
@@ -90,11 +91,11 @@ void Circle::Update2() {
 }
 
 Circle::~Circle() {
-	if (_sgrid) {
-		if (_sgridIdx > -1) {
-			_sgrid->Remove(this);
+	if (_sgc) {
+		if (_sgcIdx > -1) {
+			_sgc->Remove(this);
 		}
-		_sgrid = {};
+		_sgc = {};
 	}
 }
 
@@ -176,8 +177,8 @@ int Logic4::Update() {
 			// find cross with mouse circle
 			grid.Foreach9NeighborCells(idx, [&](Circle* const& c) {
 				auto rr = (c->radius + Logic4::maxRadius) * (c->radius + Logic4::maxRadius);	// mouse circle radius == maxRadius
-				auto dx = c->_sgridPos.x - pos.x;
-				auto dy = c->_sgridPos.y - pos.y;
+				auto dx = c->_sgcPos.x - pos.x;
+				auto dy = c->_sgcPos.y - pos.y;
 				auto dd = dx * dx + dy * dy;
 				if (dd < rr) {	// cross
 					tmpcs.push_back(c);

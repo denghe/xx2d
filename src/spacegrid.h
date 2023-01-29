@@ -1,20 +1,22 @@
 ﻿#pragma once
 #include "pch.h"
 
+// space grid index system for circle
 template<typename Item>
-struct SpaceGrid;
+struct SpaceGridC;
 
 // for inherit or copy
-struct SpaceGridItem {
-	SpaceGrid<SpaceGridItem>* _sgrid{};
-	SpaceGridItem *_sgridPrev{}, *_sgridNext{};
-	int32_t _sgridIdx{ -1 };
-	xx::XY<int32_t> _sgridPos;
+struct SpaceGridCItem {
+	SpaceGridC<SpaceGridCItem>* _sgc{};
+	SpaceGridCItem *_sgcPrev{}, *_sgcNext{};
+	int32_t _sgcIdx{ -1 };
+	xx::XY<int32_t> _sgcPos;
 };
 
-template<typename Item = SpaceGridItem>
-struct SpaceGrid {
-	int32_t numRows{}, numCols{}, maxDiameter{}, maxY{}, maxX{}, numItems{}, numActives{};
+template<typename Item = SpaceGridCItem>
+struct SpaceGridC {
+	int32_t numRows{}, numCols{}, maxDiameter{};
+	int32_t maxY{}, maxX{}, numItems{}, numActives{};	// for easy check & stat
 	std::vector<Item*> cells;
 
 	void Init(int32_t const& numRows_, int32_t const& numCols_, int32_t const& maxDiameter_) {
@@ -29,29 +31,29 @@ struct SpaceGrid {
 
 	void Add(Item* const& c) {
 		assert(c);
-		assert(c->_sgrid == this);
-		assert(c->_sgridIdx == -1);
-		assert(!c->_sgridPrev);
-		assert(!c->_sgridNext);
-		assert(c->_sgridPos.x >= 0 && c->_sgridPos.x < maxX);
-		assert(c->_sgridPos.y >= 0 && c->_sgridPos.y < maxY);
+		assert(c->_sgc == this);
+		assert(c->_sgcIdx == -1);
+		assert(!c->_sgcPrev);
+		assert(!c->_sgcNext);
+		assert(c->_sgcPos.x >= 0 && c->_sgcPos.x < maxX);
+		assert(c->_sgcPos.y >= 0 && c->_sgcPos.y < maxY);
 
 		// calc rIdx & cIdx
-		int rIdx = c->_sgridPos.y / maxDiameter, cIdx = c->_sgridPos.x / maxDiameter;
+		int rIdx = c->_sgcPos.y / maxDiameter, cIdx = c->_sgcPos.x / maxDiameter;
 		int idx = rIdx * numCols + cIdx;
 		assert(idx <= cells.size());
-		assert(!cells[idx] || !cells[idx]->_sgridPrev);
+		assert(!cells[idx] || !cells[idx]->_sgcPrev);
 
 		// link
 		if (cells[idx]) {
-			cells[idx]->_sgridPrev = c;
+			cells[idx]->_sgcPrev = c;
 		}
-		c->_sgridNext = cells[idx];
-		c->_sgridIdx = idx;
+		c->_sgcNext = cells[idx];
+		c->_sgcIdx = idx;
 		cells[idx] = c;
-		assert(!cells[idx]->_sgridPrev);
-		assert(c->_sgridNext != c);
-		assert(c->_sgridPrev != c);
+		assert(!cells[idx]->_sgcPrev);
+		assert(c->_sgcNext != c);
+		assert(c->_sgcPrev != c);
 
 		// stat
 		++numItems;
@@ -59,30 +61,30 @@ struct SpaceGrid {
 
 	void Remove(Item* const& c) {
 		assert(c);
-		assert(c->_sgrid == this);
-		assert(!c->_sgridPrev && cells[c->_sgridIdx] == c || c->_sgridPrev->_sgridNext == c && cells[c->_sgridIdx] != c);
-		assert(!c->_sgridNext || c->_sgridNext->_sgridPrev == c);
-		//assert(cells[c->_sgridIdx] include c);
+		assert(c->_sgc == this);
+		assert(!c->_sgcPrev && cells[c->_sgcIdx] == c || c->_sgcPrev->_sgcNext == c && cells[c->_sgcIdx] != c);
+		assert(!c->_sgcNext || c->_sgcNext->_sgcPrev == c);
+		//assert(cells[c->_sgcIdx] include c);
 
 		// unlink
-		if (c->_sgridPrev) {	// isn't header
-			assert(cells[c->_sgridIdx] != c);
-			c->_sgridPrev->_sgridNext = c->_sgridNext;
-			if (c->_sgridNext) {
-				c->_sgridNext->_sgridPrev = c->_sgridPrev;
-				c->_sgridNext = {};
+		if (c->_sgcPrev) {	// isn't header
+			assert(cells[c->_sgcIdx] != c);
+			c->_sgcPrev->_sgcNext = c->_sgcNext;
+			if (c->_sgcNext) {
+				c->_sgcNext->_sgcPrev = c->_sgcPrev;
+				c->_sgcNext = {};
 			}
-			c->_sgridPrev = {};
+			c->_sgcPrev = {};
 		} else {
-			assert(cells[c->_sgridIdx] == c);
-			cells[c->_sgridIdx] = c->_sgridNext;
-			if (c->_sgridNext) {
-				c->_sgridNext->_sgridPrev = {};
-				c->_sgridNext = {};
+			assert(cells[c->_sgcIdx] == c);
+			cells[c->_sgcIdx] = c->_sgcNext;
+			if (c->_sgcNext) {
+				c->_sgcNext->_sgcPrev = {};
+				c->_sgcNext = {};
 			}
 		}
-		c->_sgridIdx = -1;
-		assert(cells[c->_sgridIdx] != c);
+		c->_sgcIdx = -1;
+		assert(cells[c->_sgcIdx] != c);
 
 		// stat
 		--numItems;
@@ -90,49 +92,49 @@ struct SpaceGrid {
 
 	void Update(Item* const& c) {
 		assert(c);
-		assert(c->_sgrid == this);
-		assert(c->_sgridIdx > -1);
-		assert(c->_sgridNext != c);
-		assert(c->_sgridPrev != c);
-		//assert(cells[c->_sgridIdx] include c);
+		assert(c->_sgc == this);
+		assert(c->_sgcIdx > -1);
+		assert(c->_sgcNext != c);
+		assert(c->_sgcPrev != c);
+		//assert(cells[c->_sgcIdx] include c);
 
-		auto idx = CalcIndexByPosition(c->_sgridPos.x, c->_sgridPos.y);
-		if (idx == c->_sgridIdx) return;	// no change
-		assert(!cells[idx] || !cells[idx]->_sgridPrev);
-		assert(!cells[c->_sgridIdx] || !cells[c->_sgridIdx]->_sgridPrev);
+		auto idx = CalcIndexByPosition(c->_sgcPos.x, c->_sgcPos.y);
+		if (idx == c->_sgcIdx) return;	// no change
+		assert(!cells[idx] || !cells[idx]->_sgcPrev);
+		assert(!cells[c->_sgcIdx] || !cells[c->_sgcIdx]->_sgcPrev);
 
 		// unlink
-		if (c->_sgridPrev) {	// isn't header
-			assert(cells[c->_sgridIdx] != c);
-			c->_sgridPrev->_sgridNext = c->_sgridNext;
-			if (c->_sgridNext) {
-				c->_sgridNext->_sgridPrev = c->_sgridPrev;
-				//c->_sgridNext = {};
+		if (c->_sgcPrev) {	// isn't header
+			assert(cells[c->_sgcIdx] != c);
+			c->_sgcPrev->_sgcNext = c->_sgcNext;
+			if (c->_sgcNext) {
+				c->_sgcNext->_sgcPrev = c->_sgcPrev;
+				//c->_sgcNext = {};
 			}
-			//c->_sgridPrev = {};
+			//c->_sgcPrev = {};
 		} else {
-			assert(cells[c->_sgridIdx] == c);
-			cells[c->_sgridIdx] = c->_sgridNext;
-			if (c->_sgridNext) {
-				c->_sgridNext->_sgridPrev = {};
-				//c->_sgridNext = {};
+			assert(cells[c->_sgcIdx] == c);
+			cells[c->_sgcIdx] = c->_sgcNext;
+			if (c->_sgcNext) {
+				c->_sgcNext->_sgcPrev = {};
+				//c->_sgcNext = {};
 			}
 		}
-		//c->_sgridIdx = -1;
-		assert(cells[c->_sgridIdx] != c);
-		assert(idx != c->_sgridIdx);
+		//c->_sgcIdx = -1;
+		assert(cells[c->_sgcIdx] != c);
+		assert(idx != c->_sgcIdx);
 
 		// link
 		if (cells[idx]) {
-			cells[idx]->_sgridPrev = c;
+			cells[idx]->_sgcPrev = c;
 		}
-		c->_sgridPrev = {};
-		c->_sgridNext = cells[idx];
+		c->_sgcPrev = {};
+		c->_sgcNext = cells[idx];
 		cells[idx] = c;
-		c->_sgridIdx = idx;
-		assert(!cells[idx]->_sgridPrev);
-		assert(c->_sgridNext != c);
-		assert(c->_sgridPrev != c);
+		c->_sgcIdx = idx;
+		assert(!cells[idx]->_sgcPrev);
+		assert(c->_sgcNext != c);
+		assert(c->_sgcPrev != c);
 	}
 
 	int32_t CalcIndexByPosition(int32_t const& x, int32_t const& y) {
@@ -153,9 +155,9 @@ struct SpaceGrid {
 		assert(idx >= 0 && idx < cells.size());
 		auto c = cells[idx];
 		while (c) {
-			assert(cells[c->_sgridIdx]->_sgridPrev == nullptr);
-			assert(c->_sgridNext != c);
-			assert(c->_sgridPrev != c);
+			assert(cells[c->_sgcIdx]->_sgcPrev == nullptr);
+			assert(c->_sgcNext != c);
+			assert(c->_sgcPrev != c);
 			if constexpr (enableExcept) {
 				if (c != except) {
 					f(c);
@@ -166,7 +168,7 @@ struct SpaceGrid {
 			if constexpr (enableLimit) {
 				if (--*limit == 0) return;
 			}
-			c = c->_sgridNext;
+			c = c->_sgcNext;
 		}
 	}
 
@@ -212,12 +214,12 @@ struct SpaceGrid {
 
 	template<bool enableLimit = false, typename F>
 	void Foreach9NeighborCells(Item* c, F&& f, int32_t* limit = nullptr) {
-		Foreach<enableLimit, true>(c->_sgridIdx, f, limit, c);
+		Foreach<enableLimit, true>(c->_sgcIdx, f, limit, c);
 		if constexpr (enableLimit) {
 			if (*limit <= 0) return;
 		}
-		auto rIdx = c->_sgridIdx / numCols;
-		auto cIdx = c->_sgridIdx - numCols * rIdx;
+		auto rIdx = c->_sgcIdx / numCols;
+		auto cIdx = c->_sgcIdx - numCols * rIdx;
 		Foreach8NeighborCells<enableLimit>(rIdx, cIdx, f, limit);
 	}
 
@@ -233,10 +235,10 @@ struct SpaceGrid {
 	}
 };
 
-template<typename Item = SpaceGridItem>
-struct SpaceGridCamera : Translate {
+template<typename Item = SpaceGridCItem>
+struct SpaceGridCCamera : Translate {
 	
-	SpaceGrid<Item>* grid{};
+	SpaceGridC<Item>* grid{};
 	Size screenSize{};
 
 	XY pos{};
@@ -249,7 +251,7 @@ struct SpaceGridCamera : Translate {
 	*/
 	int32_t rowFrom = 0, rowTo = 0, columnFrom = 0, columnTo = 0;
 
-	void Init(Size const& screenSize_, SpaceGrid<Item>* const& grid_) {
+	void Init(Size const& screenSize_, SpaceGridC<Item>* const& grid_) {
 		grid = grid_;
 		screenSize = screenSize_;
 		Commit();
@@ -263,8 +265,8 @@ struct SpaceGridCamera : Translate {
 		this->scale = { scale, scale };
 		dirty = true;
 	}
-	void SetPosition(XY const& _sgridPos) {
-		this->pos = _sgridPos;
+	void SetPosition(XY const& _sgcPos) {
+		this->pos = _sgcPos;
 		dirty = true;
 	}
 	void SetPositionX(float const& x) {

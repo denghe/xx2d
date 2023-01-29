@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "logic.h"
+#include "logic3.h"
 
 void Logic3::Init(Logic* eg) {
 	this->eg = eg;

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "pch.h"
+#include "logic_base.h"
 
 struct DragableCircle;
 using DragableCircleMouseEventListener = MouseEventListener<DragableCircle*>;
