@@ -9,8 +9,13 @@ struct SpaceGridAB;
 
 template<typename SpaceGridABItemDeriveType>
 struct SpaceGridABItemCellInfo {
-	SpaceGridABItemDeriveType *self{};
+	SpaceGridABItemDeriveType* self{};
+	size_t idx{};
 	SpaceGridABItemCellInfo *prev{}, *next{};
+
+	void Dump() {
+		std::cout << "ci = " << (size_t)this << " .self = " << (size_t)self << " .idx = " << idx << " .prev = " << (size_t)prev << " .next = " << (size_t)next << std::endl;
+	}
 };
 
 // for inherit
@@ -19,15 +24,12 @@ struct SpaceGridABItem {
 	using SGABCoveredCellInfo = SpaceGridABItemCellInfo<SpaceGridABItemDeriveType>;
 	SpaceGridAB<SpaceGridABItemDeriveType>* _sgab{};
 	xx::XY<int32_t> _sgabPos, _sgaSiz, _sgabPosLeftTop, _sgabPosRightBottom;	// for calc covered cells
-	std::vector<SGABCoveredCellInfo> _sgabCoveredCellInfos;
-	int32_t _sgabFlags{};	// avoid duplication when Foreach
+	std::vector<SGABCoveredCellInfo> _sgabCoveredCellInfos;	// todo: change to custom single buf container ?
+	size_t _sgabFlag{};	// avoid duplication when Foreach
 
 	void SGABInit(SpaceGridAB<SpaceGridABItemDeriveType>* const& sgab) {
 		assert(!_sgab);
-		assert(!_sgabPrev);
-		assert(!_sgabNext);
-		assert(_sgabIdx == -1);
-		assert(!_sgabFlags);
+		assert(!_sgabFlag);
 		assert(_sgabCoveredCellInfos.empty());
 		_sgab = sgab;
 	}
@@ -60,9 +62,11 @@ struct SpaceGridABItem {
 
 template<typename Item>
 struct SpaceGridAB {
+	using ItemCellInfo = typename Item::SGABCoveredCellInfo;
 	int32_t numRows{}, numCols{}, cellWidth{}, cellHeight{};
 	int32_t maxY{}, maxX{}, numItems{}, numActives{};	// for easy check & stat
-	std::vector<typename Item::SGABCoveredCellInfo*> cells;
+	std::vector<ItemCellInfo*> cells;
+	std::vector<Item*> results;	// tmp store Foreach items
 
 	void Init(int32_t const& numRows_, int32_t const& numCols_, int32_t const& cellWidth_, int32_t const& cellHeight_) {
 		assert(cells.empty());
@@ -89,7 +93,7 @@ struct SpaceGridAB {
 		assert(c->_sgabPosLeftTop.x < c->_sgabPosRightBottom.x);
 		assert(c->_sgabPosLeftTop.y < c->_sgabPosRightBottom.y);
 		assert(c->_sgabPosLeftTop.x >= 0 && c->_sgabPosLeftTop.y >= 0);
-		assert(c->_sgabPosRightBottom.x < maxX && c->_sgabPosRightBottom.y < maxY);
+		assert(c->_sgabPosRightBottom.x < maxX&& c->_sgabPosRightBottom.y < maxY);
 
 		// calc covered cells
 		int32_t rIdxFrom = c->_sgabPosLeftTop.y / cellHeight;
@@ -98,16 +102,18 @@ struct SpaceGridAB {
 		int32_t cIdxTo = c->_sgabPosRightBottom.x / cellWidth;
 		auto numCoveredCells = (rIdxTo - rIdxFrom + 1) * (cIdxTo - cIdxFrom + 1);
 
-		c->_sgabCoveredCellInfos.reserve(numCoveredCells);
+		// link
+		auto& ccis = c->_sgabCoveredCellInfos;
+		ccis.reserve(numCoveredCells);
 		for (auto rIdx = rIdxFrom; rIdx <= rIdxTo; rIdx++) {
 			for (auto cIdx = cIdxFrom; cIdx <= cIdxTo; cIdx++) {
-				auto idx = rIdx * numCols + cIdx;
+				size_t idx = rIdx * numCols + cIdx;
 				assert(idx <= cells.size());
-				auto& ci = c->_sgabCoveredCellInfos.emplace_back({ .self = c, .prev = nullptr, .next = cells[idx] });
+				auto ci = &ccis.emplace_back(ItemCellInfo{ c, idx, nullptr, cells[idx] });
 				if (cells[idx]) {
-					cells[idx]->prev = &ci;
+					cells[idx]->prev = ci;
 				}
-				cells[idx] = &ci;
+				cells[idx] = ci;
 			}
 		}
 
@@ -115,180 +121,95 @@ struct SpaceGridAB {
 		++numItems;
 	}
 
-	//void Remove(Item* const& c) {
-	//	assert(c);
-	//	assert(c->_sgab == this);
-	//	assert(!c->_sgabPrev && cells[c->_sgabIdx] == c || c->_sgabPrev->_sgabNext == c && cells[c->_sgabIdx] != c);
-	//	assert(!c->_sgabNext || c->_sgabNext->_sgabPrev == c);
-	//	//assert(cells[c->_sgabIdx] include c);
+	void Remove(Item* const& c) {
+		assert(c);
+		assert(c->_sgab == this);
+		assert(c->_sgabCoveredCellInfos.size());
 
-	//	// unlink
-	//	if (c->_sgabPrev) {	// isn't header
-	//		assert(cells[c->_sgabIdx] != c);
-	//		c->_sgabPrev->_sgabNext = c->_sgabNext;
-	//		if (c->_sgabNext) {
-	//			c->_sgabNext->_sgabPrev = c->_sgabPrev;
-	//			c->_sgabNext = {};
-	//		}
-	//		c->_sgabPrev = {};
-	//	} else {
-	//		assert(cells[c->_sgabIdx] == c);
-	//		cells[c->_sgabIdx] = c->_sgabNext;
-	//		if (c->_sgabNext) {
-	//			c->_sgabNext->_sgabPrev = {};
-	//			c->_sgabNext = {};
-	//		}
-	//	}
-	//	c->_sgabIdx = -1;
-	//	assert(cells[c->_sgabIdx] != c);
+		// unlink
+		auto& ccis = c->_sgabCoveredCellInfos;
+		for (auto& ci : ccis) {
 
-	//	// stat
-	//	--numItems;
-	//}
+			if (ci.prev) {	// isn't header
+				ci.prev->next = ci.next;
+				if (ci.next) {
+					ci.next->prev = ci.prev;
+				}
+			}
+			else {
+				cells[ci.idx] = ci.next;
+				if (ci.next) {
+					ci.next->prev = {};
+				}
+			}
+		}
+		ccis.clear();
 
-	//void Update(Item* const& c) {
-	//	assert(c);
-	//	assert(c->_sgab == this);
-	//	assert(c->_sgabIdx > -1);
-	//	assert(c->_sgabNext != c);
-	//	assert(c->_sgabPrev != c);
-	//	//assert(cells[c->_sgabIdx] include c);
+		// stat
+		--numItems;
+	}
 
-	//	auto idx = CalcIndexByPosition(c->_sgabPos.x, c->_sgabPos.y);
-	//	if (idx == c->_sgabIdx) return;	// no change
-	//	assert(!cells[idx] || !cells[idx]->_sgabPrev);
-	//	assert(!cells[c->_sgabIdx] || !cells[c->_sgabIdx]->_sgabPrev);
+	void Update(Item* const& c) {
+		Remove(c);
+		Add<true>(c);
+	}
 
-	//	// unlink
-	//	if (c->_sgabPrev) {	// isn't header
-	//		assert(cells[c->_sgabIdx] != c);
-	//		c->_sgabPrev->_sgabNext = c->_sgabNext;
-	//		if (c->_sgabNext) {
-	//			c->_sgabNext->_sgabPrev = c->_sgabPrev;
-	//			//c->_sgabNext = {};
-	//		}
-	//		//c->_sgabPrev = {};
-	//	} else {
-	//		assert(cells[c->_sgabIdx] == c);
-	//		cells[c->_sgabIdx] = c->_sgabNext;
-	//		if (c->_sgabNext) {
-	//			c->_sgabNext->_sgabPrev = {};
-	//			//c->_sgabNext = {};
-	//		}
-	//	}
-	//	//c->_sgabIdx = -1;
-	//	assert(cells[c->_sgabIdx] != c);
-	//	assert(idx != c->_sgabIdx);
+	int32_t CalcIndexByPosition(int32_t const& x, int32_t const& y) {
+		assert(x >= 0 && x < maxX);
+		assert(y >= 0 && y < maxY);
+		int32_t rIdx = y / cellHeight, cIdx = x / cellWidth;
+		auto idx = rIdx * numCols + cIdx;
+		assert(idx <= cells.size());
+		return idx;
+	}
 
-	//	// link
-	//	if (cells[idx]) {
-	//		cells[idx]->_sgabPrev = c;
-	//	}
-	//	c->_sgabPrev = {};
-	//	c->_sgabNext = cells[idx];
-	//	cells[idx] = c;
-	//	c->_sgabIdx = idx;
-	//	assert(!cells[idx]->_sgabPrev);
-	//	assert(c->_sgabNext != c);
-	//	assert(c->_sgabPrev != c);
-	//}
+	void ClearResult() {
+		for (auto& o : results) {
+			o->_sgabFlag = 0;
+		}
+		results.clear();
+	}
 
-	//int32_t CalcIndexByPosition(int32_t const& x, int32_t const& y) {
-	//	assert(x >= 0 && x < maxX);
-	//	assert(y >= 0 && y < maxY);
-	//	int32_t rIdx = y / maxDiameter, cIdx = x / maxDiameter;
-	//	auto idx = rIdx * numCols + cIdx;
-	//	assert(idx <= cells.size());
-	//	return idx;
-	//}
+	// fill items to results
+	template<bool callByOtherForeach = false, bool enableLimit = false, bool enableExcept = false>
+	void Foreach(int32_t const& idx, int32_t* limit = nullptr, Item* const& except = nullptr) {
+		assert(idx >= 0 && idx < cells.size());
+		if constexpr (enableLimit) {
+			assert(limit);
+			if (*limit <= 0) return;
+		}
+		if constexpr (enableExcept) {
+			assert(except);
+			except->_sgabFlag = 1;
+		}
+		if constexpr (!callByOtherForeach) {
+			ClearResult();
+		}
+		auto c = cells[idx];
+		while (c) {
+			if (!c->_sgabFlag) {
+				c->_sgabFlag = 1;
+				results.push_back(c);
+			}
+			if constexpr (enableLimit) {
+				if (-- * limit == 0) break;
+			}
+			c = c->next;
+		}
+		if constexpr (enableExcept) {
+			assert(except);
+			except->_sgabFlag = 0;
+		}
+	}
 
-	//template<bool enableLimit = false, bool enableExcept = false, typename F>
-	//void Foreach(int32_t const& idx, F&& f, int32_t* limit = nullptr, Item* const& except = nullptr) {
-	//	if constexpr (enableLimit) {
-	//		assert(limit);
-	//		if (*limit <= 0) return;
-	//	}
-	//	assert(idx >= 0 && idx < cells.size());
-	//	auto c = cells[idx];
-	//	while (c) {
-	//		assert(cells[c->_sgabIdx]->_sgabPrev == nullptr);
-	//		assert(c->_sgabNext != c);
-	//		assert(c->_sgabPrev != c);
-	//		if constexpr (enableExcept) {
-	//			if (c != except) {
-	//				f(c);
-	//			}
-	//		} else {
-	//			f(c);
-	//		}
-	//		if constexpr (enableLimit) {
-	//			if (--*limit == 0) return;
-	//		}
-	//		c = c->_sgabNext;
-	//	}
-	//}
+	template<bool callByOtherForeach = false, bool enableLimit = false, bool enableExcept = false>
+	void Foreach(int32_t const& rIdx, int32_t const& cIdx, int32_t* limit = nullptr, Item* const& except = nullptr) {
+		if (rIdx < 0 || rIdx >= numRows) return;
+		if (cIdx < 0 || cIdx >= numCols) return;
+		Foreach<callByOtherForeach, enableLimit, enableExcept>(rIdx * numCols + cIdx, limit, except);
+	}
 
-	//template<bool enableLimit = false, bool enableExcept = false, typename F>
-	//void Foreach(int32_t const& rIdx, int32_t const& cIdx, F&& f, int32_t* limit = nullptr, Item* const& except = nullptr) {
-	//	if (rIdx < 0 || rIdx >= numRows) return;
-	//	if (cIdx < 0 || cIdx >= numCols) return;
-	//	Foreach<enableLimit, enableExcept>(rIdx * numCols + cIdx, std::forward<F>(f), limit, except);
-	//}
 
-	//template<bool enableLimit = false, typename F>
-	//void Foreach8NeighborCells(int32_t const& rIdx, int32_t const& cIdx, F&& f, int32_t* limit = nullptr) {
-	//	Foreach<enableLimit>(rIdx + 1, cIdx, f, limit);
-	//	if constexpr (enableLimit) {
-	//		if (*limit <= 0) return;
-	//	}
-	//	Foreach<enableLimit>(rIdx - 1, cIdx, f, limit);
-	//	if constexpr (enableLimit) {
-	//		if (*limit <= 0) return;
-	//	}
-	//	Foreach<enableLimit>(rIdx, cIdx + 1, f, limit);
-	//	if constexpr (enableLimit) {
-	//		if (*limit <= 0) return;
-	//	}
-	//	Foreach<enableLimit>(rIdx, cIdx - 1, f, limit);
-	//	if constexpr (enableLimit) {
-	//		if (*limit <= 0) return;
-	//	}
-	//	Foreach<enableLimit>(rIdx + 1, cIdx + 1, f, limit);
-	//	if constexpr (enableLimit) {
-	//		if (*limit <= 0) return;
-	//	}
-	//	Foreach<enableLimit>(rIdx + 1, cIdx - 1, f, limit);
-	//	if constexpr (enableLimit) {
-	//		if (*limit <= 0) return;
-	//	}
-	//	Foreach<enableLimit>(rIdx - 1, cIdx + 1, f, limit);
-	//	if constexpr (enableLimit) {
-	//		if (*limit <= 0) return;
-	//	}
-	//	Foreach<enableLimit>(rIdx - 1, cIdx - 1, f, limit);
-	//}
-
-	//template<bool enableLimit = false, typename F>
-	//void Foreach9NeighborCells(Item* c, F&& f, int32_t* limit = nullptr) {
-	//	Foreach<enableLimit, true>(c->_sgabIdx, f, limit, c);
-	//	if constexpr (enableLimit) {
-	//		if (*limit <= 0) return;
-	//	}
-	//	auto rIdx = c->_sgabIdx / numCols;
-	//	auto cIdx = c->_sgabIdx - numCols * rIdx;
-	//	Foreach8NeighborCells<enableLimit>(rIdx, cIdx, f, limit);
-	//}
-
-	//template<bool enableLimit = false, typename F>
-	//void Foreach9NeighborCells(int32_t const& idx, F&& f, int32_t* limit = nullptr) {
-	//	Foreach<enableLimit>(idx, f, limit);
-	//	if constexpr (enableLimit) {
-	//		if (*limit <= 0) return;
-	//	}
-	//	auto rIdx = idx / numCols;
-	//	auto cIdx = idx - numCols * rIdx;
-	//	Foreach8NeighborCells<enableLimit>(rIdx, cIdx, f, limit);
-	//}
 };
 
 //template<typename Item>

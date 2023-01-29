@@ -25,7 +25,7 @@
 #include "linestrip.h"
 #include "tmx_ex.h"
 #include "spacegrid.h"
-#include "spacegridab.h"
+//#include "spacegridab.h"
 // ...
 
 #include <omp.h>
