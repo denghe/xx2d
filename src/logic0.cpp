@@ -6,6 +6,7 @@
 #include "logic3.h"
 #include "logic4.h"
 #include "logic5.h"
+#include "logic6.h"
 
 void Logic0::Init(Logic* eg) {
 	this->eg = eg;
@@ -19,6 +20,7 @@ void Logic0::Init(Logic* eg) {
 
 	menus.emplace_back().Init(eg, { -300, -100 }, "logic4", 64);
 	menus.emplace_back().Init(eg, { 0, -100 }, "logic5", 64);
+	menus.emplace_back().Init(eg, { 300, -100 }, "logic6", 64);
 }
 
 int Logic0::Update() {
@@ -57,6 +59,8 @@ void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 			eg->DelaySwitchTo<Logic4>();
 		} else if (txt == "logic5"sv) {
 			eg->DelaySwitchTo<Logic5>();
+		} else if (txt == "logic6"sv) {
+			eg->DelaySwitchTo<Logic6>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}
