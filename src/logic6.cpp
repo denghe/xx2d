@@ -193,8 +193,13 @@ void Logic6::Init(Logic* eg) {
 
 	std::cout << "Logic6 Init( test box + circle collision detect )" << std::endl;
 
-	for(auto i = 0; i < 100; ++i)
-		cs.emplace_back().Init({(float)rnd.Next(-500, 500), (float)rnd.Next(-500, 500) }, 30, 64);
+
+
+	for (auto i = 0; i < 1000; ++i) {
+		auto r = rnd.Next(16, 100);
+		XY v{ float(rnd.Get() % ((int)eg->w - r * 2)) + r - eg->hw, float(rnd.Get() % ((int)eg->h - r*2)) + r - eg->hh };
+		cs.emplace_back().Init(v, r, 16);
+	}
 	bs.emplace_back().Init({50, 0}, {50, 200});
 
 	BL.Init(eg, Mbtns::Left);
