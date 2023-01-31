@@ -21,6 +21,16 @@ void LineStrip::FillCirclePoints(XY const& center, float const& radius, std::opt
 	}
 }
 
+void LineStrip::FillBoxPoints(XY const& center, XY const& wh) {
+	auto hwh = wh / 2;
+	points.resize(5);
+	points[0] = { -hwh.x, -hwh.y };
+	points[1] = { -hwh.x,hwh.y };
+	points[2] = { hwh.x,hwh.y };
+	points[3] = { hwh.x,-hwh.y };
+	points[4] = { -hwh.x,-hwh.y };
+}
+
 void LineStrip::SetSize(Size const& s) {
 	dirty = true;
 	size = s;
