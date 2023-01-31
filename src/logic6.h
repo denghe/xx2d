@@ -19,6 +19,7 @@ struct DragCircle {
 
 	void Init(XY const& pos, float const& radius, int32_t const& segments) {
 		this->pos = pos;
+		this->prePos = pos;
 		this->radius = radius;
 		this->radiusPow2 = radius * radius;
 
@@ -28,6 +29,7 @@ struct DragCircle {
 		border.Commit();
 	}
 	XY pos{};
+	XY prePos{};
 	float radius{}, radiusPow2{};
 	LineStrip border;
 };
@@ -69,4 +71,5 @@ struct Logic6 : LogicBase {
 
 	std::vector<DragBox> bs;
 	DragBox::LT BL;
+	Rnd rnd;
 };
