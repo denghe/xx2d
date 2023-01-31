@@ -15,7 +15,9 @@ void Logic::Init() {
 }
 
 int Logic::Update() {
-	if (Pressed(KbdKeys::Escape)) return 1;
+	if (Pressed(KbdKeys::Escape)) {
+		DelaySwitchTo<Logic0>();
+	}
 	delta = xx::NowSteadyEpochSeconds(nowSecs);
 
 	int r = lg->Update();

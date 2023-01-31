@@ -105,7 +105,7 @@ int Logic5::Update() {
 	//	f->border->Draw(eg, cam);
 	//}
 
-	grid.ForeachAABB({ 0,0 }, { 1920,1080 });
+	grid.ForeachAABB({ 0,0 }, { (int)eg->w,(int)eg->h });
 	for (auto& f : grid.results) {
 		f->border->Draw(eg, cam);
 	}

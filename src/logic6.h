@@ -15,12 +15,10 @@ struct DragCircle {
 		border.Commit();
 		return 0;
 	}
-	void HandleMouseUp(LT& L) {
-	}
+	void HandleMouseUp(LT& L) {}
 
 	void Init(XY const& pos, float const& radius, int32_t const& segments) {
 		this->pos = pos;
-		this->prePos = pos;
 		this->radius = radius;
 		this->radiusPow2 = radius * radius;
 
@@ -30,7 +28,6 @@ struct DragCircle {
 		border.Commit();
 	}
 	XY pos{};
-	XY prePos{};
 	float radius{}, radiusPow2{};
 	LineStrip border;
 };
@@ -38,39 +35,28 @@ struct DragCircle {
 struct DragBox {
 	using LT = MouseEventListener<DragBox*>;
 	bool HandleMouseDown(LT& L) {
-		auto& p = L.downPos;
-		return p.x >= leftTop.x && p.x <= rightBottom.x
-			&& p.y >= leftTop.y && p.y <= rightBottom.y;
+		auto minXY = pos - size / 2;
+		auto maxXY = pos + size / 2;
+		return L.downPos.x >= minXY.x && L.downPos.x <= maxXY.x && L.downPos.y >= minXY.y && L.downPos.y <= maxXY.y;
 	}
 	int HandleMouseMove(LT& L) {
 		pos = pos + (L.eg->mousePosition - L.lastPos);
-		leftTop = pos - hs;
-		rightBottom = pos + hs;
 		border.SetPositon(pos);
 		border.Commit();
 		return 0;
 	}
-	void HandleMouseUp(LT& L) {
-	}
+	void HandleMouseUp(LT& L) {}
 
 	void Init(XY const& pos, XY const& size) {
 		this->pos = pos;
-		hs = size / 2;
-		leftTop = pos - hs;
-		rightBottom = pos + hs;
+		this->size = size;
 
-		border.SetPoints() = { {-hs.x,-hs.y},{-hs.x,hs.y},{hs.x,hs.y},{hs.x,-hs.y},{-hs.x,-hs.y} };
+		border.FillBoxPoints({}, size);
 		border.SetColor({ 0, 255, 0, 255 });
 		border.SetPositon(pos);
 		border.Commit();
 	}
-
-	float Maxx() { return rightBottom.x; }
-	float Minx() { return leftTop.x; }
-	float Maxy() { return rightBottom.y; }
-	float Miny() { return leftTop.y; }
-
-	XY pos{}, hs{}, leftTop{}, rightBottom{};
+	XY pos{}, size{};
 	LineStrip border;
 };
 

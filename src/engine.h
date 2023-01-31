@@ -75,7 +75,7 @@ struct Engine {
 	/**********************************************************************************/
 	// window & input
 
-	float w = 1920, h = 1080, hw = w/2, hh = h/2;
+	float w = 1800, h = 1000, hw = w/2, hh = h/2;
 	std::array<XY, 10> ninePoints;
 	void SetWH(float w, float h);	// will fill w, h, hw, hh, ninePoints
 
