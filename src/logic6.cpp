@@ -37,8 +37,8 @@ bool MoveCircleIfIntersectsBox1(T const& bx, T const& by, T const& brw, T const&
 		auto incX = dx2, incY = dy2;
 		float dSeq = dx2 * dx2 + dy2 * dy2;
 		if (dSeq == 0.0f) {
-			incX = brw + cr / 1.414213562373095f + 1;
-			incY = brh + cr / 1.414213562373095f + 1;
+			incX = brw + cr * (1.f / 1.414213562373095f) + 1;
+			incY = brh + cr * (1.f / 1.414213562373095f) + 1;
 		} else {
 			auto d = std::sqrt(dSeq);
 			incX = brw + cr * dx2 / d + 1;

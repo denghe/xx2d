@@ -37,7 +37,7 @@ struct Logic4 : LogicBase {
 	inline static constexpr int32_t speed = 5, speedMaxScale = 5;
 	inline static constexpr int32_t numCircleSegments = 8;
 	inline static constexpr int32_t foreachLimit = 12;
-	inline static constexpr int32_t numRandCircles = 200000, capacity = numRandCircles * 2;
+	inline static constexpr int32_t numRandCircles = 100000, capacity = numRandCircles * 2;
 	inline static constexpr int32_t numEveryInsert = 1000;
 	SpaceGridC<Circle> grid;
 	SpaceGridCCamera<Circle> cam;

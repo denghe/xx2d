@@ -160,6 +160,9 @@ int Logic4::Update() {
 			auto x = cam.scale.x - 0.01f;
 			cam.SetScale(x > 0.001 ? x : 0.001);
 		}
+		if (eg->Pressed(KbdKeys::C)) {
+			cs.clear();
+		}
 
 		if (eg->Pressed(Mbtns::Left)) {	// insert
 			auto xy = cam.GetMousePosInGrid(eg->mousePosition);
