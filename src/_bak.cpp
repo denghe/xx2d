@@ -1,5 +1,22 @@
 ﻿/*
 
+// check Box & Circle intersects. return 1: normal  2: corner
+template<typename T>
+uint32_t BoxCircleIntersects(T const& bx, T const& by, T const& brw, T const& brh, T const& cx, T const& cy, T const& cr) {
+	auto dx = std::abs(cx - bx);
+	if (dx > brw + cr) return 0;
+
+	auto dy = std::abs(cy - by);
+	if (dy > brh + cr) return 0;
+
+	if (dx <= brw || dy <= brh) return 1;
+	if ((dx - brw) * (dx - brw) + (dy - brh) * (dy - brh) <= cr * cr) return 2;
+	return 0;
+}
+
+
+
+
 
 //// calc player's row index
 //playerRowIdx = (player.footPos.y + mapTileYOffset) / cam.tileHeight;
