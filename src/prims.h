@@ -10,6 +10,8 @@ struct XY {
 	inline XY operator+(XY const& o) const { return { x + o.x, y + o.y }; }
 	inline XY operator-(XY const& o) const { return { x - o.x, y - o.y }; }
 	inline XY operator-() const { return { -x, -y }; }
+	inline XY operator+(float const& o) const { return { x + o, y + o }; }
+	inline XY operator-(float const& o) const { return { x - o, y - o }; }
 	inline XY operator*(float const& o) const { return { x * o, y * o }; }
 	inline XY operator/(float const& o) const { return { x / o, y / o }; }
 };

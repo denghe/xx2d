@@ -2,10 +2,32 @@
 #include "logic.h"
 #include "logic6.h"
 
+// todo: limit corner directions only
+
+union AvaliableDirections {
+	struct {
+		union {
+			struct {
+				uint8_t top, bottom;
+			};
+			uint16_t top_bottom;
+		};
+		union {
+			struct {
+				uint8_t left, right;
+			};
+			uint16_t left_right;
+		};
+	};
+	uint32_t all = 0xFFFFFFFFu;
+};
+
 // b: box    c: circle    w: width    h: height    r: radius
 // if intersect, cx & cy will be changed & return true
 template<typename T = int32_t>
-bool MoveCircleIfIntersectsBox1(T const& bx, T const& by, T const& brw, T const& brh, T& cx, T& cy, T const& cr) {
+bool MoveCircleIfIntersectsBox(T const& bx, T const& by, T const& brw, T const& brh, T& cx, T& cy, T const& cr, AvaliableDirections const& ad = {}) {
+	if (!ad.all) return false;
+
 	auto dx = std::abs(cx - bx);
 	if (dx > brw + cr) return false;
 
@@ -13,18 +35,60 @@ bool MoveCircleIfIntersectsBox1(T const& bx, T const& by, T const& brw, T const&
 	if (dy > brh + cr) return false;
 
 	if (dx <= brw || dy <= brh) {
-		// change cx or cy
-		if (brw - dx > brh - dy) {
-			if (by > cy) {
-				cy = by - brh - cr - 1;
+		if (ad.all == 0xFFFFFFFFu) {	// all direction avaliable
+			if (brw - dx > brh - dy) {
+				if (by > cy) {
+					cy = by - brh - cr - 1;	// top
+				} else {
+					cy = by + brh + cr + 1;	// bottom
+				}
 			} else {
-				cy = by + brh + cr + 1;
+				if (bx > cx) {
+					cx = bx - brw - cr - 1;	// left
+				} else {
+					cx = bx + brw + cr + 1;	// right
+				}
 			}
 		} else {
-			if (bx > cx) {
-				cx = bx - brw - cr - 1;
-			} else {
-				cx = bx + brw + cr + 1;
+			// find short way out
+			// store to array. left = 1, right = 2, top = 3, bottom = 4
+			std::array<std::pair<int, T>, 4> a;
+			size_t asiz{};
+			if (ad.left) {
+				a[asiz++] = { 1, brw + cr + (bx > cx ? -dx : dx) };
+			}
+			if (ad.right) {
+				a[asiz++] = { 2, brw + cr + (bx > cx ? dx : -dx)};
+			}
+			if (ad.top) {
+				a[asiz++] = { 3, brh + cr + (by > cy ? -dy : dy) };
+			}
+			if (ad.bottom) {
+				a[asiz++] = { 4, brh + cr + (by > cy ? dy : -dy) };
+			}
+
+			// find min
+			std::pair<int, T> minVal = a[0];
+			for (size_t i = 1; i < asiz; ++i) {
+				if (a[i].second < minVal.second) {
+					minVal = a[i];
+				}
+			}
+
+			// change cx or cy
+			switch (minVal.first) {
+			case 1:
+				cx = bx - brw - cr - 1;	// left
+				return true;
+			case 2:
+				cx = bx + brw + cr + 1;	// right
+				return true;
+			case 3:
+				cy = by - brh - cr - 1;	// top
+				return true;
+			case 4:
+				cy = by + brh + cr + 1;	// bottom
+				return true;
 			}
 		}
 		return true;
@@ -44,21 +108,66 @@ bool MoveCircleIfIntersectsBox1(T const& bx, T const& by, T const& brw, T const&
 			incX = brw + cr * dx2 / d + 1;
 			incY = brh + cr * dy2 / d + 1;
 		}
-		if (cx < bx) {
-			incX = -incX;
+
+		//if (cx < bx) {
+		//	incX = -incX;
+		//}
+		//if (cy < by) {
+		//	incY = -incY;
+		//}
+		//cx = bx + incX;
+		//cy = by + incY;
+
+		// change cx cy
+		if (by > cy) {	// quadrant: 1, 2
+			if (bx < cx) {	// 1
+				if (ad.right && ad.top) {
+					cx = bx + incX;
+					cy = by - incY;
+				} else if (ad.right) {
+					cx = bx + brw + cr + 1;	// right
+				} else {
+					cy = by - brh - cr - 1;	// top
+				}
+			} else {	// 2
+				if (ad.left && ad.top) {
+					cx = bx - incX;
+					cy = by - incY;
+				} else if (ad.left) {
+					cx = bx - brw - cr - 1;	// left
+				} else {
+					cy = by - brh - cr - 1;	// top
+				}
+			}
+		} else {	// quadrant: 3, 4
+			if (bx < cx) {	// 4
+				if (ad.right && ad.bottom) {
+					cx = bx + incX;
+					cy = by + incY;
+				} else if (ad.right) {
+					cx = bx + brw + cr + 1;	// right
+				} else {
+					cy = by + brh + cr + 1;	// bottom
+				}
+			} else {	// 3
+				if (ad.left && ad.bottom) {
+					cx = bx - incX;
+					cy = by + incY;
+				} else if (ad.left) {
+					cx = bx - brw - cr - 1;	// left
+				} else {
+					cy = by + brh + cr + 1;	// bottom
+				}
+			}
 		}
-		if (cy < by) {
-			incY = -incY;
-		}
-		cx = bx + incX;
-		cy = by + incY;
+
 		return true;
 	}
 	return false;
 }
 
-bool MoveCircleIfIntersectsBox1(DragBox& b, DragCircle& c) {
-	return MoveCircleIfIntersectsBox1(b.pos.x, b.pos.y, b.size.x / 2, b.size.y / 2, c.pos.x, c.pos.y, c.radius);
+bool MoveCircleIfIntersectsBox(DragBox& b, DragCircle& c, AvaliableDirections const& avaliableDirections = {}) {
+	return MoveCircleIfIntersectsBox(b.pos.x, b.pos.y, b.size.x / 2, b.size.y / 2, c.pos.x, c.pos.y, c.radius, avaliableDirections);
 }
 
 void Logic6::Init(Logic* eg) {
@@ -72,9 +181,19 @@ void Logic6::Init(Logic* eg) {
 	//	cs.emplace_back().Init(this, v, r, 16);
 	//}
 
-	bs.emplace_back().Init({0, 0}, {200, 100});
-	bs.emplace_back().Init({150, 50}, {100, 200});
-	cs.emplace_back().Init(this, { 300, 300 }, 50, 16);
+	XY wh{ 100, 100 };
+	cs.emplace_back().Init(this, { -400, 400 }, 25, 48);
+	cs.emplace_back().Init(this, { 0, 400 }, 50, 48);
+	cs.emplace_back().Init(this, { 400, 400 }, 90, 48);
+
+	bs.emplace_back().Init({ 100, 0 }, wh);
+	bs.emplace_back().Init({ 200, 0 }, wh);
+	bs.emplace_back().Init({ 200, 100 }, wh);
+
+	bs.emplace_back().Init({ -200, 0 }, wh);
+	bs.emplace_back().Init({ -200, 100 }, wh);
+
+	bs.emplace_back().Init({ -500, 0 }, wh);
 
 
 	BL.Init(eg, Mbtns::Left);
@@ -97,10 +216,11 @@ int Logic6::Update() {
 			if (draggingC) {
 				auto tar = eg->mousePosition + draggingC->dxy;
 				auto d = tar - draggingC->pos;
-				if (d.x > 50) d.x = 50;
-				else if (d.x < -50) d.x = -50;
-				if (d.y > 50) d.y = 50;
-				else if (d.y < -50) d.y = -50;
+				auto limit = 50;// draggingC->radius / 2;
+				if (d.x > limit) d.x = limit;
+				else if (d.x < -limit) d.x = -limit;
+				if (d.y > limit) d.y = limit;
+				else if (d.y < -limit) d.y = -limit;
 				draggingC->pos = draggingC->pos + d;
 				draggingC->border.SetPositon(draggingC->pos);
 				draggingC->border.Commit();
@@ -114,15 +234,40 @@ int Logic6::Update() {
 			}
 		}
 
+		
+		auto pointInBoxs = [this](XY const& p)->uint8_t {
+			for (auto& b : bs) {
+				auto hs = b.size / 2;
+				auto leftTop = b.pos - hs;
+				if (p.x < leftTop.x) continue;
+				if (p.y < leftTop.y) continue;
+				auto rightBottom = b.pos + hs;
+				if (p.x > rightBottom.x) continue;
+				if (p.y > rightBottom.y) continue;
+				return 0;
+			}
+			return 0xFFu;
+		};
+
 		for (auto& b : bs) {
+			//if (!(b.pos.x == 100.f && b.pos.y == 0.f)) continue;
+			// fill avaliableDirections
+			auto hs = b.size / 2 + 2;	// + 2 : guess point
+			AvaliableDirections ads;
+			ads.left = pointInBoxs({ b.pos.x - hs.x, b.pos.y });
+			ads.right = pointInBoxs({ b.pos.x + hs.x, b.pos.y });
+			ads.top = pointInBoxs({ b.pos.x, b.pos.y - hs.y });
+			ads.bottom = pointInBoxs({ b.pos.x, b.pos.y + hs.y });
+
 			for (auto& c : cs) {
-				if (MoveCircleIfIntersectsBox1(b, c)) {
-					assert(!MoveCircleIfIntersectsBox1(b, c));
+				if (MoveCircleIfIntersectsBox(b, c, ads)) {
+					assert(!MoveCircleIfIntersectsBox(b, c));
 					c.border.SetPositon(c.pos);
 					c.border.Commit();
 				}
 			}
 		}
+
 	}
 
 	for (auto& c : cs) {
