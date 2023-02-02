@@ -66,13 +66,15 @@ void Logic6::Init(Logic* eg) {
 
 	std::cout << "Logic6 Init( test box + circle collision detect )" << std::endl;
 
-	for (auto i = 0; i < 1000; ++i) {
-		auto r = rnd.Next(16, 100);
-		XY v{ float(rnd.Get() % ((int)eg->w - r * 2)) + r - eg->hw, float(rnd.Get() % ((int)eg->h - r*2)) + r - eg->hh };
-		cs.emplace_back().Init(v, r, 16);
-	}
+	//for (auto i = 0; i < 1; ++i) {
+	//	auto r = rnd.Next(16, 100);
+	//	XY v{ float(rnd.Get() % ((int)eg->w - r * 2)) + r - eg->hw, float(rnd.Get() % ((int)eg->h - r*2)) + r - eg->hh };
+	//	cs.emplace_back().Init(this, v, r, 16);
+	//}
 
-	bs.emplace_back().Init({}, {50, 200});
+	bs.emplace_back().Init({0, 0}, {200, 100});
+	bs.emplace_back().Init({150, 50}, {100, 200});
+	cs.emplace_back().Init(this, { 300, 300 }, 50, 16);
 
 
 	BL.Init(eg, Mbtns::Left);
@@ -81,38 +83,107 @@ void Logic6::Init(Logic* eg) {
 
 int Logic6::Update() {
 
-	{
-		CL.Update();
-		auto&& iter = cs.begin();
-		while (CL.eventId && iter != cs.end()) {
-			CL.Dispatch(&*iter++);
-		}
-	}
-	{
-		BL.Update();
-		auto&& iter = bs.begin();
-		while (BL.eventId && iter != bs.end()) {
-			BL.Dispatch(&*iter++);
-		}
-	}
+	timePool += eg->delta;
+	auto timePoolBak = timePool;
+	if (timePool >= 1.f / 60) {
+		timePool = 0;
 
-	for (auto& b : bs) {
-		for (auto& c : cs) {
-			if (MoveCircleIfIntersectsBox1(b, c)) {
-				assert(!MoveCircleIfIntersectsBox1(b, c));
-				c.border.SetPositon(c.pos);
-				c.border.Commit();
+		{
+			CL.Update();
+			auto&& iter = cs.begin();
+			while (CL.eventId && iter != cs.end()) {
+				CL.Dispatch(&*iter++);
+			}
+			if (draggingC) {
+				auto tar = eg->mousePosition + draggingC->dxy;
+				auto d = tar - draggingC->pos;
+				if (d.x > 50) d.x = 50;
+				else if (d.x < -50) d.x = -50;
+				if (d.y > 50) d.y = 50;
+				else if (d.y < -50) d.y = -50;
+				draggingC->pos = draggingC->pos + d;
+				draggingC->border.SetPositon(draggingC->pos);
+				draggingC->border.Commit();
+			}
+		}
+		{
+			BL.Update();
+			auto&& iter = bs.begin();
+			while (BL.eventId && iter != bs.end()) {
+				BL.Dispatch(&*iter++);
+			}
+		}
+
+		for (auto& b : bs) {
+			for (auto& c : cs) {
+				if (MoveCircleIfIntersectsBox1(b, c)) {
+					assert(!MoveCircleIfIntersectsBox1(b, c));
+					c.border.SetPositon(c.pos);
+					c.border.Commit();
+				}
 			}
 		}
 	}
 
 	for (auto& c : cs) {
 		c.border.Draw(eg);
-		c.prePos = c.pos;
 	}
 	for (auto& b : bs) {
 		b.border.Draw(eg);
 	}
 
 	return 0;
+}
+
+
+bool DragCircle::HandleMouseDown(LT& L) {
+	auto d = pos - L.downPos;
+	if (d.x * d.x + d.y * d.y < radiusPow2) {
+		dxy = d;
+		owner->draggingC = this;
+		return true;
+	}
+	return false;
+}
+int DragCircle::HandleMouseMove(LT& L) {
+	return 0;
+}
+void DragCircle::HandleMouseUp(LT& L) {
+	owner->draggingC = {};
+}
+
+void DragCircle::Init(Logic6* const& owner, XY const& pos, float const& radius, int32_t const& segments) {
+	this->owner = owner;
+	this->pos = pos;
+	this->radius = radius;
+	this->radiusPow2 = radius * radius;
+
+	border.FillCirclePoints({ 0,0 }, radius, {}, segments);
+	border.SetColor({ 255, 255, 0, 255 });
+	border.SetPositon(pos);
+	border.Commit();
+}
+
+
+bool DragBox::HandleMouseDown(LT& L) {
+	auto minXY = pos - size / 2;
+	auto maxXY = pos + size / 2;
+	return L.downPos.x >= minXY.x && L.downPos.x <= maxXY.x && L.downPos.y >= minXY.y && L.downPos.y <= maxXY.y;
+}
+int DragBox::HandleMouseMove(LT& L) {
+	pos = pos + (L.eg->mousePosition - L.lastPos);
+	border.SetPositon(pos);
+	border.Commit();
+	return 0;
+}
+void DragBox::HandleMouseUp(LT& L) {}
+
+void DragBox::Init(XY const& pos, XY const& size) {
+	this->pos = pos;
+	this->size = size;
+
+	border.FillBoxPoints({}, size);
+	border.SetColor({ 0, 255, 0, 255 });
+	border.SetPositon(pos);
+	border.Commit();
 }

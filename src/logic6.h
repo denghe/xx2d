@@ -2,62 +2,30 @@
 #include "pch.h"
 #include "logic_base.h"
 
+struct Logic6;
 struct DragCircle {
 	using LT = MouseEventListener<DragCircle*>;
-	bool HandleMouseDown(LT& L) {
-		auto dx = pos.x - L.downPos.x;
-		auto dy = pos.y - L.downPos.y;
-		return dx * dx + dy * dy < radiusPow2;
-	}
-	int HandleMouseMove(LT& L) {
-		pos = pos + (L.eg->mousePosition - L.lastPos);
-		border.SetPositon(pos);
-		border.Commit();
-		return 0;
-	}
-	void HandleMouseUp(LT& L) {}
+	bool HandleMouseDown(LT& L);
+	int HandleMouseMove(LT& L);
+	void HandleMouseUp(LT& L);
 
-	void Init(XY const& pos, float const& radius, int32_t const& segments) {
-		this->pos = pos;
-		this->prePos = pos;
-		this->radius = radius;
-		this->radiusPow2 = radius * radius;
+	void Init(Logic6* const& owner, XY const& pos, float const& radius, int32_t const& segments);
 
-		border.FillCirclePoints({ 0,0 }, radius, {}, segments);
-		border.SetColor({ 255, 255, 0, 255 });
-		border.SetPositon(pos);
-		border.Commit();
-	}
-	XY pos{};
-	XY prePos{};
+	Logic6* owner{};
+	XY pos{}, dxy{};
 	float radius{}, radiusPow2{};
 	LineStrip border;
 };
 
 struct DragBox {
 	using LT = MouseEventListener<DragBox*>;
-	bool HandleMouseDown(LT& L) {
-		auto minXY = pos - size / 2;
-		auto maxXY = pos + size / 2;
-		return L.downPos.x >= minXY.x && L.downPos.x <= maxXY.x && L.downPos.y >= minXY.y && L.downPos.y <= maxXY.y;
-	}
-	int HandleMouseMove(LT& L) {
-		pos = pos + (L.eg->mousePosition - L.lastPos);
-		border.SetPositon(pos);
-		border.Commit();
-		return 0;
-	}
-	void HandleMouseUp(LT& L) {}
+	bool HandleMouseDown(LT& L);
+	int HandleMouseMove(LT& L);
+	void HandleMouseUp(LT& L);
 
-	void Init(XY const& pos, XY const& size) {
-		this->pos = pos;
-		this->size = size;
+	void Init(XY const& pos, XY const& size);
 
-		border.FillBoxPoints({}, size);
-		border.SetColor({ 0, 255, 0, 255 });
-		border.SetPositon(pos);
-		border.Commit();
-	}
+	Logic6* owner{};
 	XY pos{}, size{};
 	LineStrip border;
 };
@@ -68,8 +36,10 @@ struct Logic6 : LogicBase {
 
 	std::vector<DragCircle> cs;
 	DragCircle::LT CL;
+	DragCircle* draggingC{};
 
 	std::vector<DragBox> bs;
 	DragBox::LT BL;
 	Rnd rnd;
+	double timePool{};
 };
