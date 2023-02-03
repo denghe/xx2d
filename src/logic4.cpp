@@ -61,7 +61,7 @@ void Circle::Update(Rnd& rnd) {
 			pos += inc;
 		}
 
-		// 边缘限定( 当前逻辑有重叠才移动，故边界检测放在这里 )
+		// map edge limit
 		if (pos.x < 0) pos.x = 0;
 		else if (pos.x >= Logic4::maxX) pos.x = Logic4::maxX - 1;
 		if (pos.y < 0) pos.y = 0;

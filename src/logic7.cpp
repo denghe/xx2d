@@ -2,61 +2,96 @@
 #include "logic.h"
 #include "logic7.h"
 
-// b: box    c: circle    w: width    h: height    r: radius
-// if intersect, cx & cy will be changed & return true
-template<typename T = int32_t>
-bool MoveCircleIfIntersectsBox(T const& bx, T const& by, T const& brw, T const& brh, T& cx, T& cy, T const& cr) {
-	auto dx = std::abs(cx - bx);
-	if (dx > brw + cr) return false;
+void C::Init(Logic7* const& owner_, xx::XY<> const& pos, int32_t const& r, int32_t const& segments) {
+	owner = owner_;
+	radius = r;
 
-	auto dy = std::abs(cy - by);
-	if (dy > brh + cr) return false;
+	SGCInit(&owner->sgc);
+	SGCSetPos(pos);
+	SGCAdd();
 
-	if (dx <= brw || dy <= brh) {
-		if (brw - dx > brh - dy) {
-			if (by > cy) {
-				cy = by - brh - cr - 1;	// top
-			} else {
-				cy = by + brh + cr + 1;	// bottom
-			}
-		} else {
-			if (bx > cx) {
-				cx = bx - brw - cr - 1;	// left
-			} else {
-				cx = bx + brw + cr + 1;	// right
-			}
-		}
-		return true;
-	}
-
-	auto dx2 = dx - brw;
-	auto dy2 = dy - brh;
-	if (dx2 * dx2 + dy2 * dy2 <= cr * cr) {
-		// change cx & cy
-		auto incX = dx2, incY = dy2;
-		float dSeq = dx2 * dx2 + dy2 * dy2;
-		if (dSeq == 0.0f) {
-			incX = brw + cr * (1.f / 1.414213562373095f) + 1;
-			incY = brh + cr * (1.f / 1.414213562373095f) + 1;
-		} else {
-			auto d = std::sqrt(dSeq);
-			incX = brw + cr * dx2 / d + 1;
-			incY = brh + cr * dy2 / d + 1;
-		}
-
-		if (cx < bx) {
-			incX = -incX;
-		}
-		if (cy < by) {
-			incY = -incY;
-		}
-		cx = bx + incX;
-		cy = by + incY;
-
-		return true;
-	}
-	return false;
+	border.FillCirclePoints({ 0,0 }, radius, {}, segments);
+	border.SetColor({ 255, 255, 0, 255 });
+	border.SetPositon({(float)pos.x, (float)pos.y});
+	border.Commit();
 }
+void C::SetPos(xx::XY<> const& pos) {
+	SGCSetPos(pos);
+	SGCUpdate();
+
+	border.SetPositon({ (float)pos.x, (float)pos.y });
+	border.Commit();
+}
+void C::Update() {
+	int foreachLimit = 12, numCross{};
+	xx::XY<> v;	// combine force vector
+	newPos = _sgcPos;
+
+	// calc v
+	_sgc->Foreach9NeighborCells<true>(this, [&](C* const& c) {
+		assert(c != this);
+		// fully cross?
+		if (c->_sgcPos == _sgcPos) {
+			++numCross;
+			return;
+		}
+		// prepare cross check. (r1 + r2) * (r1 + r2) > (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)
+		auto rrPow2 = (c->radius + this->radius) * (c->radius + this->radius);
+		auto d = c->_sgcPos - _sgcPos;
+		auto dPow2 = d.x * d.x + d.y * d.y;
+		// cross?
+		if (rrPow2 > dPow2) {
+			auto dxy = std::sqrt(dPow2);
+			v += d / dxy;
+			++numCross;
+		}
+	}, &foreachLimit);
+
+	// cross?
+	if (numCross) {
+		if (v.IsZero()) {	// move by random angle
+			newPos += xx::Rotate(xx::XY<>{ speed, 0 }, owner->rnd.Next() % xx::table_num_angles);
+		}
+		else {	// move by v
+			auto vPow2 = v.x * v.x + v.y * v.y;
+			auto vxy = std::sqrt(vPow2);
+			newPos += v / vxy * speed;
+		}
+
+		// todo: get box & fix newPos
+
+		// map edge limit
+		if (newPos.x < 0) newPos.x = 0;
+		else if (newPos.x >= _sgc->maxX) newPos.x = _sgc->maxX - 1;
+		if (newPos.y < 0) newPos.y = 0;
+		else if (newPos.y >= _sgc->maxY) newPos.y = _sgc->maxY - 1;
+	}
+}
+void Update2() {
+
+}
+C::~C() {
+	SGCRemove();
+}
+
+
+void B::Init(Logic7* const& owner_, xx::XY<> const& pos, xx::XY<> const& siz) {
+	owner = owner_;
+	size = siz;
+
+	SGABInit(&owner->sgab);
+	SGABSetPosSiz(pos, siz);
+	SGABAdd();
+
+	border.FillBoxPoints({}, {(float)siz.x, (float)siz.y});
+	border.SetColor({ 0, 255, 0, 255 });
+	border.SetPositon({ (float)pos.x, (float)pos.y });
+	border.Commit();
+}
+B::~B() {
+	SGABRemove();
+}
+
 
 void Logic7::Init(Logic* eg) {
 	this->eg = eg;
@@ -102,26 +137,4 @@ int Logic7::Update() {
 	}
 
 	return 0;
-}
-
-void C::Init(Logic7* const& owner, XY const& pos, float const& radius, int32_t const& segments) {
-	this->owner = owner;
-	this->pos = pos;
-	this->radius = radius;
-	this->radiusPow2 = radius * radius;
-
-	border.FillCirclePoints({ 0,0 }, radius, {}, segments);
-	border.SetColor({ 255, 255, 0, 255 });
-	border.SetPositon(pos);
-	border.Commit();
-}
-
-void B::Init(XY const& pos, XY const& size) {
-	this->pos = pos;
-	this->size = size;
-
-	border.FillBoxPoints({}, size);
-	border.SetColor({ 0, 255, 0, 255 });
-	border.SetPositon(pos);
-	border.Commit();
 }

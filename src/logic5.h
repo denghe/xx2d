@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "pch.h"
 #include "logic_base.h"
-#include "spacegridab.h"
 
 struct Foo : SpaceGridABItem<Foo> {
 
