@@ -16,7 +16,9 @@ void Logic::Init() {
 
 int Logic::Update() {
 	if (Pressed(KbdKeys::Escape)) {
-		DelaySwitchTo<Logic0>();
+		if (!dynamic_cast<Logic0*>(lg.pointer)) {
+			DelaySwitchTo<Logic0>();
+		}
 	}
 	delta = xx::NowSteadyEpochSeconds(nowSecs);
 
@@ -30,7 +32,7 @@ int Logic::Update() {
 		fps = fpsCounter;
 		fpsCounter = 0;
 	}
-	lbInfo.SetText(fnt1, xx::ToString("fps = ", fps, ", draw call = ", sm.GetDrawCall(), ", quad count = ", sm.GetDrawQuads(), ", line point count = ", sm.GetDrawLines(), std::string_view(moreInfo)));
+	lbInfo.SetText(fnt1, xx::ToString("fps = ", fps, ", draw call = ", sm.GetDrawCall(), ", quad count = ", sm.GetDrawQuads(), ", line point count = ", sm.GetDrawLines(), std::string_view(extraInfo)));
 	lbInfo.SetPositon({ lbInfo.pos.x + 2, lbInfo.pos.y - 2 });
 	lbInfo.SetColor({ 0, 0, 255, 255 });
 	lbInfo.Commit();

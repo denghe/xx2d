@@ -109,7 +109,7 @@ int Logic5::Update() {
 	for (auto& f : grid.results) {
 		f->border->Draw(eg, cam);
 	}
-	eg->moreInfo = xx::ToString(", numAllBoxs = ", foos.size(), ", numScreenBoxs = ", grid.results.size());
+	eg->extraInfo = xx::ToString(", numAllBoxs = ", foos.size(), ", numScreenBoxs = ", grid.results.size());
 	grid.ClearResults();
 
 

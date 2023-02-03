@@ -5,7 +5,7 @@
 struct Logic : Engine {
 	BMFont fnt1;
 	Label lbInfo;
-	std::string moreInfo;
+	std::string extraInfo;
 	int fps{}, fpsCounter{};
 	double nowSecs{}, delta{}, fpsTimePool{}, timePool{};
 

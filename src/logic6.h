@@ -38,6 +38,7 @@ struct Logic6 : LogicBase {
 	DragCircle::LT CL;
 	DragCircle* draggingC{};
 
+	size_t cursor{};
 	std::vector<DragBox> bs;
 	DragBox::LT BL;
 	Rnd rnd;

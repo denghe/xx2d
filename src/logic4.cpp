@@ -234,7 +234,7 @@ int Logic4::Update() {
 		}
 
 		// output log
-		eg->moreInfo = xx::ToString(", numCircles = ",cs.size(), ", numActives = ", grid.numActives, ", update elapsed secs = ", xx::NowSteadyEpochSeconds(secs));
+		eg->extraInfo = xx::ToString(", numCircles = ",cs.size(), ", numActives = ", grid.numActives, ", update elapsed secs = ", xx::NowSteadyEpochSeconds(secs));
 	}
 
 	// draw

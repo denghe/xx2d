@@ -21,6 +21,8 @@ void Logic0::Init(Logic* eg) {
 	menus.emplace_back().Init(eg, { -300, -100 }, "logic4", 64);
 	menus.emplace_back().Init(eg, { 0, -100 }, "logic5", 64);
 	menus.emplace_back().Init(eg, { 300, -100 }, "logic6", 64);
+
+	eg->extraInfo.clear();
 }
 
 int Logic0::Update() {
