@@ -5,6 +5,7 @@
 
 struct Foo : SpaceGridABItem<Foo> {
 
+	XY size, halfSize;
 	xx::Shared<LineStrip> border;
 	RGBA8 color;
 

@@ -19,7 +19,7 @@ template<typename SpaceGridABItemDeriveType>
 struct SpaceGridABItem {
 	using SGABCoveredCellInfo = SpaceGridABItemCellInfo<SpaceGridABItemDeriveType>;
 	SpaceGridAB<SpaceGridABItemDeriveType>* _sgab{};
-	xx::XY<int32_t> _sgabPos, _sgabSize, _sgabHalfSize;	// for Add & Update calc covered cells
+	xx::XY<int32_t> _sgabPos, _sgabMin, _sgabMax;	// for Add & Update calc covered cells
 	xx::XY<int32_t> _sgabCRIdxFrom, _sgabCRIdxTo;	// backup for Update speed up
 	std::vector<SGABCoveredCellInfo> _sgabCoveredCellInfos;	// todo: change to custom single buf container ?
 	size_t _sgabFlag{};	// avoid duplication when Foreach
@@ -34,11 +34,17 @@ struct SpaceGridABItem {
 	void SGABSetPosSiz(xx::XY<int32_t> const& pos, xx::XY<int32_t> const& siz) {
 		assert(_sgab);
 		_sgabPos = pos;
-		_sgabSize = siz;
-		_sgabHalfSize = siz / 2;
-		assert(_sgabHalfSize.x > 0 && _sgabHalfSize.y > 0);
-		assert(_sgabPos.x >= 0 && _sgabPos.x + _sgabHalfSize.x < _sgab->maxX);
-		assert(_sgabPos.y >= 0 && _sgabPos.y + _sgabHalfSize.y < _sgab->maxY);
+		auto hs = siz / 2;
+		_sgabMin = pos - hs;
+		_sgabMax = pos + hs;
+		assert(_sgabMin.x < _sgabMax.x);
+		assert(_sgabMin.y < _sgabMax.y);
+		assert(_sgabMin.x >= 0 && _sgabMin.y >= 0);
+		assert(_sgabMax.x < _sgab->maxX && _sgabMax.y < _sgab->maxY);
+	}
+
+	bool SGABCheckIntersects(xx::XY<int32_t> const& minXY, xx::XY<int32_t> const& maxXY) {
+		return !(maxXY.x < _sgabMin.x || _sgabMax.x < minXY.x || maxXY.y < _sgabMin.y || _sgabMax.y < minXY.y);
 	}
 
 	void SGABAdd() {
@@ -85,21 +91,9 @@ struct SpaceGridAB {
 		assert(c->_sgab == this);
 		assert(c->_sgabCoveredCellInfos.empty());
 
-		assert(c->_sgabHalfSize.x > 0 && c->_sgabHalfSize.y > 0);
-		assert(c->_sgabPos.x >= 0 && c->_sgabPos.x + c->_sgabHalfSize.x < maxX);
-		assert(c->_sgabPos.y >= 0 && c->_sgabPos.y + c->_sgabHalfSize.y < maxY);
-
 		// calc covered cells
-		auto leftTopPos = c->_sgabPos - c->_sgabHalfSize;
-		auto crIdxFrom = leftTopPos / cellSize;
-		auto rightBottomPos = c->_sgabPos + c->_sgabHalfSize;
-		auto crIdxTo = rightBottomPos / cellSize;
-
-		assert(leftTopPos.x < rightBottomPos.x);
-		assert(leftTopPos.y < rightBottomPos.y);
-		assert(leftTopPos.x >= 0 && leftTopPos.y >= 0);
-		assert(rightBottomPos.x < maxX && rightBottomPos.y < maxY);
-
+		auto crIdxFrom = c->_sgabMin / cellSize;
+		auto crIdxTo = c->_sgabMax / cellSize;
 		auto numCoveredCells = (crIdxTo.x - crIdxFrom.x + 1) * (crIdxTo.y - crIdxFrom.y + 1);
 
 		// link
@@ -158,21 +152,9 @@ struct SpaceGridAB {
 		assert(c->_sgab == this);
 		assert(c->_sgabCoveredCellInfos.size());
 
-		assert(c->_sgabHalfSize.x > 0 && c->_sgabHalfSize.y > 0);
-		assert(c->_sgabPos.x >= 0 && c->_sgabPos.x + c->_sgabHalfSize.x < maxX);
-		assert(c->_sgabPos.y >= 0 && c->_sgabPos.y + c->_sgabHalfSize.y < maxY);
-
 		// calc covered cells
-		auto leftTopPos = c->_sgabPos - c->_sgabHalfSize;
-		auto crIdxFrom = leftTopPos / cellSize;
-		auto rightBottomPos = c->_sgabPos + c->_sgabHalfSize;
-		auto crIdxTo = rightBottomPos / cellSize;
-
-		assert(leftTopPos.x < rightBottomPos.x);
-		assert(leftTopPos.y < rightBottomPos.y);
-		assert(leftTopPos.x >= 0 && leftTopPos.y >= 0);
-		assert(rightBottomPos.x < maxX && rightBottomPos.y < maxY);
-
+		auto crIdxFrom = c->_sgabMin / cellSize;
+		auto crIdxTo = c->_sgabMax / cellSize;
 		auto numCoveredCells = (crIdxTo.x - crIdxFrom.x + 1) * (crIdxTo.y - crIdxFrom.y + 1);
 
 		auto& ccis = c->_sgabCoveredCellInfos;
@@ -239,14 +221,11 @@ struct SpaceGridAB {
 	template<bool enableLimit = false, bool enableExcept = false>
 	void Foreach(int32_t const& idx, int32_t* limit = nullptr, Item* const& except = nullptr) {
 		assert(idx >= 0 && idx < cells.size());
-		if constexpr (enableLimit) {
-			assert(limit);
-			if (*limit <= 0) return;
-		}
 		if constexpr (enableExcept) {
 			assert(except);
 			except->_sgabFlag = 1;
 		}
+
 		auto c = cells[idx];
 		while (c) {
 			if (!c->self->_sgabFlag) {
@@ -258,6 +237,7 @@ struct SpaceGridAB {
 			}
 			c = c->next;
 		}
+
 		if constexpr (enableExcept) {
 			assert(except);
 			except->_sgabFlag = 0;
@@ -274,30 +254,223 @@ struct SpaceGridAB {
 
 	// fill items to results. need ClearResults()
 	template<bool enableLimit = false, bool enableExcept = false>
-	void ForeachAABB(xx::XY<int32_t> const& leftTopPos, xx::XY<int32_t> const& rightBottomPos, int32_t* limit = nullptr, Item* const& except = nullptr) {
-		assert(leftTopPos.x < rightBottomPos.x);
-		assert(leftTopPos.y < rightBottomPos.y);
-		assert(leftTopPos.x >= 0 && leftTopPos.y >= 0);
-		assert(rightBottomPos.x < maxX && rightBottomPos.y < maxY);
+	void ForeachAABB(xx::XY<int32_t> const& minXY, xx::XY<int32_t> const& maxXY, int32_t* limit = nullptr, Item* const& except = nullptr) {
+		assert(minXY.x < maxXY.x);
+		assert(minXY.y < maxXY.y);
+		assert(minXY.x >= 0 && minXY.y >= 0);
+		assert(maxXY.x < maxX && maxXY.y < maxY);
 
 		// calc covered cells
-		auto crIdxFrom = leftTopPos / cellSize;
-		auto crIdxTo = rightBottomPos / cellSize;
+		auto crIdxFrom = minXY / cellSize;
+		auto crIdxTo = maxXY / cellSize;
 		
-		for (auto rIdx = crIdxFrom.y; rIdx <= crIdxTo.y; rIdx++) {
-			for (auto cIdx = crIdxFrom.x; cIdx <= crIdxTo.x; cIdx++) {
-				size_t idx = rIdx * numCols + cIdx;
-				assert(idx <= cells.size());
-				Foreach<enableLimit, enableExcept>(idx, limit, except);
-				if constexpr (enableLimit) {
-					assert(limit);
-					if (*limit <= 0) return;
+		// except set flag
+		if constexpr (enableExcept) {
+			assert(except);
+			except->_sgabFlag = 1;
+		}
+
+		if (crIdxFrom.x == crIdxTo.x || crIdxFrom.y == crIdxTo.y) {
+			// 1-2 row, 1-2 col: do full rect check
+			for (auto rIdx = crIdxFrom.y; rIdx <= crIdxTo.y; rIdx++) {
+				for (auto cIdx = crIdxFrom.x; cIdx <= crIdxTo.x; cIdx++) {
+					auto c = cells[rIdx * numCols + cIdx];
+					while (c) {
+						auto&& s = c->self;
+						if (s->SGABCheckIntersects(minXY, maxXY)) {
+							if (!s->_sgabFlag) {
+								s->_sgabFlag = 1;
+								results.push_back(s);
+							}
+							if constexpr (enableLimit) {
+								if (-- * limit == 0) break;
+							}
+						}
+						c = c->next;
+					}
 				}
 			}
 		}
+		else {
+			// first row: check AB
+			auto rIdx = crIdxFrom.y;
+
+			// first cell: check top left AB
+			auto cIdx = crIdxFrom.x;
+			auto c = cells[rIdx * numCols + cIdx];
+			while (c) {
+				auto&& s = c->self;
+				if (s->_sgabMax.x > minXY.x && s->_sgabMax.y > minXY.y) {
+					if (!s->_sgabFlag) {
+						s->_sgabFlag = 1;
+						results.push_back(s);
+					}
+					if constexpr (enableLimit) {
+						if (-- * limit == 0) break;
+					}
+				}
+				c = c->next;
+			}
+
+			// middle cells: check top AB
+			for (++cIdx; cIdx < crIdxTo.x; cIdx++) {
+				c = cells[rIdx * numCols + cIdx];
+				while (c) {
+					auto&& s = c->self;
+					if (s->_sgabMax.y > minXY.y) {
+						if (!s->_sgabFlag) {
+							s->_sgabFlag = 1;
+							results.push_back(s);
+						}
+						if constexpr (enableLimit) {
+							if (-- * limit == 0) break;
+						}
+					}
+					c = c->next;
+				}
+			}
+
+			// last cell: check top right AB
+			if (cIdx == crIdxTo.x) {
+				auto c = cells[rIdx * numCols + cIdx];
+				while (c) {
+					auto&& s = c->self;
+					if (s->_sgabMin.x < maxXY.x && s->_sgabMax.y > minXY.y) {
+						if (!s->_sgabFlag) {
+							s->_sgabFlag = 1;
+							results.push_back(s);
+						}
+						if constexpr (enableLimit) {
+							if (-- * limit == 0) break;
+						}
+					}
+					c = c->next;
+				}
+			}
+
+			// middle rows: first & last col check AB
+			for (++rIdx; rIdx < crIdxTo.y; rIdx++) {
+
+				// first cell: check left AB
+				cIdx = crIdxFrom.x;
+				c = cells[rIdx * numCols + cIdx];
+				while (c) {
+					auto&& s = c->self;
+					if (s->_sgabMax.x > minXY.x) {
+						if (!s->_sgabFlag) {
+							s->_sgabFlag = 1;
+							results.push_back(s);
+						}
+						if constexpr (enableLimit) {
+							if (-- * limit == 0) break;
+						}
+					}
+					c = c->next;
+				}
+
+				// middle cols: no check
+				for (; cIdx < crIdxTo.x; cIdx++) {
+					c = cells[rIdx * numCols + cIdx];
+					while (c) {
+						auto&& s = c->self;
+						if (!s->_sgabFlag) {
+							s->_sgabFlag = 1;
+							results.push_back(s);
+						}
+						if constexpr (enableLimit) {
+							if (-- * limit == 0) break;
+						}
+						c = c->next;
+					}
+				}
+
+				// last cell: check right AB
+				if (cIdx == crIdxTo.x) {
+					auto c = cells[rIdx * numCols + cIdx];
+					while (c) {
+						auto&& s = c->self;
+						if (s->_sgabMin.x < maxXY.x) {
+							if (!s->_sgabFlag) {
+								s->_sgabFlag = 1;
+								results.push_back(s);
+							}
+							if constexpr (enableLimit) {
+								if (-- * limit == 0) break;
+							}
+						}
+						c = c->next;
+					}
+				}
+			}
+
+			// last row: check AB
+			if (rIdx == crIdxTo.y) {
+
+				// first cell: check left bottom AB
+				cIdx = crIdxFrom.x;
+				c = cells[rIdx * numCols + cIdx];
+				while (c) {
+					auto&& s = c->self;
+					if (s->_sgabMax.x < minXY.x && s->_sgabMin.y < maxXY.y) {
+						if (!s->_sgabFlag) {
+							s->_sgabFlag = 1;
+							results.push_back(s);
+						}
+						if constexpr (enableLimit) {
+							if (-- * limit == 0) break;
+						}
+					}
+					c = c->next;
+				}
+
+				// middle cells: check bottom AB
+				for (++cIdx; cIdx < crIdxTo.x; cIdx++) {
+					c = cells[rIdx * numCols + cIdx];
+					while (c) {
+						auto&& s = c->self;
+						if (s->_sgabMin.y < maxXY.y) {
+							if (!s->_sgabFlag) {
+								s->_sgabFlag = 1;
+								results.push_back(s);
+							}
+							if constexpr (enableLimit) {
+								if (-- * limit == 0) break;
+							}
+						}
+						c = c->next;
+					}
+				}
+
+				// last cell: check right bottom AB
+				if (cIdx == crIdxTo.x) {
+					auto c = cells[rIdx * numCols + cIdx];
+					while (c) {
+						auto&& s = c->self;
+						if (s->_sgabMin.x < maxXY.x && s->_sgabMin.y < maxXY.y) {
+							if (!s->_sgabFlag) {
+								s->_sgabFlag = 1;
+								results.push_back(s);
+							}
+							if constexpr (enableLimit) {
+								if (-- * limit == 0) break;
+							}
+						}
+						c = c->next;
+					}
+				}
+			}
+		}
+
+		// except clear flag
+		if constexpr (enableExcept) {
+			assert(except);
+			except->_sgabFlag = 0;
+		}
+
 	}
 };
 
+// todo: test & use
 template<typename Item>
 struct SpaceGridABCamera : Translate {
 	

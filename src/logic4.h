@@ -7,14 +7,7 @@
 #define THREAD_POOL_USE_RUN_ONCE
 #define NUM_UPDATE_THREADS 16
 
-struct Circle {
-	/*********************************************/
-	SpaceGridC<Circle>* _sgc{};
-	Circle* _sgcPrev{}, * _sgcNext{};
-	int32_t _sgcIdx{ -1 };
-	xx::XY<int32_t> _sgcPos;
-	/*********************************************/
-
+struct Circle : SpaceGridCItem<Circle> {
 	xx::XY<int32_t> newPos;	// calc result
 	int32_t radius{};
 

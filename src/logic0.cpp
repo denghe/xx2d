@@ -7,6 +7,7 @@
 #include "logic4.h"
 #include "logic5.h"
 #include "logic6.h"
+#include "logic7.h"
 
 void Logic0::Init(Logic* eg) {
 	this->eg = eg;
@@ -14,13 +15,15 @@ void Logic0::Init(Logic* eg) {
 	std::cout << "Logic0 Init( main menu )" << std::endl;
 
 	meListener.Init(eg, Mbtns::Left);
-	menus.emplace_back().Init(eg, { -300, 100 }, "logic1", 64);
-	menus.emplace_back().Init(eg, { 0, 100 }, "logic2", 64);
-	menus.emplace_back().Init(eg, { 300, 100 }, "logic3", 64);
+	menus.emplace_back().Init(eg, { -500, 200 }, "1: tiledmap", 64);
+	menus.emplace_back().Init(eg, { 0, 200 }, "2: circle drag", 64);
+	menus.emplace_back().Init(eg, { 500, 200 }, "3: box button", 64);
 
-	menus.emplace_back().Init(eg, { -300, -100 }, "logic4", 64);
-	menus.emplace_back().Init(eg, { 0, -100 }, "logic5", 64);
-	menus.emplace_back().Init(eg, { 300, -100 }, "logic6", 64);
+	menus.emplace_back().Init(eg, { -500, 0 }, "4: space grid physics", 64);
+	menus.emplace_back().Init(eg, { 0, 0 }, "5: space grid ab", 64);
+	menus.emplace_back().Init(eg, { 500, 0 }, "6: circle + box physics", 64);
+
+	menus.emplace_back().Init(eg, { -500, -200 }, "7: more circle + box", 64);
 
 	eg->extraInfo.clear();
 }
@@ -51,18 +54,20 @@ int Menu::HandleMouseMove(MenuMouseEventListener& L) {
 
 void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 	if (Inside(eg->mousePosition)) {
-		if (txt == "logic1"sv) {
+		if (txt.starts_with("1:"sv)) {
 			eg->DelaySwitchTo<Logic1>();
-		} else if (txt == "logic2"sv) {
+		} else if (txt.starts_with("2:"sv)) {
 			eg->DelaySwitchTo<Logic2>();
-		} else if (txt == "logic3"sv) {
+		} else if (txt.starts_with("3:"sv)) {
 			eg->DelaySwitchTo<Logic3>();
-		} else if (txt == "logic4"sv) {
+		} else if (txt.starts_with("4:"sv)) {
 			eg->DelaySwitchTo<Logic4>();
-		} else if (txt == "logic5"sv) {
+		} else if (txt.starts_with("5:"sv)) {
 			eg->DelaySwitchTo<Logic5>();
-		} else if (txt == "logic6"sv) {
+		} else if (txt.starts_with("6:"sv)) {
 			eg->DelaySwitchTo<Logic6>();
+		} else if (txt.starts_with("7:"sv)) {
+			eg->DelaySwitchTo<Logic7>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}

@@ -7,11 +7,15 @@ void Foo::Init(SpaceGridAB<Foo>* grid, int32_t x, int32_t y, int32_t w, int32_t 
 	SGABSetPosSiz({ x,y }, { w,h });
 	SGABAdd();
 	color = c;
+	size.x = w;
+	size.y = h;
+	halfSize.x = w / 2;
+	halfSize.y = h / 2;
 	SyncBorder();
 }
 
 void Foo::SyncBorder() {
-	auto hw = float(_sgabHalfSize.x), hh = float(_sgabHalfSize.y);
+	auto hw = halfSize.x, hh = halfSize.y;
 	border.Emplace();
 	border->SetPoints() = { {-hw, hh}, {hw, hh}, {hw, -hh}, {-hw, -hh}, {-hw, hh} };
 	border->SetPositon({ (float)_sgabPos.x, -(float)_sgabPos.y });	// flip y to gl coordinate
@@ -24,7 +28,7 @@ Foo::~Foo() {
 }
 
 void Foo::SetPos(int32_t x, int32_t y) {
-	SGABSetPosSiz({ x, y }, _sgabSize);
+	SGABSetPosSiz({ x, y }, { (int32_t)size.x, (int32_t)size.y });
 	SGABUpdate();
 	SyncBorder();
 }
@@ -39,22 +43,22 @@ void Foo::SetPosY(int32_t y) {
 
 void Foo::MoveUp(int32_t inc) {
 	auto y = _sgabPos.y - inc;
-	if (y - _sgabHalfSize.y < 0) y = _sgabHalfSize.y;
+	if (y - halfSize.y < 0) y = halfSize.y;
 	SetPosY(y);
 }
 void Foo::MoveDown(int32_t inc) {
 	auto y = _sgabPos.y + inc;
-	if (y + _sgabHalfSize.y >= _sgab->maxY) y = _sgab->maxY - _sgabHalfSize.y - 1;
+	if (y + halfSize.y >= _sgab->maxY) y = _sgab->maxY - halfSize.y - 1;
 	SetPosY(y);
 }
 void Foo::MoveLeft(int32_t inc) {
 	auto x = _sgabPos.x - inc;
-	if (x - _sgabHalfSize.x < 0) x = _sgabHalfSize.x;
+	if (x - halfSize.x < 0) x = halfSize.x;
 	SetPosX(x);
 }
 void Foo::MoveRight(int32_t inc) {
 	auto x = _sgabPos.x + inc;
-	if (x + _sgabHalfSize.x >= _sgab->maxX) x = _sgab->maxX - _sgabHalfSize.x - 1;
+	if (x + halfSize.x >= _sgab->maxX) x = _sgab->maxX - halfSize.x - 1;
 	SetPosX(x);
 }
 
@@ -100,10 +104,6 @@ int Logic5::Update() {
 	}
 
 	// todo: cam control
-
-	//for (auto& f : foos) {
-	//	f->border->Draw(eg, cam);
-	//}
 
 	grid.ForeachAABB({ 0,0 }, { (int)eg->w,(int)eg->h });
 	for (auto& f : grid.results) {

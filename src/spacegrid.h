@@ -5,15 +5,43 @@
 template<typename Item>
 struct SpaceGridC;
 
-// for inherit or copy
+#define thisSpaceGridCItemDeriveType ((SpaceGridCItemDeriveType*)(this))
+
+// for inherit
+template<typename SpaceGridCItemDeriveType>
 struct SpaceGridCItem {
-	SpaceGridC<SpaceGridCItem>* _sgc{};
-	SpaceGridCItem *_sgcPrev{}, *_sgcNext{};
+	SpaceGridC<SpaceGridCItemDeriveType>* _sgc{};
+	SpaceGridCItemDeriveType*_sgcPrev{}, *_sgcNext{};
 	int32_t _sgcIdx{ -1 };
 	xx::XY<int32_t> _sgcPos;
+
+	void SGCInit(SpaceGridC<SpaceGridCItemDeriveType>* const& sgc) {
+		assert(!_sgc);
+		_sgc = sgc;
+	}
+
+	void SGCSetPos(xx::XY<int32_t> const& pos) {
+		assert(_sgc);
+		assert(_sgcPos.x >= 0 && _sgcPos.x < _sgc->maxX);
+		assert(_sgcPos.y >= 0 && _sgcPos.y < _sgc->maxY);
+		_sgcPos = pos;
+	}
+
+	void SGCAdd() {
+		assert(_sgc);
+		_sgc->Add(thisSpaceGridCItemDeriveType);
+	}
+	void SGCUpdate() {
+		assert(_sgc);
+		_sgc->Update(thisSpaceGridCItemDeriveType);
+	}
+	void SGCRemove() {
+		assert(_sgc);
+		_sgc->Remove(thisSpaceGridCItemDeriveType);
+	}
 };
 
-template<typename Item = SpaceGridCItem>
+template<typename Item>
 struct SpaceGridC {
 	int32_t numRows{}, numCols{}, maxDiameter{};
 	int32_t maxY{}, maxX{}, numItems{}, numActives{};	// for easy check & stat
@@ -235,7 +263,7 @@ struct SpaceGridC {
 	}
 };
 
-template<typename Item = SpaceGridCItem>
+template<typename Item>
 struct SpaceGridCCamera : Translate {
 	
 	SpaceGridC<Item>* grid{};
