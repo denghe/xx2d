@@ -12,14 +12,14 @@ void C::Init(Logic7* const& owner_, Pos<> const& pos, int32_t const& r, int32_t 
 
 	border.FillCirclePoints({ 0,0 }, radius, {}, segments);
 	border.SetColor({ 255, 255, 0, 255 });
-	border.SetPositon({(float)pos.x, (float)pos.y});
+	border.SetPositon({(float)pos.x, (float)-pos.y});
 	border.Commit();
 }
 void C::SetPos(Pos<> const& pos) {
 	SGCSetPos(pos);
 	SGCUpdate();
 
-	border.SetPositon({ (float)pos.x, (float)pos.y });
+	border.SetPositon({ (float)pos.x, (float)-pos.y });
 	border.Commit();
 }
 void C::Update() {
@@ -41,8 +41,7 @@ void C::Update() {
 		auto dPow2 = d.x * d.x + d.y * d.y;
 		// cross?
 		if (rrPow2 > dPow2) {
-			auto dxy = std::sqrt(float(dPow2));
-			v += d / dxy;
+			v += d / std::sqrt(float(dPow2));
 			++numCross;
 		}
 	}, &foreachLimit);
@@ -55,18 +54,32 @@ void C::Update() {
 		else {	// move by v
 			newPos += v.Normalize() * speed;
 		}
-
-		// todo: get box & fix newPos
-
-		// map edge limit
-		if (newPos.x < 0) newPos.x = 0;
-		else if (newPos.x >= _sgc->maxX) newPos.x = _sgc->maxX - 1;
-		if (newPos.y < 0) newPos.y = 0;
-		else if (newPos.y >= _sgc->maxY) newPos.y = _sgc->maxY - 1;
+	} else {	// move to mouse pos
+		newPos += (owner->mousePos - _sgcPos).Normalize() * speed;
 	}
+
+	// todo: get box & fix newPos
+
+	// map edge limit
+	if (newPos.x < 0) newPos.x = 0;
+	else if (newPos.x >= _sgc->maxX) newPos.x = _sgc->maxX - 1;
+	if (newPos.y < 0) newPos.y = 0;
+	else if (newPos.y >= _sgc->maxY) newPos.y = _sgc->maxY - 1;
 }
 void C::Update2() {
-
+	if (_sgcPos != newPos) {
+		_sgcPos = newPos;
+		_sgc->Update(this);
+		border.SetColor({ 255, 0, 0, 255 });
+		border.SetPositon({ (float)_sgcPos.x, (float)-_sgcPos.y });
+		border.Commit();
+		++_sgc->numActives;
+	} else {
+		if (border.color != RGBA8{ 255, 255, 255, 255 }) {
+			border.SetColor({ 255, 255, 255, 255 });
+			border.Commit();
+		}
+	}
 }
 C::~C() {
 	SGCRemove();
@@ -83,7 +96,7 @@ void B::Init(Logic7* const& owner_, Pos<> const& pos, Pos<> const& siz) {
 
 	border.FillBoxPoints({}, {(float)siz.x, (float)siz.y});
 	border.SetColor({ 0, 255, 0, 255 });
-	border.SetPositon({ (float)pos.x, (float)pos.y });
+	border.SetPositon({ (float)pos.x, (float)-pos.y });
 	border.Commit();
 }
 B::~B() {
@@ -96,41 +109,44 @@ void Logic7::Init(Logic* eg) {
 
 	std::cout << "Logic7 Init( test box + more circle move to cursor collision detect )" << std::endl;
 
-	//for (auto i = 0; i < 1; ++i) {
-	//	auto r = rnd.Next(16, 100);
-	//	XY v{ float(rnd.Get() % ((int)eg->w - r * 2)) + r - eg->hw, float(rnd.Get() % ((int)eg->h - r*2)) + r - eg->hh };
-	//	cs.emplace_back().Init(this, v, r, 16);
-	//}
+	sgc.Init(100, 100, 64);
+	sgab.Init(100, 100, 64, 64);
 
-	//XY wh{ 100, 100 };
-	//cs.emplace_back().Init(this, { -400, 400 }, 25, 48);
-	//cs.emplace_back().Init(this, { 0, 400 }, 50, 48);
-	//cs.emplace_back().Init(this, { 400, 400 }, 90, 48);
+	cam.Init({ eg->w, eg->h }, &sgc);
+	cam.SetPosition({ sgc.maxX / 2.f, sgc.maxY / 2.f });
+	//cam.SetScale(0.5);
+	cam.Commit();
 
-	//bs.emplace_back().Init({ 100, 0 }, wh);
-	//bs.emplace_back().Init({ 200, 0 }, wh);
-	//bs.emplace_back().Init({ 200, 100 }, wh);
+	for (auto i = 0; i < 1000; ++i) {
+		auto r = rnd.Next(16, 32);
+		Pos<> v{ rnd.Next(0, sgc.maxX1), rnd.Next(0, sgc.maxY1) };
+		cs.emplace_back().Emplace()->Init(this, v, r, 16);
+	}
 
-	//bs.emplace_back().Init({ -200, 0 }, wh);
-	//bs.emplace_back().Init({ -200, 100 }, wh);
-
-	//bs.emplace_back().Init({ -500, 0 }, wh);
+	bs.emplace_back().Emplace()->Init(this, { sgc.maxX / 2, sgc.maxY / 2 }, {100, 100});
 }
 
 int Logic7::Update() {
+	mousePos.Set(cam.pos + eg->mousePosition.GetFlipY());
+
 	timePool += eg->delta;
 	auto timePoolBak = timePool;
 	if (timePool >= 1.f / 60) {
 		timePool = 0;
 
-		// todo: move circles to mouse pos ?
+		for (auto& c : cs) {
+			c->Update();
+		}
+		for (auto& c : cs) {
+			c->Update2();
+		}
 	}
 
 	for (auto& c : cs) {
-		c.border.Draw(eg);
+		c->border.Draw(eg, cam);
 	}
 	for (auto& b : bs) {
-		b.border.Draw(eg);
+		b->border.Draw(eg, cam);
 	}
 
 	return 0;

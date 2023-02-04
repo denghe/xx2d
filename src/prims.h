@@ -96,7 +96,11 @@ struct Pos {
         return x != v.x || y != v.y;
     }
 
-    // zero check
+    void Set(HasFieldXY auto const& v) {
+        x = T(v.x);
+        y = T(v.y);
+    }
+
     bool IsZero() const {
         return x == T{} && y == T{};
     }
@@ -107,6 +111,20 @@ struct Pos {
         x = T(x / v);
         y = T(y / v);
         return *this;
+    }
+    template<typename R = T, typename U = float>
+    auto GetNormalize() -> Pos<R> {
+        auto v = std::sqrt(U(x * x + y * y));
+        return { R(x / v), R(y / v) };
+    }
+
+    Pos& FlipY() {
+        y = -y;
+        return *this;
+    }
+    template<typename R = T>
+    auto GetFlipY() -> Pos<R> {
+        return { R(x), R(-y) };
     }
 };
 using XY = Pos<float>;

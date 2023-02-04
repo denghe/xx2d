@@ -44,7 +44,7 @@ struct SpaceGridCItem {
 template<typename Item>
 struct SpaceGridC {
 	int32_t numRows{}, numCols{}, maxDiameter{};
-	int32_t maxY{}, maxX{}, numItems{}, numActives{};	// for easy check & stat
+	int32_t maxY{}, maxX{}, maxY1{}, maxX1{}, numItems{}, numActives{};	// for easy check & stat
 	std::vector<Item*> cells;
 
 	void Init(int32_t const& numRows_, int32_t const& numCols_, int32_t const& maxDiameter_) {
@@ -53,6 +53,8 @@ struct SpaceGridC {
 		maxDiameter = maxDiameter_;
 		maxY = maxDiameter * numRows;
 		maxX = maxDiameter * numCols;
+		maxY1 = maxY - 1;
+		maxX1 = maxX - 1;
 		cells.clear();
 		cells.resize(numRows * numCols);
 	}

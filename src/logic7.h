@@ -31,9 +31,11 @@ struct Logic7 : LogicBase {
 
 	SpaceGridC<C> sgc;
 	SpaceGridAB<B> sgab;
+	SpaceGridCCamera<C> cam;
+	Pos<> mousePos;	// store eg->mousePosition's grid world coordinate
 
-	std::vector<C> cs;
-	std::vector<B> bs;
+	std::vector<xx::Shared<C>> cs;
+	std::vector<xx::Shared<B>> bs;
 	Rnd rnd;
 	double timePool{};
 };
