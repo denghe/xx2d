@@ -13,7 +13,7 @@ struct Button {
 	void Init(Logic* eg, XY const& pos, Size const& borderSize, std::string_view const& txt, float const& fontSize);
 
 	Logic* eg{};
-	XY leftBottom, rightTop;	// bounding box
+	XY leftBottom{}, rightTop{};	// bounding box
 	std::string txt;
 
 	bool Inside(XY const& point);	// bounding box contains point?

@@ -2,7 +2,7 @@
 #include "logic.h"
 #include "logic7.h"
 
-void C::Init(Logic7* const& owner_, xx::XY<> const& pos, int32_t const& r, int32_t const& segments) {
+void C::Init(Logic7* const& owner_, Pos<> const& pos, int32_t const& r, int32_t const& segments) {
 	owner = owner_;
 	radius = r;
 
@@ -15,7 +15,7 @@ void C::Init(Logic7* const& owner_, xx::XY<> const& pos, int32_t const& r, int32
 	border.SetPositon({(float)pos.x, (float)pos.y});
 	border.Commit();
 }
-void C::SetPos(xx::XY<> const& pos) {
+void C::SetPos(Pos<> const& pos) {
 	SGCSetPos(pos);
 	SGCUpdate();
 
@@ -24,7 +24,7 @@ void C::SetPos(xx::XY<> const& pos) {
 }
 void C::Update() {
 	int foreachLimit = 12, numCross{};
-	xx::XY<> v;	// combine force vector
+	XY v{};	// combine force vector
 	newPos = _sgcPos;
 
 	// calc v
@@ -41,7 +41,7 @@ void C::Update() {
 		auto dPow2 = d.x * d.x + d.y * d.y;
 		// cross?
 		if (rrPow2 > dPow2) {
-			auto dxy = std::sqrt(dPow2);
+			auto dxy = std::sqrt(float(dPow2));
 			v += d / dxy;
 			++numCross;
 		}
@@ -50,12 +50,10 @@ void C::Update() {
 	// cross?
 	if (numCross) {
 		if (v.IsZero()) {	// move by random angle
-			newPos += xx::Rotate(xx::XY<>{ speed, 0 }, owner->rnd.Next() % xx::table_num_angles);
+			newPos += Calc::Rotate(Pos<>{ speed, 0 }, owner->rnd.Next() % Calc::table_num_angles);
 		}
 		else {	// move by v
-			auto vPow2 = v.x * v.x + v.y * v.y;
-			auto vxy = std::sqrt(vPow2);
-			newPos += v / vxy * speed;
+			newPos += v.Normalize() * speed;
 		}
 
 		// todo: get box & fix newPos
@@ -67,7 +65,7 @@ void C::Update() {
 		else if (newPos.y >= _sgc->maxY) newPos.y = _sgc->maxY - 1;
 	}
 }
-void Update2() {
+void C::Update2() {
 
 }
 C::~C() {
@@ -75,7 +73,7 @@ C::~C() {
 }
 
 
-void B::Init(Logic7* const& owner_, xx::XY<> const& pos, xx::XY<> const& siz) {
+void B::Init(Logic7* const& owner_, Pos<> const& pos, Pos<> const& siz) {
 	owner = owner_;
 	size = siz;
 
@@ -120,7 +118,6 @@ void Logic7::Init(Logic* eg) {
 }
 
 int Logic7::Update() {
-
 	timePool += eg->delta;
 	auto timePoolBak = timePool;
 	if (timePool >= 1.f / 60) {

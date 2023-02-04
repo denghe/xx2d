@@ -154,8 +154,11 @@ bool MoveCircleIfIntersectsBox(T const& bx, T const& by, T const& brw, T const& 
 	return false;
 }
 
-bool MoveCircleIfIntersectsBox(DragBox& b, DragCircle& c, AvaliableDirections const& avaliableDirections = {}) {
+bool MoveCircleIfIntersectsBox(DragBox& b, DragCircle& c, AvaliableDirections const& avaliableDirections) {
 	return MoveCircleIfIntersectsBox(b.pos.x, b.pos.y, b.size.x / 2, b.size.y / 2, c.pos.x, c.pos.y, c.radius, avaliableDirections);
+}
+bool MoveCircleIfIntersectsBox(DragBox& b, DragCircle& c) {
+	return Calc::MoveCircleIfIntersectsBox(b.pos.x, b.pos.y, b.size.x / 2, b.size.y / 2, c.pos.x, c.pos.y, c.radius);
 }
 
 void Logic6::Init(Logic* eg) {

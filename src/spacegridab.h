@@ -19,8 +19,8 @@ template<typename SpaceGridABItemDeriveType>
 struct SpaceGridABItem {
 	using SGABCoveredCellInfo = SpaceGridABItemCellInfo<SpaceGridABItemDeriveType>;
 	SpaceGridAB<SpaceGridABItemDeriveType>* _sgab{};
-	xx::XY<int32_t> _sgabPos, _sgabMin, _sgabMax;	// for Add & Update calc covered cells
-	xx::XY<int32_t> _sgabCRIdxFrom, _sgabCRIdxTo;	// backup for Update speed up
+	Pos<int32_t> _sgabPos, _sgabMin, _sgabMax;	// for Add & Update calc covered cells
+	Pos<int32_t> _sgabCRIdxFrom, _sgabCRIdxTo;	// backup for Update speed up
 	std::vector<SGABCoveredCellInfo> _sgabCoveredCellInfos;	// todo: change to custom single buf container ?
 	size_t _sgabFlag{};	// avoid duplication when Foreach
 
@@ -31,7 +31,7 @@ struct SpaceGridABItem {
 		_sgab = sgab;
 	}
 
-	void SGABSetPosSiz(xx::XY<int32_t> const& pos, xx::XY<int32_t> const& siz) {
+	void SGABSetPosSiz(Pos<int32_t> const& pos, Pos<int32_t> const& siz) {
 		assert(_sgab);
 		_sgabPos = pos;
 		auto hs = siz / 2;
@@ -43,7 +43,7 @@ struct SpaceGridABItem {
 		assert(_sgabMax.x < _sgab->maxX && _sgabMax.y < _sgab->maxY);
 	}
 
-	bool SGABCheckIntersects(xx::XY<int32_t> const& minXY, xx::XY<int32_t> const& maxXY) {
+	bool SGABCheckIntersects(Pos<int32_t> const& minXY, Pos<int32_t> const& maxXY) {
 		return !(maxXY.x < _sgabMin.x || _sgabMax.x < minXY.x || maxXY.y < _sgabMin.y || _sgabMax.y < minXY.y);
 	}
 
@@ -64,7 +64,7 @@ struct SpaceGridABItem {
 template<typename Item>
 struct SpaceGridAB {
 	using ItemCellInfo = typename Item::SGABCoveredCellInfo;
-	xx::XY<int32_t> cellSize;
+	Pos<int32_t> cellSize;
 	int32_t numRows{}, numCols{};
 	int32_t maxY{}, maxX{}, numItems{}, numActives{};	// for easy check & stat
 	std::vector<ItemCellInfo*> cells;
@@ -201,7 +201,7 @@ struct SpaceGridAB {
 		c->_sgabCRIdxTo = crIdxTo;
 	}
 
-	int32_t CalcIndexByPosition(xx::XY<int32_t> const& pos) {
+	int32_t CalcIndexByPosition(Pos<int32_t> const& pos) {
 		assert(pos.x >= 0 && pos.x < maxX);
 		assert(pos.y >= 0 && pos.y < maxY);
 		auto crIdx = pos / cellSize;
@@ -254,7 +254,7 @@ struct SpaceGridAB {
 
 	// fill items to results. need ClearResults()
 	template<bool enableLimit = false, bool enableExcept = false>
-	void ForeachAABB(xx::XY<int32_t> const& minXY, xx::XY<int32_t> const& maxXY, int32_t* limit = nullptr, Item* const& except = nullptr) {
+	void ForeachAABB(Pos<int32_t> const& minXY, Pos<int32_t> const& maxXY, int32_t* limit = nullptr, Item* const& except = nullptr) {
 		assert(minXY.x < maxXY.x);
 		assert(minXY.y < maxXY.y);
 		assert(minXY.x >= 0 && minXY.y >= 0);

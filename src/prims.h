@@ -2,19 +2,114 @@
 #include "pch.h"
 
 // position ( screen center == 0, 0 )
-struct XY {
-	float x, y;
-	bool operator==(XY const&) const = default;
-	bool operator!=(XY const&) const = default;
+template<typename T>
+concept HasFieldXY = requires { T::x; T::y; };
 
-	inline XY operator+(XY const& o) const { return { x + o.x, y + o.y }; }
-	inline XY operator-(XY const& o) const { return { x - o.x, y - o.y }; }
-	inline XY operator-() const { return { -x, -y }; }
-	inline XY operator+(float const& o) const { return { x + o, y + o }; }
-	inline XY operator-(float const& o) const { return { x - o, y - o }; }
-	inline XY operator*(float const& o) const { return { x * o, y * o }; }
-	inline XY operator/(float const& o) const { return { x / o, y / o }; }
+template<typename T>
+concept IsArithmetic = std::is_arithmetic_v<T>;
+
+// pos
+template<typename T = int32_t>
+struct Pos {
+    T x, y;
+
+    // -x
+    Pos operator-() const {
+        return { -x, -y };
+    }
+
+    // + - * /
+    Pos operator+(HasFieldXY auto const& v) const {
+        return { T(x + v.x), T(y + v.y) };
+    }
+    Pos operator-(HasFieldXY auto const& v) const {
+        return { T(x - v.x), T(y - v.y) };
+    }
+    Pos operator*(HasFieldXY auto const& v) const {
+        return { T(x * v.x), T(y * v.y) };
+    }
+    Pos operator/(HasFieldXY auto const& v) const {
+        return { T(x / v.x), T(y / v.y) };
+    }
+
+    Pos operator+(IsArithmetic auto const& v) const {
+        return { T(x + v), T(y + v) };
+    }
+    Pos operator-(IsArithmetic auto const& v) const {
+        return { T(x - v), T(y - v) };
+    }
+    Pos operator*(IsArithmetic auto const& v) const {
+        return { T(x * v), T(y * v) };
+    }
+    Pos operator/(IsArithmetic auto const& v) const {
+        return { T(x / v), T(y / v) };
+    }
+
+    // += -= *= /=
+    Pos& operator+=(HasFieldXY auto const& v) {
+        x = T(x + v.x);
+        y = T(y + v.y);
+        return *this;
+    }
+    Pos& operator-=(HasFieldXY auto const& v) {
+        x = T(x - v.x);
+        y = T(y - v.y);
+        return *this;
+    }
+    Pos& operator*=(HasFieldXY auto const& v) {
+        x = T(x * v.x);
+        y = T(y * v.y);
+        return *this;
+    }
+    Pos& operator/=(HasFieldXY auto const& v) {
+        x = T(x / v.x);
+        y = T(y / v.y);
+        return *this;
+    }
+
+    Pos& operator+=(IsArithmetic auto const& v) {
+        x = T(x + v);
+        y = T(y + v);
+        return *this;
+    }
+    Pos operator-=(IsArithmetic auto const& v) {
+        x = T(x - v);
+        y = T(y - v);
+        return *this;
+    }
+    Pos& operator*=(IsArithmetic auto const& v) {
+        x = T(x * v);
+        y = T(y * v);
+        return *this;
+    }
+    Pos operator/=(IsArithmetic auto const& v) {
+        x = T(x / v);
+        y = T(y / v);
+        return *this;
+    }
+
+    // == !=
+    bool operator==(HasFieldXY auto const& v) const {
+        return x == v.x && y == v.y;
+    }
+    bool operator!=(HasFieldXY auto const& v) const {
+        return x != v.x || y != v.y;
+    }
+
+    // zero check
+    bool IsZero() const {
+        return x == T{} && y == T{};
+    }
+
+    template<typename U = float>
+    Pos& Normalize() {
+        auto v = std::sqrt(U(x * x + y * y));
+        x = T(x / v);
+        y = T(y / v);
+        return *this;
+    }
 };
+using XY = Pos<float>;
 
 // texture uv mapping pos
 struct UV {

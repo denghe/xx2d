@@ -8,7 +8,7 @@
 #define NUM_UPDATE_THREADS 16
 
 struct Circle : SpaceGridCItem<Circle> {
-	xx::XY<int32_t> newPos;	// calc result
+	Pos<> newPos;	// calc result
 	int32_t radius{};
 
 	int32_t csIndex{ -1 };	// fill when push to cs, update when swap remove

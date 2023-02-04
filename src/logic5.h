@@ -4,9 +4,9 @@
 
 struct Foo : SpaceGridABItem<Foo> {
 
-	XY size, halfSize;
+	XY size{}, halfSize{};
 	xx::Shared<LineStrip> border;
-	RGBA8 color;
+	RGBA8 color{};
 
 	void Init(SpaceGridAB<Foo>* grid, int32_t x, int32_t y, int32_t w, int32_t h, RGBA8 c);
 

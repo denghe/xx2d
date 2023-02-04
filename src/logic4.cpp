@@ -19,7 +19,7 @@ void Circle::Init(SpaceGridC<Circle>* const& grid_, int32_t const& x, int32_t co
 
 void Circle::Update(Rnd& rnd) {
 	int foreachLimit = Logic4::foreachLimit, numCross{};
-	xx::XY<int32_t> v;
+	Pos<> v{};
 
 	_sgc->Foreach9NeighborCells<true>(this, [&](Circle* const& c) {
 		assert(c != this);
@@ -34,8 +34,8 @@ void Circle::Update(Rnd& rnd) {
 		auto p12 = (cxy.x - txy.x) * (cxy.x - txy.x) + (cxy.y - txy.y) * (cxy.y - txy.y);
 		// cross?
 		if (r12 > p12) {
-			auto a = xx::GetAngle<(Logic4::maxDiameter * 2 >= 1024)>(cxy, txy);
-			auto inc = xx::Rotate(xx::XY<int32_t>{ Logic4::speed * r12 / p12, 0 }, a);
+			auto a = Calc::GetAngle<(Logic4::maxDiameter * 2 >= 1024)>(cxy, txy);
+			auto inc = Calc::Rotate(Pos<>{ Logic4::speed * r12 / p12, 0 }, a);
 			v += inc;
 			++numCross;
 		}
@@ -46,8 +46,8 @@ void Circle::Update(Rnd& rnd) {
 		auto pos = this->_sgcPos;
 		// no force: random move?
 		if (v.IsZero()) {
-			auto a = rnd.Next() % xx::table_num_angles;
-			auto inc = xx::Rotate(xx::XY<int32_t>{ Logic4::speed, 0 }, a);
+			auto a = rnd.Next() % Calc::table_num_angles;
+			auto inc = Calc::Rotate(Pos<>{ Logic4::speed, 0 }, a);
 			pos += inc;
 		}
 		// move by v?
@@ -56,8 +56,8 @@ void Circle::Update(Rnd& rnd) {
 			if (numCross > Logic4::speedMaxScale) {
 				numCross = Logic4::speedMaxScale;
 			}
-			auto a = xx::GetAngleXY(v.x, v.y);
-			auto inc = xx::Rotate(xx::XY<int32_t>{ Logic4::speed * numCross, 0 }, a);
+			auto a = Calc::GetAngleXY(v.x, v.y);
+			auto inc = Calc::Rotate(Pos<>{ Logic4::speed * numCross, 0 }, a);
 			pos += inc;
 		}
 

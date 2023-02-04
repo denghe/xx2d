@@ -5,12 +5,12 @@
 struct Logic7;
 struct C : SpaceGridCItem<C> {
 	Logic7* owner{};
-	xx::XY<> newPos{};
+	Pos<> newPos{};
 	int32_t radius{}, speed{ 5 };
 	LineStrip border;
 
-	void Init(Logic7* const& owner_, xx::XY<> const& pos, int32_t const& r, int32_t const& segments = 16);
-	void SetPos(xx::XY<> const& pos);
+	void Init(Logic7* const& owner_, Pos<> const& pos, int32_t const& r, int32_t const& segments = 16);
+	void SetPos(Pos<> const& pos);
 	void Update();
 	void Update2();
 	~C();
@@ -18,10 +18,10 @@ struct C : SpaceGridCItem<C> {
 
 struct B : SpaceGridABItem<B> {
 	Logic7* owner{};
-	xx::XY<> size{};
+	Pos<> size{};
 	LineStrip border;
 
-	void Init(Logic7* const& owner_, xx::XY<> const& pos, xx::XY<> const& siz);
+	void Init(Logic7* const& owner_, Pos<> const& pos, Pos<> const& siz);
 	~B();
 };
 
