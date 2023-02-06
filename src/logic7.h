@@ -6,7 +6,7 @@ struct Logic7;
 struct C : SpaceGridCItem<C> {
 	Logic7* owner{};
 	Pos<> newPos{};
-	int32_t radius{}, speed{ 5 };
+	int32_t radius{}, speed{ 7 };
 	LineStrip border;
 
 	void Init(Logic7* const& owner_, Pos<> const& pos, int32_t const& r, int32_t const& segments = 16);

@@ -30,33 +30,41 @@ void C::Update() {
 	// calc v
 	_sgc->Foreach9NeighborCells<true>(this, [&](C* const& c) {
 		assert(c != this);
-		// fully cross?
-		if (c->_sgcPos == _sgcPos) {
-			++numCross;
-			return;
-		}
 		// prepare cross check. (r1 + r2) * (r1 + r2) > (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)
-		auto rrPow2 = (c->radius + this->radius) * (c->radius + this->radius);
+		auto rr = (c->radius + this->radius) * (c->radius + this->radius);
 		auto d = c->_sgcPos - _sgcPos;
-		auto dPow2 = d.x * d.x + d.y * d.y;
+		auto dd = d.x * d.x + d.y * d.y;
 		// cross?
-		if (rrPow2 > dPow2) {
-			v += d / std::sqrt(float(dPow2));
+		if (rr > dd) {
 			++numCross;
+			if (dd) {
+				v -= d.As<float>() / std::sqrt(float(dd));
+			}
 		}
 	}, &foreachLimit);
 
+	auto d = owner->mousePos - _sgcPos;
+	auto dd = d.x * d.x + d.y * d.y;
+
 	// cross?
 	if (numCross) {
+		// simulate move to mouse pos force
+		if (dd) {
+			v += d.As<float>() / std::sqrt(float(dd));
+		}
 		if (v.IsZero()) {	// move by random angle
-			newPos += Calc::Rotate(Pos<>{ speed, 0 }, owner->rnd.Next() % Calc::table_num_angles);
+			v = Calc::Rotate(Pos<>{ 2 * speed, 0 }, owner->rnd.Next() % Calc::table_num_angles).As<float>();
 		}
 		else {	// move by v
-			newPos += v.Normalize() * speed;
+			v = v.Normalize() * 2 * speed;
 		}
-	} else {	// move to mouse pos
-		newPos += (owner->mousePos - _sgcPos).Normalize() * speed;
+	} else {
+		if (dd) {
+			v += d.As<float>() / std::sqrt(float(dd)) * speed;
+		}
 	}
+
+	newPos += v;
 
 	// todo: get box & fix newPos
 
@@ -114,10 +122,11 @@ void Logic7::Init(Logic* eg) {
 
 	cam.Init({ eg->w, eg->h }, &sgc);
 	cam.SetPosition({ sgc.maxX / 2.f, sgc.maxY / 2.f });
-	//cam.SetScale(0.5);
+	cam.SetScale(0.25);
 	cam.Commit();
 
-	for (auto i = 0; i < 1000; ++i) {
+	//cs.emplace_back().Emplace()->Init(this, { sgc.maxX / 2, sgc.maxY / 2 }, 32, 16);
+	for (auto i = 0; i < 10000; ++i) {
 		auto r = rnd.Next(16, 32);
 		Pos<> v{ rnd.Next(0, sgc.maxX1), rnd.Next(0, sgc.maxY1) };
 		cs.emplace_back().Emplace()->Init(this, v, r, 16);
@@ -127,11 +136,11 @@ void Logic7::Init(Logic* eg) {
 }
 
 int Logic7::Update() {
-	mousePos.Set(cam.pos + eg->mousePosition.GetFlipY());
+	mousePos.Set(cam.pos + eg->mousePosition.GetFlipY() / cam.scale);
 
 	timePool += eg->delta;
 	auto timePoolBak = timePool;
-	if (timePool >= 1.f / 60) {
+	if (timePool >= 1.f / 360) {
 		timePool = 0;
 
 		for (auto& c : cs) {

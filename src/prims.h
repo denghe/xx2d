@@ -101,13 +101,24 @@ struct Pos {
         y = T(v.y);
     }
 
+    template<typename U = float>
+    auto As() -> Pos<U> const {
+        return { (U)x, (U)y };
+    }
+
     bool IsZero() const {
         return x == T{} && y == T{};
+    }
+
+    void Clear() {
+        x = {};
+        y = {};
     }
 
     template<typename U = float>
     Pos& Normalize() {
         auto v = std::sqrt(U(x * x + y * y));
+        assert(v);
         x = T(x / v);
         y = T(y / v);
         return *this;
@@ -115,6 +126,7 @@ struct Pos {
     template<typename R = T, typename U = float>
     auto GetNormalize() -> Pos<R> {
         auto v = std::sqrt(U(x * x + y * y));
+        assert(v);
         return { R(x / v), R(y / v) };
     }
 
