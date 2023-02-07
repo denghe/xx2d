@@ -23,7 +23,7 @@ void C::SetPos(Pos<> const& pos) {
 	border.Commit();
 }
 void C::Update() {
-	int foreachLimit = 12, numCross{};
+	int foreachLimit = 100, numCross{};
 	XY v{};	// combine force vector
 	newPos = _sgcPos;
 
@@ -32,13 +32,13 @@ void C::Update() {
 		assert(c != this);
 		// prepare cross check. (r1 + r2) * (r1 + r2) > (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)
 		auto rr = (c->radius + this->radius) * (c->radius + this->radius);
-		auto d = c->_sgcPos - _sgcPos;
+		auto d = _sgcPos - c->_sgcPos;
 		auto dd = d.x * d.x + d.y * d.y;
 		// cross?
 		if (rr > dd) {
 			++numCross;
 			if (dd) {
-				v -= d.As<float>() / std::sqrt(float(dd));
+				v += d.As<float>() / std::sqrt(float(dd));
 			}
 		}
 	}, &foreachLimit);
@@ -50,23 +50,35 @@ void C::Update() {
 	if (numCross) {
 		// simulate move to mouse pos force
 		if (dd) {
-			v += d.As<float>() / std::sqrt(float(dd));
+			v += d.As<float>() / std::sqrt(float(dd)) / 100;
 		}
 		if (v.IsZero()) {	// move by random angle
-			v = Calc::Rotate(Pos<>{ 2 * speed, 0 }, owner->rnd.Next() % Calc::table_num_angles).As<float>();
+			v = Calc::Rotate(Pos<>{ speed, 0 }, owner->rnd.Next() % Calc::table_num_angles).As<float>();
 		}
 		else {	// move by v
-			v = v.Normalize() * 2 * speed;
+			v = v.Normalize() * speed;
 		}
+		newPos += v + 0.5f;	// fix float -> int problem
 	} else {
-		if (dd) {
-			v += d.As<float>() / std::sqrt(float(dd)) * speed;
+		if (dd > speed * 1.5) {
+			v = d.As<float>() / std::sqrt(float(dd)) * speed;
+			newPos += v + 0.5f;	// fix float -> int problem
+		} else {
+			newPos = owner->mousePos;
 		}
 	}
 
-	newPos += v;
-
-	// todo: get box & fix newPos
+	// get box & fix newPos
+	auto minXY = newPos - radius, maxXY = newPos + radius;
+	if (minXY.x < 0) minXY.x = 0;
+	if (minXY.y < 0) minXY.y = 0;
+	if (maxXY.x >= owner->sgab.maxX) maxXY.x = owner->sgab.maxX - 1;
+	if (maxXY.y >= owner->sgab.maxY) maxXY.y = owner->sgab.maxY - 1;
+	owner->sgab.ForeachAABB(minXY, maxXY);
+	for (auto& b : owner->sgab.results) {
+		Calc::MoveCircleIfIntersectsBox(b->_sgabPos.x, b->_sgabPos.y, b->size.x / 2, b->size.y / 2, newPos.x, newPos.y, radius);
+	}
+	owner->sgab.ClearResults();
 
 	// map edge limit
 	if (newPos.x < 0) newPos.x = 0;
@@ -117,26 +129,35 @@ void Logic7::Init(Logic* eg) {
 
 	std::cout << "Logic7 Init( test box + more circle move to cursor collision detect )" << std::endl;
 
-	sgc.Init(100, 100, 64);
-	sgab.Init(100, 100, 64, 64);
+	sgc.Init(400, 400, 64);
+	sgab.Init(400, 400, 64, 64);
 
 	cam.Init({ eg->w, eg->h }, &sgc);
 	cam.SetPosition({ sgc.maxX / 2.f, sgc.maxY / 2.f });
-	cam.SetScale(0.25);
+	cam.SetScale(0.15);
 	cam.Commit();
 
 	//cs.emplace_back().Emplace()->Init(this, { sgc.maxX / 2, sgc.maxY / 2 }, 32, 16);
 	for (auto i = 0; i < 10000; ++i) {
 		auto r = rnd.Next(16, 32);
-		Pos<> v{ rnd.Next(0, sgc.maxX1), rnd.Next(0, sgc.maxY1) };
+		Pos<> v{ rnd.Next(r, sgc.maxX1 - r), rnd.Next(r, sgc.maxY1 - r) };
 		cs.emplace_back().Emplace()->Init(this, v, r, 16);
 	}
 
-	bs.emplace_back().Emplace()->Init(this, { sgc.maxX / 2, sgc.maxY / 2 }, {100, 100});
+	auto cx = sgc.maxX / 2, cy = sgc.maxY / 2;
+	bs.emplace_back().Emplace()->Init(this, { cx, cy + 1000 }, {2000, 200});
+	bs.emplace_back().Emplace()->Init(this, { cx - 1000, cy }, {200, 2000});
+	bs.emplace_back().Emplace()->Init(this, { cx + 1000, cy }, {200, 2000});
+	bs.emplace_back().Emplace()->Init(this, { cx - 800, cy - 1000 }, {400, 200});
+	bs.emplace_back().Emplace()->Init(this, { cx + 800, cy - 1000 }, {400, 200});
+
+	mousePos.Set(cam.pos);
 }
 
 int Logic7::Update() {
-	mousePos.Set(cam.pos + eg->mousePosition.GetFlipY() / cam.scale);
+	if (eg->Pressed(Mbtns::Left)) {
+		mousePos.Set(cam.pos + eg->mousePosition.GetFlipY() / cam.scale);
+	}
 
 	timePool += eg->delta;
 	auto timePoolBak = timePool;

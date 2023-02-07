@@ -411,7 +411,7 @@ struct SpaceGridAB {
 				c = cells[rIdx * numCols + cIdx];
 				while (c) {
 					auto&& s = c->self;
-					if (s->_sgabMax.x < minXY.x && s->_sgabMin.y < maxXY.y) {
+					if (s->_sgabMax.x > minXY.x && s->_sgabMin.y < maxXY.y) {
 						if (!s->_sgabFlag) {
 							s->_sgabFlag = 1;
 							results.push_back(s);
