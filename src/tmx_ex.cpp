@@ -1,74 +1,78 @@
 ﻿#include "pch.h"
 
-namespace TMX {
+namespace xx {
 
-	void Camera::Init(Size const& screenSize, Map& map) {
-		tileWidth = map.tileWidth;
-		tileHeight = map.tileHeight;
+	namespace TMX {
 
-		worldRowCount = map.height;
-		worldColumnCount = map.width;
+		void Camera::Init(Size const& screenSize, Map& map) {
+			tileWidth = map.tileWidth;
+			tileHeight = map.tileHeight;
 
-		worldPixel.w = tileWidth * worldColumnCount;
-		worldPixel.h = tileHeight * worldRowCount;
+			worldRowCount = map.height;
+			worldColumnCount = map.width;
 
-		this->screenSize = screenSize;
+			worldPixel.w = tileWidth * worldColumnCount;
+			worldPixel.h = tileHeight * worldRowCount;
 
-		Commit();
-	}
+			this->screenSize = screenSize;
 
-	void Camera::Commit() {
-		if (!dirty) return;
-		dirty = false;
-
-		auto halfNumRows = screenSize.h / scale.y / tileHeight / 2;
-		int32_t posRowIndex = pos.y / tileHeight;
-		rowFrom = posRowIndex - halfNumRows;
-		rowTo = posRowIndex + halfNumRows + 2;
-		if (rowFrom < 0) {
-			rowFrom = 0;
-		}
-		if (rowTo > worldRowCount) {
-			rowTo = worldRowCount;
+			Commit();
 		}
 
-		auto halfNumColumns = screenSize.w / scale.x / tileWidth / 2;
-		int32_t posColumnIndex = pos.x / tileWidth;
-		columnFrom = posColumnIndex - halfNumColumns;
-		columnTo = posColumnIndex + halfNumColumns + 2;
-		if (columnFrom < 0) {
-			columnFrom = 0;
+		void Camera::Commit() {
+			if (!dirty) return;
+			dirty = false;
+
+			auto halfNumRows = screenSize.h / scale.y / tileHeight / 2;
+			int32_t posRowIndex = pos.y / tileHeight;
+			rowFrom = posRowIndex - halfNumRows;
+			rowTo = posRowIndex + halfNumRows + 2;
+			if (rowFrom < 0) {
+				rowFrom = 0;
+			}
+			if (rowTo > worldRowCount) {
+				rowTo = worldRowCount;
+			}
+
+			auto halfNumColumns = screenSize.w / scale.x / tileWidth / 2;
+			int32_t posColumnIndex = pos.x / tileWidth;
+			columnFrom = posColumnIndex - halfNumColumns;
+			columnTo = posColumnIndex + halfNumColumns + 2;
+			if (columnFrom < 0) {
+				columnFrom = 0;
+			}
+			if (columnTo > worldColumnCount) {
+				columnTo = worldColumnCount;
+			}
+
+			offset = { -pos.x, pos.y };
 		}
-		if (columnTo > worldColumnCount) {
-			columnTo = worldColumnCount;
+
+		void Camera::SetScale(float const& scale) {
+			this->scale = { scale, scale };
+			dirty = true;
 		}
 
-		offset = { -pos.x, pos.y };
-	}
+		void Camera::SetScreenSize(Size const& wh) {
+			this->screenSize = wh;
+			dirty = true;
+		}
 
-	void Camera::SetScale(float const& scale) {
-		this->scale = { scale, scale };
-		dirty = true;
-	}
+		void Camera::SetPosition(XY const& xy) {
+			this->pos = xy;
+			dirty = true;
+		}
 
-	void Camera::SetScreenSize(Size const& wh) {
-		this->screenSize = wh;
-		dirty = true;
-	}
+		void Camera::SetPositionX(float const& x) {
+			this->pos.x = x;
+			dirty = true;
+		}
 
-	void Camera::SetPosition(XY const& xy) {
-		this->pos = xy;
-		dirty = true;
-	}
+		void Camera::SetPositionY(float const& y) {
+			this->pos.y = y;
+			dirty = true;
+		}
 
-	void Camera::SetPositionX(float const& x) {
-		this->pos.x = x;
-		dirty = true;
-	}
-
-	void Camera::SetPositionY(float const& y) {
-		this->pos.y = y;
-		dirty = true;
 	}
 
 }

@@ -3,21 +3,21 @@
 #include "logic_base.h"
 
 struct Menu;
-using MenuMouseEventListener = MouseEventListener<Menu*>;
+using MenuMouseEventListener = xx::MouseEventListener<Menu*>;
 
 struct Menu {
 	bool HandleMouseDown(MenuMouseEventListener& L);
 	int HandleMouseMove(MenuMouseEventListener& L);
 	void HandleMouseUp(MenuMouseEventListener& L);
-	void Init(Logic* eg, XY const& pos, std::string_view const& txt, float const& fontSize);
+	void Init(Logic* eg, xx::XY const& pos, std::string_view const& txt, float const& fontSize);
 
 	Logic* eg{};
-	XY leftBottom, rightTop;	// bounding box
+	xx::XY leftBottom, rightTop;	// bounding box
 	std::string txt;
 
-	bool Inside(XY const& point);	// bounding box contains point?
+	bool Inside(xx::XY const& point);	// bounding box contains point?
 
-	Label content;
+	xx::Label content;
 };
 
 struct Logic0 : LogicBase {

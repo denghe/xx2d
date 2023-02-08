@@ -5,7 +5,7 @@
 void Logic::Init() {
 	fnt1 = LoadBMFont("res/font1/basechars.fnt"sv);
 
-	lbInfo.SetPositon(ninePoints[1] + XY{ 10, 10 });
+	lbInfo.SetPositon(ninePoints[1] + xx::XY{ 10, 10 });
 	lbInfo.SetAnchor({0, 0});
 
 	nowSecs = xx::NowSteadyEpochSeconds();
@@ -15,7 +15,7 @@ void Logic::Init() {
 }
 
 int Logic::Update() {
-	if (Pressed(KbdKeys::Escape)) {
+	if (Pressed(xx::KbdKeys::Escape)) {
 		if (!dynamic_cast<Logic0*>(lg.pointer)) {
 			DelaySwitchTo<Logic0>();
 		}

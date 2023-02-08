@@ -2,9 +2,9 @@
 #include "pch.h"
 #include "logic_base.h"
 
-struct Logic : Engine {
-	BMFont fnt1;
-	Label lbInfo;
+struct Logic : xx::Engine {
+	xx::BMFont fnt1;
+	xx::Label lbInfo;
 	std::string extraInfo;
 	int fps{}, fpsCounter{};
 	double nowSecs{}, delta{}, fpsTimePool{}, timePool{};

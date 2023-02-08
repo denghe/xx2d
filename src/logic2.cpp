@@ -8,11 +8,11 @@ void Logic2::Init(Logic* eg) {
 	std::cout << "Logic2 Init( test mouse event listener )" << std::endl;
 
 	// test mouse event listener
-	meListener.Init(eg, Mbtns::Left);
+	meListener.Init(eg, xx::Mbtns::Left);
 
 	// test line strip
 	for (size_t i = 0; i < 10000; i++) {
-		XY v{ float(rand() % ((int)eg->w - 30)) + 15 - eg->hw, float(rand() % ((int)eg->h - 30)) + 15 - eg->hh };
+		xx::XY v{ float(rand() % ((int)eg->w - 30)) + 15 - eg->hw, float(rand() % ((int)eg->h - 30)) + 15 - eg->hh };
 
 		auto&& c = circles.emplace_back();
 		c.Init(v, 15, 12);
@@ -52,7 +52,7 @@ void DragableCircle::HandleMouseUp(DragableCircleMouseEventListener& L) {
 	std::cout << "L.downPos.x = " << L.downPos.x << ", L.downPos.y = " << L.downPos.y << std::endl;
 }
 
-void DragableCircle::Init(XY const& pos, float const& radius, int const& segments) {
+void DragableCircle::Init(xx::XY const& pos, float const& radius, int const& segments) {
 	this->radius_square = radius * radius;
 	this->FillCirclePoints({ 0,0 }, radius, {}, segments);
 	this->SetColor({ 255, 255, 0, 255 });

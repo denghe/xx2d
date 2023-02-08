@@ -158,7 +158,7 @@ bool MoveCircleIfIntersectsBox(DragBox& b, DragCircle& c, AvaliableDirections co
 	return MoveCircleIfIntersectsBox(b.pos.x, b.pos.y, b.size.x / 2, b.size.y / 2, c.pos.x, c.pos.y, c.radius, avaliableDirections);
 }
 bool MoveCircleIfIntersectsBox(DragBox& b, DragCircle& c) {
-	return Calc::MoveCircleIfIntersectsBox(b.pos.x, b.pos.y, b.size.x / 2, b.size.y / 2, c.pos.x, c.pos.y, c.radius);
+	return xx::MoveCircleIfIntersectsBox(b.pos.x, b.pos.y, b.size.x / 2, b.size.y / 2, c.pos.x, c.pos.y, c.radius);
 }
 
 void Logic6::Init(Logic* eg) {
@@ -172,7 +172,7 @@ void Logic6::Init(Logic* eg) {
 	//	cs.emplace_back().Init(this, v, r, 16);
 	//}
 
-	XY wh{ 100, 100 };
+	xx::XY wh{ 100, 100 };
 	cs.emplace_back().Init(this, { -400, 400 }, 25, 48);
 	cs.emplace_back().Init(this, { 0, 400 }, 50, 48);
 	cs.emplace_back().Init(this, { 400, 400 }, 90, 48);
@@ -187,8 +187,8 @@ void Logic6::Init(Logic* eg) {
 	bs.emplace_back().Init({ -500, 0 }, wh);
 
 
-	BL.Init(eg, Mbtns::Left);
-	CL.Init(eg, Mbtns::Right);
+	BL.Init(eg, xx::Mbtns::Left);
+	CL.Init(eg, xx::Mbtns::Right);
 }
 
 int Logic6::Update() {
@@ -226,7 +226,7 @@ int Logic6::Update() {
 		}
 
 		
-		auto pointInBoxs = [this](XY const& p)->uint8_t {
+		auto pointInBoxs = [this](xx::XY const& p)->uint8_t {
 			for (auto& b : bs) {
 				auto hs = b.size / 2;
 				auto leftTop = b.pos - hs;
@@ -292,7 +292,7 @@ void DragCircle::HandleMouseUp(LT& L) {
 	owner->draggingC = {};
 }
 
-void DragCircle::Init(Logic6* const& owner, XY const& pos, float const& radius, int32_t const& segments) {
+void DragCircle::Init(Logic6* const& owner, xx::XY const& pos, float const& radius, int32_t const& segments) {
 	this->owner = owner;
 	this->pos = pos;
 	this->radius = radius;
@@ -318,7 +318,7 @@ int DragBox::HandleMouseMove(LT& L) {
 }
 void DragBox::HandleMouseUp(LT& L) {}
 
-void DragBox::Init(XY const& pos, XY const& size) {
+void DragBox::Init(xx::XY const& pos, xx::XY const& size) {
 	this->pos = pos;
 	this->size = size;
 

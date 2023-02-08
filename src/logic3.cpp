@@ -7,7 +7,7 @@ void Logic3::Init(Logic* eg) {
 
 	std::cout << "Logic3 Init( test button )" << std::endl;
 
-	meListener.Init(eg, Mbtns::Left);
+	meListener.Init(eg, xx::Mbtns::Left);
 
 	auto x = eg->ninePoints[1].x;
 	auto y = eg->ninePoints[1].y;
@@ -53,7 +53,7 @@ void Button::HandleMouseUp(ButtonMouseEventListener& L) {
 	}
 }
 
-void Button::Init(Logic* eg_, XY const& pos, Size const& borderSize, std::string_view const& txt_, float const& fontSize) {
+void Button::Init(Logic* eg_, xx::XY const& pos, xx::Size const& borderSize, std::string_view const& txt_, float const& fontSize) {
 	eg = eg_;
 	txt = txt_;
 	auto hw = borderSize.w / 2;
@@ -68,7 +68,7 @@ void Button::Init(Logic* eg_, XY const& pos, Size const& borderSize, std::string
 	content.Commit();
 }
 
-bool Button::Inside(XY const& p) {
+bool Button::Inside(xx::XY const& p) {
 	return p.x >= leftBottom.x && p.x <= rightTop.x
 		&& p.y >= leftBottom.y && p.y <= rightTop.y;
 }

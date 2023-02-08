@@ -1,38 +1,42 @@
 ﻿#pragma once
 #include "pch.h"
 
-struct LineStrip {
-	std::vector<XYRGBA8> pointsBuf;
-	bool dirty = true;
+namespace xx {
 
-	std::vector<XY> points;
-	Size size;
-	XY pos{ 0, 0 };
-	XY anchor{ 0.5, 0.5 };
-	XY scale{ 1, 1 };
-	float rotate{ 0 };
-	RGBA8 color{ 255, 255, 255, 255 };
+	struct LineStrip {
+		std::vector<XYRGBA8> pointsBuf;
+		bool dirty = true;
 
-	std::vector<XY>& SetPoints();
+		std::vector<XY> points;
+		Size size;
+		XY pos{ 0, 0 };
+		XY anchor{ 0.5, 0.5 };
+		XY scale{ 1, 1 };
+		float rotate{ 0 };
+		RGBA8 color{ 255, 255, 255, 255 };
 
-	void FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle = {}, int const& segments = 100, XY const& scale = { 1,1 });
-	void FillBoxPoints(XY const& center, XY const& wh);
+		std::vector<XY>& SetPoints();
 
-	void SetSize(Size const& s);
+		void FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle = {}, int const& segments = 100, XY const& scale = { 1,1 });
+		void FillBoxPoints(XY const& center, XY const& wh);
 
-	void SetAnchor(XY const& a);
+		void SetSize(Size const& s);
 
-	void SetRotate(float const& r);
+		void SetAnchor(XY const& a);
 
-	void SetScale(XY const& s);
-	void SetScale(float const& s);
+		void SetRotate(float const& r);
 
-	void SetPositon(XY const& p);
+		void SetScale(XY const& s);
+		void SetScale(float const& s);
 
-	void SetColor(RGBA8 const& c);
+		void SetPositon(XY const& p);
 
-	void Commit();
+		void SetColor(RGBA8 const& c);
 
-	void Draw(Engine* eg);
-	void Draw(Engine* eg, Translate const& trans);
-};
+		void Commit();
+
+		void Draw(Engine* eg);
+		void Draw(Engine* eg, Translate const& trans);
+	};
+
+}

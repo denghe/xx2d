@@ -4,30 +4,30 @@
 
 struct Logic6;
 struct DragCircle {
-	using LT = MouseEventListener<DragCircle*>;
+	using LT = xx::MouseEventListener<DragCircle*>;
 	bool HandleMouseDown(LT& L);
 	int HandleMouseMove(LT& L);
 	void HandleMouseUp(LT& L);
 
-	void Init(Logic6* const& owner, XY const& pos, float const& radius, int32_t const& segments);
+	void Init(Logic6* const& owner, xx::XY const& pos, float const& radius, int32_t const& segments);
 
 	Logic6* owner{};
-	XY pos{}, dxy{};
+	xx::XY pos{}, dxy{};
 	float radius{}, radiusPow2{};
-	LineStrip border;
+	xx::LineStrip border;
 };
 
 struct DragBox {
-	using LT = MouseEventListener<DragBox*>;
+	using LT = xx::MouseEventListener<DragBox*>;
 	bool HandleMouseDown(LT& L);
 	int HandleMouseMove(LT& L);
 	void HandleMouseUp(LT& L);
 
-	void Init(XY const& pos, XY const& size);
+	void Init(xx::XY const& pos, xx::XY const& size);
 
 	Logic6* owner{};
-	XY pos{}, size{};
-	LineStrip border;
+	xx::XY pos{}, size{};
+	xx::LineStrip border;
 };
 
 struct Logic6 : LogicBase {
@@ -41,6 +41,6 @@ struct Logic6 : LogicBase {
 	size_t cursor{};
 	std::vector<DragBox> bs;
 	DragBox::LT BL;
-	Rnd rnd;
+	xx::Rnd rnd;
 	double timePool{};
 };

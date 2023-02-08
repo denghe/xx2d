@@ -1,10 +1,14 @@
 ﻿#pragma once
 #include "pch.h"
 
-bool Engine::Pressed(Mbtns const& b) {
-	return mbtnStates[(size_t)b];
-}
+namespace xx {
 
-bool Engine::Pressed(KbdKeys const& k) {
-	return kbdStates[(size_t)k];
+	bool Engine::Pressed(Mbtns const& b) {
+		return mbtnStates[(size_t)b];
+	}
+
+	bool Engine::Pressed(KbdKeys const& k) {
+		return kbdStates[(size_t)k];
+	}
+
 }

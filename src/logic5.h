@@ -2,13 +2,13 @@
 #include "pch.h"
 #include "logic_base.h"
 
-struct Foo : SpaceGridABItem<Foo> {
+struct Foo : xx::SpaceGridABItem<Foo> {
 
-	XY size{}, halfSize{};
-	xx::Shared<LineStrip> border;
-	RGBA8 color{};
+	xx::XY size{}, halfSize{};
+	xx::Shared<xx::LineStrip> border;
+	xx::RGBA8 color{};
 
-	void Init(SpaceGridAB<Foo>* grid, int32_t x, int32_t y, int32_t w, int32_t h, RGBA8 c);
+	void Init(xx::SpaceGridAB<Foo>* grid, int32_t x, int32_t y, int32_t w, int32_t h, xx::RGBA8 c);
 
 	void SyncBorder();
 
@@ -28,8 +28,8 @@ struct Logic5 : LogicBase {
 	void Init(Logic* eg) override;
 	int Update() override;
 	double timePool{};
-	Translate cam;
-	SpaceGridAB<Foo> grid;
+	xx::Translate cam;
+	xx::SpaceGridAB<Foo> grid;
 	std::vector<xx::Shared<Foo>> foos;
-	Rnd rnd;
+	xx::Rnd rnd;
 };

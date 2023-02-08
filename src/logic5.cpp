@@ -2,7 +2,7 @@
 #include "logic.h"
 #include "logic5.h"
 
-void Foo::Init(SpaceGridAB<Foo>* grid, int32_t x, int32_t y, int32_t w, int32_t h, RGBA8 c) {
+void Foo::Init(xx::SpaceGridAB<Foo>* grid, int32_t x, int32_t y, int32_t w, int32_t h, xx::RGBA8 c) {
 	SGABInit(grid);
 	SGABSetPosSiz({ x,y }, { w,h });
 	SGABAdd();
@@ -78,7 +78,7 @@ void Logic5::Init(Logic* eg) {
 		auto x = rnd.Next(w / 2, grid.maxX - 1 - w / 2);
 		auto y = rnd.Next(h / 2, grid.maxY - 1 - h / 2);
 		auto c = rnd.Get();
-		foos.emplace_back().Emplace()->Init(&grid, x, y, w, h, (RGBA8&)c);
+		foos.emplace_back().Emplace()->Init(&grid, x, y, w, h, (xx::RGBA8&)c);
 	}
 }
 
@@ -89,16 +89,16 @@ int Logic5::Update() {
 	if (timePool >= 1.f / 60) {
 		timePool = 0;
 		constexpr int32_t moveSpeed = 3;
-		if ((eg->Pressed(KbdKeys::W))) {
+		if ((eg->Pressed(xx::KbdKeys::W))) {
 			for (auto& f : foos) f->MoveUp(moveSpeed);
 		}
-		if ((eg->Pressed(KbdKeys::S))) {
+		if ((eg->Pressed(xx::KbdKeys::S))) {
 			for (auto& f : foos) f->MoveDown(moveSpeed);
 		}
-		if ((eg->Pressed(KbdKeys::A))) {
+		if ((eg->Pressed(xx::KbdKeys::A))) {
 			for (auto& f : foos) f->MoveLeft(moveSpeed);
 		}
-		if ((eg->Pressed(KbdKeys::D))) {
+		if ((eg->Pressed(xx::KbdKeys::D))) {
 			for (auto& f : foos) f->MoveRight(moveSpeed);
 		}
 	}

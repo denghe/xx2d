@@ -3,23 +3,23 @@
 #include "logic_base.h"
 
 struct Button;
-using ButtonMouseEventListener = MouseEventListener<Button*>;
+using ButtonMouseEventListener = xx::MouseEventListener<Button*>;
 
 struct Button {
 	bool HandleMouseDown(ButtonMouseEventListener& L);
 	int HandleMouseMove(ButtonMouseEventListener& L);
 	void HandleMouseUp(ButtonMouseEventListener& L);
 
-	void Init(Logic* eg, XY const& pos, Size const& borderSize, std::string_view const& txt, float const& fontSize);
+	void Init(Logic* eg, xx::XY const& pos, xx::Size const& borderSize, std::string_view const& txt, float const& fontSize);
 
 	Logic* eg{};
-	XY leftBottom{}, rightTop{};	// bounding box
+	xx::XY leftBottom{}, rightTop{};	// bounding box
 	std::string txt;
 
-	bool Inside(XY const& point);	// bounding box contains point?
+	bool Inside(xx::XY const& point);	// bounding box contains point?
 
-	LineStrip border;
-	Label content;
+	xx::LineStrip border;
+	xx::Label content;
 };
 
 struct Logic3 : LogicBase {

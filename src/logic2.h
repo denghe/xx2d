@@ -3,14 +3,14 @@
 #include "logic_base.h"
 
 struct DragableCircle;
-using DragableCircleMouseEventListener = MouseEventListener<DragableCircle*>;
+using DragableCircleMouseEventListener = xx::MouseEventListener<DragableCircle*>;
 
-struct DragableCircle : LineStrip {
-	using LineStrip::LineStrip;
+struct DragableCircle : xx::LineStrip {
+	using xx::LineStrip::LineStrip;
 	bool HandleMouseDown(DragableCircleMouseEventListener& L);
 	int HandleMouseMove(DragableCircleMouseEventListener& L);
 	void HandleMouseUp(DragableCircleMouseEventListener& L);
-	void Init(XY const& pos, float const& radius, int const& segments);
+	void Init(xx::XY const& pos, float const& radius, int const& segments);
 	float radius_square{};
 };
 

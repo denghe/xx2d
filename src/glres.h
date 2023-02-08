@@ -2,51 +2,55 @@
 #include "pch.h"
 #include <glad.h>
 
-enum class GLResTypes {
-	Shader, Program, Vertexss, Buffer, Texture
-};
+namespace xx {
 
-template<GLResTypes T, typename...VS>
-struct GLRes {
-	std::tuple<GLuint, VS...> vs;
-	operator GLuint const& () const { return std::get<0>(vs); }
-	GLuint& Ref() { return std::get<0>(vs); }
+	enum class GLResTypes {
+		Shader, Program, Vertexss, Buffer, Texture
+	};
 
-	GLRes(GLRes const&) = delete;
-	GLRes& operator=(GLRes const&) = delete;
-	GLRes() = default;
-	GLRes(GLuint&& i) {
-		std::get<0>(vs) = i;
-	}
-	GLRes(GLRes&& o) noexcept {
-		std::swap(vs, o.vs);
-	}
-	GLRes& operator=(GLRes&& o) noexcept {
-		std::swap(vs, o.vs);
-		return *this;
-	}
+	template<GLResTypes T, typename...VS>
+	struct GLRes {
+		std::tuple<GLuint, VS...> vs;
+		operator GLuint const& () const { return std::get<0>(vs); }
+		GLuint& Ref() { return std::get<0>(vs); }
 
-	GLRes(GLuint i) : vs(std::make_tuple(i)) {}
-	template<typename...Args>
-	GLRes(GLuint i, Args&&... args) : vs(std::make_tuple(i, std::forward<Args>(args)...)) {}
+		GLRes(GLRes const&) = delete;
+		GLRes& operator=(GLRes const&) = delete;
+		GLRes() = default;
+		GLRes(GLuint&& i) {
+			std::get<0>(vs) = i;
+		}
+		GLRes(GLRes&& o) noexcept {
+			std::swap(vs, o.vs);
+		}
+		GLRes& operator=(GLRes&& o) noexcept {
+			std::swap(vs, o.vs);
+			return *this;
+		}
 
-	~GLRes() {
-		if (!std::get<0>(vs)) return;
-		if constexpr (T == GLResTypes::Shader) { glDeleteShader(std::get<0>(vs)); }
-		if constexpr (T == GLResTypes::Program) { glDeleteProgram(std::get<0>(vs)); }
-		if constexpr (T == GLResTypes::Vertexss) { glDeleteVertexArrays(1, &std::get<0>(vs)); }
-		if constexpr (T == GLResTypes::Buffer) { glDeleteBuffers(1, &std::get<0>(vs)); }
-		if constexpr (T == GLResTypes::Texture) { glDeleteTextures(1, &std::get<0>(vs)); }
-		std::get<0>(vs) = 0;
-	}
-};
+		GLRes(GLuint i) : vs(std::make_tuple(i)) {}
+		template<typename...Args>
+		GLRes(GLuint i, Args&&... args) : vs(std::make_tuple(i, std::forward<Args>(args)...)) {}
 
-using GLShader = GLRes<GLResTypes::Shader>;
+		~GLRes() {
+			if (!std::get<0>(vs)) return;
+			if constexpr (T == GLResTypes::Shader) { glDeleteShader(std::get<0>(vs)); }
+			if constexpr (T == GLResTypes::Program) { glDeleteProgram(std::get<0>(vs)); }
+			if constexpr (T == GLResTypes::Vertexss) { glDeleteVertexArrays(1, &std::get<0>(vs)); }
+			if constexpr (T == GLResTypes::Buffer) { glDeleteBuffers(1, &std::get<0>(vs)); }
+			if constexpr (T == GLResTypes::Texture) { glDeleteTextures(1, &std::get<0>(vs)); }
+			std::get<0>(vs) = 0;
+		}
+	};
 
-using GLProgram = GLRes<GLResTypes::Program>;
+	using GLShader = GLRes<GLResTypes::Shader>;
 
-using GLVertexArrays = GLRes<GLResTypes::Vertexss>;
+	using GLProgram = GLRes<GLResTypes::Program>;
 
-using GLBuffer = GLRes<GLResTypes::Buffer>;
+	using GLVertexArrays = GLRes<GLResTypes::Vertexss>;
 
-using GLTexture = GLRes<GLResTypes::Texture, GLsizei, GLsizei, std::string>;
+	using GLBuffer = GLRes<GLResTypes::Buffer>;
+
+	using GLTexture = GLRes<GLResTypes::Texture, GLsizei, GLsizei, std::string>;
+
+}

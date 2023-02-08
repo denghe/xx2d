@@ -2,7 +2,7 @@
 #include "logic.h"
 #include "logic7.h"
 
-void C::Init(Logic7* const& owner_, Pos<> const& pos, int32_t const& r, int32_t const& segments) {
+void C::Init(Logic7* const& owner_, xx::Pos<> const& pos, int32_t const& r, int32_t const& segments) {
 	owner = owner_;
 	radius = r;
 
@@ -15,7 +15,7 @@ void C::Init(Logic7* const& owner_, Pos<> const& pos, int32_t const& r, int32_t 
 	border.SetPositon({(float)pos.x, (float)-pos.y});
 	border.Commit();
 }
-void C::SetPos(Pos<> const& pos) {
+void C::SetPos(xx::Pos<> const& pos) {
 	SGCSetPos(pos);
 	SGCUpdate();
 
@@ -24,7 +24,7 @@ void C::SetPos(Pos<> const& pos) {
 }
 void C::Update() {
 	int foreachLimit = 100, numCross{};
-	XY v{};	// combine force vector
+	xx::Pos<float> v{};	// combine force vector
 	newPos = _sgcPos;
 
 	// calc v
@@ -53,7 +53,7 @@ void C::Update() {
 			v += d.As<float>() / std::sqrt(float(dd)) / 100;
 		}
 		if (v.IsZero()) {	// move by random angle
-			v = Calc::Rotate(Pos<>{ speed, 0 }, owner->rnd.Next() % Calc::table_num_angles).As<float>();
+			v = xx::Rotate(xx::Pos<>{ speed, 0 }, owner->rnd.Next() % xx::table_num_angles).As<float>();
 		}
 		else {	// move by v
 			v = v.Normalize() * speed;
@@ -76,7 +76,7 @@ void C::Update() {
 	if (maxXY.y >= owner->sgab.maxY) maxXY.y = owner->sgab.maxY - 1;
 	owner->sgab.ForeachAABB(minXY, maxXY);
 	for (auto& b : owner->sgab.results) {
-		Calc::MoveCircleIfIntersectsBox(b->_sgabPos.x, b->_sgabPos.y, b->size.x / 2, b->size.y / 2, newPos.x, newPos.y, radius);
+		xx::MoveCircleIfIntersectsBox(b->_sgabPos.x, b->_sgabPos.y, b->size.x / 2, b->size.y / 2, newPos.x, newPos.y, radius);
 	}
 	owner->sgab.ClearResults();
 
@@ -95,7 +95,7 @@ void C::Update2() {
 		border.Commit();
 		++_sgc->numActives;
 	} else {
-		if (border.color != RGBA8{ 255, 255, 255, 255 }) {
+		if (border.color != xx::RGBA8{ 255, 255, 255, 255 }) {
 			border.SetColor({ 255, 255, 255, 255 });
 			border.Commit();
 		}
@@ -106,7 +106,7 @@ C::~C() {
 }
 
 
-void B::Init(Logic7* const& owner_, Pos<> const& pos, Pos<> const& siz) {
+void B::Init(Logic7* const& owner_, xx::Pos<> const& pos, xx::Pos<> const& siz) {
 	owner = owner_;
 	size = siz;
 
@@ -140,7 +140,7 @@ void Logic7::Init(Logic* eg) {
 	//cs.emplace_back().Emplace()->Init(this, { sgc.maxX / 2, sgc.maxY / 2 }, 32, 16);
 	for (auto i = 0; i < 10000; ++i) {
 		auto r = rnd.Next(16, 32);
-		Pos<> v{ rnd.Next(r, sgc.maxX1 - r), rnd.Next(r, sgc.maxY1 - r) };
+		xx::Pos<> v{ rnd.Next(r, sgc.maxX1 - r), rnd.Next(r, sgc.maxY1 - r) };
 		cs.emplace_back().Emplace()->Init(this, v, r, 16);
 	}
 
@@ -155,7 +155,7 @@ void Logic7::Init(Logic* eg) {
 }
 
 int Logic7::Update() {
-	if (eg->Pressed(Mbtns::Left)) {
+	if (eg->Pressed(xx::Mbtns::Left)) {
 		mousePos.Set(cam.pos + eg->mousePosition.GetFlipY() / cam.scale);
 	}
 

@@ -14,7 +14,7 @@ void Logic0::Init(Logic* eg) {
 
 	std::cout << "Logic0 Init( main menu )" << std::endl;
 
-	meListener.Init(eg, Mbtns::Left);
+	meListener.Init(eg, xx::Mbtns::Left);
 	menus.emplace_back().Init(eg, { -500, 200 }, "1: tiledmap", 64);
 	menus.emplace_back().Init(eg, { 0, 200 }, "2: circle drag", 64);
 	menus.emplace_back().Init(eg, { 500, 200 }, "3: box button", 64);
@@ -74,7 +74,7 @@ void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 	}
 }
 
-void Menu::Init(Logic* eg_, XY const& pos, std::string_view const& txt_, float const& fontSize) {
+void Menu::Init(Logic* eg_, xx::XY const& pos, std::string_view const& txt_, float const& fontSize) {
 	eg = eg_;
 	txt = txt_;
 	content.SetText(eg->fnt1, txt, fontSize);
@@ -86,7 +86,7 @@ void Menu::Init(Logic* eg_, XY const& pos, std::string_view const& txt_, float c
 	rightTop = { pos.x + hw, pos.y + hh };
 }
 
-bool Menu::Inside(XY const& p) {
+bool Menu::Inside(xx::XY const& p) {
 	return p.x >= leftBottom.x && p.x <= rightTop.x
 		&& p.y >= leftBottom.y && p.y <= rightTop.y;
 }

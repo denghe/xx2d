@@ -2,7 +2,7 @@
 #include "logic.h"
 #include "logic4.h"
 
-void Circle::Init(SpaceGridC<Circle>* const& grid_, int32_t const& x, int32_t const& y, int32_t const& r) {
+void Circle::Init(xx::SpaceGridC<Circle>* const& grid_, int32_t const& x, int32_t const& y, int32_t const& r) {
 	assert(!_sgc);
 	assert(!border);
 	_sgc = grid_;
@@ -11,15 +11,15 @@ void Circle::Init(SpaceGridC<Circle>* const& grid_, int32_t const& x, int32_t co
 	_sgc->Add(this);
 
 	radius = r;
-	border = std::make_unique<LineStrip>();
+	border = std::make_unique<xx::LineStrip>();
 	border->FillCirclePoints({ 0,0 }, radius, {}, Logic4::numCircleSegments);
 	border->SetPositon({ (float)_sgcPos.x, (float)-_sgcPos.y });
 	border->Commit();
 }
 
-void Circle::Update(Rnd& rnd) {
+void Circle::Update(xx::Rnd& rnd) {
 	int foreachLimit = Logic4::foreachLimit, numCross{};
-	Pos<> v{};
+	xx::Pos<> v{};
 
 	_sgc->Foreach9NeighborCells<true>(this, [&](Circle* const& c) {
 		assert(c != this);
@@ -34,8 +34,8 @@ void Circle::Update(Rnd& rnd) {
 		auto p12 = (cxy.x - txy.x) * (cxy.x - txy.x) + (cxy.y - txy.y) * (cxy.y - txy.y);
 		// cross?
 		if (r12 > p12) {
-			auto a = Calc::GetAngle<(Logic4::maxDiameter * 2 >= 1024)>(cxy, txy);
-			auto inc = Calc::Rotate(Pos<>{ Logic4::speed * r12 / p12, 0 }, a);
+			auto a = xx::GetAngle<(Logic4::maxDiameter * 2 >= 1024)>(cxy, txy);
+			auto inc = xx::Rotate(xx::Pos<>{ Logic4::speed * r12 / p12, 0 }, a);
 			v += inc;
 			++numCross;
 		}
@@ -46,8 +46,8 @@ void Circle::Update(Rnd& rnd) {
 		auto pos = this->_sgcPos;
 		// no force: random move?
 		if (v.IsZero()) {
-			auto a = rnd.Next() % Calc::table_num_angles;
-			auto inc = Calc::Rotate(Pos<>{ Logic4::speed, 0 }, a);
+			auto a = rnd.Next() % xx::table_num_angles;
+			auto inc = xx::Rotate(xx::Pos<>{ Logic4::speed, 0 }, a);
 			pos += inc;
 		}
 		// move by v?
@@ -56,8 +56,8 @@ void Circle::Update(Rnd& rnd) {
 			if (numCross > Logic4::speedMaxScale) {
 				numCross = Logic4::speedMaxScale;
 			}
-			auto a = Calc::GetAngleXY(v.x, v.y);
-			auto inc = Calc::Rotate(Pos<>{ Logic4::speed * numCross, 0 }, a);
+			auto a = xx::GetAngleXY(v.x, v.y);
+			auto inc = xx::Rotate(xx::Pos<>{ Logic4::speed * numCross, 0 }, a);
 			pos += inc;
 		}
 
@@ -83,7 +83,7 @@ void Circle::Update2() {
 		++_sgc->numActives;
 	}
 	else {
-		if (border->color != RGBA8{ 255, 255, 255, 255 }) {
+		if (border->color != xx::RGBA8{ 255, 255, 255, 255 }) {
 			border->SetColor({ 255, 255, 255, 255 });
 			border->Commit();
 		}
@@ -134,37 +134,37 @@ int Logic4::Update() {
 	if (timePool >= 1.f / 60) {
 		timePool = 0;
 
-		XY camInc{ 10 / cam.scale.x, 10 / cam.scale.y };
+		xx::XY camInc{ 10 / cam.scale.x, 10 / cam.scale.y };
 		float mX = grid.maxX, mY = grid.maxY;
-		if ((eg->Pressed(KbdKeys::W))) {
+		if ((eg->Pressed(xx::KbdKeys::W))) {
 			auto y = cam.pos.y - camInc.y;
 			cam.SetPositionY(y < 0 ? 0 : y);
 		}
-		if ((eg->Pressed(KbdKeys::S))) {
+		if ((eg->Pressed(xx::KbdKeys::S))) {
 			auto y = cam.pos.y + camInc.y;
 			cam.SetPositionY(y >= mY ? (mY - std::numeric_limits<float>::epsilon()) : y);
 		}
-		if ((eg->Pressed(KbdKeys::A))) {
+		if ((eg->Pressed(xx::KbdKeys::A))) {
 			auto x = cam.pos.x - camInc.x;
 			cam.SetPositionX(x < 0 ? 0 : x);
 		}
-		if ((eg->Pressed(KbdKeys::D))) {
+		if ((eg->Pressed(xx::KbdKeys::D))) {
 			auto x = cam.pos.x + camInc.x;
 			cam.SetPositionX(x >= mX ? (mX - std::numeric_limits<float>::epsilon()) : x);
 		}
-		if (eg->Pressed(KbdKeys::Z)) {
+		if (eg->Pressed(xx::KbdKeys::Z)) {
 			auto x = cam.scale.x + 0.01f;
 			cam.SetScale(x < 100 ? x : 100);
 		}
-		if (eg->Pressed(KbdKeys::X)) {
+		if (eg->Pressed(xx::KbdKeys::X)) {
 			auto x = cam.scale.x - 0.01f;
 			cam.SetScale(x > 0.001 ? x : 0.001);
 		}
-		if (eg->Pressed(KbdKeys::C)) {
+		if (eg->Pressed(xx::KbdKeys::C)) {
 			cs.clear();
 		}
 
-		if (eg->Pressed(Mbtns::Left)) {	// insert
+		if (eg->Pressed(xx::Mbtns::Left)) {	// insert
 			auto xy = cam.GetMousePosInGrid(eg->mousePosition);
 			for (size_t i = 0; i < numEveryInsert; i++) {
 				int32_t idx = cs.size();
@@ -174,7 +174,7 @@ int Logic4::Update() {
 			}
 		}
 
-		if (eg->Pressed(Mbtns::Right)) {	// erase
+		if (eg->Pressed(xx::Mbtns::Right)) {	// erase
 			auto pos = cam.GetMousePosInGrid(eg->mousePosition);
 			auto idx = grid.CalcIndexByPosition(pos.x, pos.y);
 			// find cross with mouse circle

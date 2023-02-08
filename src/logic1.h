@@ -3,27 +3,27 @@
 #include "logic_base.h"
 
 struct Frame_Anim {
-	xx::Shared<Frame> frame;
-	xx::Shared<Anim> anim;
+	xx::Shared<xx::Frame> frame;
+	xx::Shared<xx::Anim> anim;
 };
 
 struct Sprite_Anim {
-	xx::Shared<Sprite> sprite;
-	Anim* anim{};
+	xx::Shared<xx::Sprite> sprite;
+	xx::Anim* anim{};
 };
 
 struct Layer_SAs {
-	TMX::Layer_Tile* layer{};
+	xx::TMX::Layer_Tile* layer{};
 	// mapping to layer.gids
 	std::vector<Sprite_Anim> sas;
 };
 
 struct Player {
-	TP tp;
-	Anim anim;
-	Sprite sprite;
+	xx::TP tp;
+	xx::Anim anim;
+	xx::Sprite sprite;
 	bool dirty{ true };
-	XY footPos{};
+	xx::XY footPos{};
 	float yOffset{};	// for display sprite by center
 	static constexpr float scale{ 0.25f };	// by res size
 	static constexpr int32_t radius{ 48 };	// by res size
@@ -35,15 +35,15 @@ struct Logic1 : LogicBase {
 
 	double timePool{};
 
-	TMX::Camera cam;
-	TMX::Map map;
+	xx::TMX::Camera cam;
+	xx::TMX::Map map;
 	static constexpr float mapTileLogicAnchorY{ 0.25f };	// by res content "base line"
 	float mapTileYOffset{};
 
 	// mapping to map.gidInfos
 	std::vector<Frame_Anim> gidFAs;
 	// for easy update
-	std::vector<Anim*> anims;
+	std::vector<xx::Anim*> anims;
 	// mapping to "bg".gidInfos
 	std::vector<bool> walls;
 

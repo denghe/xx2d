@@ -26,5 +26,3 @@
 #include "spacegrid.h"
 #include "spacegridab.h"
 // ...
-
-#include <omp.h>

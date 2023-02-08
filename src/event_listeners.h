@@ -25,59 +25,63 @@ while (meListener.eventId && iter != foos.end()) {
 
 */
 
-template<typename Handler>
-struct MouseEventListener {
-	Engine* eg{};
-	Mbtns btn{};
+namespace xx {
 
-	XY downPos{}, lastPos{};
-	double downTime{};
+	template<typename Handler>
+	struct MouseEventListener {
+		Engine* eg{};
+		Mbtns btn{};
 
-	uint8_t lastState{};
-	Handler handler{};
-	int eventId{};	// 0: no event   1: down  2: move  3: up  4: cancel?
+		XY downPos{}, lastPos{};
+		double downTime{};
 
-	// todo: helper funcs?
+		uint8_t lastState{};
+		Handler handler{};
+		int eventId{};	// 0: no event   1: down  2: move  3: up  4: cancel?
 
-	void Init(Engine* eg, Mbtns btn) {
-		this->eg = eg;
-		this->btn = btn;
-	}
+		// todo: helper funcs?
 
-	// eventId > 0: need Dispatch
-	void Update() {
-		if (auto&& state = eg->mbtnStates[(size_t)btn]; lastState != state) {
-			lastState = state;
-			if (state) {	// down
-				assert(!handler);
-				lastPos = downPos = eg->mousePosition;
-				downTime = eg->lastTime;
-				eventId = 1;	// need search handler
-			} else {	// up
-				if (handler) {
-					handler->HandleMouseUp(*this);
-					handler = {};
-					eventId = {};
+		void Init(Engine* eg, Mbtns btn) {
+			this->eg = eg;
+			this->btn = btn;
+		}
+
+		// eventId > 0: need Dispatch
+		void Update() {
+			if (auto&& state = eg->mbtnStates[(size_t)btn]; lastState != state) {
+				lastState = state;
+				if (state) {	// down
+					assert(!handler);
+					lastPos = downPos = eg->mousePosition;
+					downTime = eg->lastTime;
+					eventId = 1;	// need search handler
+				} else {	// up
+					if (handler) {
+						handler->HandleMouseUp(*this);
+						handler = {};
+						eventId = {};
+					}
 				}
-			}
-		} else {
-			if (handler && lastPos != eg->mousePosition) {	// move
-				if (eventId = handler->HandleMouseMove(*this)) {
-					handler = {};
-				} else {
-					lastPos = eg->mousePosition;
+			} else {
+				if (handler && lastPos != eg->mousePosition) {	// move
+					if (eventId = handler->HandleMouseMove(*this)) {
+						handler = {};
+					} else {
+						lastPos = eg->mousePosition;
+					}
 				}
 			}
 		}
-	}
 
-	// eventId > 0: need Dispatch next handler
-	template<typename H>
-	void Dispatch(H&& h) {
-		assert(!handler);
-		if (h->HandleMouseDown(*this)) {
-			handler = std::forward<H>(h);
-			eventId = {};
+		// eventId > 0: need Dispatch next handler
+		template<typename H>
+		void Dispatch(H&& h) {
+			assert(!handler);
+			if (h->HandleMouseDown(*this)) {
+				handler = std::forward<H>(h);
+				eventId = {};
+			}
 		}
-	}
-};
+	};
+
+}

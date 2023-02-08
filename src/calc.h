@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 
-namespace Calc {
+namespace xx {
 	const double pi2 = 3.14159265358979323846 * 2;
 
 	// 设定计算坐标系 x, y 值范围 为 正负 table_xy_range

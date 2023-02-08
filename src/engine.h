@@ -1,117 +1,121 @@
 ﻿#pragma once
 #include "pch.h"
 
-struct Engine {
-	/**********************************************************************************/
-	// file system
+namespace xx {
 
-	std::vector<std::string> searchPaths;
-	std::filesystem::path tmpPath;
+	struct Engine {
+		/**********************************************************************************/
+		// file system
 
-	// add relative base dir to searchPaths
-	void SearchPathAdd(std::string_view dir);
+		std::vector<std::string> searchPaths;
+		std::filesystem::path tmpPath;
 
-	// search paths revert to default
-	void SearchPathReset();
+		// add relative base dir to searchPaths
+		void SearchPathAdd(std::string_view dir);
 
-	// search file by searchPaths + fn. not found return ""
-	std::string GetFullPath(std::string_view fn);
+		// search paths revert to default
+		void SearchPathReset();
 
-	// read all data by full path
-	xx::Data ReadAllBytesWithFullPath(std::string_view const& fp, bool autoDecompress = true);
+		// search file by searchPaths + fn. not found return ""
+		std::string GetFullPath(std::string_view fn);
 
-	// read all data by GetFullPath( fn )
-	std::pair<xx::Data, std::string> ReadAllBytes(std::string_view const& fn, bool autoDecompress = true);
+		// read all data by full path
+		xx::Data ReadAllBytesWithFullPath(std::string_view const& fp, bool autoDecompress = true);
 
-	/**********************************************************************************/
-	// fonts
+		// read all data by GetFullPath( fn )
+		std::pair<xx::Data, std::string> ReadAllBytes(std::string_view const& fn, bool autoDecompress = true);
 
-	BMFont LoadBMFont(std::string_view const& fn);
+		/**********************************************************************************/
+		// fonts
 
-	// ...
+		BMFont LoadBMFont(std::string_view const& fn);
 
-
-	/**********************************************************************************/
-	// texture & cache
-
-	// key: full path
-	std::unordered_map<std::string, xx::Shared<GLTexture>, xx::StringHasher<>, std::equal_to<void>> textureCache;
-
-	// load texture from file
-	GLTexture LoadTexture(std::string_view const& fn);
-
-	// load + insert or get texture from texture cache
-	xx::Shared<GLTexture> LoadTextureFromCache(std::string_view const& fn);
-
-	// unload texture from texture cache by full path
-	void UnloadTextureFromCache(std::string_view const& fn);
-
-	// unload texture from texture cache by texture
-	void UnloadTextureFromCache(xx::Shared<GLTexture> const& t);
-
-	// delete from textureCache where sharedCount == 1. return affected rows
-	size_t RemoveUnusedFromTextureCache();
+		// ...
 
 
-	/**********************************************************************************/
-	// TP & frame cache( texture does not insert into textureCache )
+		/**********************************************************************************/
+		// texture & cache
 
-	// key: frame key in plist( texture packer export .plist )
-	std::unordered_map<std::string, xx::Shared<Frame>, xx::StringHasher<>, std::equal_to<void>> frameCache;
+		// key: full path
+		std::unordered_map<std::string, xx::Shared<GLTexture>, xx::StringHasher<>, std::equal_to<void>> textureCache;
 
-	// load texture packer's plist content from file & return
-	TP LoadTPData(std::string_view const& fn);
+		// load texture from file
+		GLTexture LoadTexture(std::string_view const& fn);
 
-	// load plist frames into cache. duplicate key name will throw exception. auto get texture from cache if exists.
-	void LoadFramesFromCache(TP const& tpd);
+		// load + insert or get texture from texture cache
+		xx::Shared<GLTexture> LoadTextureFromCache(std::string_view const& fn);
 
-	// unload plist frames from cache
-	void UnloadFramesFromCache(TP const& tpd);
+		// unload texture from texture cache by full path
+		void UnloadTextureFromCache(std::string_view const& fn);
 
-	// delete from cache where sharedCount == 1. return removed frame count
-	size_t RemoveUnusedFromFrameCache();
+		// unload texture from texture cache by texture
+		void UnloadTextureFromCache(xx::Shared<GLTexture> const& t);
 
-
-	/**********************************************************************************/
-	// window & input
-
-	float w = 1800, h = 1000, hw = w/2, hh = h/2;
-	std::array<XY, 10> ninePoints;
-	void SetWH(float w, float h);	// will fill w, h, hw, hh, ninePoints
-
-	XY mousePosition{ (float)w/2, (float)h/2 };
-	std::vector<char32_t> kbdInputs;		// for store keyboard typed chars
-	std::array<uint8_t, 512> kbdStates{};	// release: 0   pressed: 1   repeat: 2
-	std::array<uint8_t, 32> mbtnStates{};	// mouse button states
-	bool Pressed(Mbtns const& b);	// return mbtnStates[(size_t)b];
-	bool Pressed(KbdKeys const& k);	// return kbdStates[(size_t)k];
-
-	double lastTime{}, lastDelta{};	// seconds. update before call Update()
+		// delete from textureCache where sharedCount == 1. return affected rows
+		size_t RemoveUnusedFromTextureCache();
 
 
-	/**********************************************************************************/
-	// shader
+		/**********************************************************************************/
+		// TP & frame cache( texture does not insert into textureCache )
 
-	ShaderManager sm;
+		// key: frame key in plist( texture packer export .plist )
+		std::unordered_map<std::string, xx::Shared<Frame>, xx::StringHasher<>, std::equal_to<void>> frameCache;
 
-	/**********************************************************************************/
-	// delay funcs
+		// load texture packer's plist content from file & return
+		TP LoadTPData(std::string_view const& fn);
 
-	std::vector<std::function<void()>> delayFuncs;	// call + clear at EngineUpdateEnd
+		// load plist frames into cache. duplicate key name will throw exception. auto get texture from cache if exists.
+		void LoadFramesFromCache(TP const& tpd);
 
-	// add delay execute func to queue.
-	template<typename F>
-	void DelayExecute(F&& f) {
-		delayFuncs.emplace_back(std::forward<F>(f));
-	}
+		// unload plist frames from cache
+		void UnloadFramesFromCache(TP const& tpd);
 
-	/**********************************************************************************/
-	// game loop
+		// delete from cache where sharedCount == 1. return removed frame count
+		size_t RemoveUnusedFromFrameCache();
 
-	void EngineInit();
-	void EngineUpdateBegin();
-	void EngineUpdateEnd();
-	void EngineDestroy();
 
-	// ...
-};
+		/**********************************************************************************/
+		// window & input
+
+		float w = 1800, h = 1000, hw = w / 2, hh = h / 2;
+		std::array<XY, 10> ninePoints;
+		void SetWH(float w, float h);	// will fill w, h, hw, hh, ninePoints
+
+		XY mousePosition{ (float)w / 2, (float)h / 2 };
+		std::vector<char32_t> kbdInputs;		// for store keyboard typed chars
+		std::array<uint8_t, 512> kbdStates{};	// release: 0   pressed: 1   repeat: 2
+		std::array<uint8_t, 32> mbtnStates{};	// mouse button states
+		bool Pressed(Mbtns const& b);	// return mbtnStates[(size_t)b];
+		bool Pressed(KbdKeys const& k);	// return kbdStates[(size_t)k];
+
+		double lastTime{}, lastDelta{};	// seconds. update before call Update()
+
+
+		/**********************************************************************************/
+		// shader
+
+		ShaderManager sm;
+
+		/**********************************************************************************/
+		// delay funcs
+
+		std::vector<std::function<void()>> delayFuncs;	// call + clear at EngineUpdateEnd
+
+		// add delay execute func to queue.
+		template<typename F>
+		void DelayExecute(F&& f) {
+			delayFuncs.emplace_back(std::forward<F>(f));
+		}
+
+		/**********************************************************************************/
+		// game loop
+
+		void EngineInit();
+		void EngineUpdateBegin();
+		void EngineUpdateEnd();
+		void EngineDestroy();
+
+		// ...
+	};
+
+}
