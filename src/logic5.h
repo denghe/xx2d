@@ -25,7 +25,7 @@ struct Foo : xx::SpaceGridABItem<Foo> {
 };
 
 struct Logic5 : LogicBase {
-	void Init(Logic* eg) override;
+	void Init(Logic* logic) override;
 	int Update() override;
 	double timePool{};
 	xx::Translate cam;

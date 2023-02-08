@@ -31,7 +31,7 @@ struct DragBox {
 };
 
 struct Logic6 : LogicBase {
-	void Init(Logic* eg) override;
+	void Init(Logic* logic) override;
 	int Update() override;
 
 	std::vector<DragCircle> cs;

@@ -26,13 +26,13 @@ struct B : xx::SpaceGridABItem<B> {
 };
 
 struct Logic7 : LogicBase {
-	void Init(Logic* eg) override;
+	void Init(Logic* logic) override;
 	int Update() override;
 
 	xx::SpaceGridC<C> sgc;
 	xx::SpaceGridAB<B> sgab;
 	xx::SpaceGridCCamera<C> cam;
-	xx::Pos<> mousePos;	// store eg->mousePosition's grid world coordinate
+	xx::Pos<> mousePos;	// store engine.mousePosition's grid world coordinate
 
 	std::vector<xx::Shared<C>> cs;
 	std::vector<xx::Shared<B>> bs;

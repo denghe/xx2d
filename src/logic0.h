@@ -21,7 +21,7 @@ struct Menu {
 };
 
 struct Logic0 : LogicBase {
-	void Init(Logic* eg) override;
+	void Init(Logic* logic) override;
 	int Update() override;
 
 	std::vector<Menu> menus;

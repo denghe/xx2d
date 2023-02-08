@@ -8,6 +8,7 @@
 #include "logic5.h"
 #include "logic6.h"
 #include "logic7.h"
+#include "logic8.h"
 
 void Logic0::Init(Logic* logic) {
 	this->logic = logic;
@@ -24,6 +25,7 @@ void Logic0::Init(Logic* logic) {
 	menus.emplace_back().Init(logic, { 500, 0 }, "6: circle + box physics", 64);
 
 	menus.emplace_back().Init(logic, { -500, -200 }, "7: more circle + box", 64);
+	menus.emplace_back().Init(logic, { 0, -200 }, "8: matrix tests", 64);
 
 	logic->extraInfo.clear();
 }
@@ -68,6 +70,8 @@ void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 			logic->DelaySwitchTo<Logic6>();
 		} else if (txt.starts_with("7:"sv)) {
 			logic->DelaySwitchTo<Logic7>();
+		} else if (txt.starts_with("8:"sv)) {
+			logic->DelaySwitchTo<Logic8>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}

@@ -23,7 +23,7 @@ struct Button {
 };
 
 struct Logic3 : LogicBase {
-	void Init(Logic* eg) override;
+	void Init(Logic* logic) override;
 	int Update() override;
 
 	std::vector<Button> btns;

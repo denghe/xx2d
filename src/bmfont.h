@@ -20,7 +20,7 @@ namespace xx {
 		uint16_t lineHeight{};
 
 		// load binary .fnt & texture from .fnt file
-		void Load(Engine* const& eg, std::string_view const& fn);
+		void Load(std::string_view const& fn);
 
 		// texture index: page
 		Char* GetChar(int const& charId);

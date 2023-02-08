@@ -4,7 +4,7 @@ namespace xx {
 
 	BMFont Engine::LoadBMFont(std::string_view const& fn) {
 		BMFont o;
-		o.Load(this, fn);
+		o.Load(fn);
 		return o;
 	}
 

@@ -30,7 +30,7 @@ struct Player {
 };
 
 struct Logic1 : LogicBase {
-	void Init(Logic* eg) override;
+	void Init(Logic* logic) override;
 	int Update() override;
 
 	double timePool{};
