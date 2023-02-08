@@ -2,13 +2,13 @@
 #include "logic.h"
 #include "logic1.h"
 
-void Logic1::Init(Logic* eg) {
-	this->eg = eg;
+void Logic1::Init(Logic* logic) {
+	this->logic = logic;
 
 	std::cout << "Logic1 Init( test tiled map )" << std::endl;
 
 	// load map
-	xx::TMX::FillTo(map, eg, "res/tiledmap2/m.tmx"sv);
+	xx::TMX::FillTo(map, "res/tiledmap2/m.tmx"sv);
 	mapTileYOffset = map.tileHeight * mapTileLogicAnchorY;
 
 	// fill frames
@@ -89,11 +89,11 @@ void Logic1::Init(Logic* eg) {
 	}
 
 	// init camera
-	cam.Init({ eg->w, eg->h}, map);
+	cam.Init({ xx::engine.w, xx::engine.h}, map);
 	cam.SetPosition({ 830, 510 });
 
 	// load plist
-	player.tp.Fill(eg, "res/ww.plist"sv);
+	player.tp.Fill("res/ww.plist"sv);
 	float maxSpriteHeight{}, anchor{ 0.5 };
 	for (auto& f : player.tp.frames) {
 		f->anchor = { anchor, anchor };
@@ -110,56 +110,57 @@ void Logic1::Init(Logic* eg) {
 }
 
 int Logic1::Update() {
-	timePool += eg->delta;
+	auto& eg = xx::engine;
+	timePool += eg.delta;
 	auto timePoolBak = timePool;
 	while (timePool >= 1.f / 60) {
 		timePool -= 1.f / 60;
 
 		xx::XY camInc{ 10 / cam.scale.x, 10 / cam.scale.y };
-		if ((eg->Pressed(xx::KbdKeys::Up))) {
+		if ((eg.Pressed(xx::KbdKeys::Up))) {
 			auto y = cam.pos.y - camInc.y;
 			cam.SetPositionY(y < 0 ? 0 : y);
 		}
-		if ((eg->Pressed(xx::KbdKeys::Down))) {
+		if ((eg.Pressed(xx::KbdKeys::Down))) {
 			auto y = cam.pos.y + camInc.y;
 			cam.SetPositionY(y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y);
 		}
-		if ((eg->Pressed(xx::KbdKeys::Left))) {
+		if ((eg.Pressed(xx::KbdKeys::Left))) {
 			auto x = cam.pos.x - camInc.x;
 			cam.SetPositionX(x < 0 ? 0 : x);
 		}
-		if ((eg->Pressed(xx::KbdKeys::Right))) {
+		if ((eg.Pressed(xx::KbdKeys::Right))) {
 			auto x = cam.pos.x + camInc.x;
 			cam.SetPositionX(x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x);
 		}
-		if (eg->Pressed(xx::KbdKeys::Z)) {
+		if (eg.Pressed(xx::KbdKeys::Z)) {
 			auto x = cam.scale.x + 0.001f;
 			cam.SetScale(x < 100 ? x : 100);
 		}
-		if (eg->Pressed(xx::KbdKeys::X)) {
+		if (eg.Pressed(xx::KbdKeys::X)) {
 			auto x = cam.scale.x - 0.001f;
 			cam.SetScale(x > 0.001 ? x : 0.001);
 		}
 		cam.Commit();
 
 		xx::XY playerInc{ 8 * player.sprite.scale.x, 8 * player.sprite.scale.y };
-		if (eg->Pressed(xx::KbdKeys::W)) {
+		if (eg.Pressed(xx::KbdKeys::W)) {
 			auto y = player.footPos.y - playerInc.y;
 			player.footPos.y = y < 0 ? 0 : y;
 			player.dirty = true;
 		}
-		if (eg->Pressed(xx::KbdKeys::S)) {
+		if (eg.Pressed(xx::KbdKeys::S)) {
 			auto y = player.footPos.y + playerInc.y;
 			player.footPos.y = y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y;
 			player.dirty = true;
 		}
-		if (eg->Pressed(xx::KbdKeys::A)) {
+		if (eg.Pressed(xx::KbdKeys::A)) {
 			auto x = player.footPos.x - playerInc.x;
 			player.footPos.x = x < 0 ? 0 : x;
 			player.dirty = true;
 			player.sprite.SetFlipX(false);
 		}
-		if (eg->Pressed(xx::KbdKeys::D)) {
+		if (eg.Pressed(xx::KbdKeys::D)) {
 			auto x = player.footPos.x + playerInc.x;
 			player.footPos.x = x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x;
 			player.dirty = true;
@@ -203,7 +204,7 @@ int Logic1::Update() {
 							sa.sprite->Commit();
 						}
 					}
-					sa.sprite->Draw(eg, cam);
+					sa.sprite->Draw(cam);
 				}
 			}
 		}
@@ -217,7 +218,7 @@ int Logic1::Update() {
 	DrawLayerSprites(layerTrees.sas, cam.rowFrom, playerRowIdx);
 
 	// draw player( override above rows )
-	player.sprite.Draw(eg, cam);
+	player.sprite.Draw(cam);
 
 	// draw after player rows
 	DrawLayerSprites(layerTrees.sas, playerRowIdx, cam.rowTo);

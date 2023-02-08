@@ -7,11 +7,10 @@ namespace xx {
 
 		struct Filler {
 			// fill data by .tmx file
-			Filler(Map& map, Engine* eg, std::string_view tmxfn);
+			Filler(Map& map, std::string_view tmxfn);
 
 			int rtv = 0;
 			Map& map;
-			Engine* eg;
 			pugi::xml_document docTmx, docTsx, docTx;
 			std::string rootPath;
 			std::unordered_map<uint32_t, Object*> objs;	// store all objs cross Layer_Object
@@ -414,7 +413,7 @@ namespace xx {
 			if (iter == map.images.end()) {
 				auto&& img = out.Emplace();
 				img->source = std::move(s);
-				img->texture.Emplace(eg->LoadTexture(fp));
+				img->texture.Emplace(engine.LoadTexture(fp));
 				TryFill(img->width, c.attribute("width"));
 				TryFill(img->height, c.attribute("height"));
 				TryFill(img->transparentColor, c.attribute("trans"));
@@ -429,7 +428,7 @@ namespace xx {
 			TryFill(ts.source, c.attribute("source"));
 
 			auto&& fp = rootPath + ts.source;	// to fullpath
-			if (auto&& d = eg->ReadAllBytesWithFullPath(fp); !d) {
+			if (auto&& d = engine.ReadAllBytesWithFullPath(fp); !d) {
 				throw std::logic_error("read file error: " + fp);
 			} else if (auto&& r = docTsx.load_buffer(d.buf, d.len); r.status) {
 				throw std::logic_error("docTsx.load_buffer error: " + std::string(r.description()));
@@ -743,7 +742,7 @@ namespace xx {
 				auto&& o = L.objects.emplace_back();
 				if (auto&& aTemplate = cObject.attribute("template"); !aTemplate.empty()) {
 					auto&& fn = rootPath + aTemplate.as_string();
-					if (auto&& [d, fp] = eg->ReadAllBytes(fn); !d) {
+					if (auto&& [d, fp] = engine.ReadAllBytes(fn); !d) {
 						throw std::logic_error("read file error: " + fn);
 					} else if (auto&& r = docTx.load_buffer(d.buf, d.len); r.status) {
 						throw std::logic_error("docTx.load_buffer error: " + std::string(r.description()));
@@ -785,12 +784,11 @@ namespace xx {
 		}
 
 		/**************************************************************************************************/
-		Filler::Filler(Map& map, Engine* eg, std::string_view tmxfn)
-			: map(map)
-			, eg(eg) {
+		Filler::Filler(Map& map, std::string_view tmxfn)
+			: map(map) {
 
 			// load file & calc rootPath
-			if (auto&& [d, fp] = eg->ReadAllBytes(tmxfn); !d) {
+			if (auto&& [d, fp] = engine.ReadAllBytes(tmxfn); !d) {
 				throw std::logic_error("read file error: " + std::string(tmxfn));
 			} else if (auto&& r = docTmx.load_buffer(d.buf, d.len); r.status) {
 				throw std::logic_error("docTmx.load_buffer error: " + std::string(r.description()));
@@ -923,8 +921,8 @@ namespace xx {
 			}
 		}
 
-		void FillTo(Map& map, Engine* eg, std::string_view const& tmxfn) {
-			Filler(map, eg, tmxfn);
+		void FillTo(Map& map, std::string_view const& tmxfn) {
+			Filler(map, tmxfn);
 		}
 
 

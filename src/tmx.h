@@ -6,7 +6,6 @@
 
 namespace xx {
 
-	struct Engine;
 	namespace TMX {
 
 		enum class PropertyTypes : uint8_t {
@@ -380,7 +379,7 @@ namespace xx {
 
 		/**********************************************************************************/
 
-		void FillTo(Map& map, Engine* eg, std::string_view const& tmxfn);
+		void FillTo(Map& map, std::string_view const& tmxfn);
 	};
 
 }

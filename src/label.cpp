@@ -99,8 +99,8 @@ namespace xx {
 		}
 	}
 
-	void Label::Draw(Engine* eg) {
-		auto& s = eg->sm.GetShader<Shader_XyUvC>();
+	void Label::Draw() {
+		auto& s = engine.sm.GetShader<Shader_XyUvC>();
 		for (auto& c : chars) {
 			s.DrawQuad(*c.tex, c.qv);		// todo: batch version
 		}

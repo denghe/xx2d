@@ -10,9 +10,9 @@ struct Button {
 	int HandleMouseMove(ButtonMouseEventListener& L);
 	void HandleMouseUp(ButtonMouseEventListener& L);
 
-	void Init(Logic* eg, xx::XY const& pos, xx::Size const& borderSize, std::string_view const& txt, float const& fontSize);
+	void Init(Logic* const& logic, xx::XY const& pos, xx::Size const& borderSize, std::string_view const& txt, float const& fontSize);
 
-	Logic* eg{};
+	Logic* logic;
 	xx::XY leftBottom{}, rightTop{};	// bounding box
 	std::string txt;
 

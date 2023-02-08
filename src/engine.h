@@ -88,9 +88,6 @@ namespace xx {
 		bool Pressed(Mbtns const& b);	// return mbtnStates[(size_t)b];
 		bool Pressed(KbdKeys const& k);	// return kbdStates[(size_t)k];
 
-		double lastTime{}, lastDelta{};	// seconds. update before call Update()
-
-
 		/**********************************************************************************/
 		// shader
 
@@ -110,7 +107,10 @@ namespace xx {
 		/**********************************************************************************/
 		// game loop
 
+		double nowSecs{}, delta{};	// seconds. update before call Update()
+
 		void EngineInit();
+		void EngineGLInit();
 		void EngineUpdateBegin();
 		void EngineUpdateEnd();
 		void EngineDestroy();
@@ -118,4 +118,6 @@ namespace xx {
 		// ...
 	};
 
+	// default / global instance
+	extern Engine engine;
 }

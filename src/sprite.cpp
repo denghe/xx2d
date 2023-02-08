@@ -145,14 +145,14 @@ namespace xx {
 		}
 	}
 
-	void Sprite::Draw(Engine* eg) {
+	void Sprite::Draw() {
 		assert(!dirty);
-		eg->sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
+		engine.sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
 	}
 
-	void Sprite::Draw(Engine* eg, Translate const& trans) {
+	void Sprite::Draw(Translate const& trans) {
 		assert(!dirty);
-		auto& s = eg->sm.GetShader<Shader_XyUvC>();
+		auto& s = engine.sm.GetShader<Shader_XyUvC>();
 		auto&& q = s.DrawQuadBegin(*frame->tex);
 		q[0].x = (qv[0].x + trans.offset.x) * trans.scale.x; q[0].y = (qv[0].y + trans.offset.y) * trans.scale.y;
 		q[1].x = (qv[1].x + trans.offset.x) * trans.scale.x; q[1].y = (qv[1].y + trans.offset.y) * trans.scale.y;

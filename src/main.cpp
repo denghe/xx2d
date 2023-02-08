@@ -2,16 +2,12 @@
 #include "logic.h"
 #include <glfw/glfw3.h>
 
-xx::Shared<Logic> logic = xx::Make<Logic>();
 GLFWwindow* wnd = nullptr;
 inline int width = 0;
 inline int height = 0;
 
 int main() {
-#ifdef OPEN_MP_NUM_THREADS
-	omp_set_num_threads(OPEN_MP_NUM_THREADS);
-	omp_set_dynamic(0);
-#endif
+	xx::engine.EngineInit();
 
 	SetConsoleOutputCP(65001);
 
@@ -25,7 +21,7 @@ int main() {
 		return -1;
 	auto sg_glfw = xx::MakeSimpleScopeGuard([] { glfwTerminate(); });
 
-	wnd = glfwCreateWindow(logic->w, logic->h, "xx2dtest1", nullptr, nullptr);
+	wnd = glfwCreateWindow(xx::engine.w, xx::engine.h, "xx2dtest1", nullptr, nullptr);
 	if (!wnd)
 		return -2;
 	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
@@ -33,12 +29,12 @@ int main() {
 	// reference from raylib rcore.c
 	glfwSetKeyCallback(wnd, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {
         if (key < 0) return;    // macos fn key == -1
-		::logic->kbdStates[key] = action;
+		xx::engine.kbdStates[key] = action;
 	});
 
 	glfwSetCharCallback(wnd, [](GLFWwindow* wnd, unsigned int key) {
-		if (::logic->kbdInputs.size() < 512) {
-			::logic->kbdInputs.push_back(key);
+		if (xx::engine.kbdInputs.size() < 512) {
+			xx::engine.kbdInputs.push_back(key);
 		}
 	});
 
@@ -46,18 +42,18 @@ int main() {
 	//glfwSetCursorEnterCallback(wnd, CursorEnterCallback);
 
 	glfwSetCursorPosCallback(wnd, [](GLFWwindow* wnd, double x, double y) {
-		::logic->mousePosition = { (float)x - ::logic->w / 2, ::logic->h / 2 - (float)y };
+		xx::engine.mousePosition = { (float)x - xx::engine.w / 2, xx::engine.h / 2 - (float)y };
 	});
 
 	glfwSetMouseButtonCallback(wnd, [](GLFWwindow* wnd, int button, int action, int mods) {
-		::logic->mbtnStates[button] = action;
+		xx::engine.mbtnStates[button] = action;
 	});
 
 	glfwSetFramebufferSizeCallback(wnd, [](GLFWwindow* wnd, int w, int h) {
-		::logic->SetWH(w, h);
+		xx::engine.SetWH(w, h);
 	});
 	glfwGetFramebufferSize(wnd, &width, &height);
-	::logic->SetWH(width, height);
+	xx::engine.SetWH(width, height);
 
 	glfwMakeContextCurrent(wnd);
 
@@ -69,22 +65,24 @@ int main() {
 
 	while (auto e = glGetError()) {};	// cleanup glfw3 error
 
-	logic->EngineInit();
-	glfwSetCursorPos(wnd, logic->mousePosition.x, logic->mousePosition.y);
+	xx::engine.EngineGLInit();
+	glfwSetCursorPos(wnd, xx::engine.mousePosition.x, xx::engine.mousePosition.y);
 
+	// *************************************************************************************** logic begin here
+	xx::Shared<Logic> logic = xx::Make<Logic>();
 	logic->Init();
 	while (!glfwWindowShouldClose(wnd)) {
 		glfwPollEvents();
-		logic->EngineUpdateBegin();
+		xx::engine.EngineUpdateBegin();
 
 		if (logic->Update()) break;
 
-		logic->EngineUpdateEnd();
+		xx::engine.EngineUpdateEnd();
 		glfwSwapBuffers(wnd);
 	}
 
-	logic->EngineDestroy();
 	logic.Reset();
+	xx::engine.EngineDestroy();
 
 	return 0;
 }

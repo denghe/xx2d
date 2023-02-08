@@ -161,14 +161,14 @@ bool MoveCircleIfIntersectsBox(DragBox& b, DragCircle& c) {
 	return xx::MoveCircleIfIntersectsBox(b.pos.x, b.pos.y, b.size.x / 2, b.size.y / 2, c.pos.x, c.pos.y, c.radius);
 }
 
-void Logic6::Init(Logic* eg) {
-	this->eg = eg;
+void Logic6::Init(Logic* logic) {
+	this->logic = logic;
 
 	std::cout << "Logic6 Init( test box + circle collision detect )" << std::endl;
 
 	//for (auto i = 0; i < 1; ++i) {
 	//	auto r = rnd.Next(16, 100);
-	//	XY v{ float(rnd.Get() % ((int)eg->w - r * 2)) + r - eg->hw, float(rnd.Get() % ((int)eg->h - r*2)) + r - eg->hh };
+	//	XY v{ float(rnd.Get() % ((int)eg.w - r * 2)) + r - eg.hw, float(rnd.Get() % ((int)eg.h - r*2)) + r - eg.hh };
 	//	cs.emplace_back().Init(this, v, r, 16);
 	//}
 
@@ -187,13 +187,14 @@ void Logic6::Init(Logic* eg) {
 	bs.emplace_back().Init({ -500, 0 }, wh);
 
 
-	BL.Init(eg, xx::Mbtns::Left);
-	CL.Init(eg, xx::Mbtns::Right);
+	BL.Init(xx::Mbtns::Left);
+	CL.Init(xx::Mbtns::Right);
 }
 
 int Logic6::Update() {
+	auto& eg = xx::engine;
 
-	timePool += eg->delta;
+	timePool += eg.delta;
 	auto timePoolBak = timePool;
 	if (timePool >= 1.f / 60) {
 		timePool = 0;
@@ -205,7 +206,7 @@ int Logic6::Update() {
 				CL.Dispatch(&*iter++);
 			}
 			if (draggingC) {
-				auto tar = eg->mousePosition + draggingC->dxy;
+				auto tar = eg.mousePosition + draggingC->dxy;
 				auto d = tar - draggingC->pos;
 				auto limit = 50;// draggingC->radius / 2;
 				if (d.x > limit) d.x = limit;
@@ -266,10 +267,10 @@ int Logic6::Update() {
 	}
 
 	for (auto& c : cs) {
-		c.border.Draw(eg);
+		c.border.Draw();
 	}
 	for (auto& b : bs) {
-		b.border.Draw(eg);
+		b.border.Draw();
 	}
 
 	return 0;
@@ -311,7 +312,7 @@ bool DragBox::HandleMouseDown(LT& L) {
 	return L.downPos.x >= minXY.x && L.downPos.x <= maxXY.x && L.downPos.y >= minXY.y && L.downPos.y <= maxXY.y;
 }
 int DragBox::HandleMouseMove(LT& L) {
-	pos = pos + (L.eg->mousePosition - L.lastPos);
+	pos = pos + (xx::engine.mousePosition - L.lastPos);
 	border.SetPositon(pos);
 	border.Commit();
 	return 0;

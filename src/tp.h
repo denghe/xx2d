@@ -4,13 +4,12 @@
 namespace xx {
 
 	// texture packer's data container. fill data from export for cocos 3.x .plist file
-	struct Engine;
 	struct TP {
 		std::vector<xx::Shared<Frame>> frames;
 		bool premultiplyAlpha;
 		std::string realTextureFileName;
 
-		void Fill(Engine* eg, std::string_view plistFn, bool sortByName = true);
+		void Fill(std::string_view plistFn, bool sortByName = true);
 
 		int Fill(std::string_view text, std::string_view const& rootPath);
 

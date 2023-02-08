@@ -2,16 +2,20 @@
 
 namespace xx {
 
-	void Engine::EngineInit() {
-		lastTime = xx::NowSteadyEpochSeconds();
-		lastDelta = 0;
-		SearchPathReset();
+	Engine engine;
 
-		sm.Init(this);
+	void Engine::EngineInit() {
+		nowSecs = xx::NowSteadyEpochSeconds();
+		delta = 0;
+		SearchPathReset();
+	}
+
+	void Engine::EngineGLInit() {
+		sm.Init();
 	}
 
 	void Engine::EngineUpdateBegin() {
-		lastDelta = xx::NowSteadyEpochSeconds(lastTime);
+		delta = xx::NowSteadyEpochSeconds(nowSecs);
 		sm.Begin();
 
 		assert(w >= 0 && h >= 0);

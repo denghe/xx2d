@@ -29,7 +29,6 @@ namespace xx {
 
 	template<typename Handler>
 	struct MouseEventListener {
-		Engine* eg{};
 		Mbtns btn{};
 
 		XY downPos{}, lastPos{};
@@ -41,19 +40,18 @@ namespace xx {
 
 		// todo: helper funcs?
 
-		void Init(Engine* eg, Mbtns btn) {
-			this->eg = eg;
+		void Init(Mbtns btn) {
 			this->btn = btn;
 		}
 
 		// eventId > 0: need Dispatch
 		void Update() {
-			if (auto&& state = eg->mbtnStates[(size_t)btn]; lastState != state) {
+			if (auto&& state = engine.mbtnStates[(size_t)btn]; lastState != state) {
 				lastState = state;
 				if (state) {	// down
 					assert(!handler);
-					lastPos = downPos = eg->mousePosition;
-					downTime = eg->lastTime;
+					lastPos = downPos = engine.mousePosition;
+					downTime = engine.nowSecs;
 					eventId = 1;	// need search handler
 				} else {	// up
 					if (handler) {
@@ -63,11 +61,11 @@ namespace xx {
 					}
 				}
 			} else {
-				if (handler && lastPos != eg->mousePosition) {	// move
+				if (handler && lastPos != engine.mousePosition) {	// move
 					if (eventId = handler->HandleMouseMove(*this)) {
 						handler = {};
 					} else {
-						lastPos = eg->mousePosition;
+						lastPos = engine.mousePosition;
 					}
 				}
 			}

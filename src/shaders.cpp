@@ -2,9 +2,7 @@
 
 namespace xx {
 
-	void ShaderManager::Init(Engine* eg) {
-		this->eg = eg;
-
+	void ShaderManager::Init() {
 		// set gl global env for all shaders
 
 		glEnable(GL_PRIMITIVE_RESTART);

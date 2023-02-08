@@ -2,19 +2,19 @@
 #include "logic.h"
 #include "logic3.h"
 
-void Logic3::Init(Logic* eg) {
-	this->eg = eg;
+void Logic3::Init(Logic* logic) {
+	this->logic = logic;
 
 	std::cout << "Logic3 Init( test button )" << std::endl;
 
-	meListener.Init(eg, xx::Mbtns::Left);
+	meListener.Init(xx::Mbtns::Left);
 
-	auto x = eg->ninePoints[1].x;
-	auto y = eg->ninePoints[1].y;
+	auto x = xx::engine.ninePoints[1].x;
+	auto y = xx::engine.ninePoints[1].y;
 	for (size_t i = 0; i < 35; i++) {
 		for (size_t j = 0; j < 63; j++) {
 			auto&& b = btns.emplace_back();
-			b.Init(eg, { x + i * 54 + 54 / 2, y + j * 17 + 17 / 2 }, { 52, 15 }, xx::ToString(i, '_', j), 12);
+			b.Init(logic, { x + i * 54 + 54 / 2, y + j * 17 + 17 / 2 }, { 52, 15 }, xx::ToString(i, '_', j), 12);
 		}
 	}
 }
@@ -30,10 +30,10 @@ int Logic3::Update() {
 
 	// layered draw for auto batch
 	for (auto&& b : btns) {
-		b.content.Draw(eg);
+		b.content.Draw();
 	}
 	for (auto&& b : btns) {
-		b.border.Draw(eg);
+		b.border.Draw();
 	}
 
 	return 0;
@@ -48,13 +48,13 @@ int Button::HandleMouseMove(ButtonMouseEventListener& L) {
 }
 
 void Button::HandleMouseUp(ButtonMouseEventListener& L) {
-	if (Inside(eg->mousePosition)) {
+	if (Inside(xx::engine.mousePosition)) {
 		std::cout << "btn clicked. txt = " << txt << std::endl;
 	}
 }
 
-void Button::Init(Logic* eg_, xx::XY const& pos, xx::Size const& borderSize, std::string_view const& txt_, float const& fontSize) {
-	eg = eg_;
+void Button::Init(Logic* const& logic, xx::XY const& pos, xx::Size const& borderSize, std::string_view const& txt_, float const& fontSize) {
+	this->logic = logic;
 	txt = txt_;
 	auto hw = borderSize.w / 2;
 	auto hh = borderSize.h / 2;
@@ -63,7 +63,7 @@ void Button::Init(Logic* eg_, xx::XY const& pos, xx::Size const& borderSize, std
 	border.SetPoints() = { {-hw,-hh},{-hw,hh},{hw,hh},{hw,-hh},{-hw,-hh} };
 	border.SetPositon(pos);
 	border.Commit();
-	content.SetText(eg->fnt1, txt, fontSize);
+	content.SetText(logic->fnt1, txt, fontSize);
 	content.SetPositon(pos);
 	content.Commit();
 }

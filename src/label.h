@@ -45,7 +45,7 @@ namespace xx {
 		void Commit();
 
 		// todo: support trans
-		void Draw(Engine* eg);
+		void Draw();
 	};
 
 }

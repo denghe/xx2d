@@ -2,17 +2,17 @@
 #include "logic.h"
 #include "logic2.h"
 
-void Logic2::Init(Logic* eg) {
-	this->eg = eg;
+void Logic2::Init(Logic* logic) {
+	this->logic = logic;
 
 	std::cout << "Logic2 Init( test mouse event listener )" << std::endl;
 
 	// test mouse event listener
-	meListener.Init(eg, xx::Mbtns::Left);
+	meListener.Init(xx::Mbtns::Left);
 
 	// test line strip
 	for (size_t i = 0; i < 10000; i++) {
-		xx::XY v{ float(rand() % ((int)eg->w - 30)) + 15 - eg->hw, float(rand() % ((int)eg->h - 30)) + 15 - eg->hh };
+		xx::XY v{ float(rand() % ((int)xx::engine.w - 30)) + 15 - xx::engine.hw, float(rand() % ((int)xx::engine.h - 30)) + 15 - xx::engine.hh };
 
 		auto&& c = circles.emplace_back();
 		c.Init(v, 15, 12);
@@ -30,7 +30,7 @@ int Logic2::Update() {
 
 	// test line strip
 	for (auto&& c : circles) {
-		c.Draw(eg);
+		c.Draw();
 	}
 
 	return 0;
@@ -43,7 +43,7 @@ bool DragableCircle::HandleMouseDown(DragableCircleMouseEventListener& L) {
 }
 
 int DragableCircle::HandleMouseMove(DragableCircleMouseEventListener& L) {
-	this->SetPositon(this->pos + (L.eg->mousePosition - L.lastPos));
+	this->SetPositon(this->pos + (xx::engine.mousePosition - L.lastPos));
 	this->Commit();
 	return 0;
 }

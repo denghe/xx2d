@@ -9,23 +9,23 @@
 #include "logic6.h"
 #include "logic7.h"
 
-void Logic0::Init(Logic* eg) {
-	this->eg = eg;
+void Logic0::Init(Logic* logic) {
+	this->logic = logic;
 
 	std::cout << "Logic0 Init( main menu )" << std::endl;
 
-	meListener.Init(eg, xx::Mbtns::Left);
-	menus.emplace_back().Init(eg, { -500, 200 }, "1: tiledmap", 64);
-	menus.emplace_back().Init(eg, { 0, 200 }, "2: circle drag", 64);
-	menus.emplace_back().Init(eg, { 500, 200 }, "3: box button", 64);
+	meListener.Init(xx::Mbtns::Left);
+	menus.emplace_back().Init(logic, { -500, 200 }, "1: tiledmap", 64);
+	menus.emplace_back().Init(logic, { 0, 200 }, "2: circle drag", 64);
+	menus.emplace_back().Init(logic, { 500, 200 }, "3: box button", 64);
 
-	menus.emplace_back().Init(eg, { -500, 0 }, "4: space grid physics", 64);
-	menus.emplace_back().Init(eg, { 0, 0 }, "5: space grid ab", 64);
-	menus.emplace_back().Init(eg, { 500, 0 }, "6: circle + box physics", 64);
+	menus.emplace_back().Init(logic, { -500, 0 }, "4: space grid physics", 64);
+	menus.emplace_back().Init(logic, { 0, 0 }, "5: space grid ab", 64);
+	menus.emplace_back().Init(logic, { 500, 0 }, "6: circle + box physics", 64);
 
-	menus.emplace_back().Init(eg, { -500, -200 }, "7: more circle + box", 64);
+	menus.emplace_back().Init(logic, { -500, -200 }, "7: more circle + box", 64);
 
-	eg->extraInfo.clear();
+	logic->extraInfo.clear();
 }
 
 int Logic0::Update() {
@@ -38,7 +38,7 @@ int Logic0::Update() {
 	}
 
 	for (auto&& m : menus) {
-		m.content.Draw(eg);
+		m.content.Draw();
 	}
 
 	return 0;
@@ -53,31 +53,31 @@ int Menu::HandleMouseMove(MenuMouseEventListener& L) {
 }
 
 void Menu::HandleMouseUp(MenuMouseEventListener& L) {
-	if (Inside(eg->mousePosition)) {
+	if (Inside(xx::engine.mousePosition)) {
 		if (txt.starts_with("1:"sv)) {
-			eg->DelaySwitchTo<Logic1>();
+			logic->DelaySwitchTo<Logic1>();
 		} else if (txt.starts_with("2:"sv)) {
-			eg->DelaySwitchTo<Logic2>();
+			logic->DelaySwitchTo<Logic2>();
 		} else if (txt.starts_with("3:"sv)) {
-			eg->DelaySwitchTo<Logic3>();
+			logic->DelaySwitchTo<Logic3>();
 		} else if (txt.starts_with("4:"sv)) {
-			eg->DelaySwitchTo<Logic4>();
+			logic->DelaySwitchTo<Logic4>();
 		} else if (txt.starts_with("5:"sv)) {
-			eg->DelaySwitchTo<Logic5>();
+			logic->DelaySwitchTo<Logic5>();
 		} else if (txt.starts_with("6:"sv)) {
-			eg->DelaySwitchTo<Logic6>();
+			logic->DelaySwitchTo<Logic6>();
 		} else if (txt.starts_with("7:"sv)) {
-			eg->DelaySwitchTo<Logic7>();
+			logic->DelaySwitchTo<Logic7>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}
 	}
 }
 
-void Menu::Init(Logic* eg_, xx::XY const& pos, std::string_view const& txt_, float const& fontSize) {
-	eg = eg_;
+void Menu::Init(Logic* logic, xx::XY const& pos, std::string_view const& txt_, float const& fontSize) {
+	this->logic = logic;
 	txt = txt_;
-	content.SetText(eg->fnt1, txt, fontSize);
+	content.SetText(logic->fnt1, txt, fontSize);
 	content.SetPositon(pos);
 	content.Commit();
 	auto hw = content.maxSize.w / 2;

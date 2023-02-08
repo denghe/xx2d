@@ -23,9 +23,6 @@ namespace xx {
 
 	struct Engine;
 	struct ShaderManager {
-		// owner engine
-		Engine* eg{};
-
 		// all shader instance container
 		std::array<xx::Shared<Shader>, 2> shaders{};
 
@@ -33,7 +30,7 @@ namespace xx {
 		size_t cursor = -1;
 
 		// make & call all shaders Init
-		void Init(Engine*);
+		void Init();
 
 		// zero counters & begin default shader
 		void Begin();

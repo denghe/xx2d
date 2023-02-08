@@ -9,9 +9,9 @@ struct Menu {
 	bool HandleMouseDown(MenuMouseEventListener& L);
 	int HandleMouseMove(MenuMouseEventListener& L);
 	void HandleMouseUp(MenuMouseEventListener& L);
-	void Init(Logic* eg, xx::XY const& pos, std::string_view const& txt, float const& fontSize);
+	void Init(Logic* logic, xx::XY const& pos, std::string_view const& txt, float const& fontSize);
 
-	Logic* eg{};
+	Logic* logic{};
 	xx::XY leftBottom, rightTop;	// bounding box
 	std::string txt;
 

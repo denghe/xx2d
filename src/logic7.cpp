@@ -124,15 +124,15 @@ B::~B() {
 }
 
 
-void Logic7::Init(Logic* eg) {
-	this->eg = eg;
+void Logic7::Init(Logic* logic) {
+	this->logic = logic;
 
 	std::cout << "Logic7 Init( test box + more circle move to cursor collision detect )" << std::endl;
 
 	sgc.Init(400, 400, 64);
 	sgab.Init(400, 400, 64, 64);
 
-	cam.Init({ eg->w, eg->h }, &sgc);
+	cam.Init({ xx::engine.w, xx::engine.h }, &sgc);
 	cam.SetPosition({ sgc.maxX / 2.f, sgc.maxY / 2.f });
 	cam.SetScale(0.15);
 	cam.Commit();
@@ -155,11 +155,11 @@ void Logic7::Init(Logic* eg) {
 }
 
 int Logic7::Update() {
-	if (eg->Pressed(xx::Mbtns::Left)) {
-		mousePos.Set(cam.pos + eg->mousePosition.GetFlipY() / cam.scale);
+	if (xx::engine.Pressed(xx::Mbtns::Left)) {
+		mousePos.Set(cam.pos + xx::engine.mousePosition.GetFlipY() / cam.scale);
 	}
 
-	timePool += eg->delta;
+	timePool += xx::engine.delta;
 	auto timePoolBak = timePool;
 	if (timePool >= 1.f / 360) {
 		timePool = 0;
@@ -173,10 +173,10 @@ int Logic7::Update() {
 	}
 
 	for (auto& c : cs) {
-		c->border.Draw(eg, cam);
+		c->border.Draw(cam);
 	}
 	for (auto& b : bs) {
-		b->border.Draw(eg, cam);
+		b->border.Draw(cam);
 	}
 
 	return 0;

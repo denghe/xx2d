@@ -63,12 +63,12 @@ void Foo::MoveRight(int32_t inc) {
 }
 
 
-void Logic5::Init(Logic* eg) {
-	this->eg = eg;
+void Logic5::Init(Logic* logic) {
+	this->logic = logic;
 
 	std::cout << "Logic5 Init( test space grid AABB )" << std::endl;
 
-	cam.offset = eg->ninePoints[7];	// (0,0) at top left
+	cam.offset = xx::engine.ninePoints[7];	// (0,0) at top left
 
 	grid.Init(50, 50, 256, 256);
 
@@ -83,33 +83,33 @@ void Logic5::Init(Logic* eg) {
 }
 
 int Logic5::Update() {
-
-	timePool += eg->delta;
+	auto& eg = xx::engine;
+	timePool += eg.delta;
 	auto timePoolBak = timePool;
 	if (timePool >= 1.f / 60) {
 		timePool = 0;
 		constexpr int32_t moveSpeed = 3;
-		if ((eg->Pressed(xx::KbdKeys::W))) {
+		if ((eg.Pressed(xx::KbdKeys::W))) {
 			for (auto& f : foos) f->MoveUp(moveSpeed);
 		}
-		if ((eg->Pressed(xx::KbdKeys::S))) {
+		if ((eg.Pressed(xx::KbdKeys::S))) {
 			for (auto& f : foos) f->MoveDown(moveSpeed);
 		}
-		if ((eg->Pressed(xx::KbdKeys::A))) {
+		if ((eg.Pressed(xx::KbdKeys::A))) {
 			for (auto& f : foos) f->MoveLeft(moveSpeed);
 		}
-		if ((eg->Pressed(xx::KbdKeys::D))) {
+		if ((eg.Pressed(xx::KbdKeys::D))) {
 			for (auto& f : foos) f->MoveRight(moveSpeed);
 		}
 	}
 
 	// todo: cam control
 
-	grid.ForeachAABB({ 0,0 }, { (int)eg->w,(int)eg->h });
+	grid.ForeachAABB({ 0,0 }, { (int)eg.w,(int)eg.h });
 	for (auto& f : grid.results) {
-		f->border->Draw(eg, cam);
+		f->border->Draw(cam);
 	}
-	eg->extraInfo = xx::ToString(", numAllBoxs = ", foos.size(), ", numScreenBoxs = ", grid.results.size());
+	logic->extraInfo = xx::ToString(", numAllBoxs = ", foos.size(), ", numScreenBoxs = ", grid.results.size());
 	grid.ClearResults();
 
 

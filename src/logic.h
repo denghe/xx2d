@@ -2,18 +2,18 @@
 #include "pch.h"
 #include "logic_base.h"
 
-struct Logic : xx::Engine {
+struct Logic {
 	xx::BMFont fnt1;
 	xx::Label lbInfo;
 	std::string extraInfo;
 	int fps{}, fpsCounter{};
-	double nowSecs{}, delta{}, fpsTimePool{}, timePool{};
+	double fpsTimePool{}, timePool{};
 
 	xx::Shared<LogicBase> lg;
 
 	template<typename LT>
 	void DelaySwitchTo() {
-		DelayExecute([this] {
+		xx::engine.DelayExecute([this] {
 			lg = xx::Make<LT>();
 			lg->Init(this);
 		});

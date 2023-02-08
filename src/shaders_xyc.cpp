@@ -65,7 +65,7 @@ void main() {
 		}
 
 		glUseProgram(p);
-		glUniform2f(uCxy, sm->eg->w / 2, sm->eg->h / 2);
+		glUniform2f(uCxy, engine.w / 2, engine.h / 2);
 
 		glBindVertexArray(va);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);

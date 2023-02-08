@@ -3,9 +3,9 @@
 
 namespace xx {
 
-	void TP::Fill(Engine* eg, std::string_view plistFn, bool sortByName) {
+	void TP::Fill(std::string_view plistFn, bool sortByName) {
 		std::string rootPath;
-		if (auto&& [d, fp] = eg->ReadAllBytes(plistFn); !d) {
+		if (auto&& [d, fp] = engine.ReadAllBytes(plistFn); !d) {
 			throw std::logic_error("read file error: " + std::string(plistFn));
 		} else {
 			if (auto&& i = fp.find_last_of("/"); i != fp.npos) {
@@ -22,7 +22,7 @@ namespace xx {
 				});
 		}
 
-		auto tex = xx::Make<GLTexture>(eg->LoadTexture(realTextureFileName));
+		auto tex = xx::Make<GLTexture>(engine.LoadTexture(realTextureFileName));
 		for (auto& f : frames) {
 			f->tex = tex;
 		}

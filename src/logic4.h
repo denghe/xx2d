@@ -21,7 +21,7 @@ struct Circle : xx::SpaceGridCItem<Circle> {
 };
 
 struct Logic4 : LogicBase {
-	void Init(Logic* eg) override;
+	void Init(Logic* logic) override;
 	int32_t Update() override;
 
 	inline static constexpr int32_t numRows = 400, numCols = 400, minRadius = 16, maxRadius = 32;

@@ -50,8 +50,8 @@ namespace xx {
 		void Commit();
 
 		// need commit
-		void Draw(Engine* eg);
-		void Draw(Engine* eg, Translate const& trans);
+		void Draw();
+		void Draw(Translate const& trans);
 	};
 
 }
