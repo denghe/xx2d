@@ -20,7 +20,6 @@ void Foo::SyncBorder() {
 	border->SetPoints() = { {-hw, hh}, {hw, hh}, {hw, -hh}, {-hw, -hh}, {-hw, hh} };
 	border->SetPositon({ (float)_sgabPos.x, -(float)_sgabPos.y });	// flip y to gl coordinate
 	border->SetColor(color);
-	border->Commit();
 }
 
 Foo::~Foo() {

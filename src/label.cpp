@@ -43,16 +43,7 @@ namespace xx {
 				px += bmf.fontSize * s;
 			}
 		}
-		maxSize = { px, (float)bmf.lineHeight * s };
-	}
-
-	void Label::SetFlipX(bool const& fx) {
-		dirtyTextSizeAnchorPosScaleRotate = 1;
-		flipX = fx;
-	}
-	void Label::SetFlipY(bool const& fy) {
-		dirtyTextSizeAnchorPosScaleRotate = 1;
-		flipY = fy;
+		size = { px, (float)bmf.lineHeight * s };
 	}
 
 	void Label::SetAnchor(XY const& a) {
@@ -79,6 +70,15 @@ namespace xx {
 		pos = p;
 	}
 
+	void Label::SetPositionX(float const& x) {
+		dirtyTextSizeAnchorPosScaleRotate = 1;
+		pos.x = x;
+	}
+	void Label::SetPositionY(float const& y) {
+		dirtyTextSizeAnchorPosScaleRotate = 1;
+		pos.y = y;
+	}
+
 	void Label::SetColor(RGBA8 const& c) {
 		dirtyColor = 1;
 		color = c;
@@ -87,21 +87,21 @@ namespace xx {
 	void Label::Commit() {
 		if (dirty) {
 			if (dirtyTextSizeAnchorPosScaleRotate) {
-				auto x = pos.x - maxSize.w * scale.x * anchor.x;
-				auto y = pos.y + maxSize.h * scale.y * (1 - anchor.y);
-				for (auto& o : chars) {
-					for (size_t i = 0; i < o.qv.size(); ++i) {
-						o.qv[i].x = o.posBak[i].x * scale.x + x;
-						o.qv[i].y = o.posBak[i].y * scale.y + y;
-					}
+				at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, { size.w * anchor.x, -size.h * (1-anchor.y) });
+				for (auto& c : chars) {
+					auto& qv = c.qv;
+					(XY&)qv[0].x = at.Apply(c.posBak[0]);
+					(XY&)qv[1].x = at.Apply(c.posBak[1]);
+					(XY&)qv[2].x = at.Apply(c.posBak[2]);
+					(XY&)qv[3].x = at.Apply(c.posBak[3]);
 				}
-				// todo: rotate support? flip?
 			}
 			if (dirtyColor) {
-				for (auto& o : chars) {
-					for (auto& v : o.qv) {
-						memcpy(&v.r, &color, sizeof(color));
-					}
+				for (auto& c : chars) {
+					memcpy(&c.qv[0].r, &color, sizeof(color));
+					memcpy(&c.qv[1].r, &color, sizeof(color));
+					memcpy(&c.qv[2].r, &color, sizeof(color));
+					memcpy(&c.qv[3].r, &color, sizeof(color));
 				}
 			}
 			dirty = 0;
@@ -109,25 +109,27 @@ namespace xx {
 	}
 	 
 	void Label::Draw() {
+		Commit();
 		auto& s = engine.sm.GetShader<Shader_XyUvC>();
 		for (auto& c : chars) {
-			s.DrawQuad(*c.tex, c.qv);		// todo: batch version
+			s.DrawQuad(*c.tex, c.qv);
 		}
 	}
 
 	void Label::Draw(AffineTransform const& t) {
-		assert(!dirty);
+		Commit();
 		auto& s = engine.sm.GetShader<Shader_XyUvC>();
-		//auto&& q = s.DrawQuadBegin(*frame->tex);
-		//(XY&)q[0].x = t.Apply(qv[0]);
-		//memcpy(&q[0].u, &qv[0].u, 8);	// 8: uv & color
-		//(XY&)q[1].x = t.Apply(qv[1]);
-		//memcpy(&q[1].u, &qv[1].u, 8);
-		//(XY&)q[2].x = t.Apply(qv[2]);
-		//memcpy(&q[2].u, &qv[2].u, 8);
-		//(XY&)q[3].x = t.Apply(qv[3]);
-		//memcpy(&q[3].u, &qv[3].u, 8);
-		//s.DrawQuadEnd();
+		for (auto& c : chars) {
+			auto&& q = s.DrawQuadBegin(*c.tex);
+			(XY&)q[0].x = t.Apply(c.qv[0]);
+			memcpy(&q[0].u, &c.qv[0].u, 8);	// 8: uv & color
+			(XY&)q[1].x = t.Apply(c.qv[1]);
+			memcpy(&q[1].u, &c.qv[1].u, 8);
+			(XY&)q[2].x = t.Apply(c.qv[2]);
+			memcpy(&q[2].u, &c.qv[2].u, 8);
+			(XY&)q[3].x = t.Apply(c.qv[3]);
+			memcpy(&q[3].u, &c.qv[3].u, 8);
+			s.DrawQuadEnd();
+		}
 	}
-
 }

@@ -4,13 +4,12 @@
 
 namespace xx {
 	struct Node {
-		AffineTransform transform;
+		AffineTransform at;
 		XY pos{}, scale{ 1, 1 };
 		float radians{};
-		std::vector<xx::Sprite> ss;
+		std::vector<std::pair<xx::Label, xx::Sprite>> ss;
 	};
 }
-
 
 struct Logic8 : LogicBase {
 	void Init(Logic* logic) override;

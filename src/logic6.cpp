@@ -215,7 +215,6 @@ int Logic6::Update() {
 				else if (d.y < -limit) d.y = -limit;
 				draggingC->pos = draggingC->pos + d;
 				draggingC->border.SetPositon(draggingC->pos);
-				draggingC->border.Commit();
 			}
 		}
 		{
@@ -259,7 +258,6 @@ int Logic6::Update() {
 				if (MoveCircleIfIntersectsBox(b, c/*, ads*/)) {
 					assert(!MoveCircleIfIntersectsBox(b, c));
 					c.border.SetPositon(c.pos);
-					c.border.Commit();
 				}
 			}
 		//}
@@ -302,7 +300,6 @@ void DragCircle::Init(Logic6* const& owner, xx::XY const& pos, float const& radi
 	border.FillCirclePoints({ 0,0 }, radius, {}, segments);
 	border.SetColor({ 255, 255, 0, 255 });
 	border.SetPositon(pos);
-	border.Commit();
 }
 
 
@@ -314,7 +311,6 @@ bool DragBox::HandleMouseDown(LT& L) {
 int DragBox::HandleMouseMove(LT& L) {
 	pos = pos + (xx::engine.mousePosition - L.lastPos);
 	border.SetPositon(pos);
-	border.Commit();
 	return 0;
 }
 void DragBox::HandleMouseUp(LT& L) {}
@@ -326,5 +322,4 @@ void DragBox::Init(xx::XY const& pos, xx::XY const& size) {
 	border.FillBoxPoints({}, size);
 	border.SetColor({ 0, 255, 0, 255 });
 	border.SetPositon(pos);
-	border.Commit();
 }

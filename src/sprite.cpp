@@ -142,12 +142,12 @@ namespace xx {
 	}
 
 	void Sprite::Draw() {
-		assert(!dirty);
+		Commit();
 		engine.sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
 	}
 
 	void Sprite::Draw(AffineTransform const& t) {
-		assert(!dirty);
+		Commit();
 		auto& s = engine.sm.GetShader<Shader_XyUvC>();
 		auto&& q = s.DrawQuadBegin(*frame->tex);
 		(XY&)q[0].x = t.Apply(qv[0]);

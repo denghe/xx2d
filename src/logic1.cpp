@@ -68,7 +68,6 @@ void Logic1::Init(Logic* logic) {
 				s.SetColor({ 255, 255, 255, 255 });
 				s.SetScale({ 1, 1 });
 				s.SetPosition({ float(cx * (int)map.tileWidth), float(-cy * (int)map.tileHeight) });
-				s.Commit();
 			}
 		}
 	};
@@ -106,7 +105,6 @@ void Logic1::Init(Logic* logic) {
 	player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame);
 	player.sprite.SetScale(player.scale);
 	player.footPos = cam.pos;
-	player.sprite.Commit();
 }
 
 int Logic1::Update() {
@@ -181,7 +179,6 @@ int Logic1::Update() {
 				player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame);
 			}
 		}
-		player.sprite.Commit();
 	}
 
 	// update all anims
@@ -201,7 +198,6 @@ int Logic1::Update() {
 					if (sa.anim) {
 						if (auto&& f = sa.anim->GetCurrentAnimFrame().frame; sa.sprite->frame != f) {
 							sa.sprite->SetFrame(f);
-							sa.sprite->Commit();
 						}
 					}
 					sa.sprite->Draw(cam.at);

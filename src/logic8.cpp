@@ -10,24 +10,27 @@ void Logic8::Init(Logic* logic) {
 	t.Emplace(xx::engine.LoadTexture("res/mouse.pkm"));
 	float x = -250;
 	for (size_t i = 0; i < 11; i++) {
-		auto& s = n.ss.emplace_back();
+		auto& [l, s] = n.ss.emplace_back();
+		//l.SetText(logic->fnt1, xx::ToString("mouse",i), 16);
+		//l.SetPositon({ x + i * 50, -20 });
+
 		s.SetPositionX(x + i * 50);
 		s.SetTexture(t);
-		s.Commit();
 	}
 }
 
 int Logic8::Update() {
 
 	n.radians += 0.001f;
-	n.scale += 0.0001f;
-	n.transform = xx::AffineTransform::MakePosScaleRadians(n.pos, n.scale, n.radians);
+	//n.scale += 0.0001f;
+	n.at = xx::AffineTransform::MakePosScaleRadians(n.pos, n.scale, n.radians);
 
-	for (auto& s : n.ss) {
-		s.SetRotate(s.radians - 0.001f);
-		//s.SetScale(s.scale + 0.0001f);
-		s.Commit();
-		s.Draw(n.transform);
+	for (auto& [l, s] : n.ss) {
+		s.SetScale(s.scale + 0.0001f);
+		s.Draw(n.at);
+
+		l.SetRotate(l.radians - 0.001f);
+		l.Draw(n.at);
 	}
 
 	return 0;

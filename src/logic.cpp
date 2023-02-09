@@ -32,11 +32,9 @@ int Logic::Update() {
 	lbInfo.SetText(fnt1, xx::ToString("fps = ", fps, ", draw call = ", xx::engine.sm.GetDrawCall(), ", quad count = ", xx::engine.sm.GetDrawQuads(), ", line point count = ", xx::engine.sm.GetDrawLines(), std::string_view(extraInfo)));
 	lbInfo.SetPositon({ lbInfo.pos.x + 2, lbInfo.pos.y - 2 });
 	lbInfo.SetColor({ 0, 0, 255, 255 });
-	lbInfo.Commit();
 	lbInfo.Draw();
 	lbInfo.SetPositon({ lbInfo.pos.x - 2, lbInfo.pos.y + 2 });
 	lbInfo.SetColor({ 255, 0, 0, 255 });
-	lbInfo.Commit();
 	lbInfo.Draw();	// shadow
 	return r;
 }

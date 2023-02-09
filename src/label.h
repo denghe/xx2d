@@ -14,7 +14,8 @@ namespace xx {
 			std::array<XY, 4> posBak;
 		};
 		std::vector<Char> chars;
-		Size maxSize;
+		Size size;
+		AffineTransform at;
 
 		union {
 			struct {
@@ -33,7 +34,6 @@ namespace xx {
 		XY anchor{ 0.5, 0.5 };
 		XY scale{ 1, 1 };
 		float radians{ 0 };
-		bool flipX = false, flipY = false;
 		RGBA8 color{ 255, 255, 255, 255 };
 
 		/***************************************************************************/

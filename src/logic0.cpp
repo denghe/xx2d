@@ -83,9 +83,8 @@ void Menu::Init(Logic* logic, xx::XY const& pos, std::string_view const& txt_, f
 	txt = txt_;
 	content.SetText(logic->fnt1, txt, fontSize);
 	content.SetPositon(pos);
-	content.Commit();
-	auto hw = content.maxSize.w / 2;
-	auto hh = content.maxSize.h / 2;
+	auto hw = content.size.w / 2;
+	auto hh = content.size.h / 2;
 	leftBottom = { pos.x - hw, pos.y - hh };
 	rightTop = { pos.x + hw, pos.y + hh };
 }
