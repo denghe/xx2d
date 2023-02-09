@@ -52,7 +52,7 @@ namespace xx {
 		void SetScale(XY const& s);
 		void SetScale(float const& s);
 
-		void SetPositon(XY const& p);
+		void SetPosition(XY const& p);
 		void SetPositionX(float const& x);
 		void SetPositionY(float const& y);
 

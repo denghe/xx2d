@@ -79,7 +79,7 @@
 //		s.SetTexture( frameCache[key] );
 //		s.SetScale({0.5, 0.5});
 //		key.clear();
-//		s.SetPositon({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
+//		s.SetPosition({ float(rnd.Next(w) - w / 2), float(rnd.Next(h) - h / 2) });
 //	}
 //}
 

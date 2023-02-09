@@ -43,7 +43,7 @@ bool DragableCircle::HandleMouseDown(DragableCircleMouseEventListener& L) {
 }
 
 int DragableCircle::HandleMouseMove(DragableCircleMouseEventListener& L) {
-	this->SetPositon(this->pos + (xx::engine.mousePosition - L.lastPos));
+	this->SetPosition(this->pos + (xx::engine.mousePosition - L.lastPos));
 	return 0;
 }
 
@@ -55,5 +55,5 @@ void DragableCircle::Init(xx::XY const& pos, float const& radius, int const& seg
 	this->radius_square = radius * radius;
 	this->FillCirclePoints({ 0,0 }, radius, {}, segments);
 	this->SetColor({ 255, 255, 0, 255 });
-	this->SetPositon(pos);
+	this->SetPosition(pos);
 }

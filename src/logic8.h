@@ -2,19 +2,31 @@
 #include "pch.h"
 #include "logic_base.h"
 
-namespace xx {
-	struct Node {
-		AffineTransform at;
-		XY pos{}, scale{ 1, 1 };
-		float radians{};
-		std::vector<std::pair<xx::Label, xx::Sprite>> ss;
-	};
-}
+struct Logic8;
+struct Mices;
+
+struct Mice {
+	xx::AffineTransform at{};
+	xx::XY pos{}, scale{ 1, 1 };
+	float radians{};
+	xx::Label name;
+	xx::Sprite body;
+	void Init(Mices* owner, xx::XY const& pos, std::string&& name);
+};
+
+struct Mices {
+	Logic8* logic8{};
+	xx::XY pos{}, scale{ 1, 1 };
+	float radians{};
+	std::vector<Mice> ms;
+	void Init(Logic8* logic);
+	void Draw();
+};
 
 struct Logic8 : LogicBase {
 	void Init(Logic* logic) override;
 	int Update() override;
 
-	xx::Node n;
+	Mices mices;
 	xx::Shared<xx::GLTexture> t;
 };

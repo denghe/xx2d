@@ -65,7 +65,7 @@ namespace xx {
 		scale = { s, s };
 	}
 
-	void Label::SetPositon(XY const& p) {
+	void Label::SetPosition(XY const& p) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
 		pos = p;
 	}

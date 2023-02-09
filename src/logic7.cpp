@@ -12,13 +12,13 @@ void C::Init(Logic7* const& owner_, xx::Pos<> const& pos, int32_t const& r, int3
 
 	border.FillCirclePoints({ 0,0 }, radius, {}, segments);
 	border.SetColor({ 255, 255, 0, 255 });
-	border.SetPositon({(float)pos.x, (float)-pos.y});
+	border.SetPosition({(float)pos.x, (float)-pos.y});
 }
 void C::SetPos(xx::Pos<> const& pos) {
 	SGCSetPos(pos);
 	SGCUpdate();
 
-	border.SetPositon({ (float)pos.x, (float)-pos.y });
+	border.SetPosition({ (float)pos.x, (float)-pos.y });
 }
 void C::Update() {
 	int foreachLimit = 100, numCross{};
@@ -89,7 +89,7 @@ void C::Update2() {
 		_sgcPos = newPos;
 		_sgc->Update(this);
 		border.SetColor({ 255, 0, 0, 255 });
-		border.SetPositon({ (float)_sgcPos.x, (float)-_sgcPos.y });
+		border.SetPosition({ (float)_sgcPos.x, (float)-_sgcPos.y });
 		++_sgc->numActives;
 	} else {
 		if (border.color != xx::RGBA8{ 255, 255, 255, 255 }) {
@@ -112,7 +112,7 @@ void B::Init(Logic7* const& owner_, xx::Pos<> const& pos, xx::Pos<> const& siz) 
 
 	border.FillBoxPoints({}, {(float)siz.x, (float)siz.y});
 	border.SetColor({ 0, 255, 0, 255 });
-	border.SetPositon({ (float)pos.x, (float)-pos.y });
+	border.SetPosition({ (float)pos.x, (float)-pos.y });
 }
 B::~B() {
 	SGABRemove();

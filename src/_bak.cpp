@@ -397,7 +397,7 @@ for (uint32_t cy = 0; cy < m.height; ++cy) {
 //		auto c = scene->rnd.Get(); auto cp = (uint8_t*)&c;
 //		spr.SetColor({ cp[0], cp[1], cp[2], 255 });
 //		spr.SetScale({0.5, 0.5});
-//		spr.SetPositon({
+//		spr.SetPosition({
 //			((float)xy.x - mapCenter.x) / mapCenter.x * (scene->eg->w / 2),
 //			((float)xy.y - mapCenter.y) / mapCenter.y * (scene->eg->h / 2)
 //		});
@@ -474,7 +474,7 @@ for (uint32_t cy = 0; cy < m.height; ++cy) {
 //			xy = xy2;
 //			assert(gridIndex != -1);
 //			scene->grid.Update(gridIndex, xy2.y / gridDiameter, xy2.x / gridDiameter);
-//			spr.SetPositon({ 
+//			spr.SetPosition({ 
 //				((float)xy.x - mapCenter.x) / mapCenter.x * (scene->eg->w / 2),
 //				((float)xy.y - mapCenter.y) / mapCenter.y * (scene->eg->h / 2)
 //			});
@@ -508,7 +508,7 @@ for (uint32_t cy = 0; cy < m.height; ++cy) {
 //	LoadFramesFromCache(LoadTPData("res/zm.plist"sv));		// key = zazaka.pkm, mouse.pkm
 //	fZazaka = frameCache.find("zazaka.pkm"sv)->second;
 //	fMouse = frameCache.find("mouse.pkm"sv)->second;
-//	lbCount.SetPositon(ninePoints[1] + XY{ 10, 10 });
+//	lbCount.SetPosition(ninePoints[1] + XY{ 10, 10 });
 //	lbCount.SetAnchor({0, 0});
 //
 //	scene.Emplace();
@@ -579,10 +579,10 @@ for (uint32_t cy = 0; cy < m.height; ++cy) {
 ////			}
 ////			auto c = rnd.Get(); auto cp = (uint8_t*)&c;
 ////			s.SetColor({ cp[0], cp[1], cp[2], 255 });
-////			s.SetPositon({ (float)m->x, (float)m->y });	// todo: mapping?
+////			s.SetPosition({ (float)m->x, (float)m->y });	// todo: mapping?
 //
 ////			l.SetText(fnt2, xx::ToString("id = ", m->id), 16);
-////			l.SetPositon({ s.pos.x, s.pos.y + s.frame->spriteSize.h * s.scale.y * (1 - s.anchor.y) });
+////			l.SetPosition({ s.pos.x, s.pos.y + s.frame->spriteSize.h * s.scale.y * (1 - s.anchor.y) });
 ////			l.SetAnchor({ 0.5, 0 });
 ////			l.scale = s.scale;
 //
@@ -593,7 +593,7 @@ for (uint32_t cy = 0; cy < m.height; ++cy) {
 ////				while (s.scale.x > 0.05) {
 ////					s.SetScale(s.scale * 0.99);
 ////					l.SetScale(s.scale);
-////					l.SetPositon({ s.pos.x, s.pos.y + s.frame->spriteSize.h * s.scale.y * (1 - s.anchor.y) });
+////					l.SetPosition({ s.pos.x, s.pos.y + s.frame->spriteSize.h * s.scale.y * (1 - s.anchor.y) });
 ////					CoYield;
 ////				}
 ////				self->monsters.erase(m);

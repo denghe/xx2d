@@ -61,9 +61,9 @@ void Button::Init(Logic* const& logic, xx::XY const& pos, xx::Size const& border
 	leftBottom = { pos.x - hw, pos.y - hh };
 	rightTop = { pos.x + hw, pos.y + hh };
 	border.SetPoints() = { {-hw,-hh},{-hw,hh},{hw,hh},{hw,-hh},{-hw,-hh} };
-	border.SetPositon(pos);
+	border.SetPosition(pos);
 	content.SetText(logic->fnt1, txt, fontSize);
-	content.SetPositon(pos);
+	content.SetPosition(pos);
 }
 
 bool Button::Inside(xx::XY const& p) {

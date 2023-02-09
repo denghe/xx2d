@@ -5,7 +5,7 @@
 void Logic::Init() {
 	fnt1 = xx::engine.LoadBMFont("res/font1/basechars.fnt"sv);
 
-	lbInfo.SetPositon(xx::engine.ninePoints[1] + xx::XY{ 10, 10 });
+	lbInfo.SetPosition(xx::engine.ninePoints[1] + xx::XY{ 10, 10 });
 	lbInfo.SetAnchor({0, 0});
 
 	lg = xx::Make<Logic0>();
@@ -30,10 +30,10 @@ int Logic::Update() {
 		fpsCounter = 0;
 	}
 	lbInfo.SetText(fnt1, xx::ToString("fps = ", fps, ", draw call = ", xx::engine.sm.GetDrawCall(), ", quad count = ", xx::engine.sm.GetDrawQuads(), ", line point count = ", xx::engine.sm.GetDrawLines(), std::string_view(extraInfo)));
-	lbInfo.SetPositon({ lbInfo.pos.x + 2, lbInfo.pos.y - 2 });
+	lbInfo.SetPosition({ lbInfo.pos.x + 2, lbInfo.pos.y - 2 });
 	lbInfo.SetColor({ 0, 0, 255, 255 });
 	lbInfo.Draw();
-	lbInfo.SetPositon({ lbInfo.pos.x - 2, lbInfo.pos.y + 2 });
+	lbInfo.SetPosition({ lbInfo.pos.x - 2, lbInfo.pos.y + 2 });
 	lbInfo.SetColor({ 255, 0, 0, 255 });
 	lbInfo.Draw();	// shadow
 	return r;

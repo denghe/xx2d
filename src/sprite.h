@@ -9,16 +9,16 @@ namespace xx {
 		// cache
 
 		QuadVerts qv;
-		AffineTransform at;
+		AffineTransform at, atBak, * pat{};
 
 		union {
 			struct {
 				uint8_t dirtyFrame;
 				uint8_t dirtySizeAnchorPosScaleRotate;
 				uint8_t dirtyColor;
-				uint8_t dirtyDummy;
+				uint8_t dirtyParentAffineTransform;
 			};
-			uint32_t dirty = 0xFFFFFFFFu;
+			uint32_t dirty = 0x00FFFFFFu;
 		};
 
 		/***************************************************************************/
@@ -54,6 +54,8 @@ namespace xx {
 		void SetPositionY(float const& y);
 
 		void SetColor(RGBA8 const& c);
+
+		void SetParentAffineTransform(AffineTransform* const& t);
 
 		void Commit();
 

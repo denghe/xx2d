@@ -13,7 +13,7 @@ void Circle::Init(xx::SpaceGridC<Circle>* const& grid_, int32_t const& x, int32_
 	radius = r;
 	border = std::make_unique<xx::LineStrip>();
 	border->FillCirclePoints({ 0,0 }, radius, {}, Logic4::numCircleSegments);
-	border->SetPositon({ (float)_sgcPos.x, (float)-_sgcPos.y });
+	border->SetPosition({ (float)_sgcPos.x, (float)-_sgcPos.y });
 }
 
 void Circle::Update(xx::Rnd& rnd) {
@@ -77,7 +77,7 @@ void Circle::Update2() {
 		_sgcPos = newPos;
 		_sgc->Update(this);
 		border->SetColor({255, 0, 0, 255});
-		border->SetPositon({ (float)_sgcPos.x, (float)-_sgcPos.y });
+		border->SetPosition({ (float)_sgcPos.x, (float)-_sgcPos.y });
 		++_sgc->numActives;
 	}
 	else {

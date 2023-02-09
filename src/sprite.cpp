@@ -72,6 +72,11 @@ namespace xx {
 		color = c;
 	}
 
+	void Sprite::SetParentAffineTransform(AffineTransform* const& t) {
+		dirtyParentAffineTransform = 1;
+		pat = t;
+	}
+
 	void Sprite::Commit() {
 		if (dirty) {
 			if (dirtyFrame) {
@@ -124,9 +129,20 @@ namespace xx {
 					}
 				}
 			}
-			if (dirtySizeAnchorPosScaleRotate) {
+			if (dirtySizeAnchorPosScaleRotate || dirtyParentAffineTransform) {
 				auto wh = frame->spriteSize;
-				at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, { wh.w * anchor.x, wh.h * anchor.y });
+				if (dirtySizeAnchorPosScaleRotate) {
+					at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, { wh.w * anchor.x, wh.h * anchor.y });
+					atBak = at;
+				}
+				if (dirtyParentAffineTransform) {
+					if (pat) {
+						at = atBak.MakeConcat(*pat);
+					}
+					else {
+						at = atBak;
+					}
+				}
 				(XY&)qv[0].x = { at.tx, at.ty };
 				(XY&)qv[1].x = at.Apply({0, wh.h });
 				(XY&)qv[2].x = at.Apply({wh.w, wh.h});

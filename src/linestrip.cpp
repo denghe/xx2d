@@ -57,7 +57,7 @@ namespace xx {
 		scale = { s, s };
 	}
 
-	void LineStrip::SetPositon(XY const& p) {
+	void LineStrip::SetPosition(XY const& p) {
 		dirty = true;
 		pos = p;
 	}

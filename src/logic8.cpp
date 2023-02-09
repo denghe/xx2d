@@ -2,36 +2,54 @@
 #include "logic.h"
 #include "logic8.h"
 
+void Mice::Init(Mices* owner, xx::XY const& pos_, std::string&& name_) {
+	pos = pos_;
+	at = this->at.MakePosScaleRadians(pos, scale, radians);
+
+	name.SetText(owner->logic8->logic->fnt1, name_, 16);
+	name.SetPositionY(-20);
+
+	body.SetTexture(owner->logic8->t);
+}
+
+void Mices::Init(Logic8* logic8) {
+	this->logic8 = logic8;
+	float x = -250;
+	for (size_t i = 0; i < 11; i++) {
+		ms.emplace_back().Init(this, { x + i * 50, 0 }, xx::ToString("mouse", i));
+	}
+}
+
+void Mices::Draw() {
+	radians += 0.001f;
+	scale += 0.0001f;
+	//auto at = xx::AffineTransform::MakePosScaleRadians(pos, scale, radians);
+	auto at = xx::AffineTransform::MakeIdentity().Rotate(radians);
+	for (auto& m : ms) {
+		auto pat = at.MakeConcat(m.at);
+
+		m.body.SetParentAffineTransform(&pat);
+		m.body.Draw();
+
+		//m.name.SetRotate(m.name.radians - 0.001f);
+		m.name.Draw(pat);
+	}
+}
+
 void Logic8::Init(Logic* logic) {
 	this->logic = logic;
 
 	std::cout << "Logic8 Init( node tests )" << std::endl;
 
 	t.Emplace(xx::engine.LoadTexture("res/mouse.pkm"));
-	float x = -250;
-	for (size_t i = 0; i < 11; i++) {
-		auto& [l, s] = n.ss.emplace_back();
-		//l.SetText(logic->fnt1, xx::ToString("mouse",i), 16);
-		//l.SetPositon({ x + i * 50, -20 });
 
-		s.SetPositionX(x + i * 50);
-		s.SetTexture(t);
-	}
+	mices.Init(this);
 }
 
 int Logic8::Update() {
 
-	n.radians += 0.001f;
-	//n.scale += 0.0001f;
-	n.at = xx::AffineTransform::MakePosScaleRadians(n.pos, n.scale, n.radians);
-
-	for (auto& [l, s] : n.ss) {
-		s.SetScale(s.scale + 0.0001f);
-		s.Draw(n.at);
-
-		l.SetRotate(l.radians - 0.001f);
-		l.Draw(n.at);
-	}
+	mices.Draw();
 
 	return 0;
 }
+ 

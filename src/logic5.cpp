@@ -18,7 +18,7 @@ void Foo::SyncBorder() {
 	auto hw = halfSize.x, hh = halfSize.y;
 	border.Emplace();
 	border->SetPoints() = { {-hw, hh}, {hw, hh}, {hw, -hh}, {-hw, -hh}, {-hw, hh} };
-	border->SetPositon({ (float)_sgabPos.x, -(float)_sgabPos.y });	// flip y to gl coordinate
+	border->SetPosition({ (float)_sgabPos.x, -(float)_sgabPos.y });	// flip y to gl coordinate
 	border->SetColor(color);
 }
 
