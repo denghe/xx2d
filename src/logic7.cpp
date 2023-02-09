@@ -156,7 +156,7 @@ void Logic7::Init(Logic* logic) {
 
 int Logic7::Update() {
 	if (xx::engine.Pressed(xx::Mbtns::Left)) {
-		mousePos.Set(cam.pos + xx::engine.mousePosition.GetFlipY() / cam.scale);
+		mousePos.Set(cam.pos + xx::engine.mousePosition.MakeFlipY() / cam.scale);
 	}
 
 	timePool += xx::engine.delta;

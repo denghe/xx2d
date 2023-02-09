@@ -11,7 +11,10 @@
 #include "glres.h"
 #include "glutils.h"
 
+#include "enums.h"
 #include "prims.h"
+#include "animframe.h"
+#include "utils.h"
 #include "calc.h"
 #include "shaders.h"
 #include "tp.h"
