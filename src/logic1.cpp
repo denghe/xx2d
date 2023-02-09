@@ -204,7 +204,7 @@ int Logic1::Update() {
 							sa.sprite->Commit();
 						}
 					}
-					sa.sprite->Draw(cam);
+					sa.sprite->Draw(cam.at);
 				}
 			}
 		}
@@ -218,7 +218,7 @@ int Logic1::Update() {
 	DrawLayerSprites(layerTrees.sas, cam.rowFrom, playerRowIdx);
 
 	// draw player( override above rows )
-	player.sprite.Draw(cam);
+	player.sprite.Draw(cam.at);
 
 	// draw after player rows
 	DrawLayerSprites(layerTrees.sas, playerRowIdx, cam.rowTo);

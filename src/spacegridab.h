@@ -471,12 +471,13 @@ namespace xx {
 
 	// todo: test & use
 	template<typename Item>
-	struct SpaceGridABCamera : Translate {
+	struct SpaceGridABCamera {
 
 		SpaceGridAB<Item>* grid{};
 		Size screenSize{};
 
-		XY pos{};
+		XY pos{}, scale{ 1,1 };
+		AffineTransform at;
 		bool dirty = true;
 
 		/*
@@ -542,7 +543,7 @@ namespace xx {
 				columnTo = grid->numCols;
 			}
 
-			offset = { -pos.x, pos.y };
+			at = at.MakePosScale(XY{ -pos.x, pos.y } *scale, scale);
 		}
 
 		XY GetMousePosInGrid(XY const& mousePos) {

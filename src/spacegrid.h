@@ -268,12 +268,13 @@ namespace xx {
 	};
 
 	template<typename Item>
-	struct SpaceGridCCamera : Translate {
+	struct SpaceGridCCamera {
 
 		SpaceGridC<Item>* grid{};
 		Size screenSize{};
 
-		XY pos{};
+		XY pos{}, scale{ 1,1 };
+		AffineTransform at;
 		bool dirty = true;
 
 		/*
@@ -293,12 +294,12 @@ namespace xx {
 			this->screenSize = wh;
 			dirty = true;
 		}
-		void SetScale(float const& scale) {
-			this->scale = { scale, scale };
+		void SetScale(float const& s) {
+			this->scale = { s, s };
 			dirty = true;
 		}
-		void SetPosition(XY const& _sgcPos) {
-			this->pos = _sgcPos;
+		void SetPosition(XY const& p) {
+			this->pos = p;
 			dirty = true;
 		}
 		void SetPositionX(float const& x) {
@@ -339,7 +340,7 @@ namespace xx {
 				columnTo = grid->numCols;
 			}
 
-			offset = { -pos.x, pos.y };
+			at = at.MakePosScale(XY{ -pos.x, pos.y } * scale, scale);
 		}
 
 		XY GetMousePosInGrid(XY const& mousePos) {

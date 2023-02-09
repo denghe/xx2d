@@ -45,7 +45,7 @@ namespace xx {
 				columnTo = worldColumnCount;
 			}
 
-			offset = { -pos.x, pos.y };
+			at = at.MakePosScale(XY{ -pos.x, pos.y } *scale, scale);
 		}
 
 		void Camera::SetScale(float const& scale) {

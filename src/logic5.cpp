@@ -68,7 +68,7 @@ void Logic5::Init(Logic* logic) {
 
 	std::cout << "Logic5 Init( test space grid AABB )" << std::endl;
 
-	cam.offset = xx::engine.ninePoints[7];	// (0,0) at top left
+	cam = cam.MakePos(xx::engine.ninePoints[7]);	// (0,0) at top left
 
 	grid.Init(50, 50, 256, 256);
 

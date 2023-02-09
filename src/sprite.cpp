@@ -42,7 +42,7 @@ namespace xx {
 
 	void Sprite::SetRotate(float const& r) {
 		dirtySizeAnchorPosScaleRotate = 1;
-		rotate = r;
+		radians = r;
 	}
 
 	void Sprite::SetScale(XY const& s) {
@@ -125,16 +125,12 @@ namespace xx {
 				}
 			}
 			if (dirtySizeAnchorPosScaleRotate) {
-				auto&& w = frame->spriteSize.w * scale.x;
-				auto&& h = frame->spriteSize.h * scale.y;
-				auto&& x = pos.x + frame->spriteOffset.x * scale.x - w * anchor.x;
-				auto&& y = pos.y + frame->spriteOffset.y * scale.y - h * anchor.y;
-				qv[0].x = x;				qv[0].y = y;
-				qv[1].x = x;				qv[1].y = y + h;
-				qv[2].x = x + w;			qv[2].y = y + h;
-				qv[3].x = x + w;			qv[3].y = y;
-
-				// todo: rotate support?
+				auto wh = frame->spriteSize;
+				at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, { wh.w * anchor.x, wh.h * anchor.y });
+				(XY&)qv[0].x = { at.tx, at.ty };
+				(XY&)qv[1].x = at.Apply({0, wh.h });
+				(XY&)qv[2].x = at.Apply({wh.w, wh.h});
+				(XY&)qv[3].x = at.Apply({wh.w, 0});
 			}
 			if (dirtyColor) {
 				for (auto& v : qv) {
@@ -148,25 +144,6 @@ namespace xx {
 	void Sprite::Draw() {
 		assert(!dirty);
 		engine.sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
-	}
-
-	void Sprite::Draw(Translate const& t) {
-		assert(!dirty);
-		auto& s = engine.sm.GetShader<Shader_XyUvC>();
-		auto&& q = s.DrawQuadBegin(*frame->tex);
-		q[0].x = (qv[0].x + t.offset.x) * t.scale.x;
-		q[0].y = (qv[0].y + t.offset.y) * t.scale.y;
-		q[1].x = (qv[1].x + t.offset.x) * t.scale.x;
-		q[1].y = (qv[1].y + t.offset.y) * t.scale.y;
-		q[2].x = (qv[2].x + t.offset.x) * t.scale.x;
-		q[2].y = (qv[2].y + t.offset.y) * t.scale.y;
-		q[3].x = (qv[3].x + t.offset.x) * t.scale.x;
-		q[3].y = (qv[3].y + t.offset.y) * t.scale.y;
-		memcpy(&q[0].u, &qv[0].u, 8);	// 8: uv & color
-		memcpy(&q[1].u, &qv[1].u, 8);
-		memcpy(&q[2].u, &qv[2].u, 8);
-		memcpy(&q[3].u, &qv[3].u, 8);
-		s.DrawQuadEnd();
 	}
 
 	void Sprite::Draw(AffineTransform const& t) {

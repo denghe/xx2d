@@ -186,25 +186,22 @@ namespace xx {
     //
     struct Rect : XY, Size {};
 
-    // for node, cam, ... ( maybe convert to 3 * 2/3 matrix ? )
-    struct Translate {
-        // todo: angle
-        XY scale = { 1, 1 };
-        XY offset = { 0, 0 };
-    };
 
-
+    // for node, cam, ... 
     // reference from cocos 2.x AffineTransform
     struct AffineTransform {
         float a, b, c, d;
         float tx, ty;
 
-        static AffineTransform Make(XY const& pos, XY const& anchorSize, XY const& scale, float const& radians);
-        static AffineTransform MakeIdentity();
+        static AffineTransform MakePosScaleRadiansAnchorSize(XY const& pos, XY const& scale, float const& radians, XY const& anchorSize);
+        static AffineTransform MakePosScaleRadians(XY const& pos, XY const& scale, float const& radians);
+        static AffineTransform MakePosScale(XY const& pos, XY const& scale);
+        static AffineTransform MakePos(XY const& pos);
 
         AffineTransform MakeConcat(AffineTransform const& t) const;
         AffineTransform MakeInvert(AffineTransform const& t);
 
+        static AffineTransform MakeIdentity();
         AffineTransform& Translate(XY const& pos);
         AffineTransform& Scale(XY const& scale);
         AffineTransform& Rotate(float const& radians);

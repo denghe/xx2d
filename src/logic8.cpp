@@ -20,8 +20,13 @@ void Logic8::Init(Logic* logic) {
 int Logic8::Update() {
 
 	n.radians += 0.001f;
-	n.transform = xx::AffineTransform::Make(n.pos, {}, n.scale, n.radians);
+	n.scale += 0.0001f;
+	n.transform = xx::AffineTransform::MakePosScaleRadians(n.pos, n.scale, n.radians);
+
 	for (auto& s : n.ss) {
+		s.SetRotate(s.radians - 0.001f);
+		//s.SetScale(s.scale + 0.0001f);
+		s.Commit();
 		s.Draw(n.transform);
 	}
 

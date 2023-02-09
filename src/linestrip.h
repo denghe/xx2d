@@ -5,6 +5,7 @@ namespace xx {
 
 	struct LineStrip {
 		std::vector<XYRGBA8> pointsBuf;
+		AffineTransform at;
 		bool dirty = true;
 
 		std::vector<XY> points;
@@ -12,7 +13,7 @@ namespace xx {
 		XY pos{ 0, 0 };
 		XY anchor{ 0.5, 0.5 };
 		XY scale{ 1, 1 };
-		float rotate{ 0 };
+		float radians{ 0 };
 		RGBA8 color{ 255, 255, 255, 255 };
 
 		std::vector<XY>& SetPoints();
@@ -36,7 +37,7 @@ namespace xx {
 		void Commit();
 
 		void Draw();
-		void Draw(Translate const& trans);
+		void Draw(AffineTransform const& t);
 	};
 
 }

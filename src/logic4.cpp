@@ -109,11 +109,12 @@ void Logic4::Init(Logic* logic) {
 	grid.Init(numRows, numCols, maxDiameter);
 
 	cs.reserve(capacity);
-	for (size_t i = 0; i < numRandCircles; i++) {
-		auto&& c = cs.emplace_back();
-		c.Emplace()->Init(&grid, rnds[0].Next(0, maxX - 1), rnds[0].Next(0, maxY - 1), rnds[0].Next(minRadius, maxRadius));
-		c->csIndex = i;
-	}
+	//for (size_t i = 0; i < numRandCircles; i++) {
+	//	auto&& c = cs.emplace_back();
+	//	c.Emplace()->Init(&grid, rnds[0].Next(0, maxX - 1), rnds[0].Next(0, maxY - 1), rnds[0].Next(minRadius, maxRadius));
+	//	c->csIndex = i;
+	//}
+	cs.emplace_back().Emplace()->Init(&grid, maxX / 2, maxY / 2, maxRadius);
 
 	cam.Init({ xx::engine.w, xx::engine.h }, &grid);
 	cam.SetPosition({ maxX / 2, maxY / 2 });
@@ -240,12 +241,15 @@ int Logic4::Update() {
 
 	// draw
 	cam.Commit();
-	for (auto rIdx = cam.rowFrom; rIdx < cam.rowTo; ++rIdx) {
-		for (auto cIdx = cam.columnFrom; cIdx < cam.columnTo; ++cIdx) {
-			grid.Foreach(rIdx, cIdx, [&](Circle* const& c) {
-				c->border->Draw(cam);
-			});
-		}
+	//for (auto rIdx = cam.rowFrom; rIdx < cam.rowTo; ++rIdx) {
+	//	for (auto cIdx = cam.columnFrom; cIdx < cam.columnTo; ++cIdx) {
+	//		grid.Foreach(rIdx, cIdx, [&](Circle* const& c) {
+	//			c->border->Draw(cam.at);
+	//		});
+	//	}
+	//}
+	for (auto& c : cs) {
+		c->border->Draw(cam.at);
 	}
 
 	return 0;

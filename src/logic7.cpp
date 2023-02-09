@@ -173,10 +173,10 @@ int Logic7::Update() {
 	}
 
 	for (auto& c : cs) {
-		c->border.Draw(cam);
+		c->border.Draw(cam.at);
 	}
 	for (auto& b : bs) {
-		b->border.Draw(cam);
+		b->border.Draw(cam.at);
 	}
 
 	return 0;

@@ -28,7 +28,7 @@ struct Logic5 : LogicBase {
 	void Init(Logic* logic) override;
 	int Update() override;
 	double timePool{};
-	xx::Translate cam;
+	xx::AffineTransform cam;
 	xx::SpaceGridAB<Foo> grid;
 	std::vector<xx::Shared<Foo>> foos;
 	xx::Rnd rnd;

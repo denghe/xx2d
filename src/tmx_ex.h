@@ -27,13 +27,15 @@ namespace xx {
 	│                  │                                   │                  │
 	└──────────────────┘                                   └──────────────────┘
 		*/
-		struct Camera : Translate {
+		struct Camera {
 			// fill by Init
 			int32_t tileWidth = 0, tileHeight = 0;
 			int32_t worldRowCount = 0, worldColumnCount = 0;
 			Size worldPixel{};
 			Size screenSize{};
-			XY pos{};
+
+			AffineTransform at;
+			XY pos{}, scale{ 1, 1 };
 			bool dirty = true;
 
 			/*

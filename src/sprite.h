@@ -4,7 +4,12 @@
 namespace xx {
 
 	struct Sprite {
+
+		/***************************************************************************/
+		// cache
+
 		QuadVerts qv;
+		AffineTransform at;
 
 		union {
 			struct {
@@ -16,15 +21,19 @@ namespace xx {
 			uint32_t dirty = 0xFFFFFFFFu;
 		};
 
+		/***************************************************************************/
+		// user data
+
 		xx::Shared<Frame> frame;
 		XY pos{ 0, 0 };
 		XY anchor{ 0.5, 0.5 };	// will be auto set by frame if included
 		XY scale{ 1, 1 };
 		bool flipX = false, flipY = false;
-		float rotate{ 0 };
+		float radians{ 0 };
 		RGBA8 color{ 255, 255, 255, 255 };
 
-		bool Empty() const;	// return !frame
+		/***************************************************************************/
+		// change user data funcs
 
 		void SetTexture(xx::Shared<GLTexture> t);	// do not override anchor
 
@@ -46,12 +55,16 @@ namespace xx {
 
 		void SetColor(RGBA8 const& c);
 
-
 		void Commit();
+
+		/***************************************************************************/
+		// query funcs
+		bool Empty() const;	// return !frame
+
+		// todo coord convert 
 
 		// need commit
 		void Draw();
-		void Draw(Translate const& t);
 		void Draw(AffineTransform const& t);
 	};
 

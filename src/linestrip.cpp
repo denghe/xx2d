@@ -45,7 +45,7 @@ namespace xx {
 
 	void LineStrip::SetRotate(float const& r) {
 		dirty = true;
-		rotate = r;
+		radians = r;
 	}
 
 	void LineStrip::SetScale(XY const& s) {
@@ -71,14 +71,11 @@ namespace xx {
 		if (dirty) {
 			auto&& ps = points.size();
 			pointsBuf.resize(ps);
-			auto x = pos.x - size.w * scale.x * anchor.x;
-			auto y = pos.y - size.h * scale.y * anchor.y;
+			at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, { size.w * anchor.x, size.h * anchor.y });
 			for (size_t i = 0; i < ps; ++i) {
-				pointsBuf[i].x = points[i].x * scale.x + x;
-				pointsBuf[i].y = points[i].y * scale.y + y;
+				(XY&)pointsBuf[i].x = at.Apply(points[i]);
 				memcpy(&pointsBuf[i].r, &color, sizeof(color));
 			}
-			// todo: rotate support?
 			dirty = false;
 		}
 	}
@@ -91,14 +88,15 @@ namespace xx {
 		}
 	}
 
-	void LineStrip::Draw(Translate const& trans) {
+	void LineStrip::Draw(AffineTransform const& t) {
 		assert(!dirty);
 		if (auto&& ps = pointsBuf.size()) {
 			auto&& s = engine.sm.GetShader<Shader_XyC>();
 			auto&& buf = s.DrawLineStrip(ps);
+			//auto tt = at.MakeConcat(t);
 			for (size_t i = 0; i < ps; ++i) {
-				buf[i].x = (pointsBuf[i].x + trans.offset.x) * trans.scale.x;
-				buf[i].y = (pointsBuf[i].y + trans.offset.y) * trans.scale.y;
+				(XY&)buf[i].x = t.Apply(pointsBuf[i]);
+				//(XY&)buf[i].x = tt.Apply(points[i]);
 				memcpy(&buf[i].r, &color.r, sizeof(color));
 			}
 		}

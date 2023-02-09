@@ -3,23 +3,38 @@
 
 namespace xx {
 
-	AffineTransform AffineTransform::Make(XY const& pos, XY const& anchorSize, XY const& scale, float const& radians) {
+	AffineTransform AffineTransform::MakePosScaleRadiansAnchorSize(XY const& pos, XY const& scale, float const& radians, XY const& anchorSize) {
 		auto x = pos.x;
 		auto y = pos.y;
-		float cx = 1, sx = 0, cy = 1, sy = 0;
+		float c = 1, s = 0;
 		if (radians) {
-			auto c = std::cos(-radians);
-			auto s = std::sin(-radians);
-			cx = c * scale.x;
-			cy = c * scale.y;
-			sx = -s * scale.x;
-			sy = s * scale.y;
+			c = std::cos(-radians);
+			s = std::sin(-radians);
 		}
 		if (!anchorSize.IsZero()) {
-			x += cy * -anchorSize.x + sx * -anchorSize.y;
-			y += sy * -anchorSize.x + cx * -anchorSize.y;
+			x += c * scale.x * -anchorSize.x - s * scale.y * -anchorSize.y;
+			y += s * scale.x * -anchorSize.x + c * scale.y * -anchorSize.y;
 		}
-		return { cy, sy, sx, cx, x, y };
+		return { c * scale.x, s * scale.x, -s * scale.y, c * scale.y, x, y };
+	}
+
+	AffineTransform AffineTransform::MakePosScaleRadians(XY const& pos, XY const& scale, float const& radians) {
+		auto x = pos.x;
+		auto y = pos.y;
+		float c = 1, s = 0;
+		if (radians) {
+			c = std::cos(-radians);
+			s = std::sin(-radians);
+		}
+		return { c * scale.x, s * scale.x, -s * scale.y, c * scale.y, x, y };
+	}
+
+	AffineTransform AffineTransform::MakePosScale(XY const& pos, XY const& scale) {
+		return { scale.x, 0, 0, scale.y, pos.x, pos.y };
+	}
+
+	AffineTransform AffineTransform::MakePos(XY const& pos) {
+		return { 1.0, 0.0, 0.0, 1.0, pos.x, pos.y };
 	}
 
 	AffineTransform AffineTransform::MakeIdentity() {
