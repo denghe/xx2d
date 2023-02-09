@@ -25,7 +25,7 @@ void Logic0::Init(Logic* logic) {
 	menus.emplace_back().Init(logic, { 500, 0 }, "6: circle + box physics", 64);
 
 	menus.emplace_back().Init(logic, { -500, -200 }, "7: more circle + box", 64);
-	menus.emplace_back().Init(logic, { 0, -200 }, "8: matrix tests", 64);
+	menus.emplace_back().Init(logic, { 0, -200 }, "8: node tests", 64);
 
 	logic->extraInfo.clear();
 }

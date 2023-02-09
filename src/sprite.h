@@ -51,7 +51,8 @@ namespace xx {
 
 		// need commit
 		void Draw();
-		void Draw(Translate const& trans);
+		void Draw(Translate const& t);
+		void Draw(AffineTransform const& t);
 	};
 
 }

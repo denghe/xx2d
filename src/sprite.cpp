@@ -150,17 +150,36 @@ namespace xx {
 		engine.sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
 	}
 
-	void Sprite::Draw(Translate const& trans) {
+	void Sprite::Draw(Translate const& t) {
 		assert(!dirty);
 		auto& s = engine.sm.GetShader<Shader_XyUvC>();
 		auto&& q = s.DrawQuadBegin(*frame->tex);
-		q[0].x = (qv[0].x + trans.offset.x) * trans.scale.x; q[0].y = (qv[0].y + trans.offset.y) * trans.scale.y;
-		q[1].x = (qv[1].x + trans.offset.x) * trans.scale.x; q[1].y = (qv[1].y + trans.offset.y) * trans.scale.y;
-		q[2].x = (qv[2].x + trans.offset.x) * trans.scale.x; q[2].y = (qv[2].y + trans.offset.y) * trans.scale.y;
-		q[3].x = (qv[3].x + trans.offset.x) * trans.scale.x; q[3].y = (qv[3].y + trans.offset.y) * trans.scale.y;
+		q[0].x = (qv[0].x + t.offset.x) * t.scale.x;
+		q[0].y = (qv[0].y + t.offset.y) * t.scale.y;
+		q[1].x = (qv[1].x + t.offset.x) * t.scale.x;
+		q[1].y = (qv[1].y + t.offset.y) * t.scale.y;
+		q[2].x = (qv[2].x + t.offset.x) * t.scale.x;
+		q[2].y = (qv[2].y + t.offset.y) * t.scale.y;
+		q[3].x = (qv[3].x + t.offset.x) * t.scale.x;
+		q[3].y = (qv[3].y + t.offset.y) * t.scale.y;
 		memcpy(&q[0].u, &qv[0].u, 8);	// 8: uv & color
 		memcpy(&q[1].u, &qv[1].u, 8);
 		memcpy(&q[2].u, &qv[2].u, 8);
+		memcpy(&q[3].u, &qv[3].u, 8);
+		s.DrawQuadEnd();
+	}
+
+	void Sprite::Draw(AffineTransform const& t) {
+		assert(!dirty);
+		auto& s = engine.sm.GetShader<Shader_XyUvC>();
+		auto&& q = s.DrawQuadBegin(*frame->tex);
+		(XY&)q[0].x = t.Apply(qv[0]);
+		memcpy(&q[0].u, &qv[0].u, 8);	// 8: uv & color
+		(XY&)q[1].x = t.Apply(qv[1]);
+		memcpy(&q[1].u, &qv[1].u, 8);
+		(XY&)q[2].x = t.Apply(qv[2]);
+		memcpy(&q[2].u, &qv[2].u, 8);
+		(XY&)q[3].x = t.Apply(qv[3]);
 		memcpy(&q[3].u, &qv[3].u, 8);
 		s.DrawQuadEnd();
 	}
