@@ -46,6 +46,15 @@ namespace xx {
 		maxSize = { px, (float)bmf.lineHeight * s };
 	}
 
+	void Label::SetFlipX(bool const& fx) {
+		dirtyTextSizeAnchorPosScaleRotate = 1;
+		flipX = fx;
+	}
+	void Label::SetFlipY(bool const& fy) {
+		dirtyTextSizeAnchorPosScaleRotate = 1;
+		flipY = fy;
+	}
+
 	void Label::SetAnchor(XY const& a) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
 		anchor = a;
@@ -53,7 +62,7 @@ namespace xx {
 
 	void Label::SetRotate(float const& r) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
-		rotate = r;
+		radians = r;
 	}
 
 	void Label::SetScale(XY const& s) {
@@ -86,7 +95,7 @@ namespace xx {
 						o.qv[i].y = o.posBak[i].y * scale.y + y;
 					}
 				}
-				// todo: rotate support?
+				// todo: rotate support? flip?
 			}
 			if (dirtyColor) {
 				for (auto& o : chars) {
@@ -98,12 +107,27 @@ namespace xx {
 			dirty = 0;
 		}
 	}
-
+	 
 	void Label::Draw() {
 		auto& s = engine.sm.GetShader<Shader_XyUvC>();
 		for (auto& c : chars) {
 			s.DrawQuad(*c.tex, c.qv);		// todo: batch version
 		}
+	}
+
+	void Label::Draw(AffineTransform const& t) {
+		assert(!dirty);
+		auto& s = engine.sm.GetShader<Shader_XyUvC>();
+		//auto&& q = s.DrawQuadBegin(*frame->tex);
+		//(XY&)q[0].x = t.Apply(qv[0]);
+		//memcpy(&q[0].u, &qv[0].u, 8);	// 8: uv & color
+		//(XY&)q[1].x = t.Apply(qv[1]);
+		//memcpy(&q[1].u, &qv[1].u, 8);
+		//(XY&)q[2].x = t.Apply(qv[2]);
+		//memcpy(&q[2].u, &qv[2].u, 8);
+		//(XY&)q[3].x = t.Apply(qv[3]);
+		//memcpy(&q[3].u, &qv[3].u, 8);
+		//s.DrawQuadEnd();
 	}
 
 }
