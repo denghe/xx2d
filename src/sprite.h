@@ -69,6 +69,7 @@ namespace xx {
 
 		// need commit
 		void Draw();
+		void SubDraw();	// set dirtyParentAffineTransform = true & Draw()
 		void Draw(AffineTransform const& t);
 	};
 

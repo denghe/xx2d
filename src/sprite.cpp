@@ -179,6 +179,13 @@ namespace xx {
 		engine.sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
 	}
 
+	void Sprite::SubDraw() {
+		assert(pat);
+		dirtyParentAffineTransform = true;
+		Commit();
+		engine.sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
+	}
+
 	void Sprite::Draw(AffineTransform const& t) {
 		Commit();
 		auto& s = engine.sm.GetShader<Shader_XyUvC>();
@@ -193,5 +200,4 @@ namespace xx {
 		memcpy(&q[3].u, &qv[3].u, 8);
 		s.DrawQuadEnd();
 	}
-
 }

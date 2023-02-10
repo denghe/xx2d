@@ -11,33 +11,29 @@ void Logic8::Init(Logic* logic) {
 		.SetPosition({ -16 * 8, -16 * 8 });
 	
 	auto tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
-	node.sprite.SetTexture(tex)
-		.SetScale(8);
 
-	node.children.emplace_back().Emplace()->sprite.SetTexture(tex)
-		.SetParentAffineTransform(&node.sprite.at)					// store parent trans ptr
-		.SetPosition({ 0,0 });
+	node.SetTexture(tex).SetScale(8);
+
+	auto& c1 = node.children.emplace_back().Emplace();
+	c1->SetTexture(tex).SetScale(0.5).SetColor({255,0,0,255});
+
+	auto& c2 = c1->children.emplace_back().Emplace();
+	c2->SetTexture(tex).SetScale(0.25).SetColor({ 0,255,0,255 });
+
+	auto& c3 = c2->children.emplace_back().Emplace();
+	c3->SetTexture(tex).SetScale(0.125).SetColor({ 0,0,255,255 });
+
+	node.FillParentAffineTransaction();
 }
 
 int Logic8::Update() {
 
-	node.sprite.SetRotate(node.sprite.radians + 0.0001).Draw();
-	for (auto& c : node.children) {
-		c->sprite.dirtyParentAffineTransform = true;				// tell children: parent trans changed
-		c->sprite.Draw();
-	}
+	node.SetRotate(node.radians + 0.000001);
+	node.Draw();
 	ls.Draw();
 
 	return 0;
 }
-
-
-
-
-
-
-
-
 
 
 //c->border.FillBoxPoints({}, c->sprite.Size());
