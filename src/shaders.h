@@ -62,7 +62,7 @@ namespace xx {
 	/***************************************************************************************************/
 
 	// for draw quad
-	struct Shader_XyUvC : Shader {
+	struct Shader_Quad : Shader {
 		static const size_t index = 0;	// index at sm->shaders
 
 		GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
@@ -91,7 +91,7 @@ namespace xx {
 	/***************************************************************************************************/
 
 	// for draw line strip
-	struct Shader_XyC : Shader {
+	struct Shader_LineStrip : Shader {
 		static const size_t index = 1;	// index at sm->shaders
 
 		GLint uCxy = -1, aPos = -1, aColor = -1;

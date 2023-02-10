@@ -92,7 +92,7 @@ namespace xx {
 	void LineStrip::Draw() {
 		Commit();
 		if (auto&& ps = pointsBuf.size()) {
-			auto&& s = engine.sm.GetShader<Shader_XyC>();
+			auto&& s = engine.sm.GetShader<Shader_LineStrip>();
 			memcpy(s.DrawLineStrip(ps), pointsBuf.data(), ps * sizeof(XYRGBA8));
 		}
 	}
@@ -100,7 +100,7 @@ namespace xx {
 	void LineStrip::Draw(AffineTransform const& t) {
 		Commit();
 		if (auto&& ps = pointsBuf.size()) {
-			auto&& s = engine.sm.GetShader<Shader_XyC>();
+			auto&& s = engine.sm.GetShader<Shader_LineStrip>();
 			auto&& buf = s.DrawLineStrip(ps);
 			for (size_t i = 0; i < ps; ++i) {
 				(XY&)buf[i].x = t.Apply(pointsBuf[i]);

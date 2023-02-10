@@ -88,6 +88,22 @@ namespace xx {
 		return *this;
 	}
 
+	Sprite& Sprite::AddPosition(XY const& p) {
+		dirtySizeAnchorPosScaleRotate = 1;
+		pos += p;
+		return *this;
+	}
+	Sprite& Sprite::AddPositionX(float const& x) {
+		dirtySizeAnchorPosScaleRotate = 1;
+		pos.x += x;
+		return *this;
+	}
+	Sprite& Sprite::AddPositionY(float const& y) {
+		dirtySizeAnchorPosScaleRotate = 1;
+		pos.y += y;
+		return *this;
+	}
+
 	Sprite& Sprite::SetColor(RGBA8 const& c) {
 		dirtyColor = 1;
 		color = c;
@@ -182,19 +198,24 @@ namespace xx {
 
 	void Sprite::Draw() {
 		Commit();
-		engine.sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
+		engine.sm.GetShader<Shader_Quad>().DrawQuad(*frame->tex, qv);
+	}
+
+	void Sprite::DrawWithoutCommit() {
+		assert(!dirty);
+		engine.sm.GetShader<Shader_Quad>().DrawQuad(*frame->tex, qv);
 	}
 
 	void Sprite::SubDraw() {
 		assert(pat);
 		dirtyParentAffineTransform = true;
 		Commit();
-		engine.sm.GetShader<Shader_XyUvC>().DrawQuad(*frame->tex, qv);
+		engine.sm.GetShader<Shader_Quad>().DrawQuad(*frame->tex, qv);
 	}
 
 	void Sprite::Draw(AffineTransform const& t) {
 		Commit();
-		auto& s = engine.sm.GetShader<Shader_XyUvC>();
+		auto& s = engine.sm.GetShader<Shader_Quad>();
 		auto&& q = s.DrawQuadBegin(*frame->tex);
 		(XY&)q[0].x = t.Apply(qv[0]);
 		memcpy(&q[0].u, &qv[0].u, 8);	// 8: uv & color

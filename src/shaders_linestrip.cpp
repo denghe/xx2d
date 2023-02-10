@@ -2,7 +2,7 @@
 
 namespace xx {
 
-	void Shader_XyC::Init(ShaderManager* sm) {
+	void Shader_LineStrip::Init(ShaderManager* sm) {
 		this->sm = sm;
 		v = LoadGLVertexShader({ R"(#version 300 es
 precision highp float;
@@ -57,7 +57,7 @@ void main() {
 		CheckGLError();
 	}
 
-	void Shader_XyC::Begin() {
+	void Shader_LineStrip::Begin() {
 		if (sm->cursor != index) {
 			// here can check shader type for combine batch
 			sm->shaders[sm->cursor]->End();
@@ -71,7 +71,7 @@ void main() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	}
 
-	void Shader_XyC::End() {
+	void Shader_LineStrip::End() {
 		if (indexsCount) {
 			Commit();
 		}
@@ -82,7 +82,7 @@ void main() {
 	}
 
 
-	void Shader_XyC::Commit() {
+	void Shader_LineStrip::Commit() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(XYRGBA8) * pointsCount, points.get(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
@@ -97,7 +97,7 @@ void main() {
 		indexsCount = 0;
 	}
 
-	XYRGBA8* Shader_XyC::DrawLineStrip(size_t const& pc) {
+	XYRGBA8* Shader_LineStrip::DrawLineStrip(size_t const& pc) {
 		assert(pc <= maxVertNums);
 		auto&& c = pointsCount + pc;
 		if (c > maxVertNums) {
@@ -114,7 +114,7 @@ void main() {
 		return rtv;
 	}
 
-	void Shader_XyC::DrawLineStrip(XYRGBA8* pointsBuf, size_t const& pc) {
+	void Shader_LineStrip::DrawLineStrip(XYRGBA8* pointsBuf, size_t const& pc) {
 		memcpy(DrawLineStrip(pc), pointsBuf, sizeof(XYRGBA8) * pc);
 	}
 

@@ -27,8 +27,8 @@ namespace xx {
 
 
 		// make all
-		shaders[Shader_XyUvC::index] = xx::Make<Shader_XyUvC>();
-		shaders[Shader_XyC::index] = xx::Make<Shader_XyC>();
+		shaders[Shader_Quad::index] = xx::Make<Shader_Quad>();
+		shaders[Shader_LineStrip::index] = xx::Make<Shader_LineStrip>();
 		// ... more make here
 
 		// init all
@@ -37,7 +37,7 @@ namespace xx {
 		}
 
 		// set default
-		cursor = Shader_XyUvC::index;
+		cursor = Shader_Quad::index;
 	}
 
 	void ShaderManager::Begin() {
@@ -51,13 +51,13 @@ namespace xx {
 
 	size_t ShaderManager::GetDrawCall() {
 		return drawCall
-			+ (RefShader<Shader_XyC>().pointsCount > 0 ? 1 : 0)
-			+ RefShader<Shader_XyUvC>().texsCount
+			+ (RefShader<Shader_LineStrip>().pointsCount > 0 ? 1 : 0)
+			+ RefShader<Shader_Quad>().texsCount
 			;
 	}
 
 	size_t ShaderManager::GetDrawQuads() {
-		auto& s = RefShader<Shader_XyUvC>();
+		auto& s = RefShader<Shader_Quad>();
 		size_t j = 0;
 		for (size_t i = 0; i < s.texsCount; i++) {
 			j += s.texs[i].second;
@@ -66,7 +66,7 @@ namespace xx {
 	}
 
 	size_t ShaderManager::GetDrawLines() {
-		auto& s = RefShader<Shader_XyC>();
+		auto& s = RefShader<Shader_LineStrip>();
 		return drawLinePoints + s.indexsCount;
 	}
 

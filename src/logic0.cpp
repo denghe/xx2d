@@ -9,6 +9,8 @@
 #include "logic6.h"
 #include "logic7.h"
 #include "logic8.h"
+#include "logic9.h"
+#include "logic10.h"
 
 void Logic0::Init(Logic* logic) {
 	this->logic = logic;
@@ -16,16 +18,21 @@ void Logic0::Init(Logic* logic) {
 	std::cout << "Logic0 Init( main menu )" << std::endl;
 
 	meListener.Init(xx::Mbtns::Left);
-	menus.emplace_back().Init(logic, { -500, 200 }, "1: tiledmap", 64);
-	menus.emplace_back().Init(logic, { 0, 200 }, "2: circle drag", 64);
-	menus.emplace_back().Init(logic, { 500, 200 }, "3: box button", 64);
+	menus.emplace_back().Init(logic, { -500, 300 }, "1: tiledmap", 48);
+	menus.emplace_back().Init(logic, { 0, 300 }, "2: circle drag", 48);
+	menus.emplace_back().Init(logic, { 500, 300 }, "3: box button", 48);
 
-	menus.emplace_back().Init(logic, { -500, 0 }, "4: space grid physics", 64);
-	menus.emplace_back().Init(logic, { 0, 0 }, "5: space grid ab", 64);
-	menus.emplace_back().Init(logic, { 500, 0 }, "6: circle + box physics", 64);
+	menus.emplace_back().Init(logic, { -500, 100 }, "4: space grid physics", 48);
+	menus.emplace_back().Init(logic, { 0, 100 }, "5: space grid ab", 48);
+	menus.emplace_back().Init(logic, { 500, 100 }, "6: circle + box physics", 48);
 
-	menus.emplace_back().Init(logic, { -500, -200 }, "7: more circle + box", 64);
-	menus.emplace_back().Init(logic, { 0, -200 }, "8: node tests", 64);
+	menus.emplace_back().Init(logic, { -500, -100 }, "7: more circle + box", 48);
+	menus.emplace_back().Init(logic, { 0, -100 }, "8: node tests", 48);
+	menus.emplace_back().Init(logic, { 500, -100 }, "9: sprite tests", 48);
+
+	menus.emplace_back().Init(logic, { -500, -300 }, "10: quad instance tests", 48);
+	//menus.emplace_back().Init(logic, { 0, -300 }, "11: ", 48);
+	//menus.emplace_back().Init(logic, { 500, -300 }, "12: ", 48);
 
 	logic->extraInfo.clear();
 }
@@ -72,6 +79,10 @@ void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 			logic->DelaySwitchTo<Logic7>();
 		} else if (txt.starts_with("8:"sv)) {
 			logic->DelaySwitchTo<Logic8>();
+		} else if (txt.starts_with("9:"sv)) {
+			logic->DelaySwitchTo<Logic9>();
+		} else if (txt.starts_with("10:"sv)) {
+			logic->DelaySwitchTo<Logic10>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}

@@ -28,4 +28,5 @@
 #include "tmx_ex.h"
 #include "spacegrid.h"
 #include "spacegridab.h"
+#include "nodes.h"
 // ...

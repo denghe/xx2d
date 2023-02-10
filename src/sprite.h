@@ -55,6 +55,9 @@ namespace xx {
 		Sprite& SetPosition(XY const& p);
 		Sprite& SetPositionX(float const& x);
 		Sprite& SetPositionY(float const& y);
+		Sprite& AddPosition(XY const& p);
+		Sprite& AddPositionX(float const& x);
+		Sprite& AddPositionY(float const& y);
 
 		Sprite& SetColor(RGBA8 const& c);
 
@@ -70,6 +73,7 @@ namespace xx {
 
 		// need commit
 		void Draw();
+		void DrawWithoutCommit();
 		void SubDraw();	// set dirtyParentAffineTransform = true & Draw()
 		void Draw(AffineTransform const& t);
 	};

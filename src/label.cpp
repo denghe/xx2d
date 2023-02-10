@@ -119,7 +119,7 @@ namespace xx {
 	 
 	void Label::Draw() {
 		Commit();
-		auto& s = engine.sm.GetShader<Shader_XyUvC>();
+		auto& s = engine.sm.GetShader<Shader_Quad>();
 		for (auto& c : chars) {
 			s.DrawQuad(*c.tex, c.qv);
 		}
@@ -127,7 +127,7 @@ namespace xx {
 
 	void Label::Draw(AffineTransform const& t) {
 		Commit();
-		auto& s = engine.sm.GetShader<Shader_XyUvC>();
+		auto& s = engine.sm.GetShader<Shader_Quad>();
 		for (auto& c : chars) {
 			auto&& q = s.DrawQuadBegin(*c.tex);
 			(XY&)q[0].x = t.Apply(c.qv[0]);

@@ -2,7 +2,7 @@
 
 namespace xx {
 
-	void Shader_XyUvC::Init(ShaderManager* sm) {
+	void Shader_Quad::Init(ShaderManager* sm) {
 		this->sm = sm;
 		v = LoadGLVertexShader({ R"(#version 300 es
 precision highp float;
@@ -78,7 +78,7 @@ void main() {
 		CheckGLError();
 	}
 
-	void Shader_XyUvC::Begin() {
+	void Shader_Quad::Begin() {
 		if (sm->cursor != index) {
 			// here can check shader type for combine batch
 			sm->shaders[sm->cursor]->End();
@@ -93,7 +93,7 @@ void main() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	}
 
-	void Shader_XyUvC::End() {
+	void Shader_Quad::End() {
 		if (quadVertsCount) {
 			Commit();
 		}
@@ -103,7 +103,7 @@ void main() {
 		// glUseProgram(0);
 	}
 
-	void Shader_XyUvC::Commit() {
+	void Shader_Quad::Commit() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVerts) * quadVertsCount, quadVerts.get(), GL_DYNAMIC_DRAW);
 
@@ -124,7 +124,7 @@ void main() {
 		quadVertsCount = 0;
 	}
 
-	QuadVerts& Shader_XyUvC::DrawQuadBegin(GLTexture& tex) {
+	QuadVerts& Shader_Quad::DrawQuadBegin(GLTexture& tex) {
 		if (quadVertsCount == maxQuadNums) {
 			Commit();
 		}
@@ -139,11 +139,11 @@ void main() {
 		return quadVerts[quadVertsCount];
 	}
 
-	void Shader_XyUvC::DrawQuadEnd() {
+	void Shader_Quad::DrawQuadEnd() {
 		++quadVertsCount;
 	}
 
-	void Shader_XyUvC::DrawQuad(GLTexture& tex, QuadVerts const& qv) {
+	void Shader_Quad::DrawQuad(GLTexture& tex, QuadVerts const& qv) {
 		auto&& tar = DrawQuadBegin(tex);
 		memcpy(&tar, qv.data(), sizeof(qv));
 		DrawQuadEnd();
