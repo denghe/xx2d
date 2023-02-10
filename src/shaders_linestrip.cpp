@@ -6,7 +6,7 @@ namespace xx {
 		this->sm = sm;
 		v = LoadGLVertexShader({ R"(#version 300 es
 precision highp float;
-uniform vec2 uCxy;	// center x y
+uniform vec2 uCxy;	// screen center coordinate
 
 in vec2 aPos;
 in vec4 aColor;

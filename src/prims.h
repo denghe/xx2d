@@ -155,23 +155,11 @@ namespace xx {
         bool operator!=(RGBA8 const&) const = default;
     };
 
-    // 1 vert data
-    struct XYUVRGBA8 : XY, UV, RGBA8 {};
-
-    /*
-     1┌────┐2
-      │    │
-     0└────┘3
-    */
-    using QuadVerts = std::array<XYUVRGBA8, 4>;
-
-    // 1 point data ( for draw line strip )
-    struct XYRGBA8 : XY, RGBA8 {};
-
-    //
+    // pos + size
     struct Rect : XY {
         XY wh;
     };
+
 
     // for node, cam, ... 
     // reference from cocos 2.x AffineTransform

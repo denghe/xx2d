@@ -24,7 +24,7 @@ namespace xx {
 	struct Engine;
 	struct ShaderManager {
 		// all shader instance container
-		std::array<xx::Shared<Shader>, 2> shaders{};
+		std::array<xx::Shared<Shader>, 3> shaders{};
 
 		// store current shaders index
 		size_t cursor = -1;
@@ -61,7 +61,18 @@ namespace xx {
 
 	/***************************************************************************************************/
 
-	// for draw quad
+	// 1 vert data
+	struct XYUVRGBA8 : XY, UV, RGBA8 {};
+
+	/*
+	 1┌────┐2
+	  │    │
+	 0└────┘3
+	*/
+	using QuadVerts = std::array<XYUVRGBA8, 4>;
+
+
+	// for draw quad	// todo: change to vertex mode
 	struct Shader_Quad : Shader {
 		static const size_t index = 0;	// index at sm->shaders
 
@@ -90,9 +101,47 @@ namespace xx {
 
 	/***************************************************************************************************/
 
+	struct QuadInstanceData {
+		XY pos;
+		float scale, radians;
+		RGBA8 color;
+		uint16_t texRectX, texRectY, texRectW, texRectH;    // normalize
+	};
+
+	// for draw quad by drawInstance
+	struct Shader_QuadInstance : Shader {
+		static const size_t index = 1;	// index at sm->shaders
+
+		GLint uCxy = -1, uTex0 = -1, aVert = -1, aPosScaleRadians = -1, aColor = -1, aTexRect = -1;
+		GLVertexArrays va;
+		GLBuffer vb, ib;
+
+		static const size_t maxQuadNums = 200000;
+		GLuint lastTextureId = 0;
+		std::unique_ptr<std::pair<GLuint, int>[]> texs = std::make_unique<std::pair<GLuint, int>[]>(maxQuadNums);	// tex id + count
+		size_t texsCount = 0;
+		std::unique_ptr<QuadInstanceData[]> quadVerts = std::make_unique<QuadInstanceData[]>(maxQuadNums);
+		size_t quadVertsCount = 0;
+
+		void Init(ShaderManager*) override;
+		void Begin() override;
+		void End() override;
+
+		void Commit();
+		QuadInstanceData& DrawQuadBegin(GLTexture& tex);	// need fill & commit
+		void DrawQuadEnd();
+
+		void DrawQuad(GLTexture& tex, QuadInstanceData const& qv);	// memcpy & commit
+	};
+
+	/***************************************************************************************************/
+
+	// 1 point data ( for draw line strip )
+	struct XYRGBA8 : XY, RGBA8 {};
+
 	// for draw line strip
 	struct Shader_LineStrip : Shader {
-		static const size_t index = 1;	// index at sm->shaders
+		static const size_t index = 2;	// index at sm->shaders
 
 		GLint uCxy = -1, aPos = -1, aColor = -1;
 		GLVertexArrays va;

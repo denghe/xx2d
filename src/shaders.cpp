@@ -28,6 +28,7 @@ namespace xx {
 
 		// make all
 		shaders[Shader_Quad::index] = xx::Make<Shader_Quad>();
+		shaders[Shader_QuadInstance::index] = xx::Make<Shader_QuadInstance>();
 		shaders[Shader_LineStrip::index] = xx::Make<Shader_LineStrip>();
 		// ... more make here
 
@@ -53,6 +54,7 @@ namespace xx {
 		return drawCall
 			+ (RefShader<Shader_LineStrip>().pointsCount > 0 ? 1 : 0)
 			+ RefShader<Shader_Quad>().texsCount
+			//+ RefShader<Shader_QuadInstance>().texsCount
 			;
 	}
 
@@ -63,11 +65,12 @@ namespace xx {
 			j += s.texs[i].second;
 		}
 		return drawQuads + j;
+
+		// Shader_QuadInstance ??
 	}
 
 	size_t ShaderManager::GetDrawLines() {
 		auto& s = RefShader<Shader_LineStrip>();
 		return drawLinePoints + s.indexsCount;
 	}
-
 }
