@@ -36,10 +36,9 @@ namespace xx {
 		// change user data funcs
 
 		Sprite& SetTexture(xx::Shared<GLTexture> t);	// do not override anchor
+		Sprite& SetFrame(xx::Shared<Frame> f, bool overrideAnchor = true);
 
 		XY& Size() const;	// return frame.spriteSize
-
-		Sprite& SetFrame(xx::Shared<Frame> f, bool overrideAnchor = true);
 
 		Sprite& SetFlipX(bool const& fx);
 		Sprite& SetFlipY(bool const& fy);

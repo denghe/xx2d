@@ -120,8 +120,8 @@ namespace xx {
 		GLuint lastTextureId = 0;
 		std::unique_ptr<std::pair<GLuint, int>[]> texs = std::make_unique<std::pair<GLuint, int>[]>(maxQuadNums);	// tex id + count
 		size_t texsCount = 0;
-		std::unique_ptr<QuadInstanceData[]> quadVerts = std::make_unique<QuadInstanceData[]>(maxQuadNums);
-		size_t quadVertsCount = 0;
+		std::unique_ptr<QuadInstanceData[]> quadInstanceDatas = std::make_unique<QuadInstanceData[]>(maxQuadNums);
+		size_t quadCount = 0;
 
 		void Init(ShaderManager*) override;
 		void Begin() override;

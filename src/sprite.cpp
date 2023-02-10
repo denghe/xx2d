@@ -29,6 +29,7 @@ namespace xx {
 	}
 
 	XY& Sprite::Size() const {
+		assert(frame);
 		return frame->spriteSize;
 	}
 

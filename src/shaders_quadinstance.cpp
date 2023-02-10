@@ -31,7 +31,7 @@ void main() {
        dot(anchor, vec2(c, s)),
        dot(anchor, vec2(-s, c))
     );
-    vec2 vv = (v + pos) / uCxy;
+    vec2 vv = (v + pos) * uCxy + vec2(-1, -1);
     gl_Position = vec4(vv.x, vv.y, 0, 1);
 
 	vColor = aColor;
@@ -67,8 +67,8 @@ void main() {
 
 		glGenBuffers(1, (GLuint*)&ib);
 
-		glBindBuffer(GL_ARRAY_BUFFER, ib);
 		static const float verts[8] = { 0, 0,    0, 1.f,    1.f, 0,    1.f, 1.f };
+		glBindBuffer(GL_ARRAY_BUFFER, ib);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
 		glVertexAttribPointer(aVert, 2, GL_FLOAT, GL_FALSE, 8, 0);
 		glEnableVertexAttribArray(aVert);
@@ -86,7 +86,6 @@ void main() {
 		glEnableVertexAttribArray(aTexRect);
 
 		glBindVertexArray(0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		CheckGLError();
@@ -101,20 +100,20 @@ void main() {
 
 		glUseProgram(p);
 		glUniform1i(uTex0, 0);
-		glUniform2f(uCxy, engine.w / 2, engine.h / 2);
+		glUniform2f(uCxy, 2 / engine.w, 2 / engine.h);
 
 		glBindVertexArray(va);
 	}
 
 	void Shader_QuadInstance::End() {
-		if (quadVertsCount) {
+		if (quadCount) {
 			Commit();
 		}
 	}
 
 	void Shader_QuadInstance::Commit() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(QuadInstanceData) * quadVertsCount, quadVerts.get(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(QuadInstanceData) * quadCount, quadInstanceDatas.get(), GL_DYNAMIC_DRAW);
 
 		size_t j = 0;
 		for (size_t i = 0; i < texsCount; i++) {
@@ -130,11 +129,11 @@ void main() {
 
 		lastTextureId = 0;
 		texsCount = 0;
-		quadVertsCount = 0;
+		quadCount = 0;
 	}
 
 	QuadInstanceData& Shader_QuadInstance::DrawQuadBegin(GLTexture& tex) {
-		if (quadVertsCount == maxQuadNums) {
+		if (quadCount == maxQuadNums) {
 			Commit();
 		}
 		if (lastTextureId != tex) {
@@ -145,11 +144,11 @@ void main() {
 		} else {
 			texs[texsCount - 1].second += 1;
 		}
-		return quadVerts[quadVertsCount];
+		return quadInstanceDatas[quadCount];
 	}
 
 	void Shader_QuadInstance::DrawQuadEnd() {
-		++quadVertsCount;
+		++quadCount;
 	}
 
 	void Shader_QuadInstance::DrawQuad(GLTexture& tex, QuadInstanceData const& qv) {
