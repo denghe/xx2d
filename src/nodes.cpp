@@ -3,6 +3,10 @@
 
 namespace xx {
 
+	SpriteNode::Child& SpriteNode::operator[](size_t const& idx) {
+		return children[idx];
+	}
+
 	void SpriteNode::FillParentAffineTransaction() {
 		FillParentAffineTransaction(children, &at);
 	}

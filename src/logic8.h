@@ -9,6 +9,3 @@ struct Logic8 : LogicBase {
 
 	xx::SpriteNode node;
 };
-
-//xx::LineStrip ls;
-//xx::LineStrip border, center;
