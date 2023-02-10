@@ -6,7 +6,7 @@ namespace xx {
 		return !frame;
 	}
 
-	void Sprite::SetTexture(xx::Shared<GLTexture> t) {
+	Sprite& Sprite::SetTexture(xx::Shared<GLTexture> t) {
 		dirtyFrame = 1;
 		auto&& f = *frame.Emplace();
 		f.anchor = { 0.5, 0.5 };
@@ -15,66 +15,83 @@ namespace xx {
 		f.spriteOffset = { 0, 0 };
 		f.textureRect = { 0, 0, frame->spriteSize.x, frame->spriteSize.y };
 		f.tex = std::move(t);
+		return *this;
 	}
 
-	void Sprite::SetFrame(xx::Shared<Frame> f, bool overrideAnchor) {
+	Sprite& Sprite::SetFrame(xx::Shared<Frame> f, bool overrideAnchor) {
 		dirtyFrame = 1;
 		frame = std::move(f);
 		if (overrideAnchor && frame->anchor.has_value() && anchor != *frame->anchor) {
 			dirtySizeAnchorPosScaleRotate = 1;
 			anchor = *frame->anchor;
 		}
+		return *this;
 	}
 
-	void Sprite::SetFlipX(bool const& fx) {
+	XY& Sprite::Size() const {
+		return frame->spriteSize;
+	}
+
+	Sprite& Sprite::SetFlipX(bool const& fx) {
 		dirtyFrame = 1;
 		flipX = fx;
+		return *this;
 	}
-	void Sprite::SetFlipY(bool const& fy) {
+	Sprite& Sprite::SetFlipY(bool const& fy) {
 		dirtyFrame = 1;
 		flipY = fy;
+		return *this;
 	}
 
-	void Sprite::SetAnchor(XY const& a) {
+	Sprite& Sprite::SetAnchor(XY const& a) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		anchor = a;
+		return *this;
 	}
 
-	void Sprite::SetRotate(float const& r) {
+	Sprite& Sprite::SetRotate(float const& r) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		radians = r;
+		return *this;
 	}
 
-	void Sprite::SetScale(XY const& s) {
+	Sprite& Sprite::SetScale(XY const& s) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		scale = s;
+		return *this;
 	}
-	void Sprite::SetScale(float const& s) {
+	Sprite& Sprite::SetScale(float const& s) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		scale = { s, s };
+		return *this;
 	}
 
-	void Sprite::SetPosition(XY const& p) {
+	Sprite& Sprite::SetPosition(XY const& p) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		pos = p;
+		return *this;
 	}
-	void Sprite::SetPositionX(float const& x) {
+	Sprite& Sprite::SetPositionX(float const& x) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		pos.x = x;
+		return *this;
 	}
-	void Sprite::SetPositionY(float const& y) {
+	Sprite& Sprite::SetPositionY(float const& y) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		pos.y = y;
+		return *this;
 	}
 
-	void Sprite::SetColor(RGBA8 const& c) {
+	Sprite& Sprite::SetColor(RGBA8 const& c) {
 		dirtyColor = 1;
 		color = c;
+		return *this;
 	}
 
-	void Sprite::SetParentAffineTransform(AffineTransform* const& t) {
+	Sprite& Sprite::SetParentAffineTransform(AffineTransform* const& t) {
 		dirtyParentAffineTransform = 1;
 		pat = t;
+		return *this;
 	}
 
 	void Sprite::Commit() {

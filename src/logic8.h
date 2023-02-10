@@ -6,7 +6,6 @@ struct Logic8;
 
 struct SpriteNode {
 	xx::Sprite sprite;
-	xx::LineStrip border, center;
 	std::vector<xx::Shared<SpriteNode>> children;
 };
 
@@ -14,7 +13,31 @@ struct Logic8 : LogicBase {
 	void Init(Logic* logic) override;
 	int Update() override;
 
-	xx::Shared<xx::GLTexture> t;
-	SpriteNode n;
+	SpriteNode node;
 	xx::LineStrip ls;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//xx::LineStrip border, center;

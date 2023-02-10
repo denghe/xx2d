@@ -17,9 +17,9 @@ void Foo::Init(xx::SpaceGridAB<Foo>* grid, int32_t x, int32_t y, int32_t w, int3
 void Foo::SyncBorder() {
 	auto hw = halfSize.x, hh = halfSize.y;
 	border.Emplace();
-	border->SetPoints() = { {-hw, hh}, {hw, hh}, {hw, -hh}, {-hw, -hh}, {-hw, hh} };
-	border->SetPosition({ (float)_sgabPos.x, -(float)_sgabPos.y });	// flip y to gl coordinate
-	border->SetColor(color);
+	border->FillBoxPoints({}, size)
+		.SetPosition({ (float)_sgabPos.x, -(float)_sgabPos.y })	// flip y to gl coordinate
+		.SetColor(color);
 }
 
 Foo::~Foo() {

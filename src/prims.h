@@ -104,7 +104,7 @@ namespace xx {
         }
 
         template<typename U = float>
-        auto As() -> Pos<U> const {
+        auto As() const -> Pos<U> {
             return { (U)x, (U)y };
         }
 

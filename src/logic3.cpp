@@ -56,14 +56,10 @@ void Button::HandleMouseUp(ButtonMouseEventListener& L) {
 void Button::Init(Logic* const& logic, xx::XY const& pos, xx::XY const& borderSize, std::string_view const& txt_, float const& fontSize) {
 	this->logic = logic;
 	txt = txt_;
-	auto hw = borderSize.x / 2;
-	auto hh = borderSize.y / 2;
-	leftBottom = { pos.x - hw, pos.y - hh };
-	rightTop = { pos.x + hw, pos.y + hh };
-	border.SetPoints() = { {-hw,-hh},{-hw,hh},{hw,hh},{hw,-hh},{-hw,-hh} };
-	border.SetPosition(pos);
-	content.SetText(logic->fnt1, txt, fontSize);
-	content.SetPosition(pos);
+	border.FillBoxPoints({}, borderSize)
+		.SetPosition(pos);
+	content.SetText(logic->fnt1, txt, fontSize)
+		.SetPosition(pos);
 }
 
 bool Button::Inside(xx::XY const& p) {

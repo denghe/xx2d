@@ -2,7 +2,7 @@
 
 namespace xx {
 
-	void Label::SetText(BMFont bmf, std::string_view const& text, float const& fontSize) {
+	Label& Label::SetText(BMFont bmf, std::string_view const& text, float const& fontSize) {
 		dirty = 0xFFFFFFFFu;
 
 		// todo: utf8, kerning?
@@ -44,44 +44,53 @@ namespace xx {
 			}
 		}
 		size = { px, (float)bmf.lineHeight * s };
+		return *this;
 	}
 
-	void Label::SetAnchor(XY const& a) {
+	Label& Label::SetAnchor(XY const& a) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
 		anchor = a;
+		return *this;
 	}
 
-	void Label::SetRotate(float const& r) {
+	Label& Label::SetRotate(float const& r) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
 		radians = r;
+		return *this;
 	}
 
-	void Label::SetScale(XY const& s) {
+	Label& Label::SetScale(XY const& s) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
 		scale = s;
+		return *this;
 	}
-	void Label::SetScale(float const& s) {
+	Label& Label::SetScale(float const& s) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
 		scale = { s, s };
+		return *this;
 	}
 
-	void Label::SetPosition(XY const& p) {
+	Label& Label::SetPosition(XY const& p) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
 		pos = p;
+		return *this;
 	}
 
-	void Label::SetPositionX(float const& x) {
+	Label& Label::SetPositionX(float const& x) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
 		pos.x = x;
+		return *this;
 	}
-	void Label::SetPositionY(float const& y) {
+	Label& Label::SetPositionY(float const& y) {
 		dirtyTextSizeAnchorPosScaleRotate = 1;
 		pos.y = y;
+		return *this;
 	}
 
-	void Label::SetColor(RGBA8 const& c) {
+	Label& Label::SetColor(RGBA8 const& c) {
 		dirtyColor = 1;
 		color = c;
+		return *this;
 	}
 
 	void Label::Commit() {

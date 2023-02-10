@@ -40,23 +40,23 @@ namespace xx {
 		// change user data funcs
 
 		// default anchor: 0, 1
-		void SetText(BMFont bmf, std::string_view const& text, float const& fontSize = 32.f);
+		Label& SetText(BMFont bmf, std::string_view const& text, float const& fontSize = 32.f);
 
-		void SetFlipX(bool const& fx);
-		void SetFlipY(bool const& fy);
+		Label& SetFlipX(bool const& fx);
+		Label& SetFlipY(bool const& fy);
 
-		void SetAnchor(XY const& a);
+		Label& SetAnchor(XY const& a);
 
-		void SetRotate(float const& r);
+		Label& SetRotate(float const& r);
 
-		void SetScale(XY const& s);
-		void SetScale(float const& s);
+		Label& SetScale(XY const& s);
+		Label& SetScale(float const& s);
 
-		void SetPosition(XY const& p);
-		void SetPositionX(float const& x);
-		void SetPositionY(float const& y);
+		Label& SetPosition(XY const& p);
+		Label& SetPositionX(float const& x);
+		Label& SetPositionY(float const& y);
 
-		void SetColor(RGBA8 const& c);
+		Label& SetColor(RGBA8 const& c);
 
 		void Commit();
 

@@ -18,21 +18,21 @@ namespace xx {
 
 		std::vector<XY>& SetPoints();
 
-		void FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle = {}, int const& segments = 100, XY const& scale = { 1,1 });
-		void FillBoxPoints(XY const& center, XY const& wh);
+		LineStrip& FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle = {}, int const& segments = 100, XY const& scale = { 1,1 });
+		LineStrip& FillBoxPoints(XY const& center, XY const& wh);
 
-		void SetSize(XY const& s);
+		LineStrip& SetSize(XY const& s);
 
-		void SetAnchor(XY const& a);
+		LineStrip& SetAnchor(XY const& a);
 
-		void SetRotate(float const& r);
+		LineStrip& SetRotate(float const& r);
 
-		void SetScale(XY const& s);
-		void SetScale(float const& s);
+		LineStrip& SetScale(XY const& s);
+		LineStrip& SetScale(float const& s);
 
-		void SetPosition(XY const& p);
+		LineStrip& SetPosition(XY const& p);
 
-		void SetColor(RGBA8 const& c);
+		LineStrip& SetColor(RGBA8 const& c);
 
 		void Commit();
 

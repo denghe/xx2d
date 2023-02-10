@@ -35,27 +35,29 @@ namespace xx {
 		/***************************************************************************/
 		// change user data funcs
 
-		void SetTexture(xx::Shared<GLTexture> t);	// do not override anchor
+		Sprite& SetTexture(xx::Shared<GLTexture> t);	// do not override anchor
 
-		void SetFrame(xx::Shared<Frame> f, bool overrideAnchor = true);
+		XY& Size() const;	// return frame.spriteSize
 
-		void SetFlipX(bool const& fx);
-		void SetFlipY(bool const& fy);
+		Sprite& SetFrame(xx::Shared<Frame> f, bool overrideAnchor = true);
 
-		void SetAnchor(XY const& a);
+		Sprite& SetFlipX(bool const& fx);
+		Sprite& SetFlipY(bool const& fy);
 
-		void SetRotate(float const& r);
+		Sprite& SetAnchor(XY const& a);
 
-		void SetScale(XY const& s);
-		void SetScale(float const& s);
+		Sprite& SetRotate(float const& r);
 
-		void SetPosition(XY const& p);
-		void SetPositionX(float const& x);
-		void SetPositionY(float const& y);
+		Sprite& SetScale(XY const& s);
+		Sprite& SetScale(float const& s);
 
-		void SetColor(RGBA8 const& c);
+		Sprite& SetPosition(XY const& p);
+		Sprite& SetPositionX(float const& x);
+		Sprite& SetPositionY(float const& y);
 
-		void SetParentAffineTransform(AffineTransform* const& t);
+		Sprite& SetColor(RGBA8 const& c);
+
+		Sprite& SetParentAffineTransform(AffineTransform* const& t);
 
 		void Commit();
 

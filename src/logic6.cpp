@@ -297,9 +297,9 @@ void DragCircle::Init(Logic6* const& owner, xx::XY const& pos, float const& radi
 	this->radius = radius;
 	this->radiusPow2 = radius * radius;
 
-	border.FillCirclePoints({ 0,0 }, radius, {}, segments);
-	border.SetColor({ 255, 255, 0, 255 });
-	border.SetPosition(pos);
+	border.FillCirclePoints({ 0,0 }, radius, {}, segments)
+		.SetColor({ 255, 255, 0, 255 })
+		.SetPosition(pos);
 }
 
 
@@ -319,7 +319,7 @@ void DragBox::Init(xx::XY const& pos, xx::XY const& size) {
 	this->pos = pos;
 	this->size = size;
 
-	border.FillBoxPoints({}, size);
-	border.SetColor({ 0, 255, 0, 255 });
-	border.SetPosition(pos);
+	border.FillBoxPoints({}, size)
+		.SetColor({ 0, 255, 0, 255 })
+		.SetPosition(pos);
 }

@@ -65,9 +65,9 @@ void Logic1::Init(Logic* logic) {
 				} else {
 					s.SetFrame(gidFAs[gid].frame);
 				}
-				s.SetColor({ 255, 255, 255, 255 });
-				s.SetScale({ 1, 1 });
-				s.SetPosition({ float(cx * (int)map.tileWidth), float(-cy * (int)map.tileHeight) });
+				s.SetColor({ 255, 255, 255, 255 })
+					.SetScale({ 1, 1 })
+					.SetPosition({ float(cx * (int)map.tileWidth), float(-cy * (int)map.tileHeight) });
 			}
 		}
 	};
@@ -102,8 +102,8 @@ void Logic1::Init(Logic* logic) {
 		}
 	}
 	player.yOffset = maxSpriteHeight * player.scale * anchor;
-	player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame);
-	player.sprite.SetScale(player.scale);
+	player.sprite.SetFrame(player.anim.GetCurrentAnimFrame().frame)
+		.SetScale(player.scale);
 	player.footPos = cam.pos;
 }
 

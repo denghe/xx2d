@@ -53,7 +53,7 @@ void DragableCircle::HandleMouseUp(DragableCircleMouseEventListener& L) {
 
 void DragableCircle::Init(xx::XY const& pos, float const& radius, int const& segments) {
 	this->radius_square = radius * radius;
-	this->FillCirclePoints({ 0,0 }, radius, {}, segments);
-	this->SetColor({ 255, 255, 0, 255 });
-	this->SetPosition(pos);
+	this->FillCirclePoints({ 0,0 }, radius, {}, segments)
+		.SetColor({ 255, 255, 0, 255 })
+		.SetPosition(pos);
 }

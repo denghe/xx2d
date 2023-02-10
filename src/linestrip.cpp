@@ -7,7 +7,7 @@ namespace xx {
 		return points;
 	}
 
-	void LineStrip::FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle, int const& segments, XY const& scale) {
+	LineStrip& LineStrip::FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle, int const& segments, XY const& scale) {
 		dirty = true;
 		points.reserve(segments + 2);
 		points.resize(segments + 1);
@@ -21,9 +21,10 @@ namespace xx {
 		if (angle.has_value()) {
 			points.push_back(center);
 		}
+		return *this;
 	}
 
-	void LineStrip::FillBoxPoints(XY const& center, XY const& wh) {
+	LineStrip& LineStrip::FillBoxPoints(XY const& center, XY const& wh) {
 		auto hwh = wh / 2;
 		points.resize(5);
 		points[0] = { -hwh.x, -hwh.y };
@@ -31,40 +32,48 @@ namespace xx {
 		points[2] = { hwh.x,hwh.y };
 		points[3] = { hwh.x,-hwh.y };
 		points[4] = { -hwh.x,-hwh.y };
+		return *this;
 	}
 
-	void LineStrip::SetSize(XY const& s) {
+	LineStrip& LineStrip::SetSize(XY const& s) {
 		dirty = true;
 		size = s;
+		return *this;
 	}
 
-	void LineStrip::SetAnchor(XY const& a) {
+	LineStrip& LineStrip::SetAnchor(XY const& a) {
 		dirty = true;
 		anchor = a;
+		return *this;
 	}
 
-	void LineStrip::SetRotate(float const& r) {
+	LineStrip& LineStrip::SetRotate(float const& r) {
 		dirty = true;
 		radians = r;
+		return *this;
 	}
 
-	void LineStrip::SetScale(XY const& s) {
+	LineStrip& LineStrip::SetScale(XY const& s) {
 		dirty = true;
 		scale = s;
+		return *this;
 	}
-	void LineStrip::SetScale(float const& s) {
+	LineStrip& LineStrip::SetScale(float const& s) {
 		dirty = true;
 		scale = { s, s };
+		return *this;
 	}
 
-	void LineStrip::SetPosition(XY const& p) {
+	LineStrip& LineStrip::SetPosition(XY const& p) {
 		dirty = true;
 		pos = p;
+		return *this;
 	}
 
-	void LineStrip::SetColor(RGBA8 const& c) {
+	LineStrip& LineStrip::SetColor(RGBA8 const& c) {
 		dirty = true;
 		color = c;
+		return *this;
 	}
 
 	void LineStrip::Commit() {
