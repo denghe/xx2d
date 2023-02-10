@@ -47,6 +47,7 @@ namespace xx {
 		Sprite& SetAnchor(XY const& a);
 
 		Sprite& SetRotate(float const& r);
+		Sprite& AddRotate(float const& r);	// radians += r
 
 		Sprite& SetScale(XY const& s);
 		Sprite& SetScale(float const& s);

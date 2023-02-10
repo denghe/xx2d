@@ -55,6 +55,12 @@ namespace xx {
 		return *this;
 	}
 
+	Sprite& Sprite::AddRotate(float const& r) {
+		dirtySizeAnchorPosScaleRotate = 1;
+		radians += r;
+		return *this;
+	}
+
 	Sprite& Sprite::SetScale(XY const& s) {
 		dirtySizeAnchorPosScaleRotate = 1;
 		scale = s;

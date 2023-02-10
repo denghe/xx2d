@@ -6,10 +6,6 @@ void Logic8::Init(Logic* logic) {
 	this->logic = logic;
 	std::cout << "Logic8 Init( node tests )" << std::endl;
 
-	ls.FillCirclePoints({}, 8, {}, 8)
-		.SetColor({ 255,0,0,255 })
-		.SetPosition({ -16 * 8, -16 * 8 });
-	
 	auto tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 
 	node.SetTexture(tex).SetScale(8);
@@ -28,12 +24,16 @@ void Logic8::Init(Logic* logic) {
 
 int Logic8::Update() {
 
-	node.SetRotate(node.radians + 0.000001);
+	node.AddRotate(0.00001);
+	node.children[0]->AddRotate(-0.0001);
+	node.children[0]->children[0]->AddRotate(0.0001);
 	node.Draw();
-	ls.Draw();
 
 	return 0;
 }
 
-
+//ls.FillCirclePoints({}, 8, {}, 8)
+//.SetColor({ 255,0,0,255 })
+//.SetPosition({ -16 * 8, -16 * 8 });
+//ls.Draw();
 //c->border.FillBoxPoints({}, c->sprite.Size());

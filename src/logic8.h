@@ -8,7 +8,7 @@ struct Logic8 : LogicBase {
 	int Update() override;
 
 	xx::SpriteNode node;
-	xx::LineStrip ls;
 };
 
+//xx::LineStrip ls;
 //xx::LineStrip border, center;
