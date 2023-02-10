@@ -14,7 +14,7 @@ namespace xx {
 			std::array<XY, 4> posBak;
 		};
 		std::vector<Char> chars;
-		Size size;
+		XY size;
 		AffineTransform at;
 
 		union {

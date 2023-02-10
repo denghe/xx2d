@@ -67,17 +67,17 @@ namespace xx {
 
 		if (i = text.find('{'); i == text.npos) return __LINE__;
 		if (j = text.find('}', i + 4); j == text.npos) return __LINE__;
-		if (ReadInteger2(CutStr(text, i + 1, j - i - 1), o.spriteSize.w, o.spriteSize.h)) return __LINE__;
+		if (ReadInteger2(CutStr(text, i + 1, j - i - 1), o.spriteSize.x, o.spriteSize.y)) return __LINE__;
 		CutStr(text, j + 10);													// skip    }</string>
 
 		if (i = text.find('{'); i == text.npos) return __LINE__;
 		if (j = text.find('}', i + 4); j == text.npos) return __LINE__;
-		if (ReadInteger2(CutStr(text, i + 1, j - i - 1), o.spriteSourceSize.w, o.spriteSourceSize.h)) return __LINE__;
+		if (ReadInteger2(CutStr(text, i + 1, j - i - 1), o.spriteSourceSize.x, o.spriteSourceSize.y)) return __LINE__;
 		CutStr(text, j + 10);													// skip    }</string>
 
 		if (i = text.find("{{"sv); i == text.npos) return __LINE__;
 		if (j = text.find("}}"sv, i + 10); j == text.npos) return __LINE__;
-		ReadInteger4(CutStr(text, i + 2, j - i - 2), o.textureRect.x, o.textureRect.y, o.textureRect.w, o.textureRect.h);
+		ReadInteger4(CutStr(text, i + 2, j - i - 2), o.textureRect.x, o.textureRect.y, o.textureRect.wh.x, o.textureRect.wh.y);
 		CutStr(text, j + 11);													// skip    }}</string>
 
 		if (i = text.find("</k"sv); i == text.npos) return __LINE__;			// <key>textureRotated</key>

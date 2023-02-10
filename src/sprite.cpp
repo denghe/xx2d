@@ -13,7 +13,7 @@ namespace xx {
 		f.textureRotated = false;
 		f.spriteSize = frame->spriteSourceSize = { (float)std::get<1>(t->vs), (float)std::get<2>(t->vs) };
 		f.spriteOffset = { 0, 0 };
-		f.textureRect = { 0, 0, frame->spriteSize };
+		f.textureRect = { 0, 0, frame->spriteSize.x, frame->spriteSize.y };
 		f.tex = std::move(t);
 	}
 
@@ -83,56 +83,56 @@ namespace xx {
 				auto& r = frame->textureRect;
 				if (frame->textureRotated) {
 					if (flipX) {
-						qv[0].v = r.y + r.w;
-						qv[1].v = r.y + r.w;
+						qv[0].v = r.y + r.wh.x;
+						qv[1].v = r.y + r.wh.x;
 						qv[2].v = r.y;
 						qv[3].v = r.y;
 					} else {
 						qv[0].v = r.y;
 						qv[1].v = r.y;
-						qv[2].v = r.y + r.w;
-						qv[3].v = r.y + r.w;
+						qv[2].v = r.y + r.wh.x;
+						qv[3].v = r.y + r.wh.x;
 					}
 					if (flipY) {
-						qv[0].u = r.x + r.h;
+						qv[0].u = r.x + r.wh.y;
 						qv[1].u = r.x;
 						qv[2].u = r.x;
-						qv[3].u = r.x + r.h;
+						qv[3].u = r.x + r.wh.y;
 					} else {
 						qv[0].u = r.x;
-						qv[1].u = r.x + r.h;
-						qv[2].u = r.x + r.h;
+						qv[1].u = r.x + r.wh.y;
+						qv[2].u = r.x + r.wh.y;
 						qv[3].u = r.x;
 					}
 				} else {
 					if (flipX) {
-						qv[0].u = r.x + r.w;
-						qv[1].u = r.x + r.w;
+						qv[0].u = r.x + r.wh.x;
+						qv[1].u = r.x + r.wh.x;
 						qv[2].u = r.x;
 						qv[3].u = r.x;
 					} else {
 						qv[0].u = r.x;
 						qv[1].u = r.x;
-						qv[2].u = r.x + r.w;
-						qv[3].u = r.x + r.w;
+						qv[2].u = r.x + r.wh.x;
+						qv[3].u = r.x + r.wh.x;
 					}
 					if (flipY) {
 						qv[0].v = r.y;
-						qv[1].v = r.y + r.h;
-						qv[2].v = r.y + r.h;
+						qv[1].v = r.y + r.wh.y;
+						qv[2].v = r.y + r.wh.y;
 						qv[3].v = r.y;
 					} else {
-						qv[0].v = r.y + r.h;
+						qv[0].v = r.y + r.wh.y;
 						qv[1].v = r.y;
 						qv[2].v = r.y;
-						qv[3].v = r.y + r.h;
+						qv[3].v = r.y + r.wh.y;
 					}
 				}
 			}
 			if (dirtySizeAnchorPosScaleRotate || dirtyParentAffineTransform) {
 				auto wh = frame->spriteSize;
 				if (dirtySizeAnchorPosScaleRotate) {
-					at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, { wh.w * anchor.x, wh.h * anchor.y });
+					at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, wh * anchor);
 					atBak = at;
 				}
 				if (dirtyParentAffineTransform) {
@@ -144,9 +144,9 @@ namespace xx {
 					}
 				}
 				(XY&)qv[0].x = { at.tx, at.ty };
-				(XY&)qv[1].x = at.Apply({0, wh.h });
-				(XY&)qv[2].x = at.Apply({wh.w, wh.h});
-				(XY&)qv[3].x = at.Apply({wh.w, 0});
+				(XY&)qv[1].x = at.Apply({0, wh.y });
+				(XY&)qv[2].x = at.Apply({wh.x, wh.y});
+				(XY&)qv[3].x = at.Apply({wh.x, 0});
 			}
 			if (dirtyColor) {
 				for (auto& v : qv) {

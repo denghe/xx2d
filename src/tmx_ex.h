@@ -31,8 +31,8 @@ namespace xx {
 			// fill by Init
 			int32_t tileWidth = 0, tileHeight = 0;
 			int32_t worldRowCount = 0, worldColumnCount = 0;
-			Size worldPixel{};
-			Size screenSize{};
+			XY worldPixel{};
+			XY screenSize{};
 
 			AffineTransform at;
 			XY pos{}, scale{ 1, 1 };
@@ -45,9 +45,9 @@ namespace xx {
 			*/
 			int32_t rowFrom = 0, rowTo = 0, columnFrom = 0, columnTo = 0;
 
-			void Init(Size const& screenSize, Map& map);
+			void Init(XY const& screenSize, Map& map);
 
-			void SetScreenSize(Size const& wh);
+			void SetScreenSize(XY const& wh);
 			void SetScale(float const& scale);
 			void SetPosition(XY const& xy);
 			void SetPositionX(float const& x);

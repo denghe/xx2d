@@ -8,8 +8,8 @@ namespace xx {
         // std::vector<std::string> aliases;	// unused
         std::optional<XY> anchor;
         XY spriteOffset{};
-        Size spriteSize{};		// content size
-        Size spriteSourceSize{};	// original pic size
+        XY spriteSize{};		// content size
+        XY spriteSourceSize{};	// original pic size
         Rect textureRect{};
         bool textureRotated{};
         std::vector<uint16_t> triangles;

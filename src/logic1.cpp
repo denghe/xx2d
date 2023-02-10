@@ -97,8 +97,8 @@ void Logic1::Init(Logic* logic) {
 	for (auto& f : player.tp.frames) {
 		f->anchor = { anchor, anchor };
 		player.anim.afs.push_back({ f, 1.f/60 });
-		if (f->spriteSize.h > maxSpriteHeight) {
-			maxSpriteHeight = f->spriteSize.h;
+		if (f->spriteSize.y > maxSpriteHeight) {
+			maxSpriteHeight = f->spriteSize.y;
 		}
 	}
 	player.yOffset = maxSpriteHeight * player.scale * anchor;
@@ -121,7 +121,7 @@ int Logic1::Update() {
 		}
 		if ((eg.Pressed(xx::KbdKeys::Down))) {
 			auto y = cam.pos.y + camInc.y;
-			cam.SetPositionY(y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y);
+			cam.SetPositionY(y >= cam.worldPixel.y ? (cam.worldPixel.y - std::numeric_limits<float>::epsilon()) : y);
 		}
 		if ((eg.Pressed(xx::KbdKeys::Left))) {
 			auto x = cam.pos.x - camInc.x;
@@ -129,7 +129,7 @@ int Logic1::Update() {
 		}
 		if ((eg.Pressed(xx::KbdKeys::Right))) {
 			auto x = cam.pos.x + camInc.x;
-			cam.SetPositionX(x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x);
+			cam.SetPositionX(x >= cam.worldPixel.x ? (cam.worldPixel.x - std::numeric_limits<float>::epsilon()) : x);
 		}
 		if (eg.Pressed(xx::KbdKeys::Z)) {
 			auto x = cam.scale.x + 0.001f;
@@ -149,7 +149,7 @@ int Logic1::Update() {
 		}
 		if (eg.Pressed(xx::KbdKeys::S)) {
 			auto y = player.footPos.y + playerInc.y;
-			player.footPos.y = y >= cam.worldPixel.h ? (cam.worldPixel.h - std::numeric_limits<float>::epsilon()) : y;
+			player.footPos.y = y >= cam.worldPixel.y ? (cam.worldPixel.y - std::numeric_limits<float>::epsilon()) : y;
 			player.dirty = true;
 		}
 		if (eg.Pressed(xx::KbdKeys::A)) {
@@ -160,7 +160,7 @@ int Logic1::Update() {
 		}
 		if (eg.Pressed(xx::KbdKeys::D)) {
 			auto x = player.footPos.x + playerInc.x;
-			player.footPos.x = x >= cam.worldPixel.w ? (cam.worldPixel.w - std::numeric_limits<float>::epsilon()) : x;
+			player.footPos.x = x >= cam.worldPixel.x ? (cam.worldPixel.x - std::numeric_limits<float>::epsilon()) : x;
 			player.dirty = true;
 			player.sprite.SetFlipX(true);
 		}

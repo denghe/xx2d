@@ -87,7 +87,7 @@ namespace xx {
 	void Label::Commit() {
 		if (dirty) {
 			if (dirtyTextSizeAnchorPosScaleRotate) {
-				at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, { size.w * anchor.x, -size.h * (1-anchor.y) });
+				at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, { size.x * anchor.x, -size.y * (1-anchor.y) });
 				for (auto& c : chars) {
 					auto& qv = c.qv;
 					(XY&)qv[0].x = at.Apply(c.posBak[0]);

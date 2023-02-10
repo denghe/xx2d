@@ -53,11 +53,11 @@ void Button::HandleMouseUp(ButtonMouseEventListener& L) {
 	}
 }
 
-void Button::Init(Logic* const& logic, xx::XY const& pos, xx::Size const& borderSize, std::string_view const& txt_, float const& fontSize) {
+void Button::Init(Logic* const& logic, xx::XY const& pos, xx::XY const& borderSize, std::string_view const& txt_, float const& fontSize) {
 	this->logic = logic;
 	txt = txt_;
-	auto hw = borderSize.w / 2;
-	auto hh = borderSize.h / 2;
+	auto hw = borderSize.x / 2;
+	auto hh = borderSize.y / 2;
 	leftBottom = { pos.x - hw, pos.y - hh };
 	rightTop = { pos.x + hw, pos.y + hh };
 	border.SetPoints() = { {-hw,-hh},{-hw,hh},{hw,hh},{hw,-hh},{-hw,-hh} };

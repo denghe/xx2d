@@ -474,7 +474,7 @@ namespace xx {
 	struct SpaceGridABCamera {
 
 		SpaceGridAB<Item>* grid{};
-		Size screenSize{};
+		XY screenSize{};
 
 		XY pos{}, scale{ 1,1 };
 		AffineTransform at;
@@ -487,13 +487,13 @@ namespace xx {
 		*/
 		int32_t rowFrom = 0, rowTo = 0, columnFrom = 0, columnTo = 0;
 
-		void Init(Size const& screenSize_, SpaceGridAB<Item>* const& grid_) {
+		void Init(XY const& screenSize_, SpaceGridAB<Item>* const& grid_) {
 			grid = grid_;
 			screenSize = screenSize_;
 			Commit();
 		}
 
-		void SetScreenSize(Size const& wh) {
+		void SetScreenSize(XY const& wh) {
 			this->screenSize = wh;
 			dirty = true;
 		}

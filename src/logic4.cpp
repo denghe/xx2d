@@ -106,12 +106,12 @@ void Logic4::Init(Logic* logic) {
 	grid.Init(numRows, numCols, maxDiameter);
 
 	cs.reserve(capacity);
-	//for (size_t i = 0; i < numRandCircles; i++) {
-	//	auto&& c = cs.emplace_back();
-	//	c.Emplace()->Init(&grid, rnds[0].Next(0, maxX - 1), rnds[0].Next(0, maxY - 1), rnds[0].Next(minRadius, maxRadius));
-	//	c->csIndex = i;
-	//}
-	cs.emplace_back().Emplace()->Init(&grid, maxX / 2, maxY / 2, maxRadius);
+	for (size_t i = 0; i < numRandCircles; i++) {
+		auto&& c = cs.emplace_back();
+		c.Emplace()->Init(&grid, rnds[0].Next(0, maxX - 1), rnds[0].Next(0, maxY - 1), rnds[0].Next(minRadius, maxRadius));
+		c->csIndex = i;
+	}
+	//cs.emplace_back().Emplace()->Init(&grid, maxX / 2, maxY / 2, maxRadius);
 
 	cam.Init({ xx::engine.w, xx::engine.h }, &grid);
 	cam.SetPosition({ maxX / 2, maxY / 2 });

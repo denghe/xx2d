@@ -271,7 +271,7 @@ namespace xx {
 	struct SpaceGridCCamera {
 
 		SpaceGridC<Item>* grid{};
-		Size screenSize{};
+		XY screenSize{};
 
 		XY pos{}, scale{ 1,1 };
 		AffineTransform at;
@@ -284,13 +284,13 @@ namespace xx {
 		*/
 		int32_t rowFrom = 0, rowTo = 0, columnFrom = 0, columnTo = 0;
 
-		void Init(Size const& screenSize_, SpaceGridC<Item>* const& grid_) {
+		void Init(XY const& screenSize_, SpaceGridC<Item>* const& grid_) {
 			grid = grid_;
 			screenSize = screenSize_;
 			Commit();
 		}
 
-		void SetScreenSize(Size const& wh) {
+		void SetScreenSize(XY const& wh) {
 			this->screenSize = wh;
 			dirty = true;
 		}
@@ -318,7 +318,7 @@ namespace xx {
 
 			auto d = grid->maxDiameter;
 			auto fd = (float)d;
-			auto halfNumRows = screenSize.h / scale.y / fd / 2;
+			auto halfNumRows = screenSize.y / scale.y / fd / 2;
 			int32_t posRowIndex = (int32_t)pos.y / d;
 			rowFrom = posRowIndex - halfNumRows;
 			rowTo = posRowIndex + halfNumRows + 2;
@@ -329,7 +329,7 @@ namespace xx {
 				rowTo = grid->numRows;
 			}
 
-			auto halfNumColumns = screenSize.w / scale.x / fd / 2;
+			auto halfNumColumns = screenSize.x / scale.x / fd / 2;
 			int32_t posColumnIndex = (int32_t)pos.x / d;
 			columnFrom = posColumnIndex - halfNumColumns;
 			columnTo = posColumnIndex + halfNumColumns + 2;

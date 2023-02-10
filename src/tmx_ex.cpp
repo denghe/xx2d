@@ -4,15 +4,15 @@ namespace xx {
 
 	namespace TMX {
 
-		void Camera::Init(Size const& screenSize, Map& map) {
+		void Camera::Init(XY const& screenSize, Map& map) {
 			tileWidth = map.tileWidth;
 			tileHeight = map.tileHeight;
 
 			worldRowCount = map.height;
 			worldColumnCount = map.width;
 
-			worldPixel.w = tileWidth * worldColumnCount;
-			worldPixel.h = tileHeight * worldRowCount;
+			worldPixel.x = tileWidth * worldColumnCount;
+			worldPixel.y = tileHeight * worldRowCount;
 
 			this->screenSize = screenSize;
 
@@ -23,7 +23,7 @@ namespace xx {
 			if (!dirty) return;
 			dirty = false;
 
-			auto halfNumRows = screenSize.h / scale.y / tileHeight / 2;
+			auto halfNumRows = screenSize.y / scale.y / tileHeight / 2;
 			int32_t posRowIndex = pos.y / tileHeight;
 			rowFrom = posRowIndex - halfNumRows;
 			rowTo = posRowIndex + halfNumRows + 2;
@@ -34,7 +34,7 @@ namespace xx {
 				rowTo = worldRowCount;
 			}
 
-			auto halfNumColumns = screenSize.w / scale.x / tileWidth / 2;
+			auto halfNumColumns = screenSize.x / scale.x / tileWidth / 2;
 			int32_t posColumnIndex = pos.x / tileWidth;
 			columnFrom = posColumnIndex - halfNumColumns;
 			columnTo = posColumnIndex + halfNumColumns + 2;
@@ -53,7 +53,7 @@ namespace xx {
 			dirty = true;
 		}
 
-		void Camera::SetScreenSize(Size const& wh) {
+		void Camera::SetScreenSize(XY const& wh) {
 			this->screenSize = wh;
 			dirty = true;
 		}

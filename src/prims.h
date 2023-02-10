@@ -168,24 +168,10 @@ namespace xx {
     // 1 point data ( for draw line strip )
     struct XYRGBA8 : XY, RGBA8 {};
 
-
-
     //
-    struct Size {
-        float w, h;
-        bool operator==(Size const&) const = default;
-        bool operator!=(Size const&) const = default;
-
-        inline Size operator+(Size const& o) const { return { w + o.w, h + o.h }; }
-        inline Size operator-(Size const& o) const { return { w - o.w, h - o.h }; }
-        inline Size operator-() const { return { -w, -h }; }
-        inline Size operator*(float const& o) const { return { w * o, h * o }; }
-        inline Size operator/(float const& o) const { return { w / o, h / o }; }
+    struct Rect : XY {
+        XY wh;
     };
-
-    //
-    struct Rect : XY, Size {};
-
 
     // for node, cam, ... 
     // reference from cocos 2.x AffineTransform
@@ -208,5 +194,4 @@ namespace xx {
 
         XY Apply(XY const& point) const;
     };
-
 }
