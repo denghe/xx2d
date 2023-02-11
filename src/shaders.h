@@ -131,7 +131,7 @@ namespace xx {
 		QuadInstanceData& DrawQuadBegin(GLTexture& tex);	// need fill & commit
 		void DrawQuadEnd();
 
-		void DrawQuad(GLTexture& tex, QuadInstanceData const& qv);	// memcpy & commit
+		void DrawQuad(GLTexture& tex, QuadInstanceData const* const& qv);	// memcpy & commit
 	};
 
 	/***************************************************************************************************/
