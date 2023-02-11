@@ -4,8 +4,8 @@
 
 // https://stackoverflow.com/questions/14066933/direct-way-of-computing-clockwise-angle-between-2-vectors
 
-void Mouse::Init(xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
-	body.SetTexture(xx::engine.LoadTextureFromCache("res/mouse.pkm"))
+void Mouse::Init(Logic9* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
+	body.SetTexture(owner->tex)
 		.SetPosition(pos)
 		.SetScale(scale)
 		.SetRotate(-radians + M_PI / 2)
@@ -30,6 +30,8 @@ void Mouse::Draw() {
 void Logic9::Init(Logic* logic) {
 	this->logic = logic;
 	std::cout << "Logic9 Init( sprite tests )" << std::endl;
+
+	tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 }
 
 int Logic9::Update() {
@@ -40,7 +42,7 @@ int Logic9::Update() {
 
 		for (size_t i = 0; i < 100; i++) {
 			radians += 0.005;
-			ms.emplace_back().Emplace()->Init({}, radians, 1);
+			ms.emplace_back().Emplace()->Init(this, {}, radians, 1);
 		}
 
 		for (auto i = (ptrdiff_t)ms.size() - 1; i >= 0; --i) {

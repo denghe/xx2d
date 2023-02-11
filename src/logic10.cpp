@@ -2,8 +2,8 @@
 #include "logic.h"
 #include "logic10.h"
 
-void Mouse2::Init(xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
-	body.SetTexture(xx::engine.LoadTextureFromCache("res/mouse.pkm"));
+void Mouse2::Init(Logic10* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
+	body.SetTexture(owner->tex);
 	body.pos = pos;
 	body.scale = scale;
 	body.radians = -radians + M_PI / 2;
@@ -34,7 +34,7 @@ void Logic10::Init(Logic* logic) {
 	this->logic = logic;
 	std::cout << "Logic10 Init( quad instance tests )" << std::endl;
 
-	//auto tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
+	tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 	//qs.resize(100000);
 	//for (auto& q : qs) {
 	//	q.SetTexture( tex );
@@ -57,7 +57,7 @@ int Logic10::Update() {
 
 		for (size_t i = 0; i < 100; i++) {
 			radians += 0.005;
-			ms.emplace_back().Emplace()->Init({}, radians, 1);
+			ms.emplace_back().Emplace()->Init(this, {}, radians, 1);
 		}
 
 		for (auto i = (ptrdiff_t)ms.size() - 1; i >= 0; --i) {
