@@ -105,7 +105,7 @@ namespace xx {
 		XY pos;
 		float scale, radians;
 		RGBA8 color;
-		uint16_t texRectX, texRectY, texRectW, texRectH;    // normalize
+		uint16_t texRectX, texRectY, texRectW, texRectH;
 	};
 
 	// for draw quad by drawInstance

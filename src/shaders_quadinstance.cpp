@@ -4,6 +4,8 @@ namespace xx {
 
 	// disable blend + enable zindex + if ( alpha < 0.x ) discord   will be fast
 
+	// todo: support anchor replace 0.5f
+
 	void Shader_QuadInstance::Init(ShaderManager* sm) {
 		this->sm = sm;
 

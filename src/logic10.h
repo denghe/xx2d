@@ -15,9 +15,6 @@ struct Logic10 : LogicBase {
 	void Init(Logic* logic) override;
 	int Update() override;
 
-	//std::vector<xx::Quad> qs;
-	//xx::Rnd rnd;
-
 	xx::Shared<xx::GLTexture> tex;
 	std::vector<xx::Shared<Mouse2>> ms;
 	float timePool{}, radians{};

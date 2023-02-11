@@ -23,7 +23,7 @@ void Mouse2::Draw() {
 	auto c = body.color;
 	body.pos += xx::XY{3, 3};
 	body.color = { 255,127,127,127 };
-	body.Draw();
+	body.Draw();						// shadow
 	body.pos -= xx::XY{ 3, 3 };
 	body.color = c;
 	body.Draw();
@@ -35,21 +35,9 @@ void Logic10::Init(Logic* logic) {
 	std::cout << "Logic10 Init( quad instance tests )" << std::endl;
 
 	tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
-	//qs.resize(100000);
-	//for (auto& q : qs) {
-	//	q.SetTexture( tex );
-	//	q.pos = { (float)rnd.Next(- xx::engine.w/2, xx::engine.w / 2), (float)rnd.Next(-xx::engine.h / 2, xx::engine.h / 2) };
-	//	q.scale = 2;
-	//	q.radians = 0;
-	//	q.color = {255,255,255,255};
-	//}
 }
 
 int Logic10::Update() {
-	//for (auto& q : qs) {
-	//	q.radians += 0.01;
-	//	q.Draw();
-	//}
 
 	timePool += xx::engine.delta;
 	while (timePool >= 1.f / 60) {

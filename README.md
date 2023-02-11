@@ -13,15 +13,17 @@ search path
 
 auto decompress zstd file( detect by header: 28 B5 2F FD )
 
-shader manager
+shader manager with autobatch
 
 texture ( current .pkm only, detect by header "PKM 20" ) cache
 
 texture packer ( 7.0 limit support ) loader & frame cache
 
-quad with auto batch
+quad
 
-sprite based of quad
+sprite
+
+node
 
 bmfont
 
@@ -55,8 +57,6 @@ touch, joystick
 
 scroll view
 
-matrix translate
-
 edit box, rich text?
 
 draw no alpha without blend but discard shader ?
@@ -64,8 +64,6 @@ draw no alpha without blend but discard shader ?
 texture packer polygon algorithm support?
 
 render texture?
-
-draw instance for particle system?
 
 texture array support?
 
