@@ -237,15 +237,12 @@ int Logic4::Update() {
 
 	// draw
 	cam.Commit();
-	//for (auto rIdx = cam.rowFrom; rIdx < cam.rowTo; ++rIdx) {
-	//	for (auto cIdx = cam.columnFrom; cIdx < cam.columnTo; ++cIdx) {
-	//		grid.Foreach(rIdx, cIdx, [&](Circle* const& c) {
-	//			c->border->Draw(cam.at);
-	//		});
-	//	}
-	//}
-	for (auto& c : cs) {
-		c->border->Draw(cam.at);
+	for (auto rIdx = cam.rowFrom; rIdx < cam.rowTo; ++rIdx) {
+		for (auto cIdx = cam.columnFrom; cIdx < cam.columnTo; ++cIdx) {
+			grid.Foreach(rIdx, cIdx, [&](Circle* const& c) {
+				c->border->Draw(cam.at);
+			});
+		}
 	}
 
 	return 0;

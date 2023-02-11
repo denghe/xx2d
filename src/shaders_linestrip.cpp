@@ -14,7 +14,7 @@ in vec4 aColor;
 out vec4 vColor;
 
 void main() {
-	gl_Position = vec4(aPos / uCxy, 0, 1);
+	gl_Position = vec4(aPos * uCxy, 0, 1);
 	vColor = aColor;
 })"sv });
 
@@ -65,7 +65,7 @@ void main() {
 		}
 
 		glUseProgram(p);
-		glUniform2f(uCxy, engine.w / 2, engine.h / 2);
+		glUniform2f(uCxy, 2 / engine.w, 2 / engine.h);
 
 		glBindVertexArray(va);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);

@@ -38,7 +38,7 @@ void main() {
 })"sv });
 
 		f = LoadGLFragmentShader({ R"(#version 300 es
-precision mediump float;
+precision highp float;
 uniform sampler2D uTex0;
 
 in vec4 vColor;

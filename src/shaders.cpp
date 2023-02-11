@@ -54,19 +54,27 @@ namespace xx {
 		return drawCall
 			+ (RefShader<Shader_LineStrip>().pointsCount > 0 ? 1 : 0)
 			+ RefShader<Shader_Quad>().texsCount
-			//+ RefShader<Shader_QuadInstance>().texsCount
+			+ RefShader<Shader_QuadInstance>().texsCount
+			// ...
 			;
 	}
 
 	size_t ShaderManager::GetDrawQuads() {
-		auto& s = RefShader<Shader_Quad>();
 		size_t j = 0;
-		for (size_t i = 0; i < s.texsCount; i++) {
-			j += s.texs[i].second;
+		{
+			auto& s = RefShader<Shader_Quad>();
+			for (size_t i = 0; i < s.texsCount; i++) {
+				j += s.texs[i].second;
+			}
 		}
+		{
+			auto& s = RefShader<Shader_QuadInstance>();
+			for (size_t i = 0; i < s.texsCount; i++) {
+				j += s.texs[i].second;
+			}
+		}
+		// ...
 		return drawQuads + j;
-
-		// Shader_QuadInstance ??
 	}
 
 	size_t ShaderManager::GetDrawLines() {
