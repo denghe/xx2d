@@ -102,17 +102,17 @@ namespace xx {
 	/***************************************************************************************************/
 
 	struct QuadInstanceData {
-		XY pos;
-		float scale, radians;
-		RGBA8 color;
-		uint16_t texRectX, texRectY, texRectW, texRectH;
+		XY pos{}, anchor{ 0.5, 0.5 }, scale{ 1, 1 };
+		float radians{};
+		RGBA8 color{ 255, 255, 255, 255 };
+		uint16_t texRectX{}, texRectY{}, texRectW{}, texRectH{};
 	};
 
 	// for draw quad by drawInstance
 	struct Shader_QuadInstance : Shader {
 		static const size_t index = 1;	// index at sm->shaders
 
-		GLint uCxy = -1, uTex0 = -1, aVert = -1, aPosScaleRadians = -1, aColor = -1, aTexRect = -1;
+		GLint uCxy = -1, uTex0 = -1, aVert = -1, aPosAnchor = -1, aScaleRadians = -1, aColor = -1, aTexRect = -1;
 		GLVertexArrays va;
 		GLBuffer vb, ib;
 

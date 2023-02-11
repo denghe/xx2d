@@ -11,6 +11,7 @@
 #include "logic8.h"
 #include "logic9.h"
 #include "logic10.h"
+#include "logic11.h"
 
 void Logic0::Init(Logic* logic) {
 	this->logic = logic;
@@ -31,7 +32,7 @@ void Logic0::Init(Logic* logic) {
 	menus.emplace_back().Init(logic, { 500, -100 }, "9: sprite tests", 48);
 
 	menus.emplace_back().Init(logic, { -500, -300 }, "10: quad instance tests", 48);
-	//menus.emplace_back().Init(logic, { 0, -300 }, "11: ", 48);
+	menus.emplace_back().Init(logic, { 0, -300 }, "11: quad anchor tests", 48);
 	//menus.emplace_back().Init(logic, { 500, -300 }, "12: ", 48);
 
 	logic->extraInfo.clear();
@@ -83,6 +84,8 @@ void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 			logic->DelaySwitchTo<Logic9>();
 		} else if (txt.starts_with("10:"sv)) {
 			logic->DelaySwitchTo<Logic10>();
+		} else if (txt.starts_with("11:"sv)) {
+			logic->DelaySwitchTo<Logic11>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}

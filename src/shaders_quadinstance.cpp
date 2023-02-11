@@ -14,7 +14,8 @@ uniform vec2 uCxy;	// screen center coordinate
 
 in vec2 aVert;	// fans index { 0, 0 }, { 0, 1.f }, { 1.f, 0 }, { 1.f, 1.f }
 
-in vec4 aPosScaleRadians;
+in vec4 aPosAnchor;
+in vec3 aScaleRadians;
 in vec4 aColor;
 in vec4 aTexRect;
 
@@ -22,10 +23,11 @@ out vec2 vTexCoord;
 out vec4 vColor;
 
 void main() {
-    vec2 pos = aPosScaleRadians.xy;
-	float radians = aPosScaleRadians.w;
-    vec2 scale = vec2(aPosScaleRadians.z * aTexRect.z, aPosScaleRadians.z * aTexRect.w);
-    vec2 offset = vec2((aVert.x - 0.5f) * scale.x, (aVert.y - 0.5f) * scale.y);
+    vec2 pos = aPosAnchor.xy;
+	vec2 anchor = aPosAnchor.zw;
+    vec2 scale = vec2(aScaleRadians.x * aTexRect.z, aScaleRadians.y * aTexRect.w);
+	float radians = aScaleRadians.z;
+    vec2 offset = vec2((aVert.x - anchor.x) * scale.x, (aVert.y - anchor.y) * scale.y);
 
     float c = cos(radians);
     float s = sin(radians);
@@ -58,7 +60,8 @@ void main() {
 		uTex0 = glGetUniformLocation(p, "uTex0");
 
 		aVert = glGetAttribLocation(p, "aVert");
-		aPosScaleRadians = glGetAttribLocation(p, "aPosScaleRadians");
+		aPosAnchor = glGetAttribLocation(p, "aPosAnchor");
+		aScaleRadians = glGetAttribLocation(p, "aScaleRadians");
 		aColor = glGetAttribLocation(p, "aColor");
 		aTexRect = glGetAttribLocation(p, "aTexRect");
 		CheckGLError();
@@ -67,7 +70,6 @@ void main() {
 		glBindVertexArray(va);
 
 		glGenBuffers(1, (GLuint*)&ib);
-
 		static const XY verts[4] = { { 0, 0 }, { 0, 1.f }, { 1.f, 0 }, { 1.f, 1.f } };
 		glBindBuffer(GL_ARRAY_BUFFER, ib);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
@@ -75,11 +77,15 @@ void main() {
 		glEnableVertexAttribArray(aVert);
 
 		glGenBuffers(1, (GLuint*)&vb);
-
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glVertexAttribPointer(aPosScaleRadians, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstanceData), 0);
-		glVertexAttribDivisor(aPosScaleRadians, 1);
-		glEnableVertexAttribArray(aPosScaleRadians);
+
+		glVertexAttribPointer(aPosAnchor, 4, GL_FLOAT, GL_FALSE, sizeof(QuadInstanceData), 0);
+		glVertexAttribDivisor(aPosAnchor, 1);
+		glEnableVertexAttribArray(aPosAnchor);
+
+		glVertexAttribPointer(aScaleRadians, 3, GL_FLOAT, GL_FALSE, sizeof(QuadInstanceData), (GLvoid*)offsetof(QuadInstanceData, scale));
+		glVertexAttribDivisor(aScaleRadians, 1);
+		glEnableVertexAttribArray(aScaleRadians);
 
 		glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(QuadInstanceData), (GLvoid*)offsetof(QuadInstanceData, color));
 		glVertexAttribDivisor(aColor, 1);

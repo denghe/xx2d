@@ -5,7 +5,6 @@
 void Mouse2::Init(Logic10* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
 	body.SetTexture(owner->tex);
 	body.pos = pos;
-	body.scale = scale;
 	body.radians = -radians + M_PI / 2;
 	body.color = color;
 	baseInc = { std::sin(body.radians), std::cos(body.radians) };
