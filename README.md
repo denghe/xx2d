@@ -41,7 +41,7 @@ tiled map ( 1.92 full support ) loader & helpers( cam, util funcs )
 
 cmake 3.20+
 
-sub modules: ( put them to sibling directory )
+depend modules: ( put them or make soft link to sibling directory )
 
 https://github.com/denghe/xxlib.git
 
@@ -53,20 +53,22 @@ https://github.com/facebook/zstd.git
 
 # todo
 
-touch, joystick
+scroll view / scissors
 
-scroll view
+render texture
 
-edit box, rich text?
+edit box, rich text? imgui?
 
-draw no alpha without blend but discard shader ?
+texture packer's polygon algorithm support
 
-texture packer polygon algorithm support?
+more texture format support? astc? webp? png? webm -> tex?
 
-render texture?
+spine?
+
+webassembly? lua? 
 
 texture array support?
 
-more texture format support? astc?
+touch, joystick
 
-spine? webassembly? lua? 
+crossplatform shell
