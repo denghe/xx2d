@@ -32,7 +32,7 @@ void Logic0::Init(Logic* logic) {
 	menus.emplace_back().Init(logic, { 500, -100 }, "9: sprite tests", 48);
 
 	menus.emplace_back().Init(logic, { -500, -300 }, "10: quad instance tests", 48);
-	menus.emplace_back().Init(logic, { 0, -300 }, "11: quad anchor tests", 48);
+	menus.emplace_back().Init(logic, { 0, -300 }, "11: shooter game", 48);
 	//menus.emplace_back().Init(logic, { 500, -300 }, "12: ", 48);
 
 	logic->extraInfo.clear();
