@@ -2,6 +2,8 @@
 #include "logic.h"
 #include "logic12.h"
 
+//#define ENABLE_DEBUG_DRAW
+
 namespace SG2 {
 
 	/*************************************************************************/
@@ -31,7 +33,7 @@ namespace SG2 {
 		running = true;
 		coros.Add([](Scene* scene)->xx::Coro {
 			while (scene->running) {
-				for (size_t i = 0; i < 5; ++i) {
+				for (size_t i = 0; i < 20; ++i) {
 					scene->monsters.emplace_back().Emplace()->Init(scene);
 				}
 				CoYield;
@@ -101,6 +103,7 @@ namespace SG2 {
 			l->lbl.Draw();
 		}
 
+#ifdef ENABLE_DEBUG_DRAW
 		// draw debug rings
 		player->ring.Draw();
 		for (auto& b : player->bullets) {
@@ -109,6 +112,7 @@ namespace SG2 {
 		for (auto& m : monsters) {
 			m->ring.Draw();
 		}
+#endif
 	}
 
 	/*************************************************************************/
@@ -198,10 +202,10 @@ namespace SG2 {
 			v = (mpos - pos);// .Normalize();
 			auto r = std::atan2(v.x, v.y);
 			bullets.emplace_back().Emplace()->Init(scene, this, { std::sin(r), std::cos(r) }, 1000);
-			for (size_t i = 1; i <= 5; ++i) {
-				auto r1 = r + 0.1f * (float)i;
+			for (size_t i = 1; i <= 10; ++i) {
+				auto r1 = r + 0.05f * (float)i;
 				bullets.emplace_back().Emplace()->Init(scene, this, { std::sin(r1), std::cos(r1) }, 1000);
-				auto r2 = r - 0.1f * (float)i;
+				auto r2 = r - 0.05f * (float)i;
 				bullets.emplace_back().Emplace()->Init(scene, this, { std::sin(r2), std::cos(r2) }, 1000);
 			}
 		}
@@ -209,12 +213,16 @@ namespace SG2 {
 
 	void Player::DrawInit() {
 		body.SetTexture(scene->tex).SetAnchor({ 0.5, 0.25 }).SetScale(radius * 3 / body.Size().x);
+#ifdef ENABLE_DEBUG_DRAW
 		ring.FillCirclePoints({}, radius, {}, 16).SetColor({ 255,0,0,127 });
+#endif
 	}
 	void Player::DrawCommit() {
 		auto p = pos.MakeFlipY();
 		body.SetPosition(p);
+#ifdef ENABLE_DEBUG_DRAW
 		ring.SetPosition(p);
+#endif
 	}
 
 	/*************************************************************************/
@@ -261,12 +269,16 @@ namespace SG2 {
 
 	void Bullet::DrawInit() {
 		body.SetTexture(scene->tex).SetColor({ 255,0,0,127 }).SetRotate(std::atan2(inc.y, inc.x) + M_PI / 2);
+#ifdef ENABLE_DEBUG_DRAW
 		ring.FillCirclePoints({}, radius, {}, 8).SetColor({ 0,255,0,127 });
+#endif
 	}
 	void Bullet::DrawCommit() {
 		auto p = pos.MakeFlipY();
 		body.SetPosition(p);
+#ifdef ENABLE_DEBUG_DRAW
 		ring.SetPosition(p);
+#endif
 	}
 
 	/*************************************************************************/
@@ -309,13 +321,17 @@ namespace SG2 {
 
 	void Monster::DrawInit() {
 		body.SetTexture(scene->tex).SetColor({ 0,0,255,127 }).SetRotate(std::atan2(inc.y, inc.x) + M_PI / 2).SetScale(radius  * 2 / body.Size().x);
+#ifdef ENABLE_DEBUG_DRAW
 		ring.FillCirclePoints({}, radius, {}, 8).SetColor({ 0,255,0,127 });
+#endif
 	}
 
 	void Monster::DrawCommit() {
 		auto p = pos.MakeFlipY();
 		body.SetPosition(p);
+#ifdef ENABLE_DEBUG_DRAW
 		ring.SetPosition(p);
+#endif
 	}
 
 	/*************************************************************************/
@@ -325,7 +341,7 @@ namespace SG2 {
 	void HPLabel::Init(Scene* const& scene, xx::XY const& pos, int64_t const& hp) {
 		this->scene = scene;
 		this->pos = pos;
-		this->life = 30;
+		this->life = 60;
 		this->txt = std::to_string(hp);
 		this->inc = { 0, -1 };
 		DrawInit();
