@@ -24,7 +24,7 @@ namespace SG2 {
 		fnt.Load("res/font2/basechars.fnt");
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 
-		sgMonsters.Init(200, 200, 32);
+		sgMonsters.Init(400, 400, 32);
 
 		player.Emplace()->Init(this);
 
@@ -236,7 +236,7 @@ namespace SG2 {
 	int Bullet::Update() {
 
 		auto& sg = scene->sgMonsters;
-		auto p = pos.As<int32_t>() + 3200;
+		auto p = pos.As<int32_t>() + 6400;
 		auto rcIdx = p / sg.maxDiameter;
 		auto idx = rcIdx.y * sg.numCols + rcIdx.x;
 		Monster* r{};
@@ -285,7 +285,7 @@ namespace SG2 {
 		this->life = 2000;
 
 		this->SGCInit(&scene->sgMonsters);
-		this->SGCSetPos(this->pos.As<int32_t>() + 3200);
+		this->SGCSetPos(this->pos.As<int32_t>() + 6400);
 		this->SGCAdd();
 
 		DrawInit();
@@ -294,7 +294,7 @@ namespace SG2 {
 	int Monster::Update() {
 		// todo: hit player check
 
-		this->SGCSetPos(this->pos.As<int32_t>() + 3200);
+		this->SGCSetPos(this->pos.As<int32_t>() + 6400);
 		this->SGCUpdate();
 
 		pos += inc * speed;	// todo: AI move
