@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "pch.h"
 #include "logic_base.h"
+#include <xx_coro_simple.h>
 
 namespace SG {
 
@@ -9,12 +10,18 @@ namespace SG {
 	struct Player;
 	struct Bullet;
 	struct Monster;
+	struct HPLabel;
 
 	struct Scene {
+		xx::BMFont fnt;
 		xx::Shared<xx::GLTexture> tex;
 		xx::Shared<Player> player;
 		std::vector<xx::Shared<Monster>> monsters;
+		std::vector<xx::Shared<HPLabel>> labels;
 		std::vector<xx::Sprite*> tmp;
+		xx::Coros coros;
+		xx::Rnd rnd;
+		bool running{};
 
 		void Init();
 		void Update();
@@ -49,7 +56,7 @@ namespace SG {
 		float radius{}, speed{};
 		int life{};
 
-		void Init(Scene* scene, Player* owner, xx::XY const& inc, int const& life);
+		void Init(Scene* const& scene, Player* const& owner, xx::XY const& inc, int const& life);
 		int Update();
 
 		void DrawInit();
@@ -63,9 +70,24 @@ namespace SG {
 		xx::LineStrip ring;
 		xx::XY pos{}, inc{};
 		float radius{}, speed{};
+		int life{};
 
-		void Init(Scene* scene);
-		void Update();
+		void Init(Scene* const& scene);
+		int Update();
+
+		void DrawInit();
+		void DrawCommit();
+	};
+
+	struct HPLabel {
+		Scene* scene{};
+		xx::Label lbl;
+		std::string txt;
+		xx::XY pos{}, inc{};
+		int life{};
+
+		void Init(Scene* const& scene, xx::XY const& pos, int64_t const& hp);
+		int Update();
 
 		void DrawInit();
 		void DrawCommit();
