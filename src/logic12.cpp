@@ -1,16 +1,31 @@
 ﻿#include "pch.h"
 #include "logic.h"
-#include "logic11.h"
+#include "logic12.h"
 
-namespace SG {
+namespace SG2 {
 
 	/*************************************************************************/
 	// scene
 	/*************************************************************************/
 
+	void Scene::EraseMonster(int idx) {
+		assert(idx != -1);
+		monsters[idx]->indexAtMonsters = -1;
+		monsters.back()->indexAtMonsters = idx;
+		monsters[idx] = std::move(monsters.back());
+		monsters.pop_back();
+	}
+	void Scene::EraseMonster(Monster* const& m) {
+		assert(m);
+		EraseMonster(m->indexAtMonsters);
+	}
+
 	void Scene::Init() {
 		fnt.Load("res/font2/basechars.fnt");
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
+
+		sgMonsters.Init(200, 200, 32);
+
 		player.Emplace()->Init(this);
 
 		running = true;
@@ -35,8 +50,7 @@ namespace SG {
 		for (auto i = (ptrdiff_t)monsters.size() - 1; i >= 0; --i) {
 			auto& m = monsters[i];
 			if (!m->Update()) {
-				m = monsters.back();
-				monsters.pop_back();
+				EraseMonster(m);
 			}
 		}
 
@@ -221,18 +235,24 @@ namespace SG {
 
 	int Bullet::Update() {
 
-		// hit monster check
-		auto& ms = scene->monsters;
-		for (auto& m : ms) {
+		auto& sg = scene->sgMonsters;
+		auto p = pos.As<int32_t>() + 3200;
+		auto rcIdx = p / sg.maxDiameter;
+		auto idx = rcIdx.y * sg.numCols + rcIdx.x;
+		Monster* r{};
+		scene->sgMonsters.Foreach9NeighborCells(idx, [&](Monster* const& m) {
+			if (r) return;	// todo: add func return bool for quit foreach
 			auto d = m->pos - pos;
 			auto rr = (m->radius + radius) * (m->radius + radius);
 			auto dd = d.x * d.x + d.y * d.y;
 			if (dd < rr) {
-				scene->labels.emplace_back().Emplace()->Init(scene, m->pos, m->radius);	// pop up damage hp
-				m = ms.back();
-				ms.pop_back();
-				return 0;
+				r = m;
 			}
+		}, nullptr);
+		if (r) {
+			scene->labels.emplace_back().Emplace()->Init(scene, r->pos, r->radius);	// pop up damage hp
+			scene->EraseMonster(r);
+			return 0;
 		}
 
 		pos += inc * speed;
@@ -255,6 +275,7 @@ namespace SG {
 
 	void Monster::Init(Scene* const& scene) {
 		this->scene = scene;
+		this->indexAtMonsters = scene->monsters.size() - 1;
 
 		this->radius = scene->rnd.Next(4, 32);
 		this->speed = 1;
@@ -263,14 +284,27 @@ namespace SG {
 		this->inc = (scene->player->pos - this->pos).MakeNormalize();
 		this->life = 2000;
 
+		this->SGCInit(&scene->sgMonsters);
+		this->SGCSetPos(this->pos.As<int32_t>() + 3200);
+		this->SGCAdd();
+
 		DrawInit();
 	}
 
 	int Monster::Update() {
 		// todo: hit player check
 
+		this->SGCSetPos(this->pos.As<int32_t>() + 3200);
+		this->SGCUpdate();
+
 		pos += inc * speed;	// todo: AI move
 		return --life;
+	}
+
+	Monster::~Monster() {
+		if (_sgc) {
+			SGCRemove();
+		}
 	}
 
 	void Monster::DrawInit() {
@@ -315,13 +349,13 @@ namespace SG {
 // logic
 /*************************************************************************/
 
-void Logic11::Init(Logic* logic) {
+void Logic12::Init(Logic* logic) {
 	this->logic = logic;
-	std::cout << "Logic11 Init( shooter game )" << std::endl;
+	std::cout << "Logic12 Init( shooter game with grid )" << std::endl;
 	scene.Init();
 }
 
-int Logic11::Update() {
+int Logic12::Update() {
 	timePool += xx::engine.delta;
 	auto timePoolBak = timePool;
 	while (timePool >= 1.f / 120) {
