@@ -13,14 +13,14 @@ namespace SG2 {
 	struct HPLabel;
 
 	struct Scene {
-		xx::SpaceGridC<Monster> sgMonsters;	// ensure life cycle > monsters
+		xx::SpaceGridC<Monster> sgMonsters;	// ensure life cycle
 
 		xx::BMFont fnt;
 		xx::Shared<xx::GLTexture> tex;
 		xx::Shared<Player> player;
 		std::vector<xx::Shared<Monster>> monsters;
 		std::vector<xx::Shared<HPLabel>> labels;
-		std::vector<xx::Sprite*> tmp;
+		std::vector<xx::Quad*> tmp;
 		xx::Coros coros;
 		xx::Rnd rnd;
 		bool running{};
@@ -36,7 +36,7 @@ namespace SG2 {
 	struct Player {
 		Scene* scene{};
 
-		xx::Sprite body;
+		xx::Quad body;
 		xx::LineStrip ring;	// for debug
 		xx::XY pos{};
 		float radius{ 32 }, speed{ 2 };
@@ -55,7 +55,7 @@ namespace SG2 {
 		Scene* scene{};
 		Player* owner{};
 
-		xx::Sprite body;
+		xx::Quad body;
 		xx::LineStrip ring;
 		xx::XY pos{}, inc{};
 		float radius{}, speed{};
@@ -71,7 +71,7 @@ namespace SG2 {
 	struct Monster : xx::SpaceGridCItem<Monster> {
 		Scene* scene{};
 
-		xx::Sprite body;
+		xx::Quad body;
 		xx::LineStrip ring;
 		xx::XY pos{}, inc{};
 		float radius{}, speed{};

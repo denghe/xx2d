@@ -89,7 +89,7 @@ namespace SG2 {
 		}
 
 		// draw tex: sort by y
-		std::sort(tmp.begin(), tmp.end(), [](xx::Sprite* const& a, xx::Sprite* const& b) {
+		std::sort(tmp.begin(), tmp.end(), [](auto const& a, auto const& b) {
 			return a->pos.y > b->pos.y;
 			});
 		for (auto& q : tmp) {
@@ -248,15 +248,16 @@ namespace SG2 {
 		auto rcIdx = p / sg.maxDiameter;
 		auto idx = rcIdx.y * sg.numCols + rcIdx.x;
 		Monster* r{};
-		scene->sgMonsters.Foreach9NeighborCells(idx, [&](Monster* const& m) {
-			if (r) return;	// todo: add func return bool for quit foreach
+		int limit = 0x7FFFFFFF;
+		scene->sgMonsters.Foreach9NeighborCells<true>(idx, [&](Monster* const& m) {
 			auto d = m->pos - pos;
 			auto rr = (m->radius + radius) * (m->radius + radius);
 			auto dd = d.x * d.x + d.y * d.y;
 			if (dd < rr) {
 				r = m;
+				limit = 0;	// break foreach
 			}
-		}, nullptr);
+		}, &limit);
 		if (r) {
 			scene->labels.emplace_back().Emplace()->Init(scene, r->pos, r->radius);	// pop up damage hp
 			scene->EraseMonster(r);

@@ -198,7 +198,7 @@ namespace xx {
 					f(c);
 				}
 				if constexpr (enableLimit) {
-					if (-- * limit == 0) return;
+					if (-- * limit <= 0) return;
 				}
 				c = c->_sgcNext;
 			}
