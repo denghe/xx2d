@@ -134,7 +134,7 @@ void main() {
 		}
 		CheckGLError();
 
-		sm->drawQuads += j;
+		sm->drawQuads += j / sizeof(QuadInstanceData);
 		sm->drawCall += texsCount;
 
 		lastTextureId = 0;
