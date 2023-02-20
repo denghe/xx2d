@@ -37,8 +37,8 @@ namespace MovePathTests {
 
 	void MovePath::FillFields(MovePathPoint& p1, MovePathPoint& p2) {
 		auto v = p2.pos - p1.pos;
-		p1.radians = std::atan2(v.x, v.y);
-		p1.inc = { std::sin(p1.radians), std::sin(p1.radians) };
+		p1.radians = std::atan2(v.y, v.x);
+		p1.inc = { std::cos(p1.radians), std::sin(p1.radians) };
 		p1.distance = std::sqrt(v.x * v.x + v.y * v.y);
 	}
 
@@ -66,14 +66,40 @@ namespace MovePathTests {
 		return { .pos = p.pos, .radians = p.radians, .movedDistance = mp->totalDistance, .terminated = !mp->loop };
 	}
 
-	MovePathRunner::MoveResult MovePathRunner::MoveForward(float distance) {
+	MovePathRunner::MoveResult MovePathRunner::MoveForward(float const& distance) {
 		assert(mp);
-		// todo
-		return MoveToEnd();
+		assert(mp->points.size());
+		auto& ps = mp->points;
+		auto siz = ps.size();
+		auto loop = mp->loop;
+		auto d = distance;
+	LabLoop:
+		auto& p = ps[cursor];
+		auto left = p.distance - cursorDistance;
+		if (d > left) {
+			d -= left;
+			cursorDistance = 0.f;
+			++cursor;
+			if (cursor == siz) {
+				if (loop) {
+					cursor = 0;
+				}
+				else {
+					// todo
+					//return { .pos = p.pos, .radians = p.radians, .movedDistance = distance - d, .terminated = !mp->loop };
+				}
+			}
+			goto LabLoop;
+		}
+		else {
+			cursorDistance += d;
+		}
+		return { .pos = p.pos + (p.inc * cursorDistance), .radians = p.radians, .movedDistance = distance, .terminated = !mp->loop && cursor == siz - 1 };
 	}
 
-	MovePathRunner::MoveResult MovePathRunner::MoveBackward(float distance) {
+	MovePathRunner::MoveResult MovePathRunner::MoveBackward(float const& distance) {
 		assert(mp);
+		assert(mp->points.size());
 		// todo
 		return MoveToBegin();
 	}
@@ -89,7 +115,7 @@ namespace MovePathTests {
 	}
 
 	int Monster::Update() {
-		auto mr = mpr.MoveForward(speed * xx::engine.delta);
+		auto mr = mpr.MoveForward(speed);
 		if (mr.terminated) return 1;
 		// mr.movedDistance for calc anim
 		radians = mr.radians;
@@ -100,11 +126,11 @@ namespace MovePathTests {
 
 
 	void Monster::DrawInit() {
-		body.FillCirclePoints({}, 32, 0.f, 24);
+		body.FillCirclePoints({}, 16, 0.f, 12);
 	}
 
 	void Monster::Draw() {
-		body.SetPosition(fixedPos).SetRotate(radians).Draw();
+		body.SetPosition(fixedPos).SetRotate(-radians).Draw();
 	}
 
 
@@ -137,14 +163,14 @@ namespace MovePathTests {
 		auto mp = xx::Make<MovePath>();
 		mp->points.emplace_back().pos = { 0, 0 };
 		mp->points.emplace_back().pos = { 100, 0 };
-		mp->points.emplace_back().pos = { 200, 100 };
-		mp->points.emplace_back().pos = { 200, 200 };
 		mp->points.emplace_back().pos = { 100, 100 };
 		mp->points.emplace_back().pos = { 0, 100 };
 		mp->Fill(true);
 
-		auto&& m = AddMonster();
-		m->Init({ -100, -50 }, mp);
+		for (size_t i = 0; i < 100000; i++) {
+			auto&& m = AddMonster();
+			m->Init({ -100, -50 }, mp);
+		}
 	}
 
 	void Scene::Update() {

@@ -32,8 +32,8 @@ namespace MovePathTests {
 		};
 		MoveResult MoveToBegin();
 		MoveResult MoveToEnd();
-		MoveResult MoveForward(float distance);
-		MoveResult MoveBackward(float distance);
+		MoveResult MoveForward(float const& distance);
+		MoveResult MoveBackward(float const& distance);
 	};
 
 	struct Scene;
