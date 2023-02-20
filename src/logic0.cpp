@@ -13,6 +13,7 @@
 #include "logic10.h"
 #include "logic11.h"
 #include "logic12.h"
+#include "logic13.h"
 
 void Logic0::Init(Logic* logic) {
 	this->logic = logic;
@@ -20,21 +21,31 @@ void Logic0::Init(Logic* logic) {
 	std::cout << "Logic0 Init( main menu )" << std::endl;
 
 	meListener.Init(xx::Mbtns::Left);
-	menus.emplace_back().Init(logic, { -500, 300 }, "1: tiledmap", 48);
-	menus.emplace_back().Init(logic, { 0, 300 }, "2: circle drag", 48);
-	menus.emplace_back().Init(logic, { 500, 300 }, "3: box button", 48);
 
-	menus.emplace_back().Init(logic, { -500, 100 }, "4: space grid physics", 48);
-	menus.emplace_back().Init(logic, { 0, 100 }, "5: space grid ab", 48);
-	menus.emplace_back().Init(logic, { 500, 100 }, "6: circle + box physics", 48);
+	float x = 300;
+	menus.emplace_back().Init(logic, { -500, x }, "1: tiledmap", 48);
+	menus.emplace_back().Init(logic, { 0, x }, "2: circle drag", 48);
+	menus.emplace_back().Init(logic, { 500, x }, "3: box button", 48);
 
-	menus.emplace_back().Init(logic, { -500, -100 }, "7: more circle + box", 48);
-	menus.emplace_back().Init(logic, { 0, -100 }, "8: node tests", 48);
-	menus.emplace_back().Init(logic, { 500, -100 }, "9: sprite tests", 48);
+	x -= 150;
+	menus.emplace_back().Init(logic, { -500, x }, "4: space grid physics", 48);
+	menus.emplace_back().Init(logic, { 0, x }, "5: space grid ab", 48);
+	menus.emplace_back().Init(logic, { 500, x }, "6: circle + box physics", 48);
 
-	menus.emplace_back().Init(logic, { -500, -300 }, "10: quad instance tests", 48);
-	menus.emplace_back().Init(logic, { 0, -300 }, "11: shooter game", 48);
-	menus.emplace_back().Init(logic, { 500, -300 }, "12: shooter game with grid", 48);
+	x -= 150;
+	menus.emplace_back().Init(logic, { -500, x }, "7: more circle + box", 48);
+	menus.emplace_back().Init(logic, { 0, x }, "8: node tests", 48);
+	menus.emplace_back().Init(logic, { 500, x }, "9: sprite tests", 48);
+
+	x -= 150;
+	menus.emplace_back().Init(logic, { -500, x }, "10: quad instance tests", 48);
+	menus.emplace_back().Init(logic, { 0, x }, "11: shooter game", 48);
+	menus.emplace_back().Init(logic, { 500, x }, "12: shooter game with grid", 48);
+
+	x -= 150;
+	menus.emplace_back().Init(logic, { -500, x }, "13: move path tests", 48);
+	//menus.emplace_back().Init(logic, { 0, x }, "14: ", 48);
+	//menus.emplace_back().Init(logic, { 500, x }, "15: ", 48);
 
 	logic->extraInfo.clear();
 }
@@ -89,6 +100,8 @@ void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 			logic->DelaySwitchTo<Logic11>();
 		} else if (txt.starts_with("12:"sv)) {
 			logic->DelaySwitchTo<Logic12>();
+		} else if (txt.starts_with("13:"sv)) {
+			logic->DelaySwitchTo<Logic13>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}
