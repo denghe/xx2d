@@ -96,10 +96,12 @@ namespace xx {
 		}
 		// curve
 		else {
-			std::vector<CurvePoint> bs, cs;
+			std::vector<CurvePoint> cs;
 
 			// curve to 2 control points curve
 			if (loop) {
+				std::vector<CurvePoint> bs;
+				bs.reserve(len + 6);
 				// insert addons
 				bs.push_back(ps[len - 3]);
 				bs.push_back(ps[len - 2]);
@@ -109,7 +111,6 @@ namespace xx {
 				bs.push_back(ps[1]);
 				bs.push_back(ps[2]);
 				CurveToBezier(cs, bs);
-				bs.clear();
 				// remove addons
 				cs.resize(cs.size() - 6);
 				cs.erase(cs.begin(), cs.begin() + 9);
@@ -119,7 +120,6 @@ namespace xx {
 
 			// 2 control points curve to split points
 			BezierToPoints(points, cs);
-			cs.clear();
 
 			if (!loop) {
 				auto& last = ps.back();

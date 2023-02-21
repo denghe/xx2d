@@ -17,9 +17,9 @@ namespace MovePathTests {
 		//xx::LineStrip body;
 		xx::Quad body;
 
-		void Init(xx::XY const& pos, xx::Shared<xx::MovePathCache> mpc);
+		void Init(xx::XY const& pos, xx::Shared<xx::MovePathCache> mpc, float const& speed, xx::RGBA8 const& color);
 		int Update();	// return non zero: release
-		void DrawInit();
+		void DrawInit(xx::RGBA8 const& color);
 		void Draw();
 	};
 

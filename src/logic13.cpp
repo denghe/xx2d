@@ -4,14 +4,15 @@
 
 namespace MovePathTests {
 
-	void Monster::Init(xx::XY const& pos, xx::Shared<xx::MovePathCache> mpc) {
+	void Monster::Init(xx::XY const& pos, xx::Shared<xx::MovePathCache> mpc, float const& speed, xx::RGBA8 const& color) {
 		auto mp = mpc->Move(0);
 		assert(mp);
 		radians = mp->radians;
 		this->originalPos = pos;
 		this->pos = pos + mp->pos;
 		this->mpc = std::move(mpc);
-		DrawInit();
+		this->speed = speed;
+		DrawInit(color);
 	}
 
 	int Monster::Update() {
@@ -25,9 +26,9 @@ namespace MovePathTests {
 
 
 
-	void Monster::DrawInit() {
+	void Monster::DrawInit(xx::RGBA8 const& color) {
 		//body.FillCirclePoints({}, 16, 0.f, 12);
-		body.SetTexture(owner->tex);
+		body.SetTexture(owner->tex).SetColor(color);
 	}
 
 	void Monster::Draw() {
@@ -59,14 +60,15 @@ namespace MovePathTests {
 	void Scene::Init(Logic* logic) {
 		this->logic = logic;
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
+		monsters.reserve(200000);
 
 		coros.Add([](Scene* self)->xx::Coro {
 			auto mp = xx::Make<xx::MovePath>();
 			std::vector<xx::CurvePoint> cps;
-			cps.emplace_back(xx::CurvePoint{ { 0, 0 }, 0.3f, 100 });
-			cps.emplace_back(xx::CurvePoint{ { 100, 0 }, 0.3f, 100 });
-			cps.emplace_back(xx::CurvePoint{ { 100, 100 }, 0.3f, 100 });
-			cps.emplace_back(xx::CurvePoint{ { 0, 100 }, 0.3f, 100 });
+			cps.emplace_back(xx::CurvePoint{ { 0, 0 }, 0.2f, 100 });
+			cps.emplace_back(xx::CurvePoint{ { 200, 0 }, 0.2f, 100 });
+			cps.emplace_back(xx::CurvePoint{ { 200, 100 }, 0.2f, 100 });
+			cps.emplace_back(xx::CurvePoint{ { 0, 100 }, 0.2f, 100 });
 			mp->FillCurve(true, cps);
 
 			auto mpc = xx::Make<xx::MovePathCache>();
@@ -76,10 +78,11 @@ namespace MovePathTests {
 			auto hh = (int)xx::engine.hh;
 			auto r = 32;
 			for (size_t j = 0; j < 10000; j++) {
-				for (size_t i = 0; i < 10; i++) {
+				for (size_t i = 0; i < 20; i++) {
 					auto&& m = self->AddMonster();
 					xx::Pos v{ self->rnd.Next(-hw + r, hw - r), self->rnd.Next(-hh + r, hh - r) };
-					m->Init(v.As<float>(), mpc);
+					auto color = self->rnd.Get();
+					m->Init(v.As<float>(), mpc, 2, (xx::RGBA8&)color);
 				}
 				CoYield;
 			}
