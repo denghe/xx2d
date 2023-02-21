@@ -5,61 +5,19 @@
 
 namespace MovePathTests {
 
-	struct MovePathPoint {
-		xx::XY pos{}, inc{};
-		float radians{}, distance{};
-	};
-
-	struct MovePath {
-		std::vector<MovePathPoint> points;
-		float totalDistance{};
-		bool loop{};
-		void Fill(xx::XY const* ps, size_t len, bool loop);
-		void Fill(bool loop);
-		void FillFields(MovePathPoint& p1, MovePathPoint& p2);
-		// todo: FillXxxxx
-	};
-
-	struct MovePathSteper {
-		xx::Shared<MovePath> mp;
-		size_t cursor{};	// mp[ index ]
-		float cursorDistance{};	// forward
-		void Init(xx::Shared<MovePath> mp);
-
-		struct MoveResult {
-			xx::XY pos{};
-			float radians{}, movedDistance{};
-			bool terminated;
-		};
-		MoveResult MoveToBegin();
-		MoveResult MoveForward(float const& stepDistance);
-	};
-
-	struct MovePathCachePoint {
-		xx::XY pos{};
-		float radians{};
-	};
-	struct MovePathCache {
-		std::vector<MovePathCachePoint> points;
-		bool loop{};
-		float stepDistance{};
-		void Init(xx::Shared<MovePath> mp, float const& stepDistance);
-		MovePathCachePoint* Move(float const& totalDistance);
-	};
-
 	struct Scene;
 	struct Monster {
 		// fill by CreateMonster & ReleaseMonster
 		Scene* owner{};
 		size_t indexAtOwnerMonsters{ std::numeric_limits<size_t>::max()};
 
-		xx::Shared<MovePathCache> mpc;
+		xx::Shared<xx::MovePathCache> mpc;
 		xx::XY originalPos{}, pos{};
 		float radians{}, speed{ 1 }, movedDistance{};
 		//xx::LineStrip body;
 		xx::Quad body;
 
-		void Init(xx::XY const& pos, xx::Shared<MovePathCache> mpc);
+		void Init(xx::XY const& pos, xx::Shared<xx::MovePathCache> mpc);
 		int Update();	// return non zero: release
 		void DrawInit();
 		void Draw();

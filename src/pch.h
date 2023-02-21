@@ -30,4 +30,5 @@
 #include "spacegridab.h"
 #include "nodes.h"
 #include "quad.h"
+#include "movepath.h"
 // ...

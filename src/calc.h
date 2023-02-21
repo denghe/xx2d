@@ -3,29 +3,21 @@
 namespace xx {
 	const double pi2 = 3.14159265358979323846 * 2;
 
-	// 设定计算坐标系 x, y 值范围 为 正负 table_xy_range
 	const int table_xy_range = 2048, table_xy_range2 = table_xy_range * 2, table_xy_rangePOW2 =
 		table_xy_range * table_xy_range;
 
-	// 角度分割精度。256 对应 uint8_t，65536 对应 uint16_t, ... 对于整数坐标系来说，角度继续细分意义不大。增量体现不出来
 	const int table_num_angles = 65536;
 	using table_angle_element_type = uint16_t;
 
-	// 查表 sin cos 整数值 放大系数
 	const int64_t table_sincos_ratio = 10000;
 
-	// 构造一个查表数组，下标是 +- table_xy_range 二维坐标值。内容是以 table_num_angles 为切割单位的自定义角度值( 并非 360 或 弧度 )
 	inline std::array<table_angle_element_type, table_xy_range2* table_xy_range2> table_angle;
 
-	// 基于 table_num_angles 个角度，查表 sin cos 值 ( 通常作为移动增量 )
 	inline std::array<int, table_num_angles> table_sin;
 	inline std::array<int, table_num_angles> table_cos;
 
-
-	// 程序启动时自动填表
 	struct TableFiller {
 		TableFiller() {
-			// todo: 多线程计算提速
 			for (int y = -table_xy_range; y < table_xy_range; ++y) {
 				for (int x = -table_xy_range; x < table_xy_range; ++x) {
 					auto idx = (y + table_xy_range) * table_xy_range2 + (x + table_xy_range);
@@ -46,9 +38,9 @@ namespace xx {
 		}
 	};
 
-	inline TableFiller tableFiller__;
+	inline TableFiller tableFiller__;	// auto fill on startup
 
-	// 传入坐标，返回角度值( 0 ~ table_num_angles )  safeMode: 支持大于查表尺寸的 xy 值 ( 慢几倍 )
+	// safeMode: abs(x|y) >= 1024
 	template<bool safeMode = true, typename T = int>
 	table_angle_element_type GetAngleXY(T x, T y) noexcept {
 		if constexpr (safeMode) {
@@ -72,7 +64,6 @@ namespace xx {
 		return GetAngleXY<safeMode>(to.x - from.x, to.y - from.y);
 	}
 
-	// 计算点旋转后的坐标
 	template<typename P, typename T = decltype(P::x)>
 	inline P Rotate(T const& x, T const& y, table_angle_element_type const& a) noexcept {
 		auto s = (int64_t)table_sin[a];
@@ -139,5 +130,37 @@ namespace xx {
 			return true;
 		}
 		return false;
+	}
+
+	// check 2 segments( p0-p1, p2-p3 ) is cross. fill cross point to p
+	template<typename Point, typename Point1, typename Point2>
+	inline bool GetSegmentIntersection(Point1 const& p0, Point1 const& p1, Point2 const& p2, Point2 const& p3, Point* const& p = nullptr) noexcept {
+		Point s02, s10, s32;
+		float s_numer, t_numer, denom, t;
+		s10.x = p1.x - p0.x;
+		s10.y = p1.y - p0.y;
+		s32.x = p3.x - p2.x;
+		s32.y = p3.y - p2.y;
+
+		denom = s10.x * s32.y - s32.x * s10.y;
+		if (denom == 0) return false; // Collinear
+		bool denomPositive = denom > 0;
+
+		s02.x = p0.x - p2.x;
+		s02.y = p0.y - p2.y;
+		s_numer = s10.x * s02.y - s10.y * s02.x;
+		if ((s_numer < 0) == denomPositive) return false; // No collision
+
+		t_numer = s32.x * s02.y - s32.y * s02.x;
+		if ((t_numer < 0) == denomPositive) return false; // No collision
+
+		if (((s_numer > denom) == denomPositive) || ((t_numer > denom) == denomPositive)) return false; // No collision
+
+		t = t_numer / denom;        // Collision detected
+		if (p) {
+			p->x = p0.x + (t * s10.x);
+			p->y = p0.y + (t * s10.y);
+		}
+		return true;
 	}
 }

@@ -4,116 +4,7 @@
 
 namespace MovePathTests {
 
-	void MovePath::Fill(xx::XY const* ps, size_t len, bool loop) {
-		assert(len > 1);
-		totalDistance = {};
-		this->loop = loop;
-		if (ps) {
-			points.resize(len);
-			for (size_t i = 0; i < len; i++) {
-				points[i].pos = ps[i];
-			}
-		} else {
-			assert(len <= points.size());
-		}
-		for (size_t i = 0; i < len - 1; i++) {
-			FillFields(points[i], points[i + 1]);
-			totalDistance += points[i].distance;
-		}
-		if (loop) {
-			FillFields(points[len - 1], points[0]);
-			totalDistance += points[len - 1].distance;
-		} else {
-			points[len - 1].distance = {};
-			points[len - 1].inc = {};
-			points[len - 1].radians = points[len - 2].radians;
-		}
-	}
-
-	void MovePath::Fill(bool loop) {
-		Fill(nullptr, points.size(), loop);
-	}
-
-	void MovePath::FillFields(MovePathPoint& p1, MovePathPoint& p2) {
-		auto v = p2.pos - p1.pos;
-		p1.radians = std::atan2(v.y, v.x);
-		p1.inc = { std::cos(p1.radians), std::sin(p1.radians) };
-		p1.distance = std::sqrt(v.x * v.x + v.y * v.y);
-	}
-
-	void MovePathSteper::Init(xx::Shared<MovePath> mp) {
-		this->mp = std::move(mp);
-		cursor = {};
-		cursorDistance = {};
-	}
-
-	MovePathSteper::MoveResult MovePathSteper::MoveToBegin() {
-		assert(mp);
-		assert(mp->points.size());
-		cursor = {};
-		cursorDistance = {};
-		auto& p = mp->points.front();
-		return { .pos = p.pos, .radians = p.radians, .movedDistance = {}, .terminated = false };
-	}
-
-	MovePathSteper::MoveResult MovePathSteper::MoveForward(float const& stepDistance) {
-		assert(mp);
-		assert(mp->points.size());
-		auto& ps = mp->points;
-		auto siz = ps.size();
-		auto loop = mp->loop;
-		auto d = stepDistance;
-	LabLoop:
-		auto& p = ps[cursor];
-		auto left = p.distance - cursorDistance;
-		if (d > left) {
-			d -= left;
-			cursorDistance = 0.f;
-			++cursor;
-			if (cursor == siz) {
-				if (loop) {
-					cursor = 0;
-				} else {
-					cursor = siz - 1;
-					return { .pos = p.pos, .radians = p.radians, .movedDistance = stepDistance - d, .terminated = true };
-				}
-			}
-			goto LabLoop;
-		} else {
-			cursorDistance += d;
-		}
-		return { .pos = p.pos + (p.inc * cursorDistance), .radians = p.radians, .movedDistance = stepDistance, .terminated = !mp->loop && cursor == siz - 1 };
-	}
-
-	void MovePathCache::Init(xx::Shared<MovePath> mp, float const& stepDistance) {
-		assert(mp);
-		assert(stepDistance > 0);
-		assert(mp->totalDistance > stepDistance);
-		this->stepDistance = stepDistance;
-		this->loop = mp->loop;
-		auto td = mp->totalDistance + stepDistance;
-		points.clear();
-		points.reserve(std::ceil(mp->totalDistance / stepDistance));
-		MovePathSteper mpr;
-		mpr.Init(std::move(mp));
-		auto mr = mpr.MoveToBegin();
-		points.push_back({ mr.pos, mr.radians });
-		for (float d = stepDistance; d < td; d += stepDistance) {
-			mr = mpr.MoveForward(stepDistance);
-			points.push_back({ mr.pos, mr.radians });
-		}
-	}
-
-	MovePathCachePoint* MovePathCache::Move(float const& totalDistance) {
-		int i = totalDistance / stepDistance;
-		if (loop) {
-			return &points[i % points.size()];
-		} else {
-			return i < points.size() ? &points[i] : nullptr;
-		}
-	}
-
-	void Monster::Init(xx::XY const& pos, xx::Shared<MovePathCache> mpc) {
+	void Monster::Init(xx::XY const& pos, xx::Shared<xx::MovePathCache> mpc) {
 		auto mp = mpc->Move(0);
 		assert(mp);
 		radians = mp->radians;
@@ -170,14 +61,15 @@ namespace MovePathTests {
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 
 		coros.Add([](Scene* self)->xx::Coro {
-			auto mp = xx::Make<MovePath>();
-			mp->points.emplace_back().pos = { 0, 0 };
-			mp->points.emplace_back().pos = { 100, 0 };
-			mp->points.emplace_back().pos = { 100, 100 };
-			mp->points.emplace_back().pos = { 0, 100 };
-			mp->Fill(true);
+			auto mp = xx::Make<xx::MovePath>();
+			std::vector<xx::CurvePoint> cps;
+			cps.emplace_back(xx::CurvePoint{ { 0, 0 }, 0.3f, 100 });
+			cps.emplace_back(xx::CurvePoint{ { 100, 0 }, 0.3f, 100 });
+			cps.emplace_back(xx::CurvePoint{ { 100, 100 }, 0.3f, 100 });
+			cps.emplace_back(xx::CurvePoint{ { 0, 100 }, 0.3f, 100 });
+			mp->FillCurve(true, cps);
 
-			auto mpc = xx::Make<MovePathCache>();
+			auto mpc = xx::Make<xx::MovePathCache>();
 			mpc->Init(mp, 1);
 
 			auto hw = (int)xx::engine.hw;
