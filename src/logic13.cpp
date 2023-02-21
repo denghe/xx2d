@@ -23,6 +23,7 @@ namespace MovePathTests {
 		}
 		if (loop) {
 			FillFields(points[len - 1], points[0]);
+			totalDistance += points[len - 1].distance;
 		}
 		else {
 			points[len - 1].distance = {};
@@ -42,13 +43,13 @@ namespace MovePathTests {
 		p1.distance = std::sqrt(v.x * v.x + v.y * v.y);
 	}
 
-	void MovePathRunner::Init(xx::Shared<MovePath> mp) {
+	void MovePathSteper::Init(xx::Shared<MovePath> mp) {
 		this->mp = std::move(mp);
 		cursor = {};
 		cursorDistance = {};
 	}
 
-	MovePathRunner::MoveResult MovePathRunner::MoveToBegin() {
+	MovePathSteper::MoveResult MovePathSteper::MoveToBegin() {
 		assert(mp);
 		assert(mp->points.size());
 		cursor = {};
@@ -57,22 +58,13 @@ namespace MovePathTests {
 		return { .pos = p.pos, .radians = p.radians, .movedDistance = {}, .terminated = false };
 	}
 
-	MovePathRunner::MoveResult MovePathRunner::MoveToEnd() {
-		assert(mp);
-		assert(mp->points.size());
-		cursor = {};
-		cursorDistance = {};
-		auto& p = mp->points.back();
-		return { .pos = p.pos, .radians = p.radians, .movedDistance = mp->totalDistance, .terminated = !mp->loop };
-	}
-
-	MovePathRunner::MoveResult MovePathRunner::MoveForward(float const& distance) {
+	MovePathSteper::MoveResult MovePathSteper::MoveForward(float const& stepDistance) {
 		assert(mp);
 		assert(mp->points.size());
 		auto& ps = mp->points;
 		auto siz = ps.size();
 		auto loop = mp->loop;
-		auto d = distance;
+		auto d = stepDistance;
 	LabLoop:
 		auto& p = ps[cursor];
 		auto left = p.distance - cursorDistance;
@@ -85,8 +77,8 @@ namespace MovePathTests {
 					cursor = 0;
 				}
 				else {
-					// todo
-					//return { .pos = p.pos, .radians = p.radians, .movedDistance = distance - d, .terminated = !mp->loop };
+					cursor = siz - 1;
+					return { .pos = p.pos, .radians = p.radians, .movedDistance = stepDistance - d, .terminated = true };
 				}
 			}
 			goto LabLoop;
@@ -94,32 +86,54 @@ namespace MovePathTests {
 		else {
 			cursorDistance += d;
 		}
-		return { .pos = p.pos + (p.inc * cursorDistance), .radians = p.radians, .movedDistance = distance, .terminated = !mp->loop && cursor == siz - 1 };
+		return { .pos = p.pos + (p.inc * cursorDistance), .radians = p.radians, .movedDistance = stepDistance, .terminated = !mp->loop && cursor == siz - 1 };
 	}
 
-	MovePathRunner::MoveResult MovePathRunner::MoveBackward(float const& distance) {
+	void MovePathCache::Init(xx::Shared<MovePath> mp, float const& stepDistance) {
 		assert(mp);
-		assert(mp->points.size());
-		// todo
-		return MoveToBegin();
+		assert(stepDistance > 0);
+		assert(mp->totalDistance > stepDistance);
+		this->stepDistance = stepDistance;
+		this->loop = mp->loop;
+		auto td = mp->totalDistance + stepDistance;
+		points.clear();
+		points.reserve(std::ceil(mp->totalDistance / stepDistance));
+		MovePathSteper mpr;
+		mpr.Init(std::move(mp));
+		auto mr = mpr.MoveToBegin();
+		points.push_back({ mr.pos, mr.radians });
+		for (float d = stepDistance; d < td; d += stepDistance) {
+			mr = mpr.MoveForward(stepDistance);
+			points.push_back({ mr.pos, mr.radians });
+		}
 	}
 
+	MovePathCachePoint* MovePathCache::Move(float const& totalDistance) {
+		int i = totalDistance / stepDistance;
+		if (loop) {
+			return &points[i % points.size()];
+		}
+		else {
+			return i < points.size() ? &points[i] : nullptr;
+		}
+	}
 
-
-	void Monster::Init(xx::XY const& pos, xx::Shared<MovePath> mp) {
-		this->pos = pos;
-		radians = mp->points.front().radians;
-		fixedPos = pos;
-		mpr.Init(std::move(mp));
+	void Monster::Init(xx::XY const& pos, xx::Shared<MovePathCache> mpc) {
+		auto mp = mpc->Move(0);
+		assert(mp);
+		radians = mp->radians;
+		this->originalPos = pos;
+		this->pos = pos + mp->pos;
+		this->mpc = std::move(mpc);
 		DrawInit();
 	}
 
 	int Monster::Update() {
-		auto mr = mpr.MoveForward(speed);
-		if (mr.terminated) return 1;
-		// mr.movedDistance for calc anim
-		radians = mr.radians;
-		fixedPos = pos + mr.pos;
+		movedDistance += speed;
+		auto mp = mpc->Move(movedDistance);
+		if (!mp) return 1;
+		radians = mp->radians;
+		pos = originalPos + mp->pos;
 		return 0;
 	}
 
@@ -130,7 +144,7 @@ namespace MovePathTests {
 	}
 
 	void Monster::Draw() {
-		body.SetPosition(fixedPos).SetRotate(-radians).Draw();
+		body.SetPosition(pos).SetRotate(-radians).Draw();
 	}
 
 
@@ -167,9 +181,12 @@ namespace MovePathTests {
 		mp->points.emplace_back().pos = { 0, 100 };
 		mp->Fill(true);
 
+		auto mpc = xx::Make<MovePathCache>();
+		mpc->Init(mp, 1);
+
 		for (size_t i = 0; i < 100000; i++) {
 			auto&& m = AddMonster();
-			m->Init({ -100, -50 }, mp);
+			m->Init({ -100, -50 }, mpc);
 		}
 	}
 
