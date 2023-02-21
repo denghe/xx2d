@@ -214,6 +214,13 @@ void Logic13::Init(Logic* logic) {
 	std::cout << "Logic13 Init( move path tests )" << std::endl;
 
 	scene.Init(logic);
+
+	auto secs = xx::NowSteadyEpochSeconds();
+	size_t i = 0;
+	for (; i < 1000; i++) {
+		scene.Update();
+	}
+	std::cout << "monsters.size == " << scene.monsters.size() << ". update " << i << " times. elapsed secs = " << xx::NowSteadyEpochSeconds(secs) << std::endl;
 }
 
 
