@@ -13,8 +13,7 @@ namespace MovePathTests {
 			for (size_t i = 0; i < len; i++) {
 				points[i].pos = ps[i];
 			}
-		}
-		else {
+		} else {
 			assert(len <= points.size());
 		}
 		for (size_t i = 0; i < len - 1; i++) {
@@ -24,8 +23,7 @@ namespace MovePathTests {
 		if (loop) {
 			FillFields(points[len - 1], points[0]);
 			totalDistance += points[len - 1].distance;
-		}
-		else {
+		} else {
 			points[len - 1].distance = {};
 			points[len - 1].inc = {};
 			points[len - 1].radians = points[len - 2].radians;
@@ -75,15 +73,13 @@ namespace MovePathTests {
 			if (cursor == siz) {
 				if (loop) {
 					cursor = 0;
-				}
-				else {
+				} else {
 					cursor = siz - 1;
 					return { .pos = p.pos, .radians = p.radians, .movedDistance = stepDistance - d, .terminated = true };
 				}
 			}
 			goto LabLoop;
-		}
-		else {
+		} else {
 			cursorDistance += d;
 		}
 		return { .pos = p.pos + (p.inc * cursorDistance), .radians = p.radians, .movedDistance = stepDistance, .terminated = !mp->loop && cursor == siz - 1 };
@@ -112,8 +108,7 @@ namespace MovePathTests {
 		int i = totalDistance / stepDistance;
 		if (loop) {
 			return &points[i % points.size()];
-		}
-		else {
+		} else {
 			return i < points.size() ? &points[i] : nullptr;
 		}
 	}
@@ -140,11 +135,12 @@ namespace MovePathTests {
 
 
 	void Monster::DrawInit() {
-		body.FillCirclePoints({}, 16, 0.f, 12);
+		//body.FillCirclePoints({}, 16, 0.f, 12);
+		body.SetTexture(owner->tex);
 	}
 
 	void Monster::Draw() {
-		body.SetPosition(pos).SetRotate(-radians).Draw();
+		body.SetPosition(pos).SetRotate(-radians + float(M_PI / 2)).Draw();
 	}
 
 
@@ -171,23 +167,31 @@ namespace MovePathTests {
 
 	void Scene::Init(Logic* logic) {
 		this->logic = logic;
+		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 
-		// todo: scene logic coro?
+		coros.Add([](Scene* self)->xx::Coro {
+			auto mp = xx::Make<MovePath>();
+			mp->points.emplace_back().pos = { 0, 0 };
+			mp->points.emplace_back().pos = { 100, 0 };
+			mp->points.emplace_back().pos = { 100, 100 };
+			mp->points.emplace_back().pos = { 0, 100 };
+			mp->Fill(true);
 
-		auto mp = xx::Make<MovePath>();
-		mp->points.emplace_back().pos = { 0, 0 };
-		mp->points.emplace_back().pos = { 100, 0 };
-		mp->points.emplace_back().pos = { 100, 100 };
-		mp->points.emplace_back().pos = { 0, 100 };
-		mp->Fill(true);
+			auto mpc = xx::Make<MovePathCache>();
+			mpc->Init(mp, 1);
 
-		auto mpc = xx::Make<MovePathCache>();
-		mpc->Init(mp, 1);
-
-		for (size_t i = 0; i < 100000; i++) {
-			auto&& m = AddMonster();
-			m->Init({ -100, -50 }, mpc);
-		}
+			auto hw = (int)xx::engine.hw;
+			auto hh = (int)xx::engine.hh;
+			auto r = 32;
+			for (size_t j = 0; j < 10000; j++) {
+				for (size_t i = 0; i < 10; i++) {
+					auto&& m = self->AddMonster();
+					xx::Pos v{ self->rnd.Next(-hw + r, hw - r), self->rnd.Next(-hh + r, hh - r) };
+					m->Init(v.As<float>(), mpc);
+				}
+				CoYield;
+			}
+		}(this));
 	}
 
 	void Scene::Update() {
@@ -217,7 +221,7 @@ void Logic13::Init(Logic* logic) {
 
 	auto secs = xx::NowSteadyEpochSeconds();
 	size_t i = 0;
-	for (; i < 1000; i++) {
+	for (; i < 100; i++) {
 		scene.Update();
 	}
 	std::cout << "monsters.size == " << scene.monsters.size() << ". update " << i << " times. elapsed secs = " << xx::NowSteadyEpochSeconds(secs) << std::endl;

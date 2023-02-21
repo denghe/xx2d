@@ -56,7 +56,8 @@ namespace MovePathTests {
 		xx::Shared<MovePathCache> mpc;
 		xx::XY originalPos{}, pos{};
 		float radians{}, speed{ 1 }, movedDistance{};
-		xx::LineStrip body;
+		//xx::LineStrip body;
+		xx::Quad body;
 
 		void Init(xx::XY const& pos, xx::Shared<MovePathCache> mpc);
 		int Update();	// return non zero: release
@@ -66,6 +67,8 @@ namespace MovePathTests {
 
 	struct Scene {
 		Logic* logic{};
+		xx::Shared<xx::GLTexture> tex;
+		xx::Rnd rnd;
 		std::vector<xx::Shared<Monster>> monsters;
 		xx::Coros coros;
 
