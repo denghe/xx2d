@@ -564,7 +564,7 @@ namespace xx {
 						}
 						default:
 						{
-							throw std::logic_error("unsupported compression: " + (int)compression);
+							throw std::logic_error("unsupported compression: " + std::to_string((int)compression));
 						}
 						}
 					}
@@ -582,7 +582,7 @@ namespace xx {
 					break;
 				}
 				default:
-					throw std::logic_error("unsupported encoding: " + (int)encoding);
+					throw std::logic_error("unsupported encoding: " + std::to_string((int)encoding));
 				};
 			} else {
 				switch (map.tileLayerFormat.encoding) {
@@ -609,7 +609,7 @@ namespace xx {
 					}
 					default:
 					{
-						throw std::logic_error("unsupported compression: " + (int)compression);
+						throw std::logic_error("unsupported compression: " + std::to_string((int)compression));
 					}
 					}
 					break;
@@ -622,7 +622,7 @@ namespace xx {
 					break;
 				}
 				default:
-					throw std::logic_error("unsupported encoding: " + (int)encoding);
+					throw std::logic_error("unsupported encoding: " + std::to_string((int)encoding));
 				};
 			}
 		}

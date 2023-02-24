@@ -91,7 +91,7 @@ void main() {
 		glVertexAttribDivisor(aColor, 1);
 		glEnableVertexAttribArray(aColor);
 
-		glVertexAttribPointer(aTexRect, 4, GL_UNSIGNED_SHORT, FALSE, sizeof(QuadInstanceData), (GLvoid*)offsetof(QuadInstanceData, texRectX));
+		glVertexAttribPointer(aTexRect, 4, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(QuadInstanceData), (GLvoid*)offsetof(QuadInstanceData, texRectX));
 		glVertexAttribDivisor(aTexRect, 1);
 		glEnableVertexAttribArray(aTexRect);
 

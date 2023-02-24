@@ -18,8 +18,13 @@ namespace xx {
 		static int ReadFloat2(std::string_view const& line, T& a, T& b) {
 			auto dotPos = line.find(',', 1);
 			if (dotPos == std::string_view::npos) return __LINE__;
+#ifdef _MSVC
 			std::from_chars(line.data(), line.data() + dotPos, a);
 			std::from_chars(line.data() + dotPos + 1, line.data() + line.size(), b);
+#else
+            a = atof(std::string(line.substr(0, dotPos)).c_str());
+            b = atof(std::string(line.substr(dotPos + 1)).c_str());
+#endif
 			return 0;
 		}
 

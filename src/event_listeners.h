@@ -62,7 +62,7 @@ namespace xx {
 				}
 			} else {
 				if (handler && lastPos != engine.mousePosition) {	// move
-					if (eventId = handler->HandleMouseMove(*this)) {
+					if ((eventId = handler->HandleMouseMove(*this))) {
 						handler = {};
 					} else {
 						lastPos = engine.mousePosition;

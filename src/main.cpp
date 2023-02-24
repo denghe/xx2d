@@ -1,6 +1,6 @@
 ﻿#include"pch.h"
 #include "logic.h"
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 
 GLFWwindow* wnd = nullptr;
 inline int width = 0;
@@ -16,7 +16,7 @@ int main() {
 	std::cout << "working dir = " << xx::GetPath_Current().string() << std::endl;
 
 	glfwSetErrorCallback([](int error, const char* description) {
-		throw new std::exception(description, error);
+		throw std::logic_error{std::string(description) + "   error number = " + std::to_string(error)};
 	});
 
 	if (!glfwInit())

@@ -60,7 +60,7 @@ void Logic1::Init(Logic* logic) {
 
 				auto& sa = lsas.sas[idx];
 				auto&& s = *sa.sprite.Emplace();
-				if (sa.anim = gidFAs[gid].anim) {
+				if ((sa.anim = gidFAs[gid].anim)) {
 					s.SetFrame(sa.anim->GetCurrentAnimFrame().frame);
 				} else {
 					s.SetFrame(gidFAs[gid].frame);

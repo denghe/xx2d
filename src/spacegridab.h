@@ -521,7 +521,7 @@ namespace xx {
 
 			auto d = grid->maxDiameter;
 			auto fd = (float)d;
-			auto halfNumRows = screenSize.h / scale.y / fd / 2;
+			auto halfNumRows = screenSize.y / scale.y / fd / 2;
 			int32_t posRowIndex = (int32_t)pos.y / d;
 			rowFrom = posRowIndex - halfNumRows;
 			rowTo = posRowIndex + halfNumRows + 2;
@@ -532,7 +532,7 @@ namespace xx {
 				rowTo = grid->numRows;
 			}
 
-			auto halfNumColumns = screenSize.w / scale.x / fd / 2;
+			auto halfNumColumns = screenSize.x / scale.x / fd / 2;
 			int32_t posColumnIndex = (int32_t)pos.x / d;
 			columnFrom = posColumnIndex - halfNumColumns;
 			columnTo = posColumnIndex + halfNumColumns + 2;
