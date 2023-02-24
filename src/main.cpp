@@ -9,7 +9,9 @@ inline int height = 0;
 int main() {
 	xx::engine.EngineInit();
 
+#ifdef _WIN32
 	SetConsoleOutputCP(65001);
+#endif
 
 	std::cout << "working dir = " << xx::GetPath_Current().string() << std::endl;
 
