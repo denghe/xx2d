@@ -1,3 +1,6 @@
 .vs
 x64
 build
+.idea
+cmake-build-debug
+cmake-build-release
