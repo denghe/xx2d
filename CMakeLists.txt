@@ -27,6 +27,9 @@ if(MSVC)
 	add_definitions("-D_SECURE_SCL=0")
 	add_definitions("-D_HAS_ITERATOR_DEBUGGING=0")
 
+	target_compile_options(${name} PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>)
+	set_source_files_properties(src/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/GL")
