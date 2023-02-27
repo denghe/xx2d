@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 include_directories(
 	3rd
+	xxlib
 	src
 	./
 )
@@ -14,6 +15,7 @@ include_directories(
 set(SRCS)
 file(GLOB_RECURSE SRCS
 	3rd/*.h
+	xxlib/*.h
 	src/*.cpp
 	src/*.h
 	src/*.hpp
@@ -27,9 +29,6 @@ if(MSVC)
 
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-	#add_definitions(-DOPEN_MP_NUM_THREADS=3)
-	#SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/openmp")
-
 	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/GL")
 	SET_TARGET_PROPERTIES(${name} PROPERTIES LINK_FLAGS "/LTCG")
 	target_compile_options(${name} 
@@ -39,18 +38,15 @@ else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
 endif()
 
-add_subdirectory(../xxlib/src xxlib)
-target_link_libraries(${name} xxlib)
-
 
 SET(GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW_BUILD_DOCS" FORCE)
 SET(GLFW_BUILD_TESTS OFF CACHE BOOL "GLFW_BUILD_TESTS" FORCE)
 SET(GLFW_INSTALL OFF CACHE BOOL "GLFW_INSTALL" FORCE)
-add_subdirectory(../glfw glfw)
+add_subdirectory(glfw)
 target_link_libraries(${name} glfw)
 
 
-add_subdirectory(../pugixml pugixml)
+add_subdirectory(pugixml)
 target_link_libraries(${name} pugixml)
 
 
@@ -60,12 +56,8 @@ SET(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL "ZSTD_BUILD_PROGRAMS" FORCE)
 SET(ZSTD_BUILD_SHARED OFF CACHE BOOL "ZSTD_BUILD_SHARED" FORCE)
 SET(ZSTD_BUILD_TESTS OFF CACHE BOOL "ZSTD_BUILD_SHARED" FORCE)
 SET(ZSTD_LEGACY_SUPPORT OFF CACHE BOOL "ZSTD_LEGACY_SUPPORT" FORCE)
-add_subdirectory(../zstd/build/cmake zstd)
+add_subdirectory(zstd/build/cmake zstd)
 target_link_libraries(${name} libzstd_static)
 include_directories(
-	../zstd/lib
+	zstd/lib
 )
-
-
-#add_subdirectory(../zlib zlib)
-#target_link_libraries(${name} zlibstatic)

@@ -41,15 +41,7 @@ tiled map ( 1.92 full support ) loader & helpers( cam, util funcs )
 
 cmake 3.20+
 
-depend modules: ( put them or make soft link to sibling directory )
-
-https://github.com/denghe/xxlib.git
-
-https://github.com/glfw/glfw.git
-
-https://github.com/zeux/pugixml.git
-
-https://github.com/facebook/zstd.git
+pull submodules
 
 # todo
 
