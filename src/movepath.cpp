@@ -91,8 +91,8 @@ namespace xx {
 
 		// 2 point: line
 		if (len == 2) {
-			points.emplace_back(ps[0].pos);
-			points.emplace_back(ps[1].pos);
+			points.emplace_back(MovePathPoint{ps[0].pos});
+			points.emplace_back(MovePathPoint{ps[1].pos});
 		}
 		// curve
 		else {

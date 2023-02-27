@@ -80,7 +80,7 @@ namespace MovePathTests {
 			for (size_t j = 0; j < 10000; j++) {
 				for (size_t i = 0; i < 20; i++) {
 					auto&& m = self->AddMonster();
-					xx::Pos v{ self->rnd.Next(-hw + r, hw - r), self->rnd.Next(-hh + r, hh - r) };
+					xx::Pos<> v{ self->rnd.Next(-hw + r, hw - r), self->rnd.Next(-hh + r, hh - r) };
 					auto color = self->rnd.Get();
 					m->Init(v.As<float>(), mpc, 2, (xx::RGBA8&)color);
 				}
