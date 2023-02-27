@@ -26,17 +26,26 @@ add_executable(${name} ${SRCS})
 if(MSVC)
 	add_definitions("-D_SECURE_SCL=0")
 	add_definitions("-D_HAS_ITERATOR_DEBUGGING=0")
+	target_compile_options(${name} 
+		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
+		PRIVATE $<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>
+	)
+	target_compile_options(${name} 
+		PRIVATE $<$<CONFIG:MinSizeRel>:/GL>
+		PRIVATE $<$<CONFIG:Release>:/GL>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:/GL>
+	)
+	target_link_options(${name} 
+		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
+		PRIVATE $<$<CONFIG:Release>:/LTCG>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
+	)
 
 	target_compile_options(${name} PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>)
 	set_source_files_properties(src/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
-
+	
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-	SET_TARGET_PROPERTIES(${name} PROPERTIES COMPILE_FLAGS "/GL")
-	SET_TARGET_PROPERTIES(${name} PROPERTIES LINK_FLAGS "/LTCG")
-	target_compile_options(${name} 
-		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
-		PRIVATE $<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>)
 else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
 endif()
