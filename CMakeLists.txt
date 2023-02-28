@@ -23,17 +23,20 @@ file(GLOB_RECURSE SRCS
 )
 add_executable(${name} ${SRCS})
 
+
 if(MSVC)
+
 	add_definitions("-D_SECURE_SCL=0")
 	add_definitions("-D_HAS_ITERATOR_DEBUGGING=0")
+	add_compile_options($<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>)	# other proj enable multi-processor compilation
+
 	target_compile_options(${name} 
 		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
-		PRIVATE $<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>
-	)
-	target_compile_options(${name} 
+		PRIVATE $<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>	# this proj enable multi-processor compilation
 		PRIVATE $<$<CONFIG:MinSizeRel>:/GL>
 		PRIVATE $<$<CONFIG:Release>:/GL>
 		PRIVATE $<$<CONFIG:RelWithDebInfo>:/GL>
+		PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>	# use pre-compile header
 	)
 	target_link_options(${name} 
 		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
@@ -41,13 +44,12 @@ if(MSVC)
 		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
 	)
 
-	target_compile_options(${name} PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>)
-	set_source_files_properties(src/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+	set_source_files_properties(src/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")		# make pre-compile header
 	
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 else()
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")	# todo: only for release?
 endif()
 
 
