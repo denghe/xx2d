@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "xx2d_pch.h"
-#include "logic_base.h"
+#include "scene_base.h"
 
 struct GameLooper {
 	xx::BMFont fnt1;
@@ -9,13 +9,13 @@ struct GameLooper {
 	int fps{}, fpsCounter{};
 	double fpsTimePool{}, timePool{};
 
-	xx::Shared<LogicBase> lg;
+	xx::Shared<SceneBase> scene;
 
 	template<typename LT>
 	void DelaySwitchTo() {
 		xx::engine.DelayExecute([this] {
-			lg = xx::Make<LT>();
-			lg->Init(this);
+			scene = xx::Make<LT>();
+			scene->Init(this);
 		});
 	}
 

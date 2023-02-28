@@ -1,24 +1,24 @@
 ﻿#include "xx2d_pch.h"
 #include "game_looper.h"
-#include "logic0.h"
+#include "s0_main_menu.h"
 
 void GameLooper::Init() {
 	fnt1 = xx::engine.LoadBMFont("res/font1/basechars.fnt"sv);
 
 	lbInfo.SetPosition(xx::engine.ninePoints[1] + xx::XY{ 10, 10 }).SetAnchor({0, 0});
 
-	lg = xx::Make<Logic0>();
-	lg->Init(this);
+	scene = xx::Make<MainMenu::Scene>();
+	scene->Init(this);
 }
 
 int GameLooper::Update() {
 	if (xx::engine.Pressed(xx::KbdKeys::Escape)) {
-		if (!dynamic_cast<Logic0*>(lg.pointer)) {
-			DelaySwitchTo<Logic0>();
+		if (!dynamic_cast<MainMenu::Scene*>(scene.pointer)) {
+			DelaySwitchTo<MainMenu::Scene>();
 		}
 	}
 
-	int r = lg->Update();
+	int r = scene->Update();
 
 	// display draw call, fps ...
 	++fpsCounter;
