@@ -23,7 +23,7 @@ int main() {
 		return -1;
 	auto sg_glfw = xx::MakeSimpleScopeGuard([] { glfwTerminate(); });
 
-	wnd = glfwCreateWindow(xx::engine.w, xx::engine.h, "xx2dtest1", nullptr, nullptr);
+	wnd = glfwCreateWindow(xx::engine.w, xx::engine.h, "xx2d game engine", nullptr, nullptr);
 	if (!wnd)
 		return -2;
 	auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });

@@ -21,9 +21,24 @@ void Logic14::Init(Logic* logic) {
 		.SetScale(3);
 
 	scissor.rect = { -100, -100, 200, 200 };
+
+	coros.Add([](Logic14* self)->xx::Coro {
+		float ay = 0;
+		while (true) {
+			for (; ay < 1.f; ay += 0.001f) {
+				self->spr.SetAnchor({ 0.5, ay });
+				CoYield;
+			}
+			for (; ay >= 0; ay -= 0.001f) {
+				self->spr.SetAnchor({ 0.5, ay });
+				CoYield;
+			}
+		}
+	}(this));
 }
 
 int Logic14::Update() {
+	coros();
 	scissor.Begin();
 	spr.Draw();
 	scissor.End();

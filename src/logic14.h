@@ -11,6 +11,7 @@ struct Scissor {
 struct Logic14 : LogicBase {
 	Scissor scissor;
 	xx::Sprite spr;
+	xx::Coros coros;
 	void Init(Logic* logic) override;
 	int Update() override;
 };
