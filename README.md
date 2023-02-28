@@ -11,11 +11,11 @@ performance ~= raylib, much more faster than cocos2dx
 
 search path
 
-auto decompress zstd file( detect by header: 28 B5 2F FD )
+auto uncompress zstd file( detect by header: 28 B5 2F FD )
 
 shader manager with autobatch
 
-texture ( current .pkm only, detect by header "PKM 20" ) cache
+texture ( current support pkm2 png format only, detect by file content ) cache
 
 texture packer ( 7.0 limit support ) loader & frame cache
 

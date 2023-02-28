@@ -403,10 +403,6 @@ namespace xx {
 			std::string s;
 			TryFill(s, c.attribute("source"));
 			auto&& fp = rootPath + s;	// to fullpath
-			if (fp.ends_with(".png"sv)) {			// hack: replace ext to pkm
-				fp.resize(fp.size() - 4);
-				fp.append(".pkm");
-			}
 			auto&& iter = std::find_if(map.images.begin(), map.images.end(), [&](xx::Shared<Image> const& img) {
 				return img->source == s;
 				});
