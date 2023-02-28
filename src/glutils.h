@@ -15,6 +15,8 @@
 
 namespace xx {
 
+	GLuint GenBindGLTexture();
+
 	// fn must be absolute path. GetFullPath recommend
 	GLTexture LoadGLTexture(std::string_view const& buf, std::string_view const& fullPath);
 

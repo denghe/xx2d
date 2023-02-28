@@ -17,6 +17,18 @@
 
 namespace xx {
 
+	GLuint GenBindGLTexture() {
+		GLuint t = 0;
+		glGenTextures(1, &t);
+		glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
+		glBindTexture(GL_TEXTURE_2D, t);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST/*GL_LINEAR*/);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		return t;
+	}
+
 	GLTexture LoadGLTexture(std::string_view const& buf, std::string_view const& fullPath) {
 		if (buf.size() <= 12) {
 			throw std::logic_error(xx::ToString("texture file size too small. fn = ", fullPath));
@@ -34,15 +46,8 @@ namespace xx {
 			uint16_t height = (p[14] << 8) | p[15];				// height
 			assert((format == 1 || format == 3) && width > 0 && height > 0 && encodedWidth >= width && encodedWidth - width < 4
 				&& encodedHeight >= height && encodedHeight - height < 4 && buf.size() == 16 + encodedWidth * encodedHeight);
-			GLuint t = 0;
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);	// todo: optimize this value like cocos2.x CCTexture2D.cpp  line 191
-			glGenTextures(1, &t);
-			glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
-			glBindTexture(GL_TEXTURE_2D, t);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST/*GL_LINEAR*/);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 8 - 4 * (width & 0x1));
+			auto t = GenBindGLTexture();
 			glCompressedTexImage2D(GL_TEXTURE_2D, 0, format == 3 ? GL_COMPRESSED_RGBA8_ETC2_EAC : GL_COMPRESSED_RGB8_ETC2, (GLsizei)width, (GLsizei)height, 0, (GLsizei)(buf.size() - 16), p + 16);
 			glBindTexture(GL_TEXTURE_2D, 0);
 			CheckGLError();
@@ -55,12 +60,11 @@ namespace xx {
 		else if (buf.starts_with("\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"sv)) {
 			int w, h, comp;
 			if (auto image = stbi_load(std::string(fullPath).c_str(), &w, &h, &comp, STBI_rgb_alpha)) {
-				GLuint t = 0;
-				glGenTextures(1, &t);
-				glBindTexture(GL_TEXTURE_2D, t);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 				auto c = comp == 3 ? GL_RGB : GL_RGBA;
+				if (comp == 4) {
+					glPixelStorei(GL_UNPACK_ALIGNMENT, 8 - 4 * (w & 0x1));
+				}
+				auto t = GenBindGLTexture();
 				glTexImage2D(GL_TEXTURE_2D, 0, c, w, h, 0, c, GL_UNSIGNED_BYTE, image);
 				glBindTexture(GL_TEXTURE_2D, 0);
 				stbi_image_free(image);
