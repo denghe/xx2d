@@ -6,6 +6,7 @@ project(${name})
 set(CMAKE_CXX_STANDARD 20)
 
 include_directories(
+	examples
 	glad
 	stb
 	xxlib
@@ -21,6 +22,11 @@ file(GLOB_RECURSE SRCS
 	src/*.h
 	src/*.hpp
 	src/*.inc
+	examples/*.h
+	examples/*.hpp
+	examples/*.inc
+	examples/*.c
+	examples/*.cpp
 )
 add_executable(${name} ${SRCS})
 
@@ -40,7 +46,7 @@ if(MSVC)
 		PRIVATE $<$<CONFIG:MinSizeRel>:/GL>
 		PRIVATE $<$<CONFIG:Release>:/GL>
 		PRIVATE $<$<CONFIG:RelWithDebInfo>:/GL>
-		PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>	# use pre-compile header
+		PRIVATE $<$<PLATFORM_ID:Windows>:/Yuxx2d_pch.h>	# use pre-compile header
 	)
 	target_link_options(${name} 
 		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
@@ -48,7 +54,7 @@ if(MSVC)
 		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
 	)
 
-	set_source_files_properties(src/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")		# make pre-compile header
+	set_source_files_properties(src/xx2d_pch.cpp PROPERTIES COMPILE_FLAGS "/Ycxx2d_pch.h")		# make pre-compile header
 	
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 

@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+﻿#include "xx2d_pch.h"
 
 // todo: handle path "../../". remove rootDir ( write global function for append path? test FS::path )
 

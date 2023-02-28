@@ -1,5 +1,5 @@
-﻿#include"pch.h"
-#include "logic.h"
+﻿#include"xx2d_pch.h"
+#include "game_looper.h"		// user code ref here
 #include <GLFW/glfw3.h>
 
 GLFWwindow* wnd = nullptr;
@@ -70,20 +70,23 @@ int main() {
 	xx::engine.EngineGLInit();
 	glfwSetCursorPos(wnd, xx::engine.mousePosition.x, xx::engine.mousePosition.y);
 
-	// *************************************************************************************** logic begin here
-	xx::Shared<Logic> logic = xx::Make<Logic>();
-	logic->Init();
+	// ***************************************************************************************
+	//  user code call here
+	// ***************************************************************************************
+
+	auto o = xx::Make<GameLooper>();	// user class
+	o->Init();
 	while (!glfwWindowShouldClose(wnd)) {
 		glfwPollEvents();
 		xx::engine.EngineUpdateBegin();
 
-		if (logic->Update()) break;
+		if (o->Update()) break;
 
 		xx::engine.EngineUpdateEnd();
 		glfwSwapBuffers(wnd);
 	}
 
-	logic.Reset();
+	o.Reset();
 	xx::engine.EngineDestroy();
 
 	return 0;
