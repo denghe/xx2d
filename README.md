@@ -53,7 +53,7 @@ edit box, rich text? imgui?
 
 texture packer's polygon algorithm support
 
-more texture format support? astc? webp? png? webm -> tex?
+more texture format support?
 
 spine?
 

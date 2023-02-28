@@ -45,8 +45,8 @@ void Logic0::Init(Logic* logic) {
 
 	x -= 150;
 	menus.emplace_back().Init(logic, { -500, x }, "13: move path tests", 48);
-	menus.emplace_back().Init(logic, { 0, x }, "14: png texture tests", 48);
-	//menus.emplace_back().Init(logic, { 500, x }, "15: ", 48);
+	menus.emplace_back().Init(logic, { 0, x }, "14: scissor tests", 48);
+	//menus.emplace_back().Init(logic, { 500, x }, "15: render texture tests", 48);
 
 	logic->extraInfo.clear();
 }
