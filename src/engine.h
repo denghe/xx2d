@@ -41,6 +41,7 @@ namespace xx {
 
 		// load texture from file
 		GLTexture LoadTexture(std::string_view const& fn);
+		xx::Shared<GLTexture> LoadSharedTexture(std::string_view const& fn);
 
 		// load + insert or get texture from texture cache
 		xx::Shared<GLTexture> LoadTextureFromCache(std::string_view const& fn);

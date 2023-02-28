@@ -4,10 +4,28 @@
 #define GLAD_GL_IMPLEMENTATION
 #include <glad.h>
 
+#define STBI_NO_JPEG
+//#define STBI_NO_PNG
+#define STBI_NO_GIF
+#define STBI_NO_PSD
+#define STBI_NO_PIC
+#define STBI_NO_PNM
+#define STBI_NO_HDR
+#define STBI_NO_TGA
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 namespace xx {
 
 	GLTexture LoadGLTexture(std::string_view const& buf, std::string_view const& fullPath) {
-		if (buf.size() >= 6 && memcmp("PKM 20", buf.data(), 6) == 0 && buf.size() >= 16) {
+		if (buf.size() <= 12) {
+			throw std::logic_error(xx::ToString("texture file size too small. fn = ", fullPath));
+		}
+
+		/***********************************************************************************************************************************/
+		// etc 2.0 / pkm2
+
+		if (buf.starts_with("PKM 20"sv) && buf.size() >= 16) {
 			auto p = (uint8_t*)buf.data();
 			uint16_t format = (p[6] << 8) | p[7];				// 1 ETC2_RGB_NO_MIPMAPS, 3 ETC2_RGBA_NO_MIPMAPS
 			uint16_t encodedWidth = (p[8] << 8) | p[9];			// 4 align width
@@ -21,17 +39,43 @@ namespace xx {
 			glGenTextures(1, &t);
 			glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
 			glBindTexture(GL_TEXTURE_2D, t);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST/*GL_LINEAR*/);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST/*GL_LINEAR*/);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glCompressedTexImage2D(GL_TEXTURE_2D, 0, format == 3 ? GL_COMPRESSED_RGBA8_ETC2_EAC : GL_COMPRESSED_RGB8_ETC2, (GLsizei)width, (GLsizei)height, 0, (GLsizei)(buf.size() - 16), p + 16);
+			glBindTexture(GL_TEXTURE_2D, 0);
 			CheckGLError();
 			return { t, width, height, fullPath };
 		}
+
+		/***********************************************************************************************************************************/
+		// png
+
+		else if (buf.starts_with("\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"sv)) {
+			int w, h, comp;
+			if (auto image = stbi_load(std::string(fullPath).c_str(), &w, &h, &comp, STBI_rgb_alpha)) {
+				GLuint t = 0;
+				glGenTextures(1, &t);
+				glBindTexture(GL_TEXTURE_2D, t);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				auto c = comp == 3 ? GL_RGB : GL_RGBA;
+				glTexImage2D(GL_TEXTURE_2D, 0, c, w, h, 0, c, GL_UNSIGNED_BYTE, image);
+				glBindTexture(GL_TEXTURE_2D, 0);
+				stbi_image_free(image);
+				return { t, w, h, fullPath };
+			} else {
+				std::logic_error(xx::ToString("failed to load texture. fn = ", fullPath));
+			}
+		}
+
+		/***********************************************************************************************************************************/
+		// todo: more format support here
+
 		throw std::logic_error(xx::ToString("unsupported texture type. fn = ", fullPath));
 	}
-
+	
 
 	GLShader LoadGLShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_) {
 		assert(codes_.size() && (type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER));

@@ -7,6 +7,9 @@ namespace xx {
 		return LoadGLTexture(d, p);
 	}
 
+	xx::Shared<GLTexture> Engine::LoadSharedTexture(std::string_view const& fn) {
+		return xx::Make<GLTexture>(LoadTexture(fn));
+	}
 
 	xx::Shared<GLTexture> Engine::LoadTextureFromCache(std::string_view const& fn) {
 		auto p = GetFullPath(fn);

@@ -14,6 +14,7 @@
 #include "logic11.h"
 #include "logic12.h"
 #include "logic13.h"
+#include "logic14.h"
 
 void Logic0::Init(Logic* logic) {
 	this->logic = logic;
@@ -44,7 +45,7 @@ void Logic0::Init(Logic* logic) {
 
 	x -= 150;
 	menus.emplace_back().Init(logic, { -500, x }, "13: move path tests", 48);
-	//menus.emplace_back().Init(logic, { 0, x }, "14: ", 48);
+	menus.emplace_back().Init(logic, { 0, x }, "14: png texture tests", 48);
 	//menus.emplace_back().Init(logic, { 500, x }, "15: ", 48);
 
 	logic->extraInfo.clear();
@@ -102,6 +103,8 @@ void Menu::HandleMouseUp(MenuMouseEventListener& L) {
 			logic->DelaySwitchTo<Logic12>();
 		} else if (txt.starts_with("13:"sv)) {
 			logic->DelaySwitchTo<Logic13>();
+		} else if (txt.starts_with("14:"sv)) {
+			logic->DelaySwitchTo<Logic14>();
 		} else {
 			throw std::logic_error("unhandled menu");
 		}

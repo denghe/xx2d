@@ -6,15 +6,16 @@ project(${name})
 set(CMAKE_CXX_STANDARD 20)
 
 include_directories(
-	3rd
+	glad
+	stb
 	xxlib
 	src
-	./
 )
 
 set(SRCS)
 file(GLOB_RECURSE SRCS
-	3rd/*.h
+	glad/*.h
+	stb/*.h
 	xxlib/*.h
 	src/*.cpp
 	src/*.h
@@ -22,6 +23,9 @@ file(GLOB_RECURSE SRCS
 	src/*.inc
 )
 add_executable(${name} ${SRCS})
+
+source_group("" FILES ${SRCS})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRCS})
 
 
 if(MSVC)
