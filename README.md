@@ -37,6 +37,8 @@ button( simulate )
 
 tiled map ( 1.92 full support ) loader & helpers( cam, util funcs )
 
+scissors
+
 # compile requires
 
 cmake 3.20+
@@ -45,7 +47,7 @@ pull submodules
 
 # todo
 
-scroll view / scissors
+audio
 
 render texture
 

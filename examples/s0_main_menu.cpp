@@ -25,30 +25,36 @@ namespace MainMenu {
 
 		meListener.Init(xx::Mbtns::Left);
 
-		float x = 300;
-		menus.emplace_back().Init(looper, { -500, x }, "1: tiledmap", 48);
-		menus.emplace_back().Init(looper, { 0, x }, "2: dragable", 48);
-		menus.emplace_back().Init(looper, { 500, x }, "3: box button", 48);
+		float y = 300;
+		float yinc = 100;
+		menus.emplace_back().Init(looper, { -500, y }, "1: tiledmap", 48);
+		menus.emplace_back().Init(looper, { 0, y }, "2: dragable", 48);
+		menus.emplace_back().Init(looper, { 500, y }, "3: box button", 48);
 
-		x -= 150;
-		menus.emplace_back().Init(looper, { -500, x }, "4: physics circles (space grid) ", 48);
-		menus.emplace_back().Init(looper, { 0, x }, "5: boxs (space grid ab)", 48);
-		menus.emplace_back().Init(looper, { 500, x }, "6: box & circle physics", 48);
+		y -= yinc;
+		menus.emplace_back().Init(looper, { -500, y }, "4: physics circles (space grid) ", 48);
+		menus.emplace_back().Init(looper, { 0, y }, "5: boxs (space grid ab)", 48);
+		menus.emplace_back().Init(looper, { 500, y }, "6: box & circle physics", 48);
 
-		x -= 150;
-		menus.emplace_back().Init(looper, { -500, x }, "7: more circle + box physics", 48);
-		menus.emplace_back().Init(looper, { 0, x }, "8: node", 48);
-		menus.emplace_back().Init(looper, { 500, x }, "9: sprites", 48);
+		y -= yinc;
+		menus.emplace_back().Init(looper, { -500, y }, "7: more circle + box physics", 48);
+		menus.emplace_back().Init(looper, { 0, y }, "8: node", 48);
+		menus.emplace_back().Init(looper, { 500, y }, "9: sprites", 48);
 
-		x -= 150;
-		menus.emplace_back().Init(looper, { -500, x }, "10: quads", 48);
-		menus.emplace_back().Init(looper, { 0, x }, "11: shooter game (slowly)", 48);
-		menus.emplace_back().Init(looper, { 500, x }, "12: shooter game with index", 48);
+		y -= yinc;
+		menus.emplace_back().Init(looper, { -500, y }, "10: quads", 48);
+		menus.emplace_back().Init(looper, { 0, y }, "11: shooter game (slowly)", 48);
+		menus.emplace_back().Init(looper, { 500, y }, "12: shooter game with index", 48);
 
-		x -= 150;
-		menus.emplace_back().Init(looper, { -500, x }, "13: move path", 48);
-		menus.emplace_back().Init(looper, { 0, x }, "14: scissor", 48);
-		menus.emplace_back().Init(looper, { 500, x }, "15: render texture", 48);
+		y -= yinc;
+		menus.emplace_back().Init(looper, { -500, y }, "13: move path", 48);
+		menus.emplace_back().Init(looper, { 0, y }, "14: scissor", 48);
+		menus.emplace_back().Init(looper, { 500, y }, "15: render texture( todo )", 48);
+
+		y -= yinc;
+		menus.emplace_back().Init(looper, { -500, y }, "16: ", 48);
+		menus.emplace_back().Init(looper, { 0, y }, "17: ", 48);
+		menus.emplace_back().Init(looper, { 500, y }, "18: ", 48);
 
 		looper->extraInfo.clear();
 	}
@@ -109,6 +115,12 @@ namespace MainMenu {
 				looper->DelaySwitchTo<Scissor::Scene>();
 			} else if (txt.starts_with("15:"sv)) {
 				looper->DelaySwitchTo<RenderTextureTest::Scene>();
+			} else if (txt.starts_with("16:"sv)) {
+				//looper->DelaySwitchTo<RenderTextureTest::Scene>();
+			} else if (txt.starts_with("17:"sv)) {
+				//looper->DelaySwitchTo<RenderTextureTest::Scene>();
+			} else if (txt.starts_with("18:"sv)) {
+				//looper->DelaySwitchTo<RenderTextureTest::Scene>();
 			} else {
 				throw std::logic_error("unhandled menu");
 			}

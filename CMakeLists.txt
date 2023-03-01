@@ -9,6 +9,7 @@ include_directories(
 	examples
 	glad
 	stb
+	miniaudio
 	xxlib
 	src
 )
@@ -17,6 +18,7 @@ set(SRCS)
 file(GLOB_RECURSE SRCS
 	glad/*.h
 	stb/*.h
+	miniaudio/*.h
 	xxlib/*.h
 	src/*.cpp
 	src/*.h

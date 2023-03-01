@@ -36,16 +36,16 @@ namespace RenderTextureTest {
 		spr.SetTexture(xx::engine.LoadSharedTexture("res/tiledmap2/tree.png"))
 			.SetScale(3);
 
-		rt.Init({ 200, 200 });
-		rt.Begin();
-		spr.Draw();
-		rt.End();
+		//rt.Init({ 200, 200 });
+		//rt.Begin();
+		//spr.Draw();
+		//rt.End();
 
 		//spr2.SetTexture(rt);	// todo
 	}
 
 	int Scene::Update() {
-		spr2.Draw();
+		//spr2.Draw();
 		return 0;
 	}
 
