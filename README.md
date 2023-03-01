@@ -33,11 +33,13 @@ line strip
 
 keyboard, mouse ( with event listener )
 
-button( simulate )
+button
 
 tiled map ( 1.92 full support ) loader & helpers( cam, util funcs )
 
 scissors
+
+audio ( miniaudio + stb vorbise )
 
 # compile requires
 
@@ -46,8 +48,6 @@ cmake 3.20+
 pull submodules
 
 # todo
-
-audio
 
 render texture
 

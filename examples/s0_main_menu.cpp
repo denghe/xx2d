@@ -16,6 +16,7 @@
 #include "s13_movepath.h"
 #include "s14_scissor.h"
 #include "s15_rendertexture.h"
+#include "s16_audio.h"
 
 namespace MainMenu {
 
@@ -49,10 +50,10 @@ namespace MainMenu {
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -500, y }, "13: move path", 48);
 		menus.emplace_back().Init(looper, { 0, y }, "14: scissor", 48);
-		menus.emplace_back().Init(looper, { 500, y }, "15: render texture( todo )", 48);
+		menus.emplace_back().Init(looper, { 500, y }, "15: render texture (todo)", 48);
 
 		y -= yinc;
-		menus.emplace_back().Init(looper, { -500, y }, "16: ", 48);
+		menus.emplace_back().Init(looper, { -500, y }, "16: audio", 48);
 		menus.emplace_back().Init(looper, { 0, y }, "17: ", 48);
 		menus.emplace_back().Init(looper, { 500, y }, "18: ", 48);
 
@@ -116,7 +117,7 @@ namespace MainMenu {
 			} else if (txt.starts_with("15:"sv)) {
 				looper->DelaySwitchTo<RenderTextureTest::Scene>();
 			} else if (txt.starts_with("16:"sv)) {
-				//looper->DelaySwitchTo<RenderTextureTest::Scene>();
+				looper->DelaySwitchTo<AudioTest::Scene>();
 			} else if (txt.starts_with("17:"sv)) {
 				//looper->DelaySwitchTo<RenderTextureTest::Scene>();
 			} else if (txt.starts_with("18:"sv)) {
