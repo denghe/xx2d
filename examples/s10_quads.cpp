@@ -33,7 +33,7 @@ namespace Quads {
 
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
-		std::cout << "Scene Init( quad instance tests )" << std::endl;
+		std::cout << "Quads::Scene::Init" << std::endl;
 
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 	}

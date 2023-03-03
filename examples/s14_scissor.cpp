@@ -16,7 +16,7 @@ namespace Scissor {
 
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
-		std::cout << "Scene Init( scissor tests )" << std::endl;
+		std::cout << "Scissor::Scene::Init" << std::endl;
 
 		spr.SetTexture(xx::engine.LoadSharedTexture("res/tiledmap2/tree.png"))
 			.SetScale(3);

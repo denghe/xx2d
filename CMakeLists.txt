@@ -9,13 +9,15 @@ include_directories(
 	examples
 	glad
 	stb
+	imgui
+	imgui/backends
 	miniaudio
 	xxlib
 	src
 )
 
 set(SRCS)
-file(GLOB_RECURSE SRCS
+file(GLOB SRCS	#GLOB_RECURSE
 	glad/*.h
 	stb/*.h
 	miniaudio/*.h
@@ -71,6 +73,10 @@ SET(GLFW_BUILD_TESTS OFF CACHE BOOL "GLFW_BUILD_TESTS" FORCE)
 SET(GLFW_INSTALL OFF CACHE BOOL "GLFW_INSTALL" FORCE)
 add_subdirectory(glfw)
 target_link_libraries(${name} glfw)
+
+
+add_subdirectory(imgui_cmake imgui)
+target_link_libraries(${name} imgui)
 
 
 add_subdirectory(pugixml)

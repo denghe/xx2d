@@ -41,6 +41,8 @@ scissors
 
 audio ( miniaudio + stb vorbise )
 
+imgui
+
 # compile requires
 
 cmake 3.20+
@@ -51,7 +53,7 @@ pull submodules
 
 render texture
 
-edit box, rich text? imgui?
+edit box, rich text?
 
 texture packer's polygon algorithm support
 

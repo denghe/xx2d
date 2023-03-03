@@ -31,7 +31,7 @@ namespace RenderTextureTest {
 
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
-		std::cout << "Scene Init( render texture tests )" << std::endl;
+		std::cout << "RenderTextureTest::Scene::Init" << std::endl;
 
 		spr.SetTexture(xx::engine.LoadSharedTexture("res/tiledmap2/tree.png"))
 			.SetScale(3);

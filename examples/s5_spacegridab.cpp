@@ -67,7 +67,7 @@ namespace SpaceGridAB {
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
 
-		std::cout << "Scene Init( test space grid AABB )" << std::endl;
+		std::cout << "SpaceGridAB::Scene::Init" << std::endl;
 
 		cam = cam.MakePos(xx::engine.ninePoints[7]);	// (0,0) at top left
 

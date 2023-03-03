@@ -1,4 +1,5 @@
 ﻿#include "xx2d_pch.h"
+#include "xx2d_imgui.h"
 
 namespace xx {
 
@@ -10,11 +11,14 @@ namespace xx {
 		SearchPathReset();
 	}
 
-	void Engine::EngineGLInit() {
+	void Engine::EngineGLInit(void* wnd) {
+		ImGuiInit(wnd);
 		sm.Init();
 	}
 
 	void Engine::EngineUpdateBegin() {
+		ImGuiUpdate();
+
 		delta = xx::NowSteadyEpochSeconds(nowSecs);
 		sm.Begin();
 
@@ -34,10 +38,14 @@ namespace xx {
 			}
 			delayFuncs.clear();
 		}
+
+		xx::ImGuiDraw();
 	}
 
 	void Engine::EngineDestroy() {
 		textureCache.clear();
+		// ...
+		xx::ImGuiDestroy();
 		// ...
 	}
 
@@ -56,5 +64,4 @@ namespace xx {
 		ninePoints[8] = { 0, hh };
 		ninePoints[9] = { hw, hh };
 	}
-
 }

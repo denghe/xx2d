@@ -6,7 +6,7 @@ namespace Node {
 
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
-		std::cout << "Logic8 Init( node tests )" << std::endl;
+		std::cout << "Node::Scene::Init" << std::endl;
 
 		auto tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 

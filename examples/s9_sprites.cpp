@@ -31,7 +31,7 @@ namespace Sprites {
 
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
-		std::cout << "Scene Init( sprite tests )" << std::endl;
+		std::cout << "Sprites::Scene::Init" << std::endl;
 
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 	}

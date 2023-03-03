@@ -101,7 +101,7 @@ namespace PhysicsCircles {
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
 
-		std::cout << "Scene Init( test spacegrid )" << std::endl;
+		std::cout << "PhysicsCircles::Scene::Init" << std::endl;
 
 		grid.Init(numRows, numCols, maxDiameter);
 

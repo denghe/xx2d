@@ -67,7 +67,7 @@ int main() {
 
 	while (auto e = glGetError()) {};	// cleanup glfw3 error
 
-	xx::engine.EngineGLInit();
+	xx::engine.EngineGLInit(wnd);
 	glfwSetCursorPos(wnd, xx::engine.mousePosition.x, xx::engine.mousePosition.y);
 
 	// ***************************************************************************************

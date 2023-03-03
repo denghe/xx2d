@@ -111,12 +111,17 @@ namespace xx {
 		double nowSecs{}, delta{};	// seconds. update before call Update()
 
 		void EngineInit();
-		void EngineGLInit();
+		void EngineGLInit(void* wnd);
 		void EngineUpdateBegin();
 		void EngineUpdateEnd();
 		void EngineDestroy();
 
 		// ...
+
+		/**********************************************************************************/
+		// imgui
+
+		std::function<void()> imguiLogic;	// set this func for call imgui logic code
 	};
 
 	// default / global instance

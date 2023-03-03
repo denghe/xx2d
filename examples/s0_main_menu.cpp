@@ -17,6 +17,7 @@
 #include "s14_scissor.h"
 #include "s15_rendertexture.h"
 #include "s16_audio.h"
+#include "s17_imgui.h"
 
 namespace MainMenu {
 
@@ -54,7 +55,7 @@ namespace MainMenu {
 
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -500, y }, "16: audio", 48);
-		menus.emplace_back().Init(looper, { 0, y }, "17: ", 48);
+		menus.emplace_back().Init(looper, { 0, y }, "17: imgui", 48);
 		menus.emplace_back().Init(looper, { 500, y }, "18: ", 48);
 
 		looper->extraInfo.clear();
@@ -119,7 +120,7 @@ namespace MainMenu {
 			} else if (txt.starts_with("16:"sv)) {
 				looper->DelaySwitchTo<AudioTest::Scene>();
 			} else if (txt.starts_with("17:"sv)) {
-				//looper->DelaySwitchTo<RenderTextureTest::Scene>();
+				looper->DelaySwitchTo<ImGuiTest::Scene>();
 			} else if (txt.starts_with("18:"sv)) {
 				//looper->DelaySwitchTo<RenderTextureTest::Scene>();
 			} else {

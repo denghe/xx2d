@@ -123,7 +123,7 @@ namespace MoreBoxCircleCD {
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
 
-		std::cout << "Scene Init( test box + more circle move to cursor collision detect )" << std::endl;
+		std::cout << "MoreBoxCircleCD::Scene::Init" << std::endl;
 
 		sgc.Init(400, 400, 64);
 		sgab.Init(400, 400, 64, 64);
