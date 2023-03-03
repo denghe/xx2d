@@ -13,3 +13,6 @@
 [submodule "miniaudio"]
 	path = miniaudio
 	url = https://github.com/mackron/miniaudio.git
+[submodule "imgui"]
+	path = imgui
+	url = https://github.com/ocornut/imgui.git
