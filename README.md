@@ -15,7 +15,7 @@ auto uncompress zstd file( detect by header: 28 B5 2F FD )
 
 shader manager with autobatch
 
-texture ( current support pkm2 png format only, detect by file content ) cache
+texture ( current support pkm2, png format only, detect by file content ) cache
 
 texture packer ( 7.0 limit support ) loader & frame cache
 
@@ -39,9 +39,9 @@ tiled map ( 1.92 full support ) loader & helpers( cam, util funcs )
 
 scissors
 
-audio ( miniaudio + stb vorbise )
+audio ( miniaudio + stb vorbise ) ( .exe + 400kb )
 
-imgui
+imgui ( .exe + 800kb )
 
 # compile requires
 
