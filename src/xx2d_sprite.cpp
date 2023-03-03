@@ -8,13 +8,7 @@ namespace xx {
 
 	Sprite& Sprite::SetTexture(xx::Shared<GLTexture> t) {
 		dirtyFrame = 1;
-		auto&& f = *frame.Emplace();
-		f.anchor = { 0.5, 0.5 };
-		f.textureRotated = false;
-		f.spriteSize = frame->spriteSourceSize = { (float)std::get<1>(t->vs), (float)std::get<2>(t->vs) };
-		f.spriteOffset = { 0, 0 };
-		f.textureRect = { 0, 0, frame->spriteSize.x, frame->spriteSize.y };
-		f.tex = std::move(t);
+		frame = MakeFrame(std::move(t));
 		return *this;
 	}
 

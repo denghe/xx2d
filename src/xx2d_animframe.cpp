@@ -2,6 +2,17 @@
 
 namespace xx {
 
+	Shared<Frame> MakeFrame(Shared<GLTexture>&& t) {
+		auto f = xx::Make<Frame>();
+		f->anchor = { 0.5, 0.5 };
+		f->textureRotated = false;
+		f->spriteSize = f->spriteSourceSize = { (float)std::get<1>(t->vs), (float)std::get<2>(t->vs) };
+		f->spriteOffset = { 0, 0 };
+		f->textureRect = { 0, 0, f->spriteSize.x, f->spriteSize.y };
+		f->tex = std::move(t);
+		return f;
+	}
+
 	AnimFrame& Anim::GetCurrentAnimFrame() const {
 		return (AnimFrame&)afs[cursor];
 	}

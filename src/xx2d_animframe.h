@@ -17,6 +17,9 @@ namespace xx {
         std::vector<float> verticesUV;
     };
 
+    // single texture -> frame
+    Shared<Frame> MakeFrame(Shared<GLTexture>&& t);
+
     struct AnimFrame {
         Shared<Frame> frame;
         float durationSeconds;
