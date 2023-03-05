@@ -3,6 +3,16 @@ cmake_minimum_required(VERSION 3.20)
 set(name xx2d)
 project(${name})
 
+option(XX2D_ENABLE_IMGUI "Enable imgui support" ON)
+if (XX2D_ENABLE_IMGUI)
+	add_definitions("-DXX2D_ENABLE_IMGUI")
+endif()
+
+option(XX2D_ENABLE_MINIAUDIO "Enable miniaudio support" ON)
+if (XX2D_ENABLE_MINIAUDIO)
+	add_definitions("-DXX2D_ENABLE_MINIAUDIO")
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 
 include_directories(

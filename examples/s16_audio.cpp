@@ -2,6 +2,7 @@
 #include "game_looper.h"
 #include "s16_audio.h"
 
+#ifdef XX2D_ENABLE_MINIAUDIO
 #define STB_VORBIS_HEADER_ONLY
 #include "extras/stb_vorbis.c"
 #define MINIAUDIO_IMPLEMENTATION
@@ -11,24 +12,31 @@
 #undef L
 #undef C
 #undef R
+#endif
 
 namespace AudioTest {
 
 	Audio::Audio() {
+#ifdef XX2D_ENABLE_MINIAUDIO
 		ctx = malloc(sizeof(ma_engine));
 		if (auto result = ma_engine_init(nullptr, (ma_engine*)ctx); result != MA_SUCCESS) {
 			throw std::logic_error("Failed to initialize audio engine.");
 		}
+#endif
 	}
 
 	Audio::~Audio() {
+#ifdef XX2D_ENABLE_MINIAUDIO
 		ma_engine_uninit((ma_engine*)ctx);
 		free(ctx);
+#endif
 	}
 
 	void Audio::Play(std::string_view fn) {
 		auto s = xx::engine.GetFullPath(fn);
+#ifdef XX2D_ENABLE_MINIAUDIO
 		ma_engine_play_sound((ma_engine*)ctx, s.c_str(), nullptr);
+#endif
 	}
 
 

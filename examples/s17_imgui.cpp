@@ -12,7 +12,9 @@ namespace ImGuiTest {
 
 		xx::engine.imguiLogic = [this] {
 			if (showDemoWindow) {
+#ifdef XX_ENABLE_IMGUI
 				ImGui::ShowDemoWindow(&showDemoWindow);
+#endif
 			}
 		};
 	}
