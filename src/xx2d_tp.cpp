@@ -119,49 +119,18 @@ namespace xx {
 			if (j = text.find('<', i + 8); j == text.npos) return __LINE__;		// </string>
 			SpaceSplitFillVector(o.verticesUV, CutStr(text, i + 8, j - i - 8));
 
-			// todo
-			//{
-			//	auto len = o.verticesUV.size() / 2;								// flip y for ogl
-			//	auto p = (xx::XY*)o.verticesUV.data();
-			//	for (size_t k = 0; k < len; ++k) {
-			//		p[k].y = o.textureRect.wh.y - p[k].y;
-			//	}
-			//}
+			{
+				auto len = o.vertices.size() / 2;								// flip y for ogl
+				auto p = (xx::XY*)o.vertices.data();
+				for (size_t k = 0; k < len; ++k) {
+					p[k].y = o.spriteSize.y - p[k].y;
+				}
+			}
 
 			CutStr(text, j + 9);												// skip    </string>
 
 			if (i = text.find("<k"sv); i == text.npos) return __LINE__;
 			CutStr(text, i + 5);												// skip    <key>
-		} else {
-
-			// todo
-
-			//auto r = o.textureRect;
-			//o.triangles.insert(o.triangles.begin(), { 0, 1, 2, 0, 2, 3 });
-			//o.vertices.insert(o.vertices.begin(), { 0,0, 0,r.wh.y, r.wh.x,r.wh.y, r.wh.x,0 });
-			//o.verticesUV.resize(8);
-			//if (o.textureRotated) {
-			//	o.verticesUV[0] = r.x;
-			//	o.verticesUV[1] = r.y;
-			//	o.verticesUV[2] = r.x + r.wh.y;
-			//	o.verticesUV[3] = r.y;
-			//	o.verticesUV[4] = r.x + r.wh.y;
-			//	o.verticesUV[5] = r.y + r.wh.x;
-			//	o.verticesUV[6] = r.x;
-			//	o.verticesUV[7] = r.y + r.wh.x;
-			//} else {
-			//	o.verticesUV[0] = r.x;
-			//	o.verticesUV[1] = r.y + r.wh.y;
-			//	o.verticesUV[2] = r.x;
-			//	o.verticesUV[3] = r.y;
-			//	o.verticesUV[4] = r.x + r.wh.x;
-			//	o.verticesUV[5] = r.y;
-			//	o.verticesUV[6] = r.x + r.wh.x;
-			//	o.verticesUV[7] = r.y + r.wh.y;
-			//}
-
-			//o.vertices.insert(o.vertices.begin(), { 0,0, 0,o.spriteSize.y, o.spriteSize.x,o.spriteSize.y, o.spriteSize.x,0 });
-			//o.verticesUV.insert(o.verticesUV.begin(), { 0,o.spriteSize.y, 0,0, o.spriteSize.x,0, o.spriteSize.x,o.spriteSize.y });
 		}
 
 		if (!text.starts_with("metadata<"sv)) {									// <key>metadata</key>    ||    <key> frame name </key>

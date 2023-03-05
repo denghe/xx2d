@@ -31,4 +31,5 @@
 #include "xx2d_nodes.h"
 #include "xx2d_quad.h"
 #include "xx2d_movepath.h"
+#include "xx2d_polygon_sprite.h"
 // ...

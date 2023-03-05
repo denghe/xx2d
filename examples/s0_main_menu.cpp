@@ -123,7 +123,7 @@ namespace MainMenu {
 			} else if (txt.starts_with("17:"sv)) {
 				looper->DelaySwitchTo<ImGuiTest::Scene>();
 			} else if (txt.starts_with("18:"sv)) {
-				looper->DelaySwitchTo<PolygonSprite::Scene>();
+				looper->DelaySwitchTo<PolygonSpriteTest::Scene>();
 			} else {
 				throw std::logic_error("unhandled menu");
 			}
