@@ -7,9 +7,7 @@ namespace xx {
 	}
 
 	Sprite& Sprite::SetTexture(xx::Shared<GLTexture> t) {
-		dirtyFrame = 1;
-		frame = MakeFrame(std::move(t));
-		return *this;
+		return SetFrame(MakeFrame(std::move(t)), false);
 	}
 
 	Sprite& Sprite::SetFrame(xx::Shared<Frame> f, bool overrideAnchor) {
@@ -29,12 +27,12 @@ namespace xx {
 
 	Sprite& Sprite::SetFlipX(bool const& fx) {
 		dirtyFrame = 1;
-		flipX = fx;
+		flip.x = fx ? -1 : 1;
 		return *this;
 	}
 	Sprite& Sprite::SetFlipY(bool const& fy) {
 		dirtyFrame = 1;
-		flipY = fy;
+		flip.y = fy ? -1 : 1;
 		return *this;
 	}
 
@@ -116,57 +114,29 @@ namespace xx {
 			if (dirtyFrame) {
 				auto& r = frame->textureRect;
 				if (frame->textureRotated) {
-					if (flipX) {
-						qv[0].v = r.y + r.wh.x;
-						qv[1].v = r.y + r.wh.x;
-						qv[2].v = r.y;
-						qv[3].v = r.y;
-					} else {
 						qv[0].v = r.y;
 						qv[1].v = r.y;
 						qv[2].v = r.y + r.wh.x;
 						qv[3].v = r.y + r.wh.x;
-					}
-					if (flipY) {
-						qv[0].u = r.x + r.wh.y;
-						qv[1].u = r.x;
-						qv[2].u = r.x;
-						qv[3].u = r.x + r.wh.y;
-					} else {
 						qv[0].u = r.x;
 						qv[1].u = r.x + r.wh.y;
 						qv[2].u = r.x + r.wh.y;
 						qv[3].u = r.x;
-					}
 				} else {
-					if (flipX) {
-						qv[0].u = r.x + r.wh.x;
-						qv[1].u = r.x + r.wh.x;
-						qv[2].u = r.x;
-						qv[3].u = r.x;
-					} else {
 						qv[0].u = r.x;
 						qv[1].u = r.x;
 						qv[2].u = r.x + r.wh.x;
 						qv[3].u = r.x + r.wh.x;
-					}
-					if (flipY) {
-						qv[0].v = r.y;
-						qv[1].v = r.y + r.wh.y;
-						qv[2].v = r.y + r.wh.y;
-						qv[3].v = r.y;
-					} else {
 						qv[0].v = r.y + r.wh.y;
 						qv[1].v = r.y;
 						qv[2].v = r.y;
 						qv[3].v = r.y + r.wh.y;
-					}
 				}
 			}
 			if (dirtySizeAnchorPosScaleRotate || dirtyParentAffineTransform) {
 				auto wh = frame->spriteSize;
 				if (dirtySizeAnchorPosScaleRotate) {
-					at = at.MakePosScaleRadiansAnchorSize(pos, scale, radians, wh * anchor);
+					at = at.MakePosScaleRadiansAnchorSize(pos, scale * flip, radians, wh * anchor);
 					atBak = at;
 				}
 				if (dirtyParentAffineTransform) {
@@ -196,16 +166,10 @@ namespace xx {
 		engine.sm.GetShader<Shader_Quad>().DrawQuad(*frame->tex, qv);
 	}
 
-	void Sprite::DrawWithoutCommit() {
-		assert(!dirty);
-		engine.sm.GetShader<Shader_Quad>().DrawQuad(*frame->tex, qv);
-	}
-
 	void Sprite::SubDraw() {
 		assert(pat);
 		dirtyParentAffineTransform = true;
-		Commit();
-		engine.sm.GetShader<Shader_Quad>().DrawQuad(*frame->tex, qv);
+		Draw();
 	}
 
 	void Sprite::Draw(AffineTransform const& t) {

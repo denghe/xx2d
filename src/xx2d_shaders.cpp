@@ -30,7 +30,8 @@ namespace xx {
 		shaders[Shader_Quad::index] = xx::Make<Shader_Quad>();
 		shaders[Shader_QuadInstance::index] = xx::Make<Shader_QuadInstance>();
 		shaders[Shader_LineStrip::index] = xx::Make<Shader_LineStrip>();
-		// ... more make here
+		shaders[Shader_Verts::index] = xx::Make<Shader_Verts>();
+		// ...
 
 		// init all
 		for (auto& s : shaders) {
@@ -42,7 +43,7 @@ namespace xx {
 	}
 
 	void ShaderManager::Begin() {
-		drawCall = drawQuads = drawLinePoints = 0;
+		drawCall = drawVerts = drawLinePoints = 0;
 		shaders[cursor]->Begin();
 	}
 
@@ -54,12 +55,13 @@ namespace xx {
 		return drawCall
 			+ (RefShader<Shader_LineStrip>().pointsCount > 0 ? 1 : 0)
 			+ RefShader<Shader_Quad>().texsCount
+			+ RefShader<Shader_Verts>().texsCount
 			+ RefShader<Shader_QuadInstance>().texsCount
 			// ...
 			;
 	}
 
-	size_t ShaderManager::GetDrawQuads() {
+	size_t ShaderManager::GetDrawVerts() {
 		size_t j = 0;
 		{
 			auto& s = RefShader<Shader_Quad>();
@@ -70,11 +72,17 @@ namespace xx {
 		{
 			auto& s = RefShader<Shader_QuadInstance>();
 			for (size_t i = 0; i < s.texsCount; i++) {
+				j += s.texs[i].second * 6;
+			}
+		}
+		{
+			auto& s = RefShader<Shader_Verts>();
+			for (size_t i = 0; i < s.texsCount; i++) {
 				j += s.texs[i].second;
 			}
 		}
 		// ...
-		return drawQuads + j;
+		return drawVerts + j;
 	}
 
 	size_t ShaderManager::GetDrawLines() {

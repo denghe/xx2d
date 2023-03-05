@@ -18,6 +18,7 @@
 #include "s15_rendertexture.h"
 #include "s16_audio.h"
 #include "s17_imgui.h"
+#include "s18_polygon_sprite.h"
 
 namespace MainMenu {
 
@@ -56,7 +57,7 @@ namespace MainMenu {
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -500, y }, "16: audio", 48);
 		menus.emplace_back().Init(looper, { 0, y }, "17: imgui", 48);
-		menus.emplace_back().Init(looper, { 500, y }, "18: ", 48);
+		menus.emplace_back().Init(looper, { 500, y }, "18: polygon sprite", 48);
 
 		looper->extraInfo.clear();
 	}
@@ -122,7 +123,7 @@ namespace MainMenu {
 			} else if (txt.starts_with("17:"sv)) {
 				looper->DelaySwitchTo<ImGuiTest::Scene>();
 			} else if (txt.starts_with("18:"sv)) {
-				//looper->DelaySwitchTo<RenderTextureTest::Scene>();
+				looper->DelaySwitchTo<PolygonSprite::Scene>();
 			} else {
 				throw std::logic_error("unhandled menu");
 			}

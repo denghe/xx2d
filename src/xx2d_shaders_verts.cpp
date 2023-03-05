@@ -2,7 +2,7 @@
 
 namespace xx {
 
-	void Shader_Quad::Init(ShaderManager* sm) {
+	void Shader_Verts::Init(ShaderManager* sm) {
 		this->sm = sm;
 		v = LoadGLVertexShader({ R"(#version 300 es
 precision highp float;
@@ -58,18 +58,6 @@ void main() {
 		glEnableVertexAttribArray(aColor);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-		auto idxs = std::make_unique<GLushort[]>(maxIndexNums);
-		for (size_t i = 0; i < maxVertNums / 4; i++) {
-			auto p = idxs.get() + i * 6;
-			auto v = i * 4;
-			p[0] = uint16_t(v + 0);
-			p[1] = uint16_t(v + 1);
-			p[2] = uint16_t(v + 2);
-			p[3] = uint16_t(v + 0);
-			p[4] = uint16_t(v + 2);
-			p[5] = uint16_t(v + 3);
-		}
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 2 * maxIndexNums, idxs.get(), GL_STATIC_DRAW);
 
 		glBindVertexArray(0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -78,7 +66,7 @@ void main() {
 		CheckGLError();
 	}
 
-	void Shader_Quad::Begin() {
+	void Shader_Verts::Begin() {
 		if (sm->cursor != index) {
 			// here can check shader type for combine batch
 			sm->shaders[sm->cursor]->End();
@@ -90,29 +78,25 @@ void main() {
 		glUniform2f(uCxy, 2 / engine.w, 2 / engine.h);
 
 		glBindVertexArray(va);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	}
 
-	void Shader_Quad::End() {
-		if (quadVertsCount) {
+	void Shader_Verts::End() {
+		if (texsCount) {
 			Commit();
 		}
-		// todo: cleanup buf & shader?
-		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		// glBindVertexArray(0);
-		// glUseProgram(0);
 	}
 
-	void Shader_Quad::Commit() {
+	void Shader_Verts::Commit() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVerts) * quadVertsCount, quadVerts.get(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(XYUVRGBA8) * vertsCount, verts.get(), GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexsCount, indexs.get(), GL_DYNAMIC_DRAW);
 
 		size_t j = 0;
 		for (size_t i = 0; i < texsCount; i++) {
 			glBindTexture(GL_TEXTURE_2D, texs[i].first);
-			auto n = (GLsizei)(texs[i].second * 6);
-			glDrawElements(GL_TRIANGLES, n, GL_UNSIGNED_SHORT, (GLvoid*)j);
-			j += n * 2;
+			glDrawElements(GL_TRIANGLES, texs[i].second, GL_UNSIGNED_SHORT, (GLvoid*)j);
+			j += texs[i].second * 2;
 		}
 		CheckGLError();
 
@@ -121,32 +105,27 @@ void main() {
 
 		lastTextureId = 0;
 		texsCount = 0;
-		quadVertsCount = 0;
+		vertsCount = 0;
+		indexsCount = 0;
 	}
 
-	QuadVerts& Shader_Quad::DrawQuadBegin(GLTexture& tex) {
-		if (quadVertsCount == maxQuadNums) {
+	std::tuple<size_t, XYUVRGBA8*, uint16_t*> Shader_Verts::Draw(GLTexture& tex, size_t const& numVerts, size_t const& numIndexs) {
+		assert(numVerts <= maxVertNums);
+		assert(numIndexs <= maxIndexNums);
+		if (vertsCount + numVerts > maxVertNums || indexsCount + numIndexs > maxIndexNums) {
 			Commit();
 		}
 		if (lastTextureId != tex) {
 			lastTextureId = tex;
 			texs[texsCount].first = tex;
-			texs[texsCount].second = 1;
+			texs[texsCount].second = numIndexs;
 			++texsCount;
 		} else {
-			texs[texsCount - 1].second += 1;
+			texs[texsCount - 1].second += numIndexs;
 		}
-		return quadVerts[quadVertsCount];
+		std::tuple<size_t, XYUVRGBA8*, uint16_t*> r{ vertsCount, &verts[vertsCount], &indexs[indexsCount] };
+		vertsCount += numVerts;
+		indexsCount += numIndexs;
+		return r;
 	}
-
-	void Shader_Quad::DrawQuadEnd() {
-		++quadVertsCount;
-	}
-
-	void Shader_Quad::DrawQuad(GLTexture& tex, QuadVerts const& qv) {
-		auto&& tar = DrawQuadBegin(tex);
-		memcpy(&tar, qv.data(), sizeof(qv));
-		DrawQuadEnd();
-	};
-
 }

@@ -28,7 +28,7 @@ int GameLooper::Update() {
 		fps = fpsCounter;
 		fpsCounter = 0;
 	}
-	lbInfo.SetText(fnt1, xx::ToString("fps = ", fps, ", draw call = ", xx::engine.sm.GetDrawCall(), ", quad count = ", xx::engine.sm.GetDrawQuads(), ", line point count = ", xx::engine.sm.GetDrawLines(), std::string_view(extraInfo)))
+	lbInfo.SetText(fnt1, xx::ToString("fps = ", fps, ", draw call = ", xx::engine.sm.GetDrawCall(), ", vert count = ", xx::engine.sm.GetDrawVerts(), ", line point count = ", xx::engine.sm.GetDrawLines(), std::string_view(extraInfo)))
 		.SetPosition({ lbInfo.pos.x + 2, lbInfo.pos.y - 2 })
 		.SetColor({ 0, 0, 255, 255 })
 		.Draw();

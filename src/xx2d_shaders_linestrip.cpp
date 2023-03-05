@@ -68,7 +68,6 @@ void main() {
 		glUniform2f(uCxy, 2 / engine.w, 2 / engine.h);
 
 		glBindVertexArray(va);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	}
 
 	void Shader_LineStrip::End() {

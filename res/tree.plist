@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>frames</key>
+        <dict>
+            <key>tree.png</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{0,0.5}</string>
+                <key>spriteSize</key>
+                <string>{64,125}</string>
+                <key>spriteSourceSize</key>
+                <string>{64,128}</string>
+                <key>textureRect</key>
+                <string>{{1,1},{64,125}}</string>
+                <key>textureRotated</key>
+                <false/>
+                <key>triangles</key>
+                <string>4 6 7 4 5 6 2 3 4 1 2 4 0 1 4 0 4 7</string>
+                <key>vertices</key>
+                <string>64 2 64 120 33 126 0 119 14 67 0 62 0 12 12 1</string>
+                <key>verticesUV</key>
+                <string>65 2 65 120 34 126 1 119 15 67 1 62 1 12 13 1</string>
+            </dict>
+        </dict>
+        <key>metadata</key>
+        <dict>
+            <key>format</key>
+            <integer>3</integer>
+            <key>premultiplyAlpha</key>
+            <false/>
+            <key>realTextureFileName</key>
+            <string>tree.pkm</string>
+            <key>size</key>
+            <string>{66,127}</string>
+            <key>smartupdate</key>
+            <string>$TexturePacker:SmartUpdate:8e419d6219a48fb8e89e360867847633:b4c6411476305f4e2980d4c4328a5be2:0a9288f9a6cc0f33e0da58428fb746c1$</string>
+            <key>textureFileName</key>
+            <string>tree.pkm</string>
+        </dict>
+    </dict>
+</plist>

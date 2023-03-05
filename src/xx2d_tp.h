@@ -71,7 +71,7 @@ namespace xx {
 			vs.clear();
 			auto&& p = line.data();
 		LabBegin:
-			vs.push_back((T)ReadInteger(p));
+			vs.push_back((T)ReadInteger<true>(p));
 			if (*p == ' ') {
 				++p;
 				goto LabBegin;

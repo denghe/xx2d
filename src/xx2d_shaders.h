@@ -24,7 +24,7 @@ namespace xx {
 	struct Engine;
 	struct ShaderManager {
 		// all shader instance container
-		std::array<xx::Shared<Shader>, 3> shaders{};
+		std::array<xx::Shared<Shader>, 4> shaders{};
 
 		// store current shaders index
 		size_t cursor = -1;
@@ -39,9 +39,9 @@ namespace xx {
 		void End();
 
 		// performance counters
-		size_t drawCall{}, drawQuads{}, drawLinePoints{};	// set zero by begin
+		size_t drawCall{}, drawVerts{}, drawLinePoints{};	// set zero by begin
 		size_t GetDrawCall();
-		size_t GetDrawQuads();
+		size_t GetDrawVerts();
 		size_t GetDrawLines();
 
 		// direct ref to shader instance
@@ -161,6 +161,36 @@ namespace xx {
 		XYRGBA8* DrawLineStrip(size_t const& pointsCount);	// fill
 		void DrawLineStrip(XYRGBA8* pointsBuf, size_t const& pointsCount);	// memcpy
 	};
+
+	/***************************************************************************************************/
+
+	// for draw multi verts
+	struct Shader_Verts : Shader {
+		static const size_t index = 3;	// index at sm->shaders
+
+		GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
+		GLVertexArrays va;
+		GLBuffer vb, ib;
+
+		static const size_t maxTexNums = maxVertNums / 3;
+		static const size_t maxIndexNums = maxVertNums * 4;	// 1.5 for quad, 4 for texture packer polygon algorithm
+		GLuint lastTextureId = 0;
+		std::unique_ptr<std::pair<GLuint, GLsizei>[]> texs = std::make_unique<std::pair<GLuint, GLsizei>[]>(maxTexNums);	// tex id + count
+		size_t texsCount = 0;
+		std::unique_ptr<XYUVRGBA8[]> verts = std::make_unique<XYUVRGBA8[]>(maxVertNums);
+		size_t vertsCount = 0;
+		std::unique_ptr<uint16_t[]> indexs = std::make_unique<uint16_t[]>(maxIndexNums);
+		size_t indexsCount = 0;
+
+		void Init(ShaderManager*) override;
+		void Begin() override;
+		void End() override;
+
+		void Commit();
+		std::tuple<size_t, XYUVRGBA8*, uint16_t*> Draw(GLTexture& tex, size_t const& numVerts, size_t const& numIndexs);
+	};
+
+
 
 
 	// ... more shader struct here
