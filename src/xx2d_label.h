@@ -42,9 +42,6 @@ namespace xx {
 		// default anchor: 0, 1
 		Label& SetText(BMFont bmf, std::string_view const& text, float const& fontSize = 32.f);
 
-		Label& SetFlipX(bool const& fx);
-		Label& SetFlipY(bool const& fy);
-
 		Label& SetAnchor(XY const& a);
 
 		Label& SetRotate(float const& r);
@@ -60,7 +57,6 @@ namespace xx {
 
 		void Commit();
 
-		// todo: support trans
 		void Draw();
 		void Draw(AffineTransform const& t);
 	};

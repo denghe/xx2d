@@ -93,7 +93,7 @@ namespace xx {
 		Commit();
 		if (auto&& ps = pointsBuf.size()) {
 			auto&& s = engine.sm.GetShader<Shader_LineStrip>();
-			memcpy(s.DrawLineStrip(ps), pointsBuf.data(), ps * sizeof(XYRGBA8));
+			memcpy(s.Draw(ps), pointsBuf.data(), ps * sizeof(XYRGBA8));
 		}
 	}
 
@@ -101,7 +101,7 @@ namespace xx {
 		Commit();
 		if (auto&& ps = pointsBuf.size()) {
 			auto&& s = engine.sm.GetShader<Shader_LineStrip>();
-			auto&& buf = s.DrawLineStrip(ps);
+			auto&& buf = s.Draw(ps);
 			for (size_t i = 0; i < ps; ++i) {
 				(XY&)buf[i].x = t.Apply(pointsBuf[i]);
 				memcpy(&buf[i].r, &color.r, sizeof(color));

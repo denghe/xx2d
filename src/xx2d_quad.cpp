@@ -81,6 +81,6 @@ namespace xx {
 	}
 
 	void Quad::Draw() const {
-		engine.sm.GetShader<Shader_QuadInstance>().DrawQuad(*tex, (QuadInstanceData*)this);
+		engine.sm.GetShader<Shader_QuadInstance>().Draw(*tex, (QuadInstanceData*)this);
 	}
 }

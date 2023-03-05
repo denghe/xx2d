@@ -19,7 +19,7 @@ namespace MainMenu {
 
 		bool Inside(xx::XY const& point);	// bounding box contains point?
 
-		xx::Label content;
+		xx::SimpleLabel content;
 	};
 
 	struct Scene : SceneBase {

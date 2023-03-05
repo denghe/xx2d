@@ -121,7 +121,7 @@ namespace xx {
 		Commit();
 		auto& s = engine.sm.GetShader<Shader_Quad>();
 		for (auto& c : chars) {
-			s.DrawQuad(*c.tex, c.qv);
+			s.Draw(*c.tex, c.qv);
 		}
 	}
 
@@ -129,7 +129,7 @@ namespace xx {
 		Commit();
 		auto& s = engine.sm.GetShader<Shader_Quad>();
 		for (auto& c : chars) {
-			auto&& q = s.DrawQuadBegin(*c.tex);
+			auto&& q = *s.Draw(*c.tex);
 			(XY&)q[0].x = t.Apply(c.qv[0]);
 			memcpy(&q[0].u, &c.qv[0].u, 8);	// 8: uv & color
 			(XY&)q[1].x = t.Apply(c.qv[1]);
@@ -138,7 +138,6 @@ namespace xx {
 			memcpy(&q[2].u, &c.qv[2].u, 8);
 			(XY&)q[3].x = t.Apply(c.qv[3]);
 			memcpy(&q[3].u, &c.qv[3].u, 8);
-			s.DrawQuadEnd();
 		}
 	}
 }

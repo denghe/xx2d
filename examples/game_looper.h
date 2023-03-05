@@ -4,7 +4,7 @@
 
 struct GameLooper {
 	xx::BMFont fnt1;
-	xx::Label lbInfo;
+	xx::SimpleLabel lbInfo;
 	std::string extraInfo;
 	int fps{}, fpsCounter{};
 	double fpsTimePool{}, timePool{};

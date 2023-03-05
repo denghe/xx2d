@@ -163,7 +163,7 @@ namespace xx {
 
 	void Sprite::Draw() {
 		Commit();
-		engine.sm.GetShader<Shader_Quad>().DrawQuad(*frame->tex, qv);
+		engine.sm.GetShader<Shader_Quad>().Draw(*frame->tex, qv);
 	}
 
 	void Sprite::SubDraw() {
@@ -174,8 +174,7 @@ namespace xx {
 
 	void Sprite::Draw(AffineTransform const& t) {
 		Commit();
-		auto& s = engine.sm.GetShader<Shader_Quad>();
-		auto&& q = s.DrawQuadBegin(*frame->tex);
+		auto&& q = *engine.sm.GetShader<Shader_Quad>().Draw(*frame->tex);
 		(XY&)q[0].x = t.Apply(qv[0]);
 		memcpy(&q[0].u, &qv[0].u, 8);	// 8: uv & color
 		(XY&)q[1].x = t.Apply(qv[1]);
@@ -184,6 +183,5 @@ namespace xx {
 		memcpy(&q[2].u, &qv[2].u, 8);
 		(XY&)q[3].x = t.Apply(qv[3]);
 		memcpy(&q[3].u, &qv[3].u, 8);
-		s.DrawQuadEnd();
 	}
 }

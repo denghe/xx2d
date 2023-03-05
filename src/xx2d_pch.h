@@ -32,4 +32,5 @@
 #include "xx2d_quad.h"
 #include "xx2d_movepath.h"
 #include "xx2d_polygon_sprite.h"
+#include "xx2d_simple_label.h"
 // ...

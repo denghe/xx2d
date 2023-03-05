@@ -142,29 +142,26 @@ void main() {
 		quadCount = 0;
 	}
 
-	QuadInstanceData& Shader_QuadInstance::DrawQuadBegin(GLTexture& tex) {
-		if (quadCount == maxQuadNums) {
+	QuadInstanceData* Shader_QuadInstance::Draw(GLTexture& tex, int numQuads) {
+		assert(numQuads <= maxQuadNums);
+		if (quadCount + numQuads > maxQuadNums) {
 			Commit();
 		}
 		if (lastTextureId != tex) {
 			lastTextureId = tex;
 			texs[texsCount].first = tex;
-			texs[texsCount].second = 1;
+			texs[texsCount].second = numQuads;
 			++texsCount;
 		} else {
-			texs[texsCount - 1].second += 1;
+			texs[texsCount - 1].second += numQuads;
 		}
-		return quadInstanceDatas[quadCount];
+		auto r = &quadInstanceDatas[quadCount];
+		quadCount += numQuads;
+		return r;
 	}
 
-	void Shader_QuadInstance::DrawQuadEnd() {
-		++quadCount;
-	}
-
-	void Shader_QuadInstance::DrawQuad(GLTexture& tex, QuadInstanceData const* const& qv) {
-		auto&& tar = DrawQuadBegin(tex);
-		memcpy(&tar, qv, sizeof(QuadInstanceData));
-		DrawQuadEnd();
+	void Shader_QuadInstance::Draw(GLTexture& tex, QuadInstanceData const* const& qv) {
+		memcpy(Draw(tex), qv, sizeof(QuadInstanceData));
 	};
 
 }

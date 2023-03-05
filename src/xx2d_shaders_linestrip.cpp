@@ -96,7 +96,7 @@ void main() {
 		indexsCount = 0;
 	}
 
-	XYRGBA8* Shader_LineStrip::DrawLineStrip(size_t const& pc) {
+	XYRGBA8* Shader_LineStrip::Draw(size_t const& pc) {
 		assert(pc <= maxVertNums);
 		auto&& c = pointsCount + pc;
 		if (c > maxVertNums) {
@@ -113,8 +113,8 @@ void main() {
 		return rtv;
 	}
 
-	void Shader_LineStrip::DrawLineStrip(XYRGBA8* pointsBuf, size_t const& pc) {
-		memcpy(DrawLineStrip(pc), pointsBuf, sizeof(XYRGBA8) * pc);
+	void Shader_LineStrip::Draw(XYRGBA8* pointsBuf, size_t const& pc) {
+		memcpy(Draw(pc), pointsBuf, sizeof(XYRGBA8) * pc);
 	}
 
 }

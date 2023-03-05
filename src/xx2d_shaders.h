@@ -93,10 +93,8 @@ namespace xx {
 		void End() override;
 
 		void Commit();
-		QuadVerts& DrawQuadBegin(GLTexture& tex);	// need fill & commit
-		void DrawQuadEnd();
-
-		void DrawQuad(GLTexture& tex, QuadVerts const& qv);	// memcpy & commit
+		QuadVerts* Draw(GLTexture& tex, int numQVs = 1);	// need fill & commit
+		void Draw(GLTexture& tex, QuadVerts const& qv);	// memcpy & commit
 	};
 
 	/***************************************************************************************************/
@@ -128,10 +126,8 @@ namespace xx {
 		void End() override;
 
 		void Commit();
-		QuadInstanceData& DrawQuadBegin(GLTexture& tex);	// need fill & commit
-		void DrawQuadEnd();
-
-		void DrawQuad(GLTexture& tex, QuadInstanceData const* const& qv);	// memcpy & commit
+		QuadInstanceData* Draw(GLTexture& tex, int numQuads = 1);	// need fill & commit
+		void Draw(GLTexture& tex, QuadInstanceData const* const& qv);	// memcpy & commit
 	};
 
 	/***************************************************************************************************/
@@ -158,8 +154,8 @@ namespace xx {
 		void End() override;
 
 		void Commit();
-		XYRGBA8* DrawLineStrip(size_t const& pointsCount);	// fill
-		void DrawLineStrip(XYRGBA8* pointsBuf, size_t const& pointsCount);	// memcpy
+		XYRGBA8* Draw(size_t const& pointsCount);	// fill
+		void Draw(XYRGBA8* pointsBuf, size_t const& pointsCount);	// memcpy
 	};
 
 	/***************************************************************************************************/
