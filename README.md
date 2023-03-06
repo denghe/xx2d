@@ -17,17 +17,17 @@ shader manager with autobatch
 
 texture ( current support pkm2, png format only, detect by file content ) cache
 
-texture packer ( 7.0 limit support ) loader & frame cache
+texture packer ( polygon algorithm support. format: cocos3.x plist ) loader & frame cache
 
-quad
+quad instance
 
-sprite
+sprite, polygon sprite
 
 node
 
 bmfont
 
-label
+label, simple label
 
 line strip
 
@@ -54,8 +54,6 @@ pull submodules
 render texture
 
 edit box, rich text?
-
-texture packer's polygon algorithm support
 
 more texture format support?
 

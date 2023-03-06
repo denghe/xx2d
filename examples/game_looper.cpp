@@ -20,7 +20,7 @@ int GameLooper::Update() {
 
 	int r = scene->Update();
 
-	// display draw call, fps ...
+	// calc frame time
 	++fpsCounter;
 	fpsTimePool += xx::engine.delta;
 	if (fpsTimePool >= 1) {
@@ -28,12 +28,23 @@ int GameLooper::Update() {
 		fps = fpsCounter;
 		fpsCounter = 0;
 	}
-	lbInfo.SetText(fnt1, xx::ToString("fps = ", fps, ", draw call = ", xx::engine.sm.GetDrawCall(), ", vert count = ", xx::engine.sm.GetDrawVerts(), ", line point count = ", xx::engine.sm.GetDrawLines(), std::string_view(extraInfo)))
+
+	// display draw call, fps ...
+	auto& sm = xx::engine.sm;
+	sm.End();
+
+	lbInfo.SetText(fnt1, xx::ToString(
+		"fps = ", fps, 
+		", draw call = ", sm.drawCall,
+		", vert count = ", sm.drawVerts,
+		", line point count = ", sm.drawLinePoints,
+		std::string_view(extraInfo)))
 		.SetPosition({ lbInfo.pos.x + 2, lbInfo.pos.y - 2 })
 		.SetColor({ 0, 0, 255, 255 })
-		.Draw();
+		.Draw();	// shadow
+
 	lbInfo.SetPosition({ lbInfo.pos.x - 2, lbInfo.pos.y + 2 })
 		.SetColor({ 255, 0, 0, 255 })
-		.Draw();	// shadow
+		.Draw();
 	return r;
 }

@@ -50,39 +50,4 @@ namespace xx {
 	void ShaderManager::End() {
 		shaders[cursor]->End();
 	}
-
-	size_t ShaderManager::GetDrawCall() {
-		return drawCall
-			+ (RefShader<Shader_LineStrip>().pointsCount > 0 ? 1 : 0)
-			+ RefShader<Shader_Quad>().texsCount
-			+ RefShader<Shader_Verts>().texsCount
-			+ (RefShader<Shader_QuadInstance>().quadCount > 0 ? 1 : 0)
-			// ...
-			;
-	}
-
-	size_t ShaderManager::GetDrawVerts() {
-		size_t j = 0;
-		{
-			auto& s = RefShader<Shader_Quad>();
-			for (size_t i = 0; i < s.texsCount; i++) {
-				j += s.texs[i].second * 6;
-			}
-		}
-		{
-			auto& s = RefShader<Shader_QuadInstance>();
-			j += s.quadCount * 6;
-		}
-		{
-			auto& s = RefShader<Shader_Verts>();
-			j += s.indexsCount;
-		}
-		// ...
-		return drawVerts + j;
-	}
-
-	size_t ShaderManager::GetDrawLines() {
-		auto& s = RefShader<Shader_LineStrip>();
-		return drawLinePoints + s.indexsCount;
-	}
 }

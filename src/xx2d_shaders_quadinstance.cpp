@@ -134,7 +134,7 @@ void main() {
 
 	QuadInstanceData* Shader_QuadInstance::Draw(GLTexture& tex, int numQuads) {
 		assert(numQuads <= maxQuadNums);
-		if (quadCount + numQuads > maxQuadNums || lastTextureId != tex) {
+		if (quadCount + numQuads > maxQuadNums || (lastTextureId && lastTextureId != tex)) {
 			Commit();
 		}
 		lastTextureId = tex;

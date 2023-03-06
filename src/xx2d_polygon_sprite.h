@@ -3,6 +3,7 @@
 
 namespace xx {
 
+	// support texture packer's polygon algorithm. more cpu usage
 	struct PolygonSprite {
 
 		/***************************************************************************/

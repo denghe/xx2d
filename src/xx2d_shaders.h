@@ -40,9 +40,6 @@ namespace xx {
 
 		// performance counters
 		size_t drawCall{}, drawVerts{}, drawLinePoints{};	// set zero by begin
-		size_t GetDrawCall();
-		size_t GetDrawVerts();
-		size_t GetDrawLines();
 
 		// direct ref to shader instance
 		template<typename T, typename ENABLED = std::enable_if_t<std::is_base_of_v<Shader, T>>>
