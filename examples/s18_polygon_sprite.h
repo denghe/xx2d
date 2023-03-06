@@ -5,7 +5,7 @@
 namespace PolygonSpriteTest {
 
 	struct Scene;
-	struct Tree {
+	struct Sword {
 		xx::PolygonSprite body;
 		xx::XY baseInc{};
 		void Init(Scene* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color = { 255,255,255,255 });
@@ -18,7 +18,7 @@ namespace PolygonSpriteTest {
 		int Update() override;
 
 		xx::Shared<xx::Frame> f;
-		std::vector<xx::Shared<Tree>> ts;
+		std::vector<xx::Shared<Sword>> ts;
 		float timePool{}, radians{};
 	};
 

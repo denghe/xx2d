@@ -4,7 +4,7 @@
 
 namespace PolygonSpriteTest {
 
-	void Tree::Init(Scene* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
+	void Sword::Init(Scene* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
 		body.SetFrame(owner->f)
 			.SetPosition(pos)
 			.SetScale(scale)
@@ -14,14 +14,14 @@ namespace PolygonSpriteTest {
 		baseInc *= 2;
 	}
 
-	int Tree::Update() {
+	int Sword::Update() {
 		body.AddPosition(baseInc);
 		if (body.pos.x * body.pos.x > (1800 / 2) * (1800 / 2)
 			|| body.pos.y * body.pos.y > (1000 / 2) * (1000 / 2)) return 1;
 		return 0;
 	}
 
-	void Tree::Draw() {
+	void Sword::Draw() {
 		auto c = body.color;
 		body.AddPosition({ 3,3 }).SetColor({ 255,127,127,127 }).Draw();
 		body.AddPosition({ -3,-3 }).SetColor(c).Draw();

@@ -19,6 +19,7 @@
 #include "s16_audio.h"
 #include "s17_imgui.h"
 #include "s18_polygon_sprite.h"
+#include "s19_space_shooter.h"
 
 namespace MainMenu {
 
@@ -60,7 +61,7 @@ namespace MainMenu {
 		menus.emplace_back().Init(looper, { 500, y }, "18: polygon sprite", 48);
 
 		y -= yinc;
-		menus.emplace_back().Init(looper, { -500, y }, "19: ", 48);
+		menus.emplace_back().Init(looper, { -500, y }, "19: space shooter", 48);
 		menus.emplace_back().Init(looper, { 0, y }, "20: ", 48);
 		menus.emplace_back().Init(looper, { 500, y }, "21: ", 48);
 
@@ -130,14 +131,15 @@ namespace MainMenu {
 			} else if (txt.starts_with("18:"sv)) {
 				looper->DelaySwitchTo<PolygonSpriteTest::Scene>();
 			} else if (txt.starts_with("19:"sv)) {
-				//looper->DelaySwitchTo<::Scene>();	// todo: movepath editor ?
+				looper->DelaySwitchTo<SpaceShooter::Scene>();
 			} else if (txt.starts_with("20:"sv)) {
-				//looper->DelaySwitchTo<::Scene>();	// todo: circle editor ?
 			} else if (txt.starts_with("21:"sv)) {
-				//looper->DelaySwitchTo<::Scene>();	// todo: anim frame editor ?
 			} else {
 				throw std::logic_error("unhandled menu");
 			}
+				//looper->DelaySwitchTo<::Scene>();	// todo: movepath editor ?
+				//looper->DelaySwitchTo<::Scene>();	// todo: circle editor ?
+				//looper->DelaySwitchTo<::Scene>();	// todo: anim frame editor ?
 		}
 	}
 
