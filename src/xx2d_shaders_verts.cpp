@@ -88,9 +88,9 @@ void main() {
 
 	void Shader_Verts::Commit() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(XYUVRGBA8) * vertsCount, verts.get(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(XYUVRGBA8) * vertsCount, verts.get(), GL_STREAM_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexsCount, indexs.get(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexsCount, indexs.get(), GL_STREAM_DRAW);
 
 		size_t j = 0;
 		for (size_t i = 0; i < texsCount; i++) {

@@ -83,9 +83,9 @@ void main() {
 
 	void Shader_LineStrip::Commit() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(XYRGBA8) * pointsCount, points.get(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(XYRGBA8) * pointsCount, points.get(), GL_STREAM_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexsCount, indexs.get(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexsCount, indexs.get(), GL_STREAM_DRAW);
 
 		glDrawElements(GL_LINE_STRIP, indexsCount, GL_UNSIGNED_SHORT, 0);
 

@@ -105,7 +105,7 @@ void main() {
 
 	void Shader_Quad::Commit() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVerts) * quadVertsCount, quadVerts.get(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(QuadVerts) * quadVertsCount, quadVerts.get(), GL_STREAM_DRAW);
 
 		size_t j = 0;
 		for (size_t i = 0; i < texsCount; i++) {

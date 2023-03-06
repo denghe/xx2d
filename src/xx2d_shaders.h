@@ -116,8 +116,6 @@ namespace xx {
 
 		static const size_t maxQuadNums = 200000;
 		GLuint lastTextureId = 0;
-		std::unique_ptr<std::pair<GLuint, int>[]> texs = std::make_unique<std::pair<GLuint, int>[]>(maxQuadNums);	// tex id + count
-		size_t texsCount = 0;
 		std::unique_ptr<QuadInstanceData[]> quadInstanceDatas = std::make_unique<QuadInstanceData[]>(maxQuadNums);
 		size_t quadCount = 0;
 

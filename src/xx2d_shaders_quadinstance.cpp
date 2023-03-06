@@ -2,10 +2,6 @@
 
 namespace xx {
 
-	// disable blend + enable zindex + if ( alpha < 0.x ) discord   will be fast
-
-	// todo: support anchor replace 0.5f
-
 	void Shader_QuadInstance::Init(ShaderManager* sm) {
 		this->sm = sm;
 
@@ -123,38 +119,25 @@ void main() {
 
 	void Shader_QuadInstance::Commit() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(QuadInstanceData) * quadCount, quadInstanceDatas.get(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(QuadInstanceData) * quadCount, quadInstanceDatas.get(), GL_STREAM_DRAW);
 
-		size_t j = 0;
-		for (size_t i = 0; i < texsCount; i++) {
-			glBindTexture(GL_TEXTURE_2D, texs[i].first);
-			auto n = (GLsizei)texs[i].second;
-			glDrawArraysInstanced(GL_TRIANGLE_STRIP, j, 4, n);
-			j += n * sizeof(QuadInstanceData);
-		}
+		glBindTexture(GL_TEXTURE_2D, lastTextureId);
+		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, quadCount);
 		CheckGLError();
 
-		sm->drawVerts += j / sizeof(QuadInstanceData) * 6;
-		sm->drawCall += texsCount;
+		sm->drawVerts += quadCount * 6;
+		sm->drawCall += 1;
 
 		lastTextureId = 0;
-		texsCount = 0;
 		quadCount = 0;
 	}
 
 	QuadInstanceData* Shader_QuadInstance::Draw(GLTexture& tex, int numQuads) {
 		assert(numQuads <= maxQuadNums);
-		if (quadCount + numQuads > maxQuadNums) {
+		if (quadCount + numQuads > maxQuadNums || lastTextureId != tex) {
 			Commit();
 		}
-		if (lastTextureId != tex) {
-			lastTextureId = tex;
-			texs[texsCount].first = tex;
-			texs[texsCount].second = numQuads;
-			++texsCount;
-		} else {
-			texs[texsCount - 1].second += numQuads;
-		}
+		lastTextureId = tex;
 		auto r = &quadInstanceDatas[quadCount];
 		quadCount += numQuads;
 		return r;

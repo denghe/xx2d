@@ -56,7 +56,7 @@ namespace xx {
 			+ (RefShader<Shader_LineStrip>().pointsCount > 0 ? 1 : 0)
 			+ RefShader<Shader_Quad>().texsCount
 			+ RefShader<Shader_Verts>().texsCount
-			+ RefShader<Shader_QuadInstance>().texsCount
+			+ (RefShader<Shader_QuadInstance>().quadCount > 0 ? 1 : 0)
 			// ...
 			;
 	}
@@ -66,20 +66,16 @@ namespace xx {
 		{
 			auto& s = RefShader<Shader_Quad>();
 			for (size_t i = 0; i < s.texsCount; i++) {
-				j += s.texs[i].second;
-			}
-		}
-		{
-			auto& s = RefShader<Shader_QuadInstance>();
-			for (size_t i = 0; i < s.texsCount; i++) {
 				j += s.texs[i].second * 6;
 			}
 		}
 		{
+			auto& s = RefShader<Shader_QuadInstance>();
+			j += s.quadCount * 6;
+		}
+		{
 			auto& s = RefShader<Shader_Verts>();
-			for (size_t i = 0; i < s.texsCount; i++) {
-				j += s.texs[i].second;
-			}
+			j += s.indexsCount;
 		}
 		// ...
 		return drawVerts + j;
