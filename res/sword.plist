@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>frames</key>
+        <dict>
+            <key>sword</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{-14.5,18.5}</string>
+                <key>spriteSize</key>
+                <string>{993,987}</string>
+                <key>spriteSourceSize</key>
+                <string>{1024,1024}</string>
+                <key>textureRect</key>
+                <string>{{1,1},{993,987}}</string>
+                <key>textureRotated</key>
+                <false/>
+                <key>triangles</key>
+                <string>26 27 28 25 26 28 0 25 28 1 2 23 2 3 22 21 3 4 19 20 21 18 19 21 3 21 22 11 17 18 15 16 17 12 14 15 17 11 12 12 13 14 12 15 17 21 4 18 18 4 10 8 9 10 6 7 8 6 8 10 5 6 10 4 5 10 18 10 11 2 22 23 1 23 24 0 1 24 0 24 25</string>
+                <key>vertices</key>
+                <string>200 27 401 234 550 400 692 571 719 594 743 594 803 571 850 588 871 617 871 681 819 722 821 744 922 847 994 882 968 958 922 982 863 987 824 890 727 810 650 845 595 829 580 754 421 639 205 423 95 265 20 118 1 44 2 0 126 0</string>
+                <key>verticesUV</key>
+                <string>200 28 401 235 550 401 692 572 719 595 743 595 803 572 850 589 871 618 871 682 819 723 821 745 922 848 994 883 968 959 922 983 863 988 824 891 727 811 650 846 595 830 580 755 421 640 205 424 95 266 20 119 1 45 2 1 126 1</string>
+            </dict>
+        </dict>
+        <key>metadata</key>
+        <dict>
+            <key>format</key>
+            <integer>3</integer>
+            <key>premultiplyAlpha</key>
+            <false/>
+            <key>realTextureFileName</key>
+            <string>sword.pkm</string>
+            <key>size</key>
+            <string>{995,989}</string>
+            <key>smartupdate</key>
+            <string>$TexturePacker:SmartUpdate:00b49e0919e1334c6e4d1f7566130f9b:8e2ec1bd5439b36fe0e59457e0715ef6:fc4332e55816c37fef0870d41c07c1bf$</string>
+            <key>textureFileName</key>
+            <string>sword.pkm</string>
+        </dict>
+    </dict>
+</plist>

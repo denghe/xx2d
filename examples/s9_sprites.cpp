@@ -33,7 +33,7 @@ namespace Sprites {
 		this->looper = looper;
 		std::cout << "Sprites::Scene::Init" << std::endl;
 
-		tex = xx::engine.LoadTextureFromCache("res/sword.pkm.zstd");
+		tex = xx::engine.LoadTextureFromCache("res/sword.pkm");
 	}
 
 	int Scene::Update() {

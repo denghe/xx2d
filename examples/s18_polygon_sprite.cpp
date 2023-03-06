@@ -34,7 +34,7 @@ namespace PolygonSpriteTest {
 		std::cout << "PolygonSpriteTest::Scene::Init" << std::endl;
 
 		xx::TP tp;
-		tp.Fill("res/tree.plist");
+		tp.Fill("res/sword.plist");
 		assert(tp.frames.size());
 		f = tp.frames[0];
 	}
@@ -47,7 +47,7 @@ namespace PolygonSpriteTest {
 
 			for (size_t i = 0; i < 100; i++) {
 				radians += 0.005;
-				ts.emplace_back().Emplace()->Init(this, {}, radians, 1);
+				ts.emplace_back().Emplace()->Init(this, {}, radians, 0.1);
 			}
 
 			for (auto i = (ptrdiff_t)ts.size() - 1; i >= 0; --i) {
