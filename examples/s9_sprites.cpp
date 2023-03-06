@@ -33,7 +33,7 @@ namespace Sprites {
 		this->looper = looper;
 		std::cout << "Sprites::Scene::Init" << std::endl;
 
-		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
+		tex = xx::engine.LoadTextureFromCache("res/sword.pkm.zstd");
 	}
 
 	int Scene::Update() {
@@ -44,7 +44,7 @@ namespace Sprites {
 
 			for (size_t i = 0; i < 100; i++) {
 				radians += 0.005;
-				ms.emplace_back().Emplace()->Init(this, {}, radians, 1);
+				ms.emplace_back().Emplace()->Init(this, {}, radians, 0.1);
 			}
 
 			for (auto i = (ptrdiff_t)ms.size() - 1; i >= 0; --i) {

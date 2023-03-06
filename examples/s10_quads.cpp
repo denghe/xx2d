@@ -7,6 +7,7 @@ namespace Quads {
 	void Mouse2::Init(Scene* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
 		body.SetTexture(owner->tex);
 		body.pos = pos;
+		body.scale = { scale, scale };
 		body.radians = -radians + M_PI / 2;
 		body.color = color;
 		baseInc = { std::sin(body.radians), std::cos(body.radians) };
@@ -35,7 +36,7 @@ namespace Quads {
 		this->looper = looper;
 		std::cout << "Quads::Scene::Init" << std::endl;
 
-		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
+		tex = xx::engine.LoadTextureFromCache("res/sword.pkm.zstd");
 	}
 
 	int Scene::Update() {
@@ -46,7 +47,7 @@ namespace Quads {
 
 			for (size_t i = 0; i < 100; i++) {
 				radians += 0.005;
-				ms.emplace_back().Emplace()->Init(this, {}, radians, 1);
+				ms.emplace_back().Emplace()->Init(this, {}, radians, 0.1);
 			}
 
 			for (auto i = (ptrdiff_t)ms.size() - 1; i >= 0; --i) {
