@@ -6,6 +6,14 @@ GPU & CPU cache friendly, manual control draw order
 
 performance ~= raylib, much more faster than cocos2dx
 
+# tips
+
+convert png to pkm:
+tools/etcpak.exe & drag_png_here_convert_pkm_etc2_rgba8.bat
+
+compress pkm:
+https://github.com/facebook/zstd/releases
+zstd.exe --ultra -22 ?????.pkm -o ?????.pkm.zstd
 
 # feature
 
