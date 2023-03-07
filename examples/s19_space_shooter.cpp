@@ -176,13 +176,15 @@ namespace SpaceShooter {
 
 	/***********************************************************************/
 
-	void Plane::Init(Scene* owner) {
+	void Plane::Init(Scene* owner, int64_t const& invincibleTime) {
 		this->owner = owner;
 		body.SetFrame(owner->framesPlane[1]).SetScale(owner->scale);
 		pos = {};
 		inc = {};
 		speed = 0.5f * owner->scale;
 		frame = 2;	// 1 ~ 3
+		radius = body.texRectH / 2;
+		invincibleFrameNumber = owner->frameNumber + invincibleTime;
 	}
 	bool Plane::Update() {
 
@@ -199,7 +201,21 @@ namespace SpaceShooter {
 			inc = d.As<float>() / std::sqrt(float(dd)) * speed;
 			pos += inc;
 		}
+		owner->lastPlanePos = pos;
 		//}
+
+		if (invincibleFrameNumber <= owner->frameNumber) {
+			// collision detection
+			for (auto& m : owner->monsters) {
+				auto d = m->pos - pos;
+				auto rr = (m->radius + radius) * (m->radius + radius);
+				auto dd = d.x * d.x + d.y * d.y;
+				if (dd < rr) {
+					// todo: show effect?
+					return true;
+				}
+			}
+		}
 
 		// change frame display
 		constexpr float finc = 0.1f, fmin = 1.f, fmid = 2.f, fmax = 3.f;
@@ -240,7 +256,7 @@ namespace SpaceShooter {
 		return false;
 	}
 	void Plane::Draw() {
-		body.SetPosition(pos).Draw();
+		body.SetPosition(pos).SetColor(invincibleFrameNumber > owner->frameNumber ? xx::RGBA8{255,255,255,50} : xx::RGBA8{255,255,255,255}).Draw();
 	}
 
 
@@ -338,7 +354,7 @@ namespace SpaceShooter {
 		// init all
 		space.Init(this);
 		score.Init(this);
-		plane.Init(this);
+		plane.Emplace()->Init(this);
 		// ...
 
 		// run script
@@ -361,7 +377,11 @@ namespace SpaceShooter {
 			space.Update();
 
 			// move player's plane
-			plane.Update();
+			if (plane && plane->Update()) {
+				// todo: death effect?
+				plane.Reset();
+				coros.Add(SceneLogic_PlaneReborn());
+			}
 
 			// move bullets & collision detection
 			for (auto i = (ptrdiff_t)bullets.size() - 1; i >= 0; --i) {
@@ -400,7 +420,7 @@ namespace SpaceShooter {
 
 		space.Draw();
 		for (auto& o : monsters) o->Draw();
-		plane.Draw();
+		if (plane) plane->Draw();
 		for (auto& o : bullets) o->Draw();
 		for (auto& o : labels) o->Draw();
 		score.Draw();
@@ -441,7 +461,7 @@ namespace SpaceShooter {
 					auto radians = rnd.Next<float>(0, M_PI);
 					xx::XY v{ std::cos(radians),std::sin(radians) };
 					auto bornPos = v * (xx::engine.hw + 100);
-					auto d = plane.pos - bornPos;
+					auto d = lastPlanePos - bornPos;
 					radians = std::atan2(d.y, d.x);
 					auto m = xx::Make<Monster2>();
 					m->Init(this, bornPos, radians, 2.f, { 0,0,255,255 });
@@ -467,4 +487,11 @@ namespace SpaceShooter {
 			CoSleep(600ms);
 		}
 	}
+
+	xx::Coro Scene::SceneLogic_PlaneReborn() {
+		CoSleep(3s);
+		assert(!plane);
+		plane.Emplace()->Init(this, 240);
+	}
+
 }

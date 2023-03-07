@@ -79,9 +79,9 @@ namespace SpaceShooter {
 		Scene* owner{};
 		xx::Quad body;
 		xx::XY pos{}, inc{};
-		float speed{}, frame{};
-		int64_t fireCD{};
-		void Init(Scene* owner);
+		float speed{}, frame{}, radius{};
+		int64_t fireCD{}, invincibleFrameNumber{};
+		void Init(Scene* owner, int64_t const& invincibleTime_ = 0);
 		bool Update();
 		void Draw();
 	};
@@ -101,6 +101,7 @@ namespace SpaceShooter {
 
 		xx::Coro SceneLogic();
 		xx::Coro SceneLogic_CreateMonsterTeam(int n, int64_t bonus);
+		xx::Coro SceneLogic_PlaneReborn();
 
 		void AddMonster(MonsterBase* m);	// insert into monsters & sync index
 		void EraseMonster(MonsterBase* m);	// remove from monsters & clear index
@@ -123,11 +124,12 @@ namespace SpaceShooter {
 		float timePool{};
 		float bgScale{}, scale{};
 		int64_t frameNumber{};
+		xx::XY lastPlanePos{};
 		xx::Rnd rnd;
 
 		Space space;
 		Score score;
-		Plane plane;
+		xx::Shared<Plane> plane;
 		std::vector<xx::Shared<Bullet>> bullets;
 		std::vector<xx::Shared<MonsterBase>> monsters;
 		std::vector<xx::Shared<LabelEffect>> labels;
