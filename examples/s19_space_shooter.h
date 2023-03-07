@@ -21,11 +21,11 @@ namespace SpaceShooter {
 	struct LabelEffect {
 		Scene* owner{};
 		xx::XY pos{}, inc{};
-		int life{};
+		int64_t avaliableFrameNumber{};
 		xx::Label body;
 
 		void Init(Scene* const& owner_, xx::XY const& pos_, std::string_view const& txt_);
-		int Update();
+		bool Update();
 		void Draw();
 	};
 
@@ -35,34 +35,43 @@ namespace SpaceShooter {
 	template<typename T>
 	using Listener_s = xx::Shared<Listener<T>>;
 
-
-	struct Monster {
+	struct MonsterBase {
 		Scene* owner{};
 		size_t indexAtOwnerMonsters{ std::numeric_limits<size_t>::max() };
-
-		xx::Shared<xx::MovePathCache> mpc;
-		xx::XY originalPos{}, pos{};
-		float radius{}, radians{}, speed{}, movedDistance{};
-		int64_t hp{}, maxHP{}, hitEffectEndFrame{};
-		Listener_s<Monster> deathListener;
-
-		void Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_ = 1.f, xx::RGBA8 const& color_ = {255,255,255,255}, Listener_s<Monster> deathListener_ = {});
-		int Update();
-		bool Hit(int64_t const& damage);	// return true: dead
-		void Draw();
-
+		xx::XY pos{};
+		float radius{}, radians{}, speed{};
+		int64_t hp{}, maxHP{}, hitEffectExpireFrameNumber{};
+		Listener_s<MonsterBase> deathListener;
 		xx::Quad body;
 		xx::RGBA8 color;
+		void Draw();
+		bool Hit(int64_t const& damage);	// return true: dead
+		virtual bool Update() = 0;
+	};
+	struct Monster : MonsterBase {
+		xx::Shared<xx::MovePathCache> mpc;
+		xx::XY originalPos{};
+		float movedDistance{};
+
+		void Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_ = 1.f, xx::RGBA8 const& color_ = {255,255,255,255}, Listener_s<MonsterBase> deathListener_ = {});
+		bool Update() override;
+	};
+	struct Monster2 : MonsterBase {
+		xx::XY inc{};
+		int64_t avaliableFrameNumber{};
+
+		void Init(Scene* owner_, xx::XY const& posFrom, float const& radians_, float const& speed_ = 1.f, xx::RGBA8 const& color_ = {255,255,255,255}, Listener_s<MonsterBase> deathListener_ = {});
+		bool Update() override;
 	};
 
 	struct Bullet {
 		Scene* owner{};
 		xx::Quad body;
 		xx::XY pos{}, inc{};
-		float radius{}, speed{}, life{};
-		int64_t damage{};
+		float radius{}, speed{};
+		int64_t damage{}, avaliableFrameNumber{};
 		void Init(Scene* owner_, xx::XY const& pos_, int64_t const& power_);
-		int Update();
+		bool Update();
 		void Draw();
 	};
 
@@ -71,9 +80,9 @@ namespace SpaceShooter {
 		xx::Quad body;
 		xx::XY pos{}, inc{};
 		float speed{}, frame{};
-		int fireCD{};
+		int64_t fireCD{};
 		void Init(Scene* owner);
-		int Update();
+		bool Update();
 		void Draw();
 	};
 
@@ -82,7 +91,7 @@ namespace SpaceShooter {
 		xx::Quad body;
 		float yPos{}, yInc{}, ySize{};
 		void Init(Scene* owner);
-		int Update();
+		void Update();
 		void Draw();
 	};
 
@@ -91,8 +100,12 @@ namespace SpaceShooter {
 		int Update() override;
 
 		xx::Coro SceneLogic();
-		xx::Shared<Monster>& AddMonster();
-		void EraseMonster(Monster* m);
+		xx::Coro SceneLogic_CreateMonsterTeam(int n, int64_t bonus);
+
+		void AddMonster(MonsterBase* m);	// insert into monsters & sync index
+		void EraseMonster(MonsterBase* m);	// remove from monsters & clear index
+
+		void ShowBonusEffect(xx::XY const& pos, int64_t const& value);
 
 		// res
 		xx::TP tp;
@@ -109,13 +122,14 @@ namespace SpaceShooter {
 		// env
 		float timePool{};
 		float bgScale{}, scale{};
-		int frameCounter{};
+		int64_t frameNumber{};
+		xx::Rnd rnd;
 
 		Space space;
 		Score score;
 		Plane plane;
 		std::vector<xx::Shared<Bullet>> bullets;
-		std::vector<xx::Shared<Monster>> monsters;
+		std::vector<xx::Shared<MonsterBase>> monsters;
 		std::vector<xx::Shared<LabelEffect>> labels;
 		// ...
 

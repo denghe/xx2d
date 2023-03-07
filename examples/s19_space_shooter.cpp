@@ -13,6 +13,10 @@ namespace SpaceShooter {
 	}
 	void Score::Add(int64_t const& offset) {
 		to += offset;
+		step = (to - from) / 120 * 2;
+		if (step < 1) {
+			step = 1;
+		}
 	}
 	void Score::Update() {
 		if (from < to) {
@@ -43,14 +47,14 @@ namespace SpaceShooter {
 		owner = owner_;
 		pos = pos_;
 
-		life = 100;
+		avaliableFrameNumber = owner->frameNumber + 100;
 		inc = { 0, 0.5 };
 
 		body.SetText(owner->looper->fnt1, txt_, 64);
 	}
-	int LabelEffect::Update() {
+	bool LabelEffect::Update() {
 		pos += inc;
-		return --life;
+		return avaliableFrameNumber < owner->frameNumber;
 	}
 	void LabelEffect::Draw() {
 		body.SetPosition(pos).Draw();
@@ -58,7 +62,28 @@ namespace SpaceShooter {
 
 	/***********************************************************************/
 
-	void Monster::Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_, xx::RGBA8 const& color_, Listener_s<Monster> deathListener_) {
+	void MonsterBase::Draw() {
+		body.SetPosition(pos).SetRotate(-radians + float(M_PI / 2))
+			.SetColor(hitEffectExpireFrameNumber > owner->frameNumber ? xx::RGBA8{ 255,0,0,255 } : color)
+			.Draw();
+	}
+	bool MonsterBase::Hit(int64_t const& damage) {
+		hp -= damage;
+		if (hp <= 0) {
+			owner->score.Add(100);
+			// todo: make explode effect ?
+			if (deathListener) {
+				(*deathListener)(this);
+			}
+			return true;
+		}
+		hitEffectExpireFrameNumber = owner->frameNumber + 10;
+		return false;
+	}
+
+	/***********************************************************************/
+
+	void Monster::Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_, xx::RGBA8 const& color_, Listener_s<MonsterBase> deathListener_) {
 		// store args
 		owner = owner_;
 		originalPos = pos_;
@@ -77,31 +102,40 @@ namespace SpaceShooter {
 		// init draw
 		body.SetFrame(owner->framesMonster[0]).SetColor(color).SetScale(owner->scale);
 	}
-	int Monster::Update() {
+	bool Monster::Update() {
 		movedDistance += speed;
 		auto mp = mpc->Move(movedDistance);
-		if (!mp) return 1;
+		if (!mp) return true;
 
 		radians = mp->radians;
 		pos = originalPos + mp->pos;
-		return 0;
-	}
-	bool Monster::Hit(int64_t const& damage) {
-		hp -= damage;
-		if (hp <= 0) {
-			// todo: make explode effect ?
-			if (deathListener) {
-				(*deathListener)(this);
-			}
-			return true;
-		}
-		hitEffectEndFrame = owner->frameCounter + 10;
 		return false;
 	}
-	void Monster::Draw() {
-		body.SetPosition(pos).SetRotate(-radians + float(M_PI / 2))
-			.SetColor(hitEffectEndFrame > owner->frameCounter ? xx::RGBA8{255,0,0,255} : color)
-			.Draw();
+
+	/***********************************************************************/
+
+	void Monster2::Init(Scene* owner_, xx::XY const& pos_, float const& radians_, float const& speed_, xx::RGBA8 const& color_, Listener_s<MonsterBase> deathListener_) {
+		// store args
+		owner = owner_;
+		pos = pos_;
+		radians = radians_;
+		speed = speed_;
+		color = color_;
+		deathListener = std::move(deathListener_);
+		radius = 7 * owner->scale;
+
+		// init
+		inc = { std::cos(radians),std::sin(radians) };
+		inc *= speed;
+		avaliableFrameNumber = owner->frameNumber + 120 * 10;
+		hp = 20;
+
+		// init draw
+		body.SetFrame(owner->framesMonster[0]).SetColor(color).SetScale(owner->scale);
+	}
+	bool Monster2::Update() {
+		pos += inc;
+		return avaliableFrameNumber < owner->frameNumber;
 	}
 
 	/***********************************************************************/
@@ -113,12 +147,12 @@ namespace SpaceShooter {
 
 		speed = 1.f * owner->scale;
 		inc = { 0, speed };
-		life = 60 * 5;
+		avaliableFrameNumber = owner->frameNumber + 120 * 2;
 		radius = 2 * owner->scale;
 
 		body.SetFrame(owner->framesBullet[0]).SetScale(owner->scale);
 	}
-	int Bullet::Update() {
+	bool Bullet::Update() {
 
 		// collision detection
 		for (auto& m : owner->monsters) {
@@ -129,12 +163,12 @@ namespace SpaceShooter {
 				if (m->Hit(damage)) {
 					owner->EraseMonster(m);	// can't access 'm' after this line
 				}
-				return -1;
+				return true;
 			}
 		}
 
 		pos += inc;
-		return --life <= 0 ? 1 : 0;
+		return avaliableFrameNumber < owner->frameNumber;
 	}
 	void Bullet::Draw() {
 		body.SetPosition(pos).Draw();
@@ -150,7 +184,7 @@ namespace SpaceShooter {
 		speed = 0.5f * owner->scale;
 		frame = 2;	// 1 ~ 3
 	}
-	int Plane::Update() {
+	bool Plane::Update() {
 
 		// move body
 		//if (xx::engine.Pressed(xx::Mbtns::Left) || xx::engine.Pressed(xx::Mbtns::Right)) {
@@ -197,13 +231,13 @@ namespace SpaceShooter {
 
 
 		// auto shoot
-		if (fireCD < owner->frameCounter) {
-			fireCD = owner->frameCounter + 20;
+		if (fireCD < owner->frameNumber) {
+			fireCD = owner->frameNumber + 20;
 			auto&& b = owner->bullets.emplace_back().Emplace();
 			b->Init(owner, pos + xx::XY{ 0, 8 * owner->scale }, 10);		// todo: more style
 		}
 
-		return 0;
+		return false;
 	}
 	void Plane::Draw() {
 		body.SetPosition(pos).Draw();
@@ -218,12 +252,11 @@ namespace SpaceShooter {
 		yInc = 0.1f * owner->bgScale;
 		ySize = body.texRectH * owner->bgScale;
 	}
-	int Space::Update() {
+	void Space::Update() {
 		yPos += yInc;
 		if (yPos > ySize) {
 			yPos -= ySize;
 		}
-		return 0;
 	}
 	void Space::Draw() {
 		body.SetPositionY(-yPos).Draw();
@@ -319,7 +352,7 @@ namespace SpaceShooter {
 			timePool -= 1.f / 120;
 
 			// step frame counter
-			++frameCounter;
+			++frameNumber;
 
 			// generate monsters
 			coros();
@@ -353,7 +386,7 @@ namespace SpaceShooter {
 			// move labels
 			for (auto i = (ptrdiff_t)labels.size() - 1; i >= 0; --i) {
 				auto& o = labels[i];
-				if (o->Update() <= 0) {
+				if (o->Update()) {
 					o = labels.back();
 					labels.pop_back();
 				}
@@ -376,14 +409,12 @@ namespace SpaceShooter {
 		return 0;
 	}
 
-	xx::Shared<Monster>& Scene::AddMonster() {
-		auto& m = monsters.emplace_back().Emplace();
-		m->owner = this;
-		m->indexAtOwnerMonsters = monsters.size() - 1;
-		return m;
+	void Scene::AddMonster(MonsterBase* m) {
+		m->indexAtOwnerMonsters = monsters.size();
+		monsters.emplace_back(m);
 	}
 
-	void Scene::EraseMonster(Monster* m) {
+	void Scene::EraseMonster(MonsterBase* m) {
 		assert(m);
 		assert(m->owner);
 		assert(m->owner == this);
@@ -396,27 +427,44 @@ namespace SpaceShooter {
 		monsters.pop_back();
 	}
 
+	void Scene::ShowBonusEffect(xx::XY const& pos, int64_t const& value) {
+		labels.emplace_back().Emplace()->Init(this, pos, xx::ToString("+", value));
+	}
+
 	xx::Coro Scene::SceneLogic() {
 		while (true) {
-			// make team
+			coros.Add(SceneLogic_CreateMonsterTeam(5, 2000));
+			CoSleep(5s);
 			{
-				int n = 5, bonus = 100;
-
-				auto dt = xx::Make<Listener<Monster>>([this, n = n, bonus] (Monster* m) mutable {
-					if (--n == 0) {
-						score.Add(bonus);
-						labels.emplace_back().Emplace()->Init(this, m->pos, "+100");
-					}
-				});
-				
-				auto&& mpc = mpcsMonster[0];
+				int n = 100;
 				for (int i = 0; i < n; i++) {
-					auto&& m = AddMonster();
-					m->Init(this, { -1000, 300 }, mpc, 2.f, { 255,255,255,255 }, dt);
-					CoSleep(600ms);
+					auto radians = rnd.Next<float>(0, M_PI);
+					xx::XY v{ std::cos(radians),std::sin(radians) };
+					auto bornPos = v * (xx::engine.hw + 100);
+					auto d = plane.pos - bornPos;
+					radians = std::atan2(d.y, d.x);
+					auto m = xx::Make<Monster2>();
+					m->Init(this, bornPos, radians, 2.f, { 0,0,255,255 });
+					AddMonster(m);
+					CoSleep(50ms);
 				}
 			}
-			CoSleep(5s);
+			// ...
+		}
+	}
+	xx::Coro Scene::SceneLogic_CreateMonsterTeam(int n, int64_t bonus) {
+		auto dt = xx::Make<Listener<MonsterBase>>([this, n, bonus] (MonsterBase* m) mutable {
+			if (--n == 0) {
+				score.Add(bonus);
+				ShowBonusEffect(m->pos, bonus);
+			}
+		});
+		auto&& mpc = mpcsMonster[0];
+		for (int i = 0; i < n; i++) {
+			auto m = xx::Make<Monster>();
+			m->Init(this, { -1000, 300 }, mpc, 2.f, { 255,255,0,255 }, dt);
+			AddMonster(m);
+			CoSleep(600ms);
 		}
 	}
 }
