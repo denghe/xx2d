@@ -6,6 +6,7 @@
 namespace SpaceShooter {
 
 	/***********************************************************************/
+	/***********************************************************************/
 
 	void Score::Init(Scene* const& owner_) {
 		owner = owner_;
@@ -42,6 +43,7 @@ namespace SpaceShooter {
 	}
 
 	/***********************************************************************/
+	/***********************************************************************/
 
 	void LabelEffect::Init(Scene* const& owner_, xx::XY const& pos_, std::string_view const& txt_) {
 		owner = owner_;
@@ -60,6 +62,7 @@ namespace SpaceShooter {
 		body.SetPosition(pos).Draw();
 	}
 
+	/***********************************************************************/
 	/***********************************************************************/
 
 	void MonsterBase::Draw() {
@@ -81,6 +84,7 @@ namespace SpaceShooter {
 		return false;
 	}
 
+	/***********************************************************************/
 	/***********************************************************************/
 
 	void Monster::Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_, xx::RGBA8 const& color_, Listener_s<MonsterBase> deathListener_) {
@@ -113,6 +117,7 @@ namespace SpaceShooter {
 	}
 
 	/***********************************************************************/
+	/***********************************************************************/
 
 	void Monster2::Init(Scene* owner_, xx::XY const& pos_, float const& radians_, float const& speed_, xx::RGBA8 const& color_, Listener_s<MonsterBase> deathListener_) {
 		// store args
@@ -138,6 +143,7 @@ namespace SpaceShooter {
 		return avaliableFrameNumber < owner->frameNumber;
 	}
 
+	/***********************************************************************/
 	/***********************************************************************/
 
 	void Bullet::Init(Scene* owner_, xx::XY const& pos_, int64_t const& damage_) {
@@ -174,6 +180,7 @@ namespace SpaceShooter {
 		body.SetPosition(pos).Draw();
 	}
 
+	/***********************************************************************/
 	/***********************************************************************/
 
 	void Plane::Init(Scene* owner, int64_t const& invincibleTime) {
@@ -261,6 +268,7 @@ namespace SpaceShooter {
 
 
 	/***********************************************************************/
+	/***********************************************************************/
 
 	void Space::Init(Scene* owner) {
 		this->owner = owner;
@@ -280,6 +288,7 @@ namespace SpaceShooter {
 	}
 
 
+	/***********************************************************************/
 	/***********************************************************************/
 
 	void Scene::Init(GameLooper* looper) {
@@ -361,6 +370,8 @@ namespace SpaceShooter {
 		coros.Add(SceneLogic());
 	}
 
+	/***********************************************************************/
+
 	int Scene::Update() {
 
 		timePool += xx::engine.delta;
@@ -429,6 +440,8 @@ namespace SpaceShooter {
 		return 0;
 	}
 
+	/***********************************************************************/
+
 	void Scene::AddMonster(MonsterBase* m) {
 		m->indexAtOwnerMonsters = monsters.size();
 		monsters.emplace_back(m);
@@ -451,27 +464,32 @@ namespace SpaceShooter {
 		labels.emplace_back().Emplace()->Init(this, pos, xx::ToString("+", value));
 	}
 
+	/***********************************************************************/
+
 	xx::Coro Scene::SceneLogic() {
 		while (true) {
 			coros.Add(SceneLogic_CreateMonsterTeam(5, 2000));
 			CoSleep(5s);
 			{
-				int n = 100;
-				for (int i = 0; i < n; i++) {
-					auto radians = rnd.Next<float>(0, M_PI);
-					xx::XY v{ std::cos(radians),std::sin(radians) };
-					auto bornPos = v * (xx::engine.hw + 100);
-					auto d = lastPlanePos - bornPos;
-					radians = std::atan2(d.y, d.x);
-					auto m = xx::Make<Monster2>();
-					m->Init(this, bornPos, radians, 2.f, { 0,0,255,255 });
-					AddMonster(m);
-					CoSleep(50ms);
+				int n1 = 120 * 5, n2 = 50;
+				for (int i = 0; i < n1; i++) {
+					for (int j = 0; j < n2; j++) {
+						auto radians = rnd.Next<float>(0, M_PI);
+						xx::XY v{ std::cos(radians),std::sin(radians) };
+						auto bornPos = v * (xx::engine.hw + 100);
+						auto d = lastPlanePos - bornPos;
+						radians = std::atan2(d.y, d.x);
+						auto m = xx::Make<Monster2>();
+						m->Init(this, bornPos, radians, 2.f, { 255,255,255,255 });
+						AddMonster(m);
+					}
+					CoYield;	//CoSleep(50ms);
 				}
 			}
 			// ...
 		}
 	}
+
 	xx::Coro Scene::SceneLogic_CreateMonsterTeam(int n, int64_t bonus) {
 		auto dt = xx::Make<Listener<MonsterBase>>([this, n, bonus] (MonsterBase* m) mutable {
 			if (--n == 0) {
@@ -482,7 +500,7 @@ namespace SpaceShooter {
 		auto&& mpc = mpcsMonster[0];
 		for (int i = 0; i < n; i++) {
 			auto m = xx::Make<Monster>();
-			m->Init(this, { -1000, 300 }, mpc, 2.f, { 255,255,0,255 }, dt);
+			m->Init(this, { -1000, 300 }, mpc, 2.f, { 255,126,126,255 }, dt);
 			AddMonster(m);
 			CoSleep(600ms);
 		}
