@@ -7,18 +7,72 @@ namespace SpaceShooter {
 
 	/***********************************************************************/
 
-	void Monster::Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_, xx::RGBA8 const& color_) {
+	void Score::Init(Scene* const& owner_) {
+		owner = owner_;
+		step = 1;
+	}
+	void Score::Add(int64_t const& offset) {
+		to += offset;
+	}
+	void Score::Update() {
+		if (from < to) {
+			from += step;
+			if (from > to) {
+				from = to;
+			}
+		}
+	}
+	void Score::Draw() {
+		auto s = std::to_string(from);
+		auto siz = s.size();
+		auto& fs = owner->framesNumber;
+		auto wh = fs[0]->spriteSourceSize * owner->scale;
+		auto origin = xx::engine.ninePoints[8];
+		xx::XY xy{ origin.x - wh.x * siz / 2, origin.y - 10 };
+		xx::Quad q;
+		q.SetScale(owner->scale).SetAnchor({ 0, 1 });
+		for (auto& c : s) {
+			q.SetFrame(fs[c - '0']).SetPosition(xy).Draw();
+			xy.x += wh.x;
+		}
+	}
+
+	/***********************************************************************/
+
+	void LabelEffect::Init(Scene* const& owner_, xx::XY const& pos_, std::string_view const& txt_) {
+		owner = owner_;
+		pos = pos_;
+
+		life = 100;
+		inc = { 0, 0.5 };
+
+		body.SetText(owner->looper->fnt1, txt_, 64);
+	}
+	int LabelEffect::Update() {
+		pos += inc;
+		return --life;
+	}
+	void LabelEffect::Draw() {
+		body.SetPosition(pos).Draw();
+	}
+
+	/***********************************************************************/
+
+	void Monster::Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_, xx::RGBA8 const& color_, Listener_s<Monster> deathListener_) {
 		// store args
 		owner = owner_;
 		originalPos = pos_;
 		mpc = std::move(mpc_);
 		speed = speed_;
 		color = color_;
+		deathListener = std::move(deathListener_);
+		radius = 7 * owner->scale;
 
-		// init pos
+		// init
 		auto mp = mpc->Move(0);
 		radians = mp->radians;
 		pos = originalPos + mp->pos;
+		hp = 20;
 
 		// init draw
 		body.SetFrame(owner->framesMonster[0]).SetColor(color).SetScale(owner->scale);
@@ -27,26 +81,58 @@ namespace SpaceShooter {
 		movedDistance += speed;
 		auto mp = mpc->Move(movedDistance);
 		if (!mp) return 1;
+
 		radians = mp->radians;
 		pos = originalPos + mp->pos;
 		return 0;
 	}
+	bool Monster::Hit(int64_t const& damage) {
+		hp -= damage;
+		if (hp <= 0) {
+			// todo: make explode effect ?
+			if (deathListener) {
+				(*deathListener)(this);
+			}
+			return true;
+		}
+		hitEffectEndFrame = owner->frameCounter + 10;
+		return false;
+	}
 	void Monster::Draw() {
-		body.SetPosition(pos).SetRotate(-radians + float(M_PI / 2)).Draw();
+		body.SetPosition(pos).SetRotate(-radians + float(M_PI / 2))
+			.SetColor(hitEffectEndFrame > owner->frameCounter ? xx::RGBA8{255,0,0,255} : color)
+			.Draw();
 	}
 
 	/***********************************************************************/
 
-	void Bullet::Init(Scene* owner, xx::XY const& pos) {	// todo: more args
-		this->owner = owner;
-		body.SetFrame(owner->framesBullet[0]).SetScale(owner->scale);
-		this->pos = pos;
+	void Bullet::Init(Scene* owner_, xx::XY const& pos_, int64_t const& damage_) {
+		owner = owner_;
+		pos = pos_;
+		damage = damage_;
+
 		speed = 1.f * owner->scale;
 		inc = { 0, speed };
 		life = 60 * 5;
+		radius = 2 * owner->scale;
+
+		body.SetFrame(owner->framesBullet[0]).SetScale(owner->scale);
 	}
 	int Bullet::Update() {
-		// todo: collision detection
+
+		// collision detection
+		for (auto& m : owner->monsters) {
+			auto d = m->pos - pos;
+			auto rr = (m->radius + radius) * (m->radius + radius);
+			auto dd = d.x * d.x + d.y * d.y;
+			if (dd < rr) {
+				if (m->Hit(damage)) {
+					owner->EraseMonster(m);	// can't access 'm' after this line
+				}
+				return -1;
+			}
+		}
+
 		pos += inc;
 		return --life <= 0 ? 1 : 0;
 	}
@@ -114,7 +200,7 @@ namespace SpaceShooter {
 		if (fireCD < owner->frameCounter) {
 			fireCD = owner->frameCounter + 20;
 			auto&& b = owner->bullets.emplace_back().Emplace();
-			b->Init(owner, pos + xx::XY{ 0, 8 * owner->scale });		// todo: more style
+			b->Init(owner, pos + xx::XY{ 0, 8 * owner->scale }, 10);		// todo: more style
 		}
 
 		return 0;
@@ -218,9 +304,11 @@ namespace SpaceShooter {
 
 		// init all
 		space.Init(this);
+		score.Init(this);
 		plane.Init(this);
 		// ...
 
+		// run script
 		coros.Add(SceneLogic());
 	}
 
@@ -256,11 +344,23 @@ namespace SpaceShooter {
 
 			// move monsters & collision detection
 			for (auto i = (ptrdiff_t)monsters.size() - 1; i >= 0; --i) {
-				auto& m = monsters[i];
-				if (m->Update()) {
-					EraseMonster(m);
+				auto& o = monsters[i];
+				if (o->Update()) {
+					EraseMonster(o);
 				}
 			}
+
+			// move labels
+			for (auto i = (ptrdiff_t)labels.size() - 1; i >= 0; --i) {
+				auto& o = labels[i];
+				if (o->Update() <= 0) {
+					o = labels.back();
+					labels.pop_back();
+				}
+			}
+
+			// refresh score
+			score.Update();
 
 			// ...
 		}
@@ -269,6 +369,8 @@ namespace SpaceShooter {
 		for (auto& o : monsters) o->Draw();
 		plane.Draw();
 		for (auto& o : bullets) o->Draw();
+		for (auto& o : labels) o->Draw();
+		score.Draw();
 		// ...
 
 		return 0;
@@ -296,12 +398,22 @@ namespace SpaceShooter {
 
 	xx::Coro Scene::SceneLogic() {
 		while (true) {
+			// make team
 			{
+				int n = 5, bonus = 100;
+
+				auto dt = xx::Make<Listener<Monster>>([this, n = n, bonus] (Monster* m) mutable {
+					if (--n == 0) {
+						score.Add(bonus);
+						labels.emplace_back().Emplace()->Init(this, m->pos, "+100");
+					}
+				});
+				
 				auto&& mpc = mpcsMonster[0];
-				for (size_t i = 0; i < 10; i++) {
+				for (int i = 0; i < n; i++) {
 					auto&& m = AddMonster();
-					m->Init(this, { -1000, 0 }, mpc, 2.f, { 255,255,255,255 });
-					CoSleep(1s);
+					m->Init(this, { -1000, 300 }, mpc, 2.f, { 255,255,255,255 }, dt);
+					CoSleep(600ms);
 				}
 			}
 			CoSleep(5s);

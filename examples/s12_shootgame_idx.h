@@ -88,7 +88,7 @@ namespace ShootGameWithIndex {
 
 	struct HPLabel {
 		Scene* scene{};
-		xx::Label lbl;	// known issue: SimpleLabel can't see
+		xx::SimpleLabel lbl;
 		std::string txt;
 		xx::XY pos{}, inc{};
 		int life{};
