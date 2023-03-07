@@ -39,28 +39,33 @@ namespace SpaceShooter {
 		Scene* owner{};
 		size_t indexAtOwnerMonsters{ std::numeric_limits<size_t>::max() };
 		xx::XY pos{};
-		float radius{}, radians{}, speed{};
+		float radius{}, radians{}, speed{}, frameIndex{}, frameStep{};
 		int64_t hp{}, maxHP{}, hitEffectExpireFrameNumber{};
 		Listener_s<MonsterBase> deathListener;
+		std::vector<xx::Shared<xx::Frame>>* frames{};
 		xx::Quad body;
 		xx::RGBA8 color;
-		void Draw();
-		bool Hit(int64_t const& damage);	// return true: dead
+		void Init1(Scene* owner_, float const& speed_ = 1.f, xx::RGBA8 const& color_ = { 255,255,255,255 }, Listener_s<MonsterBase> deathListener_ = {});
 		virtual bool Update() = 0;
+		void UpdateFrameIndex();
+		bool Hit(int64_t const& damage);	// return true: dead
+		void Draw();
 	};
+
 	struct Monster : MonsterBase {
 		xx::Shared<xx::MovePathCache> mpc;
 		xx::XY originalPos{};
 		float movedDistance{};
 
-		void Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_ = 1.f, xx::RGBA8 const& color_ = {255,255,255,255}, Listener_s<MonsterBase> deathListener_ = {});
+		void Init2(xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_);
 		bool Update() override;
 	};
+
 	struct Monster2 : MonsterBase {
 		xx::XY inc{};
 		int64_t avaliableFrameNumber{};
 
-		void Init(Scene* owner_, xx::XY const& posFrom, float const& radians_, float const& speed_ = 1.f, xx::RGBA8 const& color_ = {255,255,255,255}, Listener_s<MonsterBase> deathListener_ = {});
+		void Init2(xx::XY const& pos_, float const& radians_);
 		bool Update() override;
 	};
 

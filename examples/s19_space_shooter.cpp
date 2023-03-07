@@ -65,10 +65,20 @@ namespace SpaceShooter {
 	/***********************************************************************/
 	/***********************************************************************/
 
-	void MonsterBase::Draw() {
-		body.SetPosition(pos).SetRotate(-radians + float(M_PI / 2))
-			.SetColor(hitEffectExpireFrameNumber > owner->frameNumber ? xx::RGBA8{ 255,0,0,255 } : color)
-			.Draw();
+	void MonsterBase::Init1(Scene* owner_, float const& speed_, xx::RGBA8 const& color_, Listener_s<MonsterBase> deathListener_) {
+		assert(!owner);
+		owner = owner_;
+		speed = speed_;
+		color = color_;
+		deathListener = std::move(deathListener_);
+		frameStep = 0.1f;
+	}
+	void MonsterBase::UpdateFrameIndex() {
+		frameIndex += frameStep;
+		if (frameIndex >= frames->size() || frameIndex < 0) {
+			frameStep = -frameStep;
+			frameIndex += frameStep;
+		}
 	}
 	bool MonsterBase::Hit(int64_t const& damage) {
 		hp -= damage;
@@ -83,18 +93,20 @@ namespace SpaceShooter {
 		hitEffectExpireFrameNumber = owner->frameNumber + 10;
 		return false;
 	}
+	void MonsterBase::Draw() {
+		body.SetPosition(pos).SetRotate(-radians + float(M_PI / 2)).SetFrame((*frames)[frameIndex])
+			.SetColor(hitEffectExpireFrameNumber > owner->frameNumber ? xx::RGBA8{ 255,0,0,255 } : color)
+			.Draw();
+	}
 
 	/***********************************************************************/
 	/***********************************************************************/
 
-	void Monster::Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_, xx::RGBA8 const& color_, Listener_s<MonsterBase> deathListener_) {
-		// store args
-		owner = owner_;
+	void Monster::Init2(xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_) {
+		assert(owner);
 		originalPos = pos_;
 		mpc = std::move(mpc_);
-		speed = speed_;
-		color = color_;
-		deathListener = std::move(deathListener_);
+		frames = &owner->framesMonster1;
 		radius = 7 * owner->scale;
 
 		// init
@@ -104,7 +116,7 @@ namespace SpaceShooter {
 		hp = 20;
 
 		// init draw
-		body.SetFrame(owner->framesMonster1[0]).SetColor(color).SetScale(owner->scale);
+		body.SetScale(owner->scale);
 	}
 	bool Monster::Update() {
 		movedDistance += speed;
@@ -113,20 +125,19 @@ namespace SpaceShooter {
 
 		radians = mp->radians;
 		pos = originalPos + mp->pos;
+		UpdateFrameIndex();
 		return false;
 	}
 
 	/***********************************************************************/
 	/***********************************************************************/
 
-	void Monster2::Init(Scene* owner_, xx::XY const& pos_, float const& radians_, float const& speed_, xx::RGBA8 const& color_, Listener_s<MonsterBase> deathListener_) {
+	void Monster2::Init2(xx::XY const& pos_, float const& radians_) {
+		assert(owner);
 		// store args
-		owner = owner_;
 		pos = pos_;
 		radians = radians_;
-		speed = speed_;
-		color = color_;
-		deathListener = std::move(deathListener_);
+		frames = &owner->framesMonster2;
 		radius = 2 * owner->scale;
 
 		// init
@@ -136,10 +147,11 @@ namespace SpaceShooter {
 		hp = 20;
 
 		// init draw
-		body.SetFrame(owner->framesMonster2[0]).SetColor(color).SetScale(owner->scale / 3);
+		body.SetScale(owner->scale / 3);
 	}
 	bool Monster2::Update() {
 		pos += inc;
+		UpdateFrameIndex();
 		return avaliableFrameNumber < owner->frameNumber;
 	}
 
@@ -516,7 +528,8 @@ namespace SpaceShooter {
 						auto d = lastPlanePos - bornPos;
 						radians = std::atan2(d.y, d.x);
 						auto m = xx::Make<Monster2>();
-						m->Init(this, bornPos, radians, 2.f, { 255,255,255,255 });
+						m->Init1(this, 2.f, { 255,255,255,255 });
+						m->Init2(bornPos, radians);
 						AddMonster(m);
 					}
 					CoYield;	//CoSleep(50ms);
@@ -536,7 +549,8 @@ namespace SpaceShooter {
 		auto&& mpc = mpcsMonster[0];
 		for (int i = 0; i < n; i++) {
 			auto m = xx::Make<Monster>();
-			m->Init(this, { -1000, 300 }, mpc, 2.f, { 255,255,255,255 }, dt);
+			m->Init1(this, 2.f, { 255,255,255,255 }, dt);
+			m->Init2({ -1000, 300 }, mpc);
 			AddMonster(m);
 			CoSleep(600ms);
 		}
