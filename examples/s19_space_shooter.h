@@ -110,12 +110,18 @@ namespace SpaceShooter {
 
 		// res
 		xx::TP tp;
-		std::vector<xx::Shared<xx::Frame>> framesPlane;
-		std::vector<xx::Shared<xx::Frame>> framesNumber;
-		std::vector<xx::Shared<xx::Frame>> framesBullet;
-		std::vector<xx::Shared<xx::Frame>> framesRocket;
-		std::vector<xx::Shared<xx::Frame>> framesMonster;
-		std::vector<xx::Shared<xx::Frame>> framesBackground;
+		std::vector<xx::Shared<xx::Frame>> framesPlane;			// p, p1 ~ 3
+		std::vector<xx::Shared<xx::Frame>> framesNumber;		// n0 ~ 9
+		std::vector<xx::Shared<xx::Frame>> framesBullet;		// b1 ~ 9
+		std::vector<xx::Shared<xx::Frame>> framesRocket;		// r1 ~ 2
+		std::vector<xx::Shared<xx::Frame>> framesMonster1;		// ma1 ~ 6
+		std::vector<xx::Shared<xx::Frame>> framesMonster2;		// mb1 ~ 5
+		std::vector<xx::Shared<xx::Frame>> framesMonster3;		// mc1 ~ 4
+		std::vector<xx::Shared<xx::Frame>> framesBackground;	// bg1
+		std::vector<xx::Shared<xx::Frame>> framesMonsterBullet;	// eb1 ~ 4
+		std::vector<xx::Shared<xx::Frame>> framesEffect;		// e1 ~ 5
+		std::vector<xx::Shared<xx::Frame>> framesStuff;			// po1 ~ 3, ph, ps, pc
+		std::vector<xx::Shared<xx::Frame>> framesText;			// tstart, tgameover
 
 		std::vector<xx::Shared<xx::MovePathCache>> mpcsMonster;
 		// ... mpcsBullet? mpcsStuff?

@@ -104,7 +104,7 @@ namespace SpaceShooter {
 		hp = 20;
 
 		// init draw
-		body.SetFrame(owner->framesMonster[0]).SetColor(color).SetScale(owner->scale);
+		body.SetFrame(owner->framesMonster1[0]).SetColor(color).SetScale(owner->scale);
 	}
 	bool Monster::Update() {
 		movedDistance += speed;
@@ -127,7 +127,7 @@ namespace SpaceShooter {
 		speed = speed_;
 		color = color_;
 		deathListener = std::move(deathListener_);
-		radius = 7 * owner->scale;
+		radius = 2 * owner->scale;
 
 		// init
 		inc = { std::cos(radians),std::sin(radians) };
@@ -136,7 +136,7 @@ namespace SpaceShooter {
 		hp = 20;
 
 		// init draw
-		body.SetFrame(owner->framesMonster[0]).SetColor(color).SetScale(owner->scale);
+		body.SetFrame(owner->framesMonster2[0]).SetColor(color).SetScale(owner->scale / 3);
 	}
 	bool Monster2::Update() {
 		pos += inc;
@@ -332,10 +332,22 @@ namespace SpaceShooter {
 			framesRocket.push_back(fs[std::string_view(buf, 2)]);
 		}
 
-		buf[0] = 'm';
-		for (char c = '1'; c <= '1'; ++c) {
-			buf[1] = c;
-			framesMonster.push_back(fs[std::string_view(buf, 2)]);
+		buf[0] = 'm'; buf[1] = 'a';
+		for (char c = '1'; c <= '6'; ++c) {
+			buf[2] = c;
+			framesMonster1.push_back(fs[std::string_view(buf, 3)]);
+		}
+
+		buf[0] = 'm'; buf[1] = 'b';
+		for (char c = '1'; c <= '5'; ++c) {
+			buf[2] = c;
+			framesMonster2.push_back(fs[std::string_view(buf, 3)]);
+		}
+
+		buf[0] = 'm'; buf[1] = 'c';
+		for (char c = '1'; c <= '4'; ++c) {
+			buf[2] = c;
+			framesMonster3.push_back(fs[std::string_view(buf, 3)]);
 		}
 
 		buf[0] = 'b'; buf[1] = 'g';
@@ -343,6 +355,30 @@ namespace SpaceShooter {
 			buf[2] = c;
 			framesBackground.push_back(fs[std::string_view(buf, 3)]);
 		}
+
+		buf[0] = 'e'; buf[1] = 'b';
+		for (char c = '1'; c <= '4'; ++c) {
+			buf[2] = c;
+			framesMonsterBullet.push_back(fs[std::string_view(buf, 3)]);
+		}
+
+		buf[0] = 'e';
+		for (char c = '1'; c <= '5'; ++c) {
+			buf[1] = c;
+			framesEffect.push_back(fs[std::string_view(buf, 2)]);
+		}
+
+		buf[0] = 'p'; buf[1] = 'o';
+		for (char c = '1'; c <= '3'; ++c) {
+			buf[2] = c;
+			framesStuff.push_back(fs[std::string_view(buf, 3)]);
+		}
+		framesStuff.push_back(fs["ph"sv]);
+		framesStuff.push_back(fs["ps"sv]);
+		framesStuff.push_back(fs["pc"sv]);
+
+		framesText.push_back(fs["tstart"sv]);
+		framesText.push_back(fs["tgameover"sv]);
 
 		// begin fill move paths
 		{
@@ -476,7 +512,7 @@ namespace SpaceShooter {
 					for (int j = 0; j < n2; j++) {
 						auto radians = rnd.Next<float>(0, M_PI);
 						xx::XY v{ std::cos(radians),std::sin(radians) };
-						auto bornPos = v * (xx::engine.hw + 100);
+						auto bornPos = v * (xx::engine.hw + 200);
 						auto d = lastPlanePos - bornPos;
 						radians = std::atan2(d.y, d.x);
 						auto m = xx::Make<Monster2>();
@@ -500,7 +536,7 @@ namespace SpaceShooter {
 		auto&& mpc = mpcsMonster[0];
 		for (int i = 0; i < n; i++) {
 			auto m = xx::Make<Monster>();
-			m->Init(this, { -1000, 300 }, mpc, 2.f, { 255,126,126,255 }, dt);
+			m->Init(this, { -1000, 300 }, mpc, 2.f, { 255,255,255,255 }, dt);
 			AddMonster(m);
 			CoSleep(600ms);
 		}

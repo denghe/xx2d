@@ -64,7 +64,7 @@
             </struct>
         </struct>
         <key>shapePadding</key>
-        <uint>0</uint>
+        <uint>2</uint>
         <key>jpgQuality</key>
         <uint>80</uint>
         <key>pngOptimizationLevel</key>
@@ -76,7 +76,7 @@
         <key>textureFormat</key>
         <enum type="SettingsBase::TextureFormat">pkm</enum>
         <key>borderPadding</key>
-        <uint>0</uint>
+        <uint>2</uint>
         <key>maxTextureSize</key>
         <QSize>
             <key>width</key>
@@ -181,6 +181,7 @@
         <map type="IndividualSpriteSettingsMap">
             <key type="filename">b1.png</key>
             <key type="filename">b2.png</key>
+            <key type="filename">e1.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -244,6 +245,9 @@
             </struct>
             <key type="filename">b8.png</key>
             <key type="filename">b9.png</key>
+            <key type="filename">pc.png</key>
+            <key type="filename">ph.png</key>
+            <key type="filename">ps.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -273,7 +277,7 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">m1.png</key>
+            <key type="filename">e2.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -282,12 +286,50 @@
                 <key>scale9Enabled</key>
                 <false/>
                 <key>scale9Borders</key>
-                <rect>4,3,7,7</rect>
+                <rect>3,3,7,6</rect>
                 <key>scale9Paddings</key>
-                <rect>4,3,7,7</rect>
+                <rect>3,3,7,6</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
+            <key type="filename">e3.png</key>
+            <key type="filename">e4.png</key>
+            <key type="filename">ma4.png</key>
+            <key type="filename">ma5.png</key>
+            <key type="filename">p2.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,4,8,7</rect>
+                <key>scale9Paddings</key>
+                <rect>4,4,8,7</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">e5.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>2,2,5,3</rect>
+                <key>scale9Paddings</key>
+                <rect>2,2,5,3</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">eb1.png</key>
+            <key type="filename">eb2.png</key>
+            <key type="filename">eb3.png</key>
+            <key type="filename">eb4.png</key>
             <key type="filename">n0.png</key>
             <key type="filename">n1.png</key>
             <key type="filename">n2.png</key>
@@ -312,6 +354,37 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
+            <key type="filename">ma1.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,3,7,7</rect>
+                <key>scale9Paddings</key>
+                <rect>4,3,7,7</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">ma2.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>3,3,6,7</rect>
+                <key>scale9Paddings</key>
+                <rect>3,3,6,7</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">ma3.png</key>
             <key type="filename">p1.png</key>
             <key type="filename">p3.png</key>
             <struct type="IndividualSpriteSettings">
@@ -328,7 +401,7 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">p2.png</key>
+            <key type="filename">ma6.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -337,9 +410,148 @@
                 <key>scale9Enabled</key>
                 <false/>
                 <key>scale9Borders</key>
-                <rect>4,4,8,7</rect>
+                <rect>4,4,7,7</rect>
                 <key>scale9Paddings</key>
-                <rect>4,4,8,7</rect>
+                <rect>4,4,7,7</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">mb1.png</key>
+            <key type="filename">mb2.png</key>
+            <key type="filename">mb3.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>3,3,6,5</rect>
+                <key>scale9Paddings</key>
+                <rect>3,3,6,5</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">mb4.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,2,7,5</rect>
+                <key>scale9Paddings</key>
+                <rect>4,2,7,5</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">mb5.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>3,3,5,7</rect>
+                <key>scale9Paddings</key>
+                <rect>3,3,5,7</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">mc1.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,2,7,4</rect>
+                <key>scale9Paddings</key>
+                <rect>4,2,7,4</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">mc2.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>3,2,6,3</rect>
+                <key>scale9Paddings</key>
+                <rect>3,2,6,3</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">mc3.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>3,2,5,3</rect>
+                <key>scale9Paddings</key>
+                <rect>3,2,5,3</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">mc4.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,3,8,5</rect>
+                <key>scale9Paddings</key>
+                <rect>4,3,8,5</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">p.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>3,2,5,4</rect>
+                <key>scale9Paddings</key>
+                <rect>3,2,5,4</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">po1.png</key>
+            <key type="filename">po2.png</key>
+            <key type="filename">po3.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>2,3,4,5</rect>
+                <key>scale9Paddings</key>
+                <rect>2,3,4,5</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
@@ -359,6 +571,36 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
+            <key type="filename">tgameover.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>18,2,35,3</rect>
+                <key>scale9Paddings</key>
+                <rect>18,2,35,3</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">tstart.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>11,2,21,3</rect>
+                <key>scale9Paddings</key>
+                <rect>11,2,21,3</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
         </map>
         <key>fileLists</key>
         <map type="SpriteSheetMap">
@@ -375,7 +617,6 @@
                     <filename>b7.png</filename>
                     <filename>b8.png</filename>
                     <filename>b9.png</filename>
-                    <filename>m1.png</filename>
                     <filename>n0.png</filename>
                     <filename>n1.png</filename>
                     <filename>n2.png</filename>
@@ -392,6 +633,39 @@
                     <filename>r1.png</filename>
                     <filename>r2.png</filename>
                     <filename>bg1.png</filename>
+                    <filename>ma1.png</filename>
+                    <filename>e1.png</filename>
+                    <filename>e2.png</filename>
+                    <filename>e3.png</filename>
+                    <filename>e4.png</filename>
+                    <filename>e5.png</filename>
+                    <filename>eb1.png</filename>
+                    <filename>eb2.png</filename>
+                    <filename>eb3.png</filename>
+                    <filename>eb4.png</filename>
+                    <filename>ma2.png</filename>
+                    <filename>ma3.png</filename>
+                    <filename>ma4.png</filename>
+                    <filename>ma5.png</filename>
+                    <filename>ma6.png</filename>
+                    <filename>mb1.png</filename>
+                    <filename>mb2.png</filename>
+                    <filename>mb3.png</filename>
+                    <filename>mb4.png</filename>
+                    <filename>mb5.png</filename>
+                    <filename>mc1.png</filename>
+                    <filename>mc2.png</filename>
+                    <filename>mc3.png</filename>
+                    <filename>mc4.png</filename>
+                    <filename>p.png</filename>
+                    <filename>pc.png</filename>
+                    <filename>ph.png</filename>
+                    <filename>po1.png</filename>
+                    <filename>po2.png</filename>
+                    <filename>po3.png</filename>
+                    <filename>ps.png</filename>
+                    <filename>tgameover.png</filename>
+                    <filename>tstart.png</filename>
                 </array>
             </struct>
         </map>

@@ -96,7 +96,7 @@ namespace xx {
 		if (i = text.find("<k"sv); i == text.npos) return __LINE__;
 		CutStr(text, i + 5);													// skip    <key>
 
-		if (text.starts_with('t')) {
+		if (text.starts_with("triangles<"sv)) {
 			CutStr(text, 15);													// skip    triangles</key>
 
 			if (i = text.find('<'); i == text.npos) return __LINE__;			// <string>
