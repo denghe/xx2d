@@ -6,6 +6,21 @@ namespace SpaceShooter {
 
 	struct Scene;
 
+	//...
+
+	struct Monster {
+		Scene* owner{};
+		size_t indexAtOwnerMonsters{ std::numeric_limits<size_t>::max() };
+		xx::Shared<xx::MovePathCache> mpc;
+		xx::XY originalPos{}, pos{};
+		float radians{}, speed{}, movedDistance{};
+		void Init(Scene* owner_, xx::XY const& pos_, xx::Shared<xx::MovePathCache> mpc_, float const& speed_, xx::RGBA8 const& color_);
+		int Update();
+		void Draw();
+		xx::Quad body;
+		xx::RGBA8 color;
+	};
+
 	struct Bullet {
 		Scene* owner{};
 		xx::Quad body;
@@ -20,7 +35,8 @@ namespace SpaceShooter {
 		Scene* owner{};
 		xx::Quad body;
 		xx::XY pos{}, inc{};
-		float speed{};
+		float speed{}, frame{};
+		int fireCD{};
 		void Init(Scene* owner);
 		int Update();
 		void Draw();
@@ -39,7 +55,11 @@ namespace SpaceShooter {
 		void Init(GameLooper* looper) override;
 		int Update() override;
 
-		// res manage
+		xx::Coro SceneLogic();
+		xx::Shared<Monster>& AddMonster();
+		void EraseMonster(Monster* m);
+
+		// res
 		xx::TP tp;
 		std::vector<xx::Shared<xx::Frame>> framesPlane;
 		std::vector<xx::Shared<xx::Frame>> framesNumber;
@@ -48,13 +68,20 @@ namespace SpaceShooter {
 		std::vector<xx::Shared<xx::Frame>> framesMonster;
 		std::vector<xx::Shared<xx::Frame>> framesBackground;
 
+		std::vector<xx::Shared<xx::MovePathCache>> mpcsMonster;
+		// ... bullet? item?
+
 		// env
 		float timePool{};
 		float bgScale{}, scale{};
+		int frameCounter{};
 
 		Space space;
 		Plane plane;
 		std::vector<xx::Shared<Bullet>> bullets;
+		std::vector<xx::Shared<Monster>> monsters;
 		// ...
+
+		xx::Coros coros;
 	};
 }
