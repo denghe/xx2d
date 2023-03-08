@@ -3,6 +3,8 @@
 
 namespace xx {
 
+	// tips: put it in front of other members for destruct life cycle
+
 	// space grid index system for AABB bounding box. coordinate (0, 0) at left-top, +x = right, +y = buttom
 	template<typename Item>
 	struct SpaceGridAB;

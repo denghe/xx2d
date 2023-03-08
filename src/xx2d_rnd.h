@@ -145,7 +145,7 @@ namespace xx {
 
         template<typename V>
         V Next(V to) {
-            return Next(0, to);
+            return Next((V)0, to);
         }
     };
 

@@ -3,6 +3,8 @@
 
 namespace xx {
 
+	// tips: put it in front of other members for destruct life cycle
+
 	// space grid index system for circle
 	template<typename Item>
 	struct SpaceGridC;
@@ -41,6 +43,23 @@ namespace xx {
 			assert(_sgc);
 			_sgc->Remove(thisSpaceGridCItemDeriveType);
 		}
+
+		void SGCInit(SpaceGridC<SpaceGridCItemDeriveType>* const& sgc, Pos<int32_t> const& pos) {
+			assert(!_sgc);
+			_sgc = sgc;
+			SGCSetPos(pos);
+			SGCAdd();
+		}
+		void SGCUpdate(Pos<int32_t> const& pos) {
+			SGCSetPos(pos);
+			SGCUpdate();
+		}
+		void SGCTryRemove() {
+			if (_sgc) {
+				SGCRemove();
+				_sgc = {};
+			}
+		}
 	};
 
 	template<typename Item>
@@ -48,6 +67,11 @@ namespace xx {
 		int32_t numRows{}, numCols{}, maxDiameter{};
 		int32_t maxY{}, maxX{}, maxY1{}, maxX1{}, numItems{}, numActives{};	// for easy check & stat
 		std::vector<Item*> cells;
+
+		int32_t PosToIndex(xx::Pos<> const& p) {
+			auto rcIdx = p / maxDiameter;
+			return rcIdx.y * numCols + rcIdx.x;
+		}
 
 		void Init(int32_t const& numRows_, int32_t const& numCols_, int32_t const& maxDiameter_) {
 			numRows = numRows_;

@@ -13,11 +13,11 @@ namespace SpaceShooter {
 	/***********************************************************************/
 	/***********************************************************************/
 
-	void DeathEffect::Init(Scene* const& owner_, xx::XY const& pos_) {
+	void DeathEffect::Init(Scene* const& owner_, xx::XY const& pos_, float const& scale) {
 		owner = owner_;
 		pos = pos_;
 		
-		body.SetPosition(pos).SetScale(owner->scale);
+		body.SetPosition(pos).SetScale(owner->scale * scale).SetRotate(owner->rnd.Next<float>(M_PI*2));
 	}
 	bool DeathEffect::Update() {
 		frameIndex += 0.1f;
@@ -36,7 +36,7 @@ namespace SpaceShooter {
 		pos = pos_;
 		typeId = typeId_;
 
-		speed = 2.f;
+		speed = 4.f;
 		radius = 5 * owner->scale;
 		mpc = owner->mpcsMonster[1];
 
@@ -140,17 +140,19 @@ namespace SpaceShooter {
 		deathListener = std::move(deathListener_);
 		frameStep = 0.1f;
 	}
+
 	void MonsterBase::UpdateFrameIndex() {
 		frameIndex += frameStep;
 		if (frameIndex >= frames->size()) {
 			frameIndex = 0;
 		}
 	}
+
 	bool MonsterBase::Hit(int64_t const& damage) {
 		hp -= damage;
 		if (hp <= 0) {
 			owner->score.Add(100);
-			owner->deathEffects.emplace_back().Emplace()->Init(owner, pos);	// show death effect
+			owner->deathEffects.emplace_back().Emplace()->Init(owner, pos, radius / owner->scale / 7);	// show death effect
 			if (deathListener) {
 				(*deathListener)(this);
 			}
@@ -164,6 +166,8 @@ namespace SpaceShooter {
 			.SetColor(hitEffectExpireFrameNumber > owner->frameNumber ? xx::RGBA8{ 255,0,0,255 } : color)
 			.Draw();
 	}
+
+	MonsterBase::~MonsterBase() {}
 
 	/***********************************************************************/
 	/***********************************************************************/
@@ -181,6 +185,8 @@ namespace SpaceShooter {
 		pos = originalPos + mp->pos;
 		hp = 20;
 
+		SGCInit(&owner->monsterGrid, pos.As<int32_t>() + owner->monsterGrid.maxX / 2);
+
 		// init draw
 		body.SetScale(owner->scale);
 	}
@@ -191,9 +197,12 @@ namespace SpaceShooter {
 		if (!mp) return true;
 		frameStep = pair.second;
 
+		SGCUpdate(pos.As<int32_t>() + owner->monsterGrid.maxX / 2);
+
 		radians = mp->radians;
 		pos = originalPos + mp->pos;
 		UpdateFrameIndex();
+
 		return false;
 	}
 
@@ -214,11 +223,14 @@ namespace SpaceShooter {
 		avaliableFrameNumber = owner->frameNumber + 120 * 10;
 		hp = 20;
 
+		SGCInit(&owner->monsterGrid, pos.As<int32_t>() + owner->monsterGrid.maxX / 2);
+
 		// init draw
 		body.SetScale(owner->scale / 3);
 	}
 	bool Monster2::Update() {
 		pos += inc;
+		SGCUpdate(pos.As<int32_t>() + owner->monsterGrid.maxX / 2);
 		UpdateFrameIndex();
 		return avaliableFrameNumber < owner->frameNumber;
 	}
@@ -233,7 +245,6 @@ namespace SpaceShooter {
 
 		speed = 1.f * owner->scale;
 		inc = { 0, speed };
-		avaliableFrameNumber = owner->frameNumber + 120 * 2;
 		radius = 2 * owner->scale;
 
 		body.SetFrame(owner->framesBullet[0]).SetScale(owner->scale);
@@ -241,20 +252,34 @@ namespace SpaceShooter {
 	bool Bullet::Update() {
 
 		// collision detection
-		for (auto& m : owner->monsters) {
+		auto& g = owner->monsterGrid;
+		auto p = pos.As<int32_t>() + g.maxX / 2;
+		auto idx = g.PosToIndex(p);
+		auto& deadMonsters = owner->tmpMonsters;
+		deadMonsters.clear();
+		int limit = 0x7FFFFFFF;
+		g.Foreach9NeighborCells<true>(idx, [&](MonsterBase* const& m) {
 			auto d = m->pos - pos;
 			auto rr = (m->radius + radius) * (m->radius + radius);
 			auto dd = d.x * d.x + d.y * d.y;
 			if (dd < rr) {
+				auto hp = m->hp;
 				if (m->Hit(damage)) {
-					owner->EraseMonster(m);	// can't access 'm' after this line
+					deadMonsters.push_back(m);
 				}
-				return true;
+				damage -= hp;
+				if (damage <= 0) {
+					limit = 0;	// break foreach
+				}
 			}
+		}, &limit);
+		for (auto& m : deadMonsters) {
+			owner->EraseMonster(m);
 		}
+		if (damage <= 0) return true;
 
 		pos += inc;
-		return avaliableFrameNumber < owner->frameNumber;
+		return pos.y > xx::engine.hh + 100;
 	}
 	void Bullet::Draw() {
 		body.SetPosition(pos).Draw();
@@ -317,7 +342,7 @@ namespace SpaceShooter {
 			if (dd < rr) {
 				switch (o->typeId) {
 				case 0:
-					level += 10;
+					level += 5;
 					owner->labels.emplace_back().Emplace()->Init(owner, pos, xx::ToString("level up!"));	// show label effect
 					break;
 				case 1:
@@ -370,7 +395,7 @@ namespace SpaceShooter {
 		// auto shoot
 		if (fireableFrameNumber < owner->frameNumber) {
 			fireableFrameNumber = owner->frameNumber + fireCD;
-			auto step = 5 * owner->scale;
+			auto step = 2 * owner->scale;
 			float x = -level / 2 * step;
 			for (int i = 0; i < level; i++) {
 				auto&& b = owner->bullets.emplace_back().Emplace();
@@ -458,6 +483,7 @@ namespace SpaceShooter {
 		// set env
 		bgScale = xx::engine.w / framesBackground[0]->spriteSourceSize.x;
 		scale = bgScale / 4;
+		monsterGrid.Init(500, 500, 64);
 
 		// init all
 		space.Init(this);
@@ -570,6 +596,7 @@ namespace SpaceShooter {
 		assert(m);
 		assert(m->owner);
 		assert(m->owner == this);
+		m->SGCTryRemove();
 		auto idx = m->indexAtOwnerMonsters;
 		m->indexAtOwnerMonsters = std::numeric_limits<size_t>::max();
 		m->owner = {};
@@ -583,10 +610,12 @@ namespace SpaceShooter {
 
 	xx::Coro Scene::SceneLogic() {
 		while (true) {
-			coros.Add(SceneLogic_CreateMonsterTeam(5, 2000));
-			CoSleep(5s);
+			for (size_t i = 0; i < 30; i++) {
+				coros.Add(SceneLogic_CreateMonsterTeam(2, 2000));
+				CoSleep(2s);
+			}
 			{
-				int n1 = 120 * 5, n2 = 5;
+				int n1 = 120 * 5, n2 = 50;
 				for (int i = 0; i < n1; i++) {
 					for (int j = 0; j < n2; j++) {
 						auto radians = rnd.Next<float>(0, M_PI);
@@ -611,20 +640,23 @@ namespace SpaceShooter {
 			if (--n == 0) {
 				score.Add(bonus);
 				labels.emplace_back().Emplace()->Init(this, m->pos, xx::ToString("+", bonus));	// show label effect
-				powers.emplace_back().Emplace()->Init(this, m->pos, rnd.Next(0, 3));	// drop P
+				powers.emplace_back().Emplace()->Init(this, m->pos, stuffIndex++);	// drop P
+				if (stuffIndex == 4) {
+					stuffIndex = 0;
+				}
 			}
 		});
 		auto&& mpc = mpcsMonster[0];
 		for (int i = 0; i < n; i++) {
 			auto m = xx::Make<Monster>();
-			m->Init1(this, 3.f, { 255,255,255,255 }, dt);
+			m->Init1(this, 4.f, { 255,255,255,255 }, dt);
 			m->Init2({ -1000, 300 }, mpc);
 			AddMonster(m);
 			CoSleep(600ms);
 		}
 	}
 
-	xx::Coro Scene::SceneLogic_PlaneReborn(xx::XY const& deathPos, xx::XY const& bornPos) {
+	xx::Coro Scene::SceneLogic_PlaneReborn(xx::XY deathPos, xx::XY bornPos) {
 		CoSleep(3s);
 		assert(!plane);
 		plane.Emplace()->Init(this, bornPos, 240);

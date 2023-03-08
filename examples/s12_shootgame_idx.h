@@ -51,7 +51,7 @@ namespace ShootGameWithIndex {
 		void DrawCommit();
 	};
 
-	struct Bullet : xx::SpaceGridCItem<Bullet> {
+	struct Bullet {
 		Scene* scene{};
 		Player* owner{};
 

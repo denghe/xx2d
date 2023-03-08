@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-// important: only support static function or lambda !!!
+// important: only support static function or lambda !!!  COPY data by res !!! do not ref !!!
 
 #if __has_include(<coroutine>)
 #include <coroutine>

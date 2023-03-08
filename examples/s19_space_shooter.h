@@ -15,7 +15,7 @@ namespace SpaceShooter {
 		float frameIndex{};
 		xx::Quad body;
 
-		void Init(Scene* const& owner_, xx::XY const& pos_);
+		void Init(Scene* const& owner_, xx::XY const& pos_, float const& scale = 1.f);
 		bool Update();
 		void Draw();
 	};
@@ -61,7 +61,7 @@ namespace SpaceShooter {
 	template<typename T>
 	using Listener_s = xx::Shared<Listener<T>>;
 
-	struct MonsterBase {
+	struct MonsterBase : xx::SpaceGridCItem<MonsterBase> {
 		Scene* owner{};
 		size_t indexAtOwnerMonsters{ std::numeric_limits<size_t>::max() };
 		xx::XY pos{};
@@ -76,6 +76,7 @@ namespace SpaceShooter {
 		void UpdateFrameIndex();
 		bool Hit(int64_t const& damage);	// return true: dead
 		void Draw();
+		virtual ~MonsterBase();
 	};
 
 	struct Monster : MonsterBase {
@@ -100,7 +101,7 @@ namespace SpaceShooter {
 		xx::Quad body;
 		xx::XY pos{}, inc{};
 		float radius{}, speed{};
-		int64_t damage{}, avaliableFrameNumber{};
+		int64_t damage{};
 		void Init(Scene* owner_, xx::XY const& pos_, int64_t const& power_);
 		bool Update();
 		void Draw();
@@ -132,7 +133,7 @@ namespace SpaceShooter {
 
 		xx::Coro SceneLogic();
 		xx::Coro SceneLogic_CreateMonsterTeam(int n, int64_t bonus);
-		xx::Coro SceneLogic_PlaneReborn(xx::XY const& deathPos = {}, xx::XY const& bornPos = {});
+		xx::Coro SceneLogic_PlaneReborn(xx::XY deathPos = {}, xx::XY bornPos = {});
 
 		void AddMonster(MonsterBase* m);	// insert into monsters & sync index
 		void EraseMonster(MonsterBase* m);	// remove from monsters & clear index
@@ -160,6 +161,10 @@ namespace SpaceShooter {
 		int64_t frameNumber{};
 		xx::XY lastPlanePos{};
 		xx::Rnd rnd;
+		int stuffIndex{};
+
+		xx::SpaceGridC<MonsterBase> monsterGrid;
+		std::vector<MonsterBase*> tmpMonsters;
 
 		Space space;
 		Score score;
@@ -170,6 +175,7 @@ namespace SpaceShooter {
 		std::vector<xx::Shared<Power>> powers;
 		std::vector<xx::Shared<DeathEffect>> deathEffects;
 		// ...
+
 
 		xx::Coros coros;
 	};

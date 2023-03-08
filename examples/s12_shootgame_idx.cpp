@@ -245,11 +245,10 @@ namespace ShootGameWithIndex {
 
 		auto& sg = scene->sgMonsters;
 		auto p = pos.As<int32_t>() + 6400;
-		auto rcIdx = p / sg.maxDiameter;
-		auto idx = rcIdx.y * sg.numCols + rcIdx.x;
+		auto idx = sg.PosToIndex(p);
 		Monster* r{};
 		int limit = 0x7FFFFFFF;
-		scene->sgMonsters.Foreach9NeighborCells<true>(idx, [&](Monster* const& m) {
+		sg.Foreach9NeighborCells<true>(idx, [&](Monster* const& m) {
 			auto d = m->pos - pos;
 			auto rr = (m->radius + radius) * (m->radius + radius);
 			auto dd = d.x * d.x + d.y * d.y;
