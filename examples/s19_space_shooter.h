@@ -114,7 +114,6 @@ namespace SpaceShooter {
 		void ShowBonusEffect(xx::XY const& pos, int64_t const& value);
 
 		// res
-		xx::TP tp;
 		std::vector<xx::Shared<xx::Frame>> framesPlane;			// p, p1 ~ 3
 		std::vector<xx::Shared<xx::Frame>> framesNumber;		// n0 ~ 9
 		std::vector<xx::Shared<xx::Frame>> framesBullet;		// b1 ~ 9

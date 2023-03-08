@@ -63,13 +63,8 @@ namespace MovePath {
 		monsters.reserve(200000);
 
 		coros.Add([](Scene* self)->xx::Coro {
-			auto mp = xx::Make<xx::MovePath>();
-			std::vector<xx::CurvePoint> cps;
-			cps.emplace_back(xx::CurvePoint{ { 0, 0 }, 0.2f, 100 });
-			cps.emplace_back(xx::CurvePoint{ { 200, 0 }, 0.2f, 100 });
-			cps.emplace_back(xx::CurvePoint{ { 200, 100 }, 0.2f, 100 });
-			cps.emplace_back(xx::CurvePoint{ { 0, 100 }, 0.2f, 100 });
-			mp->FillCurve(true, cps);
+			xx::MovePath mp;
+			mp.FillCurve(true, { { 0, 0 }, { 200, 0 }, { 200, 100 }, { 0, 100 } });
 
 			auto mpc = xx::Make<xx::MovePathCache>();
 			mpc->Init(mp, 1);

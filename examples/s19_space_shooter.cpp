@@ -3,6 +3,9 @@
 #include "s19_space_shooter.h"
 #include "xx_coro_simple.h"
 
+// todo
+// power up
+
 namespace SpaceShooter {
 
 	/***********************************************************************/
@@ -75,9 +78,8 @@ namespace SpaceShooter {
 	}
 	void MonsterBase::UpdateFrameIndex() {
 		frameIndex += frameStep;
-		if (frameIndex >= frames->size() || frameIndex < 0) {
-			frameStep = -frameStep;
-			frameIndex += frameStep;
+		if (frameIndex >= frames->size()) {
+			frameIndex = 0;
 		}
 	}
 	bool MonsterBase::Hit(int64_t const& damage) {
@@ -261,9 +263,6 @@ namespace SpaceShooter {
 				}
 			}
 		}
-		auto fidx = int(frame + 0.5f) - 1;
-		body.SetFrame(owner->framesPlane[fidx]);
-
 
 		// auto shoot
 		if (fireCD < owner->frameNumber) {
@@ -275,7 +274,10 @@ namespace SpaceShooter {
 		return false;
 	}
 	void Plane::Draw() {
-		body.SetPosition(pos).SetColor(invincibleFrameNumber > owner->frameNumber ? xx::RGBA8{255,255,255,50} : xx::RGBA8{255,255,255,255}).Draw();
+		body.SetFrame(owner->framesPlane[size_t(frame + 0.5f)])
+			.SetPosition(pos)
+			.SetColor(invincibleFrameNumber > owner->frameNumber ? xx::RGBA8{255,255,255,50} : xx::RGBA8{255,255,255,255})
+			.Draw();
 	}
 
 
@@ -308,100 +310,39 @@ namespace SpaceShooter {
 		std::cout << "SpaceShooter::Scene::Init" << std::endl;
 
 		// res preload
-		// p1 ~ 3, n0 ~ 9, b1 ~ 9, r1 ~ 2, m1
+		xx::TP tp;
 		tp.Fill("res/space_shooter/space_shooter.plist");
 
-		// array -> map for easy search
-		std::unordered_map<std::string_view, xx::Shared<xx::Frame>> fs;
-		for (auto& f : tp.frames) {
-			fs[std::string_view(f->key)] = f;
-		}
+		tp.GetTo(framesPlane, { "p" });
+		tp.GetToByPrefix(framesPlane, "p");
+		tp.GetToByPrefix(framesNumber, "n");
+		tp.GetToByPrefix(framesBullet, "b");
+		tp.GetToByPrefix(framesRocket, "r");
+		tp.GetToByPrefix(framesMonster1, "ma");
+		tp.GetToByPrefix(framesMonster2, "mb");
+		tp.GetToByPrefix(framesMonster3, "mc");
+		tp.GetToByPrefix(framesBackground, "bg");
+		tp.GetToByPrefix(framesMonsterBullet, "eb");
+		tp.GetToByPrefix(framesEffect, "e");
+		tp.GetToByPrefix(framesStuff, "po");
+		tp.GetTo(framesStuff, { "ph", "ps", "pc" });
+		tp.GetTo(framesText, { "tstart", "tgameover" });
 
-		// begin fill res containers
-		char buf[3];
+		auto AddReciprocalRes = [](std::vector<xx::Shared<xx::Frame>>& fs) {
+			for (auto i = fs.size() - 2; i > 0; --i) {
+				fs.push_back(fs[i]);
+			}
+		};
+		AddReciprocalRes(framesMonster1);
+		AddReciprocalRes(framesMonster2);
+		AddReciprocalRes(framesMonster3);
 
-		buf[0] = 'p';
-		for (char c = '1'; c <= '3'; ++c) {
-			buf[1] = c;
-			framesPlane.push_back(fs[std::string_view(buf, 2)]);
-		}
-
-		buf[0] = 'n';
-		for (char c = '0'; c <= '9'; ++c) {
-			buf[1] = c;
-			framesNumber.push_back(fs[std::string_view(buf, 2)]);
-		}
-
-		buf[0] = 'b';
-		for (char c = '1'; c <= '9'; ++c) {
-			buf[1] = c;
-			framesBullet.push_back(fs[std::string_view(buf, 2)]);
-		}
-
-		buf[0] = 'r';
-		for (char c = '1'; c <= '2'; ++c) {
-			buf[1] = c;
-			framesRocket.push_back(fs[std::string_view(buf, 2)]);
-		}
-
-		buf[0] = 'm'; buf[1] = 'a';
-		for (char c = '1'; c <= '6'; ++c) {
-			buf[2] = c;
-			framesMonster1.push_back(fs[std::string_view(buf, 3)]);
-		}
-
-		buf[0] = 'm'; buf[1] = 'b';
-		for (char c = '1'; c <= '5'; ++c) {
-			buf[2] = c;
-			framesMonster2.push_back(fs[std::string_view(buf, 3)]);
-		}
-
-		buf[0] = 'm'; buf[1] = 'c';
-		for (char c = '1'; c <= '4'; ++c) {
-			buf[2] = c;
-			framesMonster3.push_back(fs[std::string_view(buf, 3)]);
-		}
-
-		buf[0] = 'b'; buf[1] = 'g';
-		for (char c = '1'; c <= '1'; ++c) {
-			buf[2] = c;
-			framesBackground.push_back(fs[std::string_view(buf, 3)]);
-		}
-
-		buf[0] = 'e'; buf[1] = 'b';
-		for (char c = '1'; c <= '4'; ++c) {
-			buf[2] = c;
-			framesMonsterBullet.push_back(fs[std::string_view(buf, 3)]);
-		}
-
-		buf[0] = 'e';
-		for (char c = '1'; c <= '5'; ++c) {
-			buf[1] = c;
-			framesEffect.push_back(fs[std::string_view(buf, 2)]);
-		}
-
-		buf[0] = 'p'; buf[1] = 'o';
-		for (char c = '1'; c <= '3'; ++c) {
-			buf[2] = c;
-			framesStuff.push_back(fs[std::string_view(buf, 3)]);
-		}
-		framesStuff.push_back(fs["ph"sv]);
-		framesStuff.push_back(fs["ps"sv]);
-		framesStuff.push_back(fs["pc"sv]);
-
-		framesText.push_back(fs["tstart"sv]);
-		framesText.push_back(fs["tgameover"sv]);
 
 		// begin fill move paths
 		{
-			auto mp = xx::Make<xx::MovePath>();
-			std::vector<xx::CurvePoint> cps;
-			cps.emplace_back(xx::CurvePoint{ { 0, 0 }, 0.2f, 100 });
-			cps.emplace_back(xx::CurvePoint{ { 1500, 0 }, 0.2f, 100 });
-			cps.emplace_back(xx::CurvePoint{ { 1500, -200 }, 0.2f, 100 });
-			cps.emplace_back(xx::CurvePoint{ { 0, -200 }, 0.2f, 100 });
-			mp->FillCurve(true, cps);
-			mpcsMonster.emplace_back(xx::Make<xx::MovePathCache>())->Init(mp, 1);
+			xx::MovePath mp;
+			mp.FillCurve(true, { {0, 0}, {1500, 0}, {1500, -200}, {0, -200} });
+			mpcsMonster.emplace_back().Emplace()->Init(mp, 1);
 		}
 
 		// set env

@@ -176,23 +176,24 @@ namespace xx {
 		return { .pos = p.pos + (p.inc * cursorDistance), .radians = p.radians, .movedDistance = stepDistance, .terminated = !mp->loop && cursor == siz - 1 };
 	}
 
-	void MovePathCache::Init(xx::Shared<MovePath> mp, float const& stepDistance) {
-		assert(mp);
+	void MovePathCache::Init(MovePath const& mp, float const& stepDistance) {
 		assert(stepDistance > 0);
-		assert(mp->totalDistance > stepDistance);
+		assert(mp.totalDistance > stepDistance);
 		this->stepDistance = stepDistance;
-		this->loop = mp->loop;
-		auto td = mp->totalDistance + stepDistance;
+		this->loop = mp.loop;
+		auto td = mp.totalDistance + stepDistance;
 		points.clear();
-		points.reserve(std::ceil(mp->totalDistance / stepDistance));
+		points.reserve(std::ceil(mp.totalDistance / stepDistance));
+
 		MovePathSteper mpr;
-		mpr.Init(std::move(mp));
+		mpr.mp.pointer = (MovePath*)&mp;	// tmp fill fake ptr instead Init(std::move(mp));
 		auto mr = mpr.MoveToBegin();
 		points.push_back({ mr.pos, mr.radians });
 		for (float d = stepDistance; d < td; d += stepDistance) {
 			mr = mpr.MoveForward(stepDistance);
 			points.push_back({ mr.pos, mr.radians });
 		}
+		mpr.mp.pointer = {};	// clear fake ptr
 	}
 
 	MovePathCachePoint* MovePathCache::Move(float const& totalDistance) {

@@ -7,6 +7,7 @@ namespace xx {
 		if (auto&& [d, fp] = engine.ReadAllBytes(plistFn); !d) {
 			throw std::logic_error("read file error: " + std::string(plistFn));
 		} else {
+			plistFullPath = fp;
 			if (auto&& i = fp.find_last_of("/"); i != fp.npos) {
 				rootPath = fp.substr(0, i + 1);
 			}
@@ -162,4 +163,64 @@ namespace xx {
 		return 0;
 	}
 
+
+	xx::Shared<Frame> const& TP::Get(std::string_view const& key) const {
+		for (auto& f : frames) {
+			if (f->key == key) return f;
+		}
+		throw std::logic_error(xx::ToString(key, " is not found in tp: ", plistFullPath));
+	}
+
+	xx::Shared<Frame> const& TP::Get(char const* const& buf, size_t const& len) const {
+		return Get(std::string_view(buf, len));
+	}
+
+	size_t TP::GetToByPrefix(std::vector<xx::Shared<xx::Frame>>& fs, std::string_view const& prefix) const {
+		size_t n{};
+		for (auto& f : frames) {
+			if (f->key.starts_with(prefix)) {
+				auto s = f->key.substr(prefix.size());
+				if (s[0] >= '0' && s[0] <= '9') {
+					fs.push_back(f);
+					++n;
+				}
+			}
+		}
+		return n;
+	}
+
+	std::vector<xx::Shared<xx::Frame>> TP::GetByPrefix(std::string_view const& prefix) const {
+		std::vector<xx::Shared<xx::Frame>> fs;
+		GetToByPrefix(fs, prefix);
+		return fs;
+	}
+
+	void TP::GetTo(std::vector<xx::Shared<xx::Frame>>& fs, std::initializer_list<std::string_view> keys) const {
+		for (auto& k : keys) {
+			fs.push_back(Get(k));
+		}
+	}
+
+	xx::Shared<Frame> TP::TryGet(std::string_view const& key) const {
+		for (auto& f : frames) {
+			if (f->key == key) return f;
+		}
+		return {};
+	}
+
+	std::unordered_map<std::string_view, xx::Shared<Frame>> TP::GetMapSV() const {
+		std::unordered_map<std::string_view, xx::Shared<xx::Frame>> fs;
+		for (auto& f : frames) {
+			fs[std::string_view(f->key)] = f;
+		}
+		return fs;
+	}
+
+	std::unordered_map<std::string, xx::Shared<Frame>> TP::GetMapS() const {
+		std::unordered_map<std::string, xx::Shared<xx::Frame>> fs;
+		for (auto& f : frames) {
+			fs[f->key] = f;
+		}
+		return fs;
+	}
 }

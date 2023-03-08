@@ -8,10 +8,29 @@ namespace xx {
 		std::vector<xx::Shared<Frame>> frames;
 		bool premultiplyAlpha;
 		std::string realTextureFileName;
+		std::string plistFullPath;
 
+		// fill below fields by plist file
 		void Fill(std::string_view plistFn, bool sortByName = true);
 
+		// fill by plist file's content
 		int Fill(std::string_view text, std::string_view const& rootPath);
+
+		// get frame by key
+		xx::Shared<Frame> const& Get(std::string_view const& key) const;
+		xx::Shared<Frame> const& Get(char const* const& buf, size_t const& len) const;
+
+		// get frames by key's prefix + number. example: "p1 p2 p3" prefix is 'p'
+		std::vector<xx::Shared<xx::Frame>> GetByPrefix(std::string_view const& prefix) const;
+		size_t GetToByPrefix(std::vector<xx::Shared<xx::Frame>>& fs, std::string_view const& prefix) const;
+		void GetTo(std::vector<xx::Shared<xx::Frame>>& fs, std::initializer_list<std::string_view> keys) const;
+
+		xx::Shared<Frame> TryGet(std::string_view const& key) const;
+
+		std::unordered_map<std::string_view, xx::Shared<Frame>> GetMapSV() const;
+		std::unordered_map<std::string, xx::Shared<Frame>> GetMapS() const;
+
+	protected:
 
 		// format: a,b
 		template<typename T>

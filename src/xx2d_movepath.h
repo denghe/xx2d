@@ -5,8 +5,8 @@ namespace xx {
 
 	struct CurvePoint {
 		xx::XY pos{};
-		float tension{};
-		int32_t numSegments{};
+		float tension{ 0.2f };
+		int32_t numSegments{ 100 };
 
 		inline CurvePoint operator+(CurvePoint const& v) const {
 			return { pos + v.pos, tension, numSegments };
@@ -62,7 +62,7 @@ namespace xx {
 		std::vector<MovePathCachePoint> points;
 		bool loop{};
 		float stepDistance{};
-		void Init(xx::Shared<MovePath> mp, float const& stepDistance);
+		void Init(MovePath const& mp, float const& stepDistance);
 		MovePathCachePoint* Move(float const& totalDistance);
 	};
 }
