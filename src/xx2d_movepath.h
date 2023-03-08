@@ -62,7 +62,7 @@ namespace xx {
 		std::vector<MovePathCachePoint> points;
 		bool loop{};
 		float stepDistance{};
-		void Init(MovePath const& mp, float const& stepDistance);
+		void Init(MovePath const& mp, float const& stepDistance = 1.f);
 		MovePathCachePoint* Move(float const& totalDistance);
 	};
 }

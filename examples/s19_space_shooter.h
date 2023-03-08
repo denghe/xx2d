@@ -8,6 +8,32 @@ namespace SpaceShooter {
 
 	//...
 
+
+	struct DeathEffect {
+		Scene* owner{};
+		xx::XY pos{};
+		float frameIndex{};
+		xx::Quad body;
+
+		void Init(Scene* const& owner_, xx::XY const& pos_);
+		bool Update();
+		void Draw();
+	};
+
+
+	struct Power {
+		Scene* owner{};
+		xx::Shared<xx::MovePathCache> mpc;
+		xx::XY pos{}, inc{};
+		float movedDistance{}, speed{};
+		int lineNumber{}, typeId{}, i{};
+		xx::Quad body;
+
+		void Init(Scene* const& owner_, xx::XY const& pos_, int const& typeId_);
+		int Update();
+		void Draw();
+	};
+
 	struct Score {
 		Scene* owner{};
 		int64_t from{}, to{}, step{};
@@ -106,12 +132,10 @@ namespace SpaceShooter {
 
 		xx::Coro SceneLogic();
 		xx::Coro SceneLogic_CreateMonsterTeam(int n, int64_t bonus);
-		xx::Coro SceneLogic_PlaneReborn();
+		xx::Coro SceneLogic_PlaneReborn(xx::XY const& deathPos = {}, xx::XY const& bornPos = {});
 
 		void AddMonster(MonsterBase* m);	// insert into monsters & sync index
 		void EraseMonster(MonsterBase* m);	// remove from monsters & clear index
-
-		void ShowBonusEffect(xx::XY const& pos, int64_t const& value);
 
 		// res
 		std::vector<xx::Shared<xx::Frame>> framesPlane;			// p, p1 ~ 3
@@ -143,6 +167,8 @@ namespace SpaceShooter {
 		std::vector<xx::Shared<Bullet>> bullets;
 		std::vector<xx::Shared<MonsterBase>> monsters;
 		std::vector<xx::Shared<LabelEffect>> labels;
+		std::vector<xx::Shared<Power>> powers;
+		std::vector<xx::Shared<DeathEffect>> deathEffects;
 		// ...
 
 		xx::Coros coros;

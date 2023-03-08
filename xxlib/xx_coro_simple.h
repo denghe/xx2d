@@ -86,10 +86,14 @@ namespace xx {
             return !coros.empty();
         }
 
+        Coro& At(size_t const& idx) {
+            return reinterpret_cast<Coro&>(coros[idx]);
+        }
+
         void operator()() {
-            for (int i = (int)coros.size() - 1; i >= 0; --i) {
-                auto& c = reinterpret_cast<Coro&>(coros[i]);
-                if (c(); c) {
+            for (auto i = (ptrdiff_t)coros.size() - 1; i >= 0; --i) {
+                At(i)();    // maybe add new coro here, vector realloc
+                if (auto& c = At(i)) {
                     c.~Coro();
                     coros[i] = coros[coros.size() - 1];
                     coros.pop_back();

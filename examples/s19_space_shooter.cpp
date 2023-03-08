@@ -4,9 +4,71 @@
 #include "xx_coro_simple.h"
 
 // todo
-// power up
+// eat power up
+// monster bullet
+// boss
 
 namespace SpaceShooter {
+
+	/***********************************************************************/
+	/***********************************************************************/
+
+	void DeathEffect::Init(Scene* const& owner_, xx::XY const& pos_) {
+		owner = owner_;
+		pos = pos_;
+		
+		body.SetPosition(pos).SetScale(owner->scale);
+	}
+	bool DeathEffect::Update() {
+		frameIndex += 0.1f;
+		return frameIndex >= owner->framesEffect.size();
+	}
+	void DeathEffect::Draw() {
+		body.SetFrame(owner->framesEffect[(size_t)frameIndex]).Draw();
+	}
+
+
+	/***********************************************************************/
+	/***********************************************************************/
+
+	void Power::Init(Scene* const& owner_, xx::XY const& pos_, int const& typeId_) {
+		owner = owner_;
+		speed = 2.f;
+		pos = pos_;
+		typeId = typeId_;
+		mpc = owner->mpcsMonster[1];
+
+		auto& tar = mpc->points[0].pos;
+		inc = (tar - pos).Normalize() * speed;
+		
+		body.SetFrame(owner->framesStuff[typeId]).SetScale(owner->scale);
+	}
+	int Power::Update() {
+		COR_BEGIN
+		for (i = 0; i < 60; ++i) {	// wait 0.5 sec
+			COR_YIELD
+		}
+		while(true) {
+			pos += inc;	// move to path first point
+			auto d = mpc->points[0].pos - pos;
+			if (d.x * d.x + d.y * d.y <= speed * speed) goto LabLoop;
+			COR_YIELD
+		}
+		LabLoop:
+		while (true) {
+			movedDistance += speed;
+			{
+				auto&& mp = mpc->Move(movedDistance);
+				if (!mp) COR_EXIT;
+				pos = mp->pos;	// move by path
+			}
+			COR_YIELD
+		}
+		COR_END
+	}
+	void Power::Draw() {
+		body.SetPosition(pos).Draw();
+	}
 
 	/***********************************************************************/
 	/***********************************************************************/
@@ -86,7 +148,7 @@ namespace SpaceShooter {
 		hp -= damage;
 		if (hp <= 0) {
 			owner->score.Add(100);
-			// todo: make explode effect ?
+			owner->deathEffects.emplace_back().Emplace()->Init(owner, pos);	// show death effect
 			if (deathListener) {
 				(*deathListener)(this);
 			}
@@ -238,6 +300,8 @@ namespace SpaceShooter {
 			}
 		}
 
+		// todo: collision detection with P
+
 		// change frame display
 		constexpr float finc = 0.1f, fmin = 1.f, fmid = 2.f, fmax = 3.f;
 		if (x < pos.x) {
@@ -276,7 +340,7 @@ namespace SpaceShooter {
 	void Plane::Draw() {
 		body.SetFrame(owner->framesPlane[size_t(frame + 0.5f)])
 			.SetPosition(pos)
-			.SetColor(invincibleFrameNumber > owner->frameNumber ? xx::RGBA8{255,255,255,50} : xx::RGBA8{255,255,255,255})
+			.SetColor(invincibleFrameNumber > owner->frameNumber ? xx::RGBA8{127,127,127,220} : xx::RGBA8{255,255,255,255})
 			.Draw();
 	}
 
@@ -341,8 +405,13 @@ namespace SpaceShooter {
 		// begin fill move paths
 		{
 			xx::MovePath mp;
-			mp.FillCurve(true, { {0, 0}, {1500, 0}, {1500, -200}, {0, -200} });
-			mpcsMonster.emplace_back().Emplace()->Init(mp, 1);
+
+			mp.FillCurve(true, { {0, 0}, {1500, 0}, {1500, -200}, {0, -200} });	// for monster team ( drop power )
+			mpcsMonster.emplace_back().Emplace()->Init(mp);
+
+			xx::XY xy{ xx::engine.hw / 2, xx::engine.hh / 2 };
+			mp.FillCurve(true, { {-xy.x, xy.y}, {xy.x, xy.y}, {xy.x, -xy.y}, {-xy.x, -xy.y} });	// for stuff
+			mpcsMonster.emplace_back().Emplace()->Init(mp);
 		}
 
 		// set env
@@ -378,9 +447,8 @@ namespace SpaceShooter {
 
 			// move player's plane
 			if (plane && plane->Update()) {
-				// todo: death effect?
+				coros.Add(SceneLogic_PlaneReborn(plane->pos));
 				plane.Reset();
-				coros.Add(SceneLogic_PlaneReborn());
 			}
 
 			// move bullets & collision detection
@@ -412,6 +480,25 @@ namespace SpaceShooter {
 				}
 			}
 
+			// move powers
+			for (auto i = (ptrdiff_t)powers.size() - 1; i >= 0; --i) {
+				auto& o = powers[i];
+				o->lineNumber = o->Update();
+				if (o->lineNumber == 0) {
+					o = powers.back();
+					powers.pop_back();
+				}
+			}
+
+			// show death effects
+			for (auto i = (ptrdiff_t)deathEffects.size() - 1; i >= 0; --i) {
+				auto& o = deathEffects[i];
+				if (o->Update()) {
+					o = deathEffects.back();
+					deathEffects.pop_back();
+				}
+			}
+
 			// refresh score
 			score.Update();
 
@@ -421,7 +508,9 @@ namespace SpaceShooter {
 		space.Draw();
 		for (auto& o : monsters) o->Draw();
 		if (plane) plane->Draw();
+		for (auto& o : deathEffects) o->Draw();
 		for (auto& o : bullets) o->Draw();
+		for (auto& o : powers) o->Draw();
 		for (auto& o : labels) o->Draw();
 		score.Draw();
 		// ...
@@ -447,10 +536,6 @@ namespace SpaceShooter {
 		monsters[idx] = monsters.back();
 		monsters.back()->indexAtOwnerMonsters = idx;
 		monsters.pop_back();
-	}
-
-	void Scene::ShowBonusEffect(xx::XY const& pos, int64_t const& value) {
-		labels.emplace_back().Emplace()->Init(this, pos, xx::ToString("+", value));
 	}
 
 	/***********************************************************************/
@@ -484,7 +569,8 @@ namespace SpaceShooter {
 		auto dt = xx::Make<Listener<MonsterBase>>([this, n, bonus] (MonsterBase* m) mutable {
 			if (--n == 0) {
 				score.Add(bonus);
-				ShowBonusEffect(m->pos, bonus);
+				labels.emplace_back().Emplace()->Init(this, m->pos, xx::ToString("+", bonus));	// show label effect
+				powers.emplace_back().Emplace()->Init(this, m->pos, 0);	// drop P
 			}
 		});
 		auto&& mpc = mpcsMonster[0];
@@ -497,10 +583,10 @@ namespace SpaceShooter {
 		}
 	}
 
-	xx::Coro Scene::SceneLogic_PlaneReborn() {
+	xx::Coro Scene::SceneLogic_PlaneReborn(xx::XY const& deathPos, xx::XY const& bornPos) {
+		deathEffects.emplace_back().Emplace()->Init(this, deathPos);	// show death effect
 		CoSleep(3s);
 		assert(!plane);
 		plane.Emplace()->Init(this, 240);
 	}
-
 }
