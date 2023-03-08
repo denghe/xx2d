@@ -611,8 +611,8 @@ namespace SpaceShooter {
 	xx::Coro Scene::SceneLogic() {
 		while (true) {
 			for (size_t i = 0; i < 30; i++) {
-				coros.Add(SceneLogic_CreateMonsterTeam(2, 2000));
-				CoSleep(2s);
+				coros.Add(SceneLogic_CreateMonsterTeam(1, 2000));
+				CoSleep(0.5s);
 			}
 			{
 				int n1 = 120 * 5, n2 = 50;
