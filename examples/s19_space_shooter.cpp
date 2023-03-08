@@ -329,7 +329,7 @@ namespace SpaceShooter {
 					owner->labels.emplace_back().Emplace()->Init(owner, pos, xx::ToString("bullet damage up!"));	// show label effect
 					break;
 				case 3:
-					speed /= 2;
+					speed *= 2;
 					owner->labels.emplace_back().Emplace()->Init(owner, pos, xx::ToString("speed up!"));	// show label effect
 					break;
 				default:
