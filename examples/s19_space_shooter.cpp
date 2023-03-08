@@ -4,7 +4,7 @@
 #include "xx_coro_simple.h"
 
 // todo
-// eat power up
+// space grid ?
 // monster bullet
 // boss
 
@@ -33,9 +33,11 @@ namespace SpaceShooter {
 
 	void Power::Init(Scene* const& owner_, xx::XY const& pos_, int const& typeId_) {
 		owner = owner_;
-		speed = 2.f;
 		pos = pos_;
 		typeId = typeId_;
+
+		speed = 2.f;
+		radius = 5 * owner->scale;
 		mpc = owner->mpcsMonster[1];
 
 		auto& tar = mpc->points[0].pos;
@@ -183,9 +185,11 @@ namespace SpaceShooter {
 		body.SetScale(owner->scale);
 	}
 	bool Monster::Update() {
-		movedDistance += speed;
+		auto pair = (std::pair<float, float>&)(*frames)[frameIndex]->ud;
+		movedDistance += speed * pair.first;
 		auto mp = mpc->Move(movedDistance);
 		if (!mp) return true;
+		frameStep = pair.second;
 
 		radians = mp->radians;
 		pos = originalPos + mp->pos;
@@ -259,15 +263,19 @@ namespace SpaceShooter {
 	/***********************************************************************/
 	/***********************************************************************/
 
-	void Plane::Init(Scene* owner, int64_t const& invincibleTime) {
+	void Plane::Init(Scene* owner, xx::XY const& bornPos, int64_t const& invincibleTime) {
 		this->owner = owner;
-		body.SetFrame(owner->framesPlane[1]).SetScale(owner->scale);
-		pos = {};
+		pos = bornPos;
 		inc = {};
+		level = 1;
 		speed = 0.5f * owner->scale;
 		frame = 2;	// 1 ~ 3
-		radius = body.texRectH / 2;
+		radius = 7 * owner->scale;
 		invincibleFrameNumber = owner->frameNumber + invincibleTime;
+		fireCD = 20;
+		bulletDamage = 10;
+
+		body.SetFrame(owner->framesPlane[1]).SetScale(owner->scale);
 	}
 	bool Plane::Update() {
 
@@ -288,19 +296,50 @@ namespace SpaceShooter {
 		//}
 
 		if (invincibleFrameNumber <= owner->frameNumber) {
-			// collision detection
+			// collision detection with monster
 			for (auto& m : owner->monsters) {
 				auto d = m->pos - pos;
 				auto rr = (m->radius + radius) * (m->radius + radius);
 				auto dd = d.x * d.x + d.y * d.y;
 				if (dd < rr) {
-					// todo: show effect?
+					owner->deathEffects.emplace_back().Emplace()->Init(owner, pos);	// show death effect
 					return true;
 				}
 			}
 		}
 
-		// todo: collision detection with P
+		// collision detection with P
+		for (auto i = (ptrdiff_t)owner->powers.size() - 1; i >= 0; --i) {
+			auto& o = owner->powers[i];
+			auto d = o->pos - pos;
+			auto rr = (o->radius + radius) * (o->radius + radius);
+			auto dd = d.x * d.x + d.y * d.y;
+			if (dd < rr) {
+				switch (o->typeId) {
+				case 0:
+					level += 10;
+					owner->labels.emplace_back().Emplace()->Init(owner, pos, xx::ToString("level up!"));	// show label effect
+					break;
+				case 1:
+					fireCD /= 2;
+					owner->labels.emplace_back().Emplace()->Init(owner, pos, xx::ToString("reduce fire CD!"));	// show label effect
+					break;
+				case 2:
+					bulletDamage += 10;
+					owner->labels.emplace_back().Emplace()->Init(owner, pos, xx::ToString("bullet damage up!"));	// show label effect
+					break;
+				case 3:
+					speed /= 2;
+					owner->labels.emplace_back().Emplace()->Init(owner, pos, xx::ToString("speed up!"));	// show label effect
+					break;
+				default:
+					throw std::logic_error("unhandled typeId");
+				}
+				o = owner->powers.back();
+				owner->powers.pop_back();
+			}
+		}
+
 
 		// change frame display
 		constexpr float finc = 0.1f, fmin = 1.f, fmid = 2.f, fmax = 3.f;
@@ -329,10 +368,14 @@ namespace SpaceShooter {
 		}
 
 		// auto shoot
-		if (fireCD < owner->frameNumber) {
-			fireCD = owner->frameNumber + 20;
-			auto&& b = owner->bullets.emplace_back().Emplace();
-			b->Init(owner, pos + xx::XY{ 0, 8 * owner->scale }, 10);		// todo: more style
+		if (fireableFrameNumber < owner->frameNumber) {
+			fireableFrameNumber = owner->frameNumber + fireCD;
+			auto step = 5 * owner->scale;
+			float x = -level / 2 * step;
+			for (int i = 0; i < level; i++) {
+				auto&& b = owner->bullets.emplace_back().Emplace();
+				b->Init(owner, pos + xx::XY{ x + i * step, 8 * owner->scale }, bulletDamage);
+			}
 		}
 
 		return false;
@@ -389,18 +432,16 @@ namespace SpaceShooter {
 		tp.GetToByPrefix(framesMonsterBullet, "eb");
 		tp.GetToByPrefix(framesEffect, "e");
 		tp.GetToByPrefix(framesStuff, "po");
-		tp.GetTo(framesStuff, { "ph", "ps", "pc" });
+		tp.GetTo(framesStuff, { "ps", "ph", "pc" });
 		tp.GetTo(framesText, { "tstart", "tgameover" });
 
-		auto AddReciprocalRes = [](std::vector<xx::Shared<xx::Frame>>& fs) {
-			for (auto i = fs.size() - 2; i > 0; --i) {
-				fs.push_back(fs[i]);
-			}
-		};
-		AddReciprocalRes(framesMonster1);
-		AddReciprocalRes(framesMonster2);
-		AddReciprocalRes(framesMonster3);
-
+		// set frame delay & move speed
+		(std::pair<float, float>&)framesMonster1[0]->ud = { 0.5f, 0.1f };
+		(std::pair<float, float>&)framesMonster1[1]->ud = { 0.7f, 0.05f };
+		(std::pair<float, float>&)framesMonster1[2]->ud = { 1.0f, 0.02f };
+		(std::pair<float, float>&)framesMonster1[3]->ud = { 0.7f, 0.05f };
+		(std::pair<float, float>&)framesMonster1[4]->ud = { 0.4f, 0.07f };
+		(std::pair<float, float>&)framesMonster1[5]->ud = { 0.2f, 0.1f };
 
 		// begin fill move paths
 		{
@@ -447,7 +488,7 @@ namespace SpaceShooter {
 
 			// move player's plane
 			if (plane && plane->Update()) {
-				coros.Add(SceneLogic_PlaneReborn(plane->pos));
+				coros.Add(SceneLogic_PlaneReborn(plane->pos, plane->pos));	// reborn
 				plane.Reset();
 			}
 
@@ -545,7 +586,7 @@ namespace SpaceShooter {
 			coros.Add(SceneLogic_CreateMonsterTeam(5, 2000));
 			CoSleep(5s);
 			{
-				int n1 = 120 * 5, n2 = 50;
+				int n1 = 120 * 5, n2 = 5;
 				for (int i = 0; i < n1; i++) {
 					for (int j = 0; j < n2; j++) {
 						auto radians = rnd.Next<float>(0, M_PI);
@@ -570,13 +611,13 @@ namespace SpaceShooter {
 			if (--n == 0) {
 				score.Add(bonus);
 				labels.emplace_back().Emplace()->Init(this, m->pos, xx::ToString("+", bonus));	// show label effect
-				powers.emplace_back().Emplace()->Init(this, m->pos, 0);	// drop P
+				powers.emplace_back().Emplace()->Init(this, m->pos, rnd.Next(0, 3));	// drop P
 			}
 		});
 		auto&& mpc = mpcsMonster[0];
 		for (int i = 0; i < n; i++) {
 			auto m = xx::Make<Monster>();
-			m->Init1(this, 2.f, { 255,255,255,255 }, dt);
+			m->Init1(this, 3.f, { 255,255,255,255 }, dt);
 			m->Init2({ -1000, 300 }, mpc);
 			AddMonster(m);
 			CoSleep(600ms);
@@ -584,9 +625,8 @@ namespace SpaceShooter {
 	}
 
 	xx::Coro Scene::SceneLogic_PlaneReborn(xx::XY const& deathPos, xx::XY const& bornPos) {
-		deathEffects.emplace_back().Emplace()->Init(this, deathPos);	// show death effect
 		CoSleep(3s);
 		assert(!plane);
-		plane.Emplace()->Init(this, 240);
+		plane.Emplace()->Init(this, bornPos, 240);
 	}
 }

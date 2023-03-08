@@ -25,7 +25,7 @@ namespace SpaceShooter {
 		Scene* owner{};
 		xx::Shared<xx::MovePathCache> mpc;
 		xx::XY pos{}, inc{};
-		float movedDistance{}, speed{};
+		float movedDistance{}, speed{}, radius{};
 		int lineNumber{}, typeId{}, i{};
 		xx::Quad body;
 
@@ -111,8 +111,8 @@ namespace SpaceShooter {
 		xx::Quad body;
 		xx::XY pos{}, inc{};
 		float speed{}, frame{}, radius{};
-		int64_t fireCD{}, invincibleFrameNumber{};
-		void Init(Scene* owner, int64_t const& invincibleTime_ = 0);
+		int64_t level{}, fireCD{}, bulletDamage{}, fireableFrameNumber{}, invincibleFrameNumber{};
+		void Init(Scene* owner, xx::XY const& bornPos = {}, int64_t const& invincibleTime_ = 0);
 		bool Update();
 		void Draw();
 	};

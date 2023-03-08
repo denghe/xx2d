@@ -11,6 +11,7 @@ namespace xx {
         XY spriteSize{};		// content size
         XY spriteSourceSize{};	// original pic size
         Rect textureRect{};
+        size_t ud{};   // user data
         bool textureRotated{};
         std::vector<uint16_t> triangles;
         std::vector<float> vertices;
