@@ -52,6 +52,7 @@ namespace xx {
                 if (auto r = dr.ReadFixed(paddingRight)) throw std::logic_error(xx::ToString("BMFont read paddingRight error. r = ", r, ". fn = ", p));
                 if (auto r = dr.ReadFixed(paddingBottom)) throw std::logic_error(xx::ToString("BMFont read paddingBottom error. r = ", r, ". fn = ", p));
                 if (auto r = dr.ReadFixed(paddingLeft)) throw std::logic_error(xx::ToString("BMFont read paddingLeft error. r = ", r, ". fn = ", p));
+                fontSize = std::abs(fontSize);  // maybe negative
 
             } else if (blockId == 2) {
                 /*

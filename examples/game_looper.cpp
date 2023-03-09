@@ -3,7 +3,9 @@
 #include "s0_main_menu.h"
 
 void GameLooper::Init() {
-	fnt1 = xx::engine.LoadBMFont("res/font1/basechars.fnt"sv);
+	//fnt1 = xx::engine.LoadBMFont("res/font1/basechars.fnt"sv);
+	//fnt1 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
+	fnt1 = xx::engine.LoadBMFont("res/font/karma.fnt"sv);
 
 	lbInfo.SetPosition(xx::engine.ninePoints[1] + xx::XY{ 10, 10 }).SetAnchor({0, 0});
 
