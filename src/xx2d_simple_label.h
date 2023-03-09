@@ -15,12 +15,12 @@ namespace xx {
 			uint16_t tx, ty, tw, th;
 		};
 		std::vector<Char> chars;
-		XY size;
+		XY size{};
 
 		/***************************************************************************/
 		// user data
 
-		XY pos{ 0, 0 };
+		XY pos{};
 		XY anchor{ 0.5, 0.5 };
 		XY scale{ 1, 1 };
 		float baseScale{ 1 };

@@ -13,9 +13,9 @@ namespace ShootGameWithIndex {
 	struct HPLabel;
 
 	struct Scene {
+		GameLooper* looper{};
 		xx::SpaceGridC<Monster> sgMonsters;	// ensure life cycle
 
-		xx::BMFont fnt;
 		xx::Shared<xx::GLTexture> tex;
 		xx::Shared<Player> player;
 		std::vector<xx::Shared<Monster>> monsters;
@@ -28,7 +28,7 @@ namespace ShootGameWithIndex {
 		void EraseMonster(Monster* const& m);
 		void EraseMonster(int idx);
 
-		void Init();
+		void Init(GameLooper* looper);
 		void Update();
 		void Draw();
 	};

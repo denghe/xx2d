@@ -3,7 +3,7 @@
 #include "scene_base.h"
 
 struct GameLooper {
-	xx::BMFont fnt1;
+	xx::BMFont fontBase, font3500;
 	xx::SimpleLabel lbInfo;
 	std::string extraInfo;
 	int fps{}, fpsCounter{};

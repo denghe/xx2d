@@ -30,8 +30,8 @@ namespace xx {
 
     struct Anim {
         AnimFrames afs;
-        size_t cursor = 0;
-        float timePool = 0;
+        size_t cursor{};
+        float timePool{};
         void Step();
         bool Update(float const& delta);
         AnimFrame& GetCurrentAnimFrame() const;

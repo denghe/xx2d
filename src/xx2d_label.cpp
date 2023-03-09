@@ -5,14 +5,15 @@ namespace xx {
 	Label& Label::SetText(BMFont bmf, std::string_view const& text, float const& fontSize) {
 		dirty = 0xFFFFFFFFu;
 
-		// todo: utf8, kerning?
-		// todo: sort by tex
+		// todo: utf8, kerning? sort by tex?
+
+		auto c32s = xx::StringU8ToU32(text);
 
 		chars.clear();
 		auto s = fontSize / bmf.fontSize;
 		float px = 0, py = 0;
-		for (auto& t : text) {
-			if (auto&& r = bmf.GetChar(t)) {
+		for (auto& t : c32s) {
+			if (auto&& r = bmf.GetChar((uint8_t)t)) {
 				auto&& c = chars.emplace_back();
 				c.tex = bmf.texs[r->page];
 

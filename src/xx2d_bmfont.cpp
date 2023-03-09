@@ -11,7 +11,7 @@ namespace xx {
         if (d[3] != 3) throw std::logic_error(xx::ToString("BMFont only support version 3. fn = ", p));
 
         // cleanup for logic safety
-        charArray.fill({});
+        memset(charArray.data(), 0, sizeof(charArray));
         charMap.clear();
         kernings.clear();
         texs.clear();
@@ -156,7 +156,8 @@ namespace xx {
         }
     }
 
-    BMFont::Char* BMFont::GetChar(int const& charId) {
+    BMFont::Char* BMFont::GetChar(char32_t const& charId) {
+        assert(charId >= 0);
         if (charId < 256) {
             auto& c = charArray[charId];
             if ((uint64_t&)c) {

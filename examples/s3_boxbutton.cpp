@@ -60,7 +60,7 @@ namespace BoxButton {
 		txt = txt_;
 		border.FillBoxPoints({}, borderSize)
 			.SetPosition(pos);
-		content.SetText(looper->fnt1, txt, fontSize)
+		content.SetText(looper->fontBase, txt, fontSize)
 			.SetPosition(pos);
 	}
 

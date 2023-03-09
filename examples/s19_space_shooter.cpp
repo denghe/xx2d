@@ -119,7 +119,7 @@ namespace SpaceShooter {
 		avaliableFrameNumber = owner->frameNumber + 100;
 		inc = { 0, 0.5 };
 
-		body.SetText(owner->looper->fnt1, txt_, 64);
+		body.SetText(owner->looper->fontBase, txt_, 64);
 	}
 	bool LabelEffect::Update() {
 		pos += inc;

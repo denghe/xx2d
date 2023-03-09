@@ -3,9 +3,8 @@
 #include "s0_main_menu.h"
 
 void GameLooper::Init() {
-	//fnt1 = xx::engine.LoadBMFont("res/font1/basechars.fnt"sv);
-	//fnt1 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
-	fnt1 = xx::engine.LoadBMFont("res/font/karma.fnt"sv);
+	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
+	font3500 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
 
 	lbInfo.SetPosition(xx::engine.ninePoints[1] + xx::XY{ 10, 10 }).SetAnchor({0, 0});
 
@@ -35,7 +34,7 @@ int GameLooper::Update() {
 	auto& sm = xx::engine.sm;
 	sm.End();
 
-	lbInfo.SetText(fnt1, xx::ToString(
+	lbInfo.SetText(fontBase, xx::ToString(
 		"fps = ", fps, 
 		", draw call = ", sm.drawCall,
 		", vert count = ", sm.drawVerts,

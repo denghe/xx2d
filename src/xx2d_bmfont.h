@@ -11,7 +11,7 @@ namespace xx {
 			int16_t xoffset, yoffset, xadvance;
 			uint8_t page, chnl;
 		};
-		std::array<Char, 256> charArray{};	// charMap ascii cache
+		std::array<Char, 256> charArray;	// charMap ascii cache
 		std::unordered_map<uint32_t, Char> charMap;	// key: char id
 		std::unordered_map<uint64_t, int> kernings;	// key: char id pair
 		std::vector<xx::Shared<GLTexture>> texs;
@@ -23,7 +23,7 @@ namespace xx {
 		void Load(std::string_view const& fn);
 
 		// texture index: page
-		Char* GetChar(int const& charId);
+		Char* GetChar(char32_t const& charId);
 	};
 
 }

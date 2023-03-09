@@ -5,15 +5,21 @@ namespace xx {
 	SimpleLabel& SimpleLabel::SetText(BMFont bmf, std::string_view const& text, float const& fontSize) {
 		assert(bmf.texs.size() == 1);
 
-		// todo: utf8, kerning?
+		// todo: kerning?
 
 		tex = bmf.texs[0];
+		auto c32s = xx::StringU8ToU32(text);
 
 		chars.clear();
 		baseScale = fontSize / bmf.fontSize;
-		float px = 0, py = 0;
-		for (auto& t : text) {
-			if (auto&& r = bmf.GetChar(t)) {
+		float px{}, py{};
+		for (auto& t : c32s) {
+			if (t == '\r') continue;
+			else if (t == '\n') {
+				px = 0;
+				py -= bmf.lineHeight * baseScale;
+			}
+			else if (auto&& r = bmf.GetChar(t)) {
 				auto&& c = chars.emplace_back();
 
 				c.pos.x = px + r->xoffset * baseScale;
@@ -28,7 +34,7 @@ namespace xx {
 				px += bmf.fontSize * baseScale;
 			}
 		}
-		size = { px, (float)bmf.lineHeight * baseScale };
+		size = { px, -py + bmf.lineHeight * baseScale };
 		return *this;
 	}
 
@@ -68,14 +74,16 @@ namespace xx {
 	void SimpleLabel::Draw() {
 		auto siz = chars.size();
 		auto qs = engine.sm.GetShader<Shader_QuadInstance>().Draw(*tex, siz);
+		auto xy = size * xx::XY{ -anchor.x, 1 - anchor.y } * scale + pos;
+		auto s = scale * baseScale;
 		for (size_t i = 0; i < siz; i++) {
 			auto& c = chars[i];
 			auto& q = qs[i];
-			q.anchor = {0,1};
+			q.anchor = {0, 1};
 			q.color = color;
-			q.pos = size * xx::XY{ -anchor.x, 1 - anchor.y } + pos + c.pos;
+			q.pos = xy + c.pos * scale;
 			q.radians = 0;
-			q.scale = scale * baseScale;
+			q.scale = s;
 			q.texRectX = c.tx;
 			q.texRectY = c.ty;
 			q.texRectW = c.tw;

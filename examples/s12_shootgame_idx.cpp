@@ -22,8 +22,8 @@ namespace ShootGameWithIndex {
 		EraseMonster(m->indexAtMonsters);
 	}
 
-	void Scene::Init() {
-		fnt.Load("res/font2/basechars.fnt");
+	void Scene::Init(GameLooper* looper) {
+		this->looper = looper;
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 
 		sgMonsters.Init(400, 400, 32);
@@ -353,7 +353,7 @@ namespace ShootGameWithIndex {
 	}
 
 	void HPLabel::DrawInit() {
-		lbl.SetText(scene->fnt, txt);
+		lbl.SetText(scene->looper->fontBase, txt);
 	}
 
 	void HPLabel::DrawCommit() {
@@ -367,7 +367,7 @@ namespace ShootGameWithIndex {
 	void Looper::Init(GameLooper* looper) {
 		this->looper = looper;
 		std::cout << "ShootGameWithIndex::Looper::Init" << std::endl;
-		scene.Init();
+		scene.Init(looper);
 	}
 
 	int Looper::Update() {

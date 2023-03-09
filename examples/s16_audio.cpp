@@ -88,7 +88,7 @@ namespace AudioTest {
 	void Button::Init(Scene* const& scene, xx::XY const& pos, std::string_view const& txt_, float const& fontSize) {
 		this->scene = scene;
 		txt = txt_;
-		content.SetText(scene->looper->fnt1, txt, fontSize)
+		content.SetText(scene->looper->fontBase, txt, fontSize)
 			.SetPosition(pos).Commit();
 		auto siz = content.size + xx::XY{ 20, 4 };
 		border.FillBoxPoints({}, siz)

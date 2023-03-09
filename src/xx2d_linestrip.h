@@ -9,11 +9,11 @@ namespace xx {
 		bool dirty = true;
 
 		std::vector<XY> points;
-		XY size;
-		XY pos{ 0, 0 };
+		XY size{};
+		XY pos{};
 		XY anchor{ 0.5, 0.5 };
 		XY scale{ 1, 1 };
-		float radians{ 0 };
+		float radians{};
 		RGBA8 color{ 255, 255, 255, 255 };
 
 		std::vector<XY>& SetPoints();
