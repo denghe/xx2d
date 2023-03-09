@@ -69,8 +69,6 @@ spine?
 
 webassembly? lua? 
 
-texture array support?
-
-touch, joystick
+touch, joystick?
 
 crossplatform shell
