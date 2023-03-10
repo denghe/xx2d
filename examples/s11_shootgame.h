@@ -13,7 +13,7 @@ namespace ShootGame {
 	struct HPLabel;
 
 	struct Scene {
-		xx::BMFont fnt;
+		GameLooper* looper;
 		xx::Shared<xx::GLTexture> tex;
 		xx::Shared<Player> player;
 		std::vector<xx::Shared<Monster>> monsters;
@@ -23,7 +23,7 @@ namespace ShootGame {
 		xx::Rnd rnd;
 		bool running{};
 
-		void Init();
+		void Init(GameLooper* looper);
 		void Update();
 		void Draw();
 	};

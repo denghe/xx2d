@@ -8,8 +8,8 @@ namespace ShootGame {
 	// scene
 	/*************************************************************************/
 
-	void Scene::Init() {
-		fnt.Load("res/font2/basechars.fnt");
+	void Scene::Init(GameLooper* looper) {
+		this->looper = looper;
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 		player.Emplace()->Init(this);
 
@@ -303,7 +303,7 @@ namespace ShootGame {
 	}
 
 	void HPLabel::DrawInit() {
-		lbl.SetText(scene->fnt, txt);
+		lbl.SetText(scene->looper->fontBase, txt);
 	}
 
 	void HPLabel::DrawCommit() {
@@ -317,7 +317,7 @@ namespace ShootGame {
 	void Looper::Init(GameLooper* looper) {
 		this->looper = looper;
 		std::cout << "ShootGame::Looper::Init" << std::endl;
-		scene.Init();
+		scene.Init(looper);
 	}
 
 	int Looper::Update() {
