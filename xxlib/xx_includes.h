@@ -46,7 +46,9 @@
 #include <cassert>
 
 #ifdef _WIN32
+#ifndef NOMINMAX
 #	define NOMINMAX
+#endif
 #	define NODRAWTEXT
 //#	define NOGDI            // d3d9 need it
 #	define NOBITMAP

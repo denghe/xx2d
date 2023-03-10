@@ -54,7 +54,7 @@ if(MSVC)
 	add_definitions("-D_HAS_ITERATOR_DEBUGGING=0")
 	add_compile_options($<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>)	# other proj enable multi-processor compilation
 
-	target_compile_options(${name} 
+	target_compile_options(${name}
 		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>	# this proj enable multi-processor compilation
 		PRIVATE $<$<CONFIG:MinSizeRel>:/GL>
@@ -62,18 +62,18 @@ if(MSVC)
 		PRIVATE $<$<CONFIG:RelWithDebInfo>:/GL>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/Yuxx2d_pch.h>	# use pre-compile header
 	)
-	target_link_options(${name} 
+	target_link_options(${name}
 		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
 		PRIVATE $<$<CONFIG:Release>:/LTCG>
 		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
 	)
 
 	set_source_files_properties(src/xx2d_pch.cpp PROPERTIES COMPILE_FLAGS "/Ycxx2d_pch.h")		# make pre-compile header
-	
+
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-else()
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")	# todo: only for release?
+#else()
+#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")	# todo: only for release?
 endif()
 
 

@@ -52,9 +52,16 @@ void main() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
 		glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVRGBA8), 0);
 		glEnableVertexAttribArray(aPos);
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#endif
 		glVertexAttribPointer(aTexCoord, 2, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(XYUVRGBA8), (GLvoid*)offsetof(XYUVRGBA8, u));
 		glEnableVertexAttribArray(aTexCoord);
 		glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYUVRGBA8), (GLvoid*)offsetof(XYUVRGBA8, r));
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 		glEnableVertexAttribArray(aColor);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);

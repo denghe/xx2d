@@ -16,7 +16,7 @@ namespace SpaceShooter {
 	void DeathEffect::Init(Scene* const& owner_, xx::XY const& pos_, float const& scale) {
 		owner = owner_;
 		pos = pos_;
-		
+
 		body.SetPosition(pos).SetScale(owner->scale * scale).SetRotate(owner->rnd.Next<float>(M_PI*2));
 	}
 	bool DeathEffect::Update() {
@@ -42,7 +42,7 @@ namespace SpaceShooter {
 
 		auto& tar = mpc->points[0].pos;
 		inc = (tar - pos).Normalize() * speed;
-		
+
 		body.SetFrame(owner->framesStuff[typeId]).SetScale(owner->scale);
 	}
 	int Power::Update() {
@@ -52,8 +52,10 @@ namespace SpaceShooter {
 		}
 		while(true) {
 			pos += inc;	// move to path first point
-			auto d = mpc->points[0].pos - pos;
-			if (d.x * d.x + d.y * d.y <= speed * speed) goto LabLoop;
+            {
+                auto d = mpc->points[0].pos - pos;
+                if (d.x * d.x + d.y * d.y <= speed * speed) goto LabLoop;
+            }
 			COR_YIELD
 		}
 		LabLoop:
