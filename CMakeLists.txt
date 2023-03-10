@@ -50,11 +50,18 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRCS})
 
 if(MSVC)
 
+	add_compile_options(
+		$<$<CONFIG:MinSizeRel>:/MT>
+		$<$<CONFIG:Release>:/MT>
+		$<$<CONFIG:RelWithDebInfo>:/MT>
+	)
+
 	add_definitions("-D_SECURE_SCL=0")
 	add_definitions("-D_HAS_ITERATOR_DEBUGGING=0")
 	add_compile_options($<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>)	# other proj enable multi-processor compilation
 
 	target_compile_options(${name}
+		PRIVATE $<$<PLATFORM_ID:Windows>:/MT>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>	# this proj enable multi-processor compilation
 		PRIVATE $<$<CONFIG:MinSizeRel>:/GL>
