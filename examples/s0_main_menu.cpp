@@ -29,41 +29,41 @@ namespace MainMenu {
 
 		meListener.Init(xx::Mbtns::Left);
 
-		float y = 300;
-		float yinc = 100;
-		menus.emplace_back().Init(looper, { -500, y }, "1: tiledmap", 32);
+		float x = 0, xstep = xx::engine.w / 3 - 50;
+		float y = 300, yinc = 100;
+		menus.emplace_back().Init(looper, { -xstep, y }, "1: tiledmap", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "2: dragable", 32);
-		menus.emplace_back().Init(looper, { 500, y }, "3: box button", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "3: box button", 32);
 
 		y -= yinc;
-		menus.emplace_back().Init(looper, { -500, y }, "4: physics circles (space grid) ", 32);
+		menus.emplace_back().Init(looper, { -xstep, y }, "4: physics circles (space grid) ", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "5: boxs (space grid ab)", 32);
-		menus.emplace_back().Init(looper, { 500, y }, "6: box & circle physics", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "6: box & circle physics", 32);
 
 		y -= yinc;
-		menus.emplace_back().Init(looper, { -500, y }, "7: more circle + box physics", 32);
+		menus.emplace_back().Init(looper, { -xstep, y }, "7: more circle + box physics", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "8: node", 32);
-		menus.emplace_back().Init(looper, { 500, y }, "9: sprites", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "9: sprites", 32);
 
 		y -= yinc;
-		menus.emplace_back().Init(looper, { -500, y }, "10: quads", 32);
+		menus.emplace_back().Init(looper, { -xstep, y }, "10: quads", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "11: shooter game (slowly)", 32);
-		menus.emplace_back().Init(looper, { 500, y }, "12: shooter game with index", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "12: shooter game with index", 32);
 
 		y -= yinc;
-		menus.emplace_back().Init(looper, { -500, y }, "13: move path", 32);
+		menus.emplace_back().Init(looper, { -xstep, y }, "13: move path", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "14: scissor", 32);
-		menus.emplace_back().Init(looper, { 500, y }, "15: render texture (todo)", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "15: render texture (todo)", 32);
 
 		y -= yinc;
-		menus.emplace_back().Init(looper, { -500, y }, "16: audio", 32);
+		menus.emplace_back().Init(looper, { -xstep, y }, "16: audio", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "17: imgui", 32);
-		menus.emplace_back().Init(looper, { 500, y }, "18: polygon sprite", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "18: polygon sprite", 32);
 
 		y -= yinc;
-		menus.emplace_back().Init(looper, { -500, y }, "19: space shooter", 32);
+		menus.emplace_back().Init(looper, { -xstep, y }, "19: space shooter", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "20: 你好", 32);
-		menus.emplace_back().Init(looper, { 500, y }, "21: 世界", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "21: 世界", 32);
 
 		looper->extraInfo.clear();
 	}
@@ -146,7 +146,7 @@ namespace MainMenu {
 	void Menu::Init(GameLooper* looper, xx::XY const& pos, std::string_view const& txt_, float const& fontSize) {
 		this->looper = looper;
 		txt = txt_;
-		content.SetText(looper->font3500, txt, fontSize).SetPosition(pos);
+		content.SetText(looper->fontBase, txt, fontSize, xx::engine.w / 3 - 50).SetPosition(pos);
 		auto hw = content.size.x / 2;
 		auto hh = content.size.y / 2;
 		leftBottom = { pos.x - hw, pos.y - hh };

@@ -98,6 +98,10 @@ namespace xx {
             return x != v.x || y != v.y;
         }
 
+        Pos MakeAdd(IsArithmetic auto const& vx, IsArithmetic auto const& vy) const {
+            return { x + vx, y + vy };
+        }
+
         void Set(HasFieldXY auto const& v) {
             x = T(v.x);
             y = T(v.y);

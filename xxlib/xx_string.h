@@ -139,7 +139,7 @@ namespace xx {
     inline std::u32string StringU8ToU32(std::string_view const& s) {
         std::u32string ws;
         ws.reserve(s.size());
-        wchar_t wc;
+        char32_t wc{};
         for (int i = 0; i < s.size(); ) {
             char c = s[i];
             if ((c & 0x80) == 0) {

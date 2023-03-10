@@ -30,7 +30,7 @@ namespace xx {
 		// change user data funcs
 
 		// default anchor: 0, 1
-		SimpleLabel& SetText(BMFont bmf, std::string_view const& text, float const& fontSize = 32.f);
+		SimpleLabel& SetText(BMFont bmf, std::string_view const& text, float const& fontSize = 32.f, float const& lineWidthLimit = 0.f);
 
 		SimpleLabel& SetAnchor(XY const& a);
 
@@ -43,7 +43,7 @@ namespace xx {
 
 		SimpleLabel& SetColor(RGBA8 const& c);
 
-		void Draw();
+		SimpleLabel& Draw();
 	};
 
 }

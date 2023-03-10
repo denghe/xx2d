@@ -6,7 +6,7 @@ void GameLooper::Init() {
 	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 	font3500 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
 
-	lbInfo.SetPosition(xx::engine.ninePoints[1] + xx::XY{ 10, 10 }).SetAnchor({0, 0});
+	lbInfo.SetAnchor({0, 0});
 
 	scene = xx::Make<MainMenu::Scene>();
 	scene->Init(this);
@@ -34,18 +34,15 @@ int GameLooper::Update() {
 	auto& sm = xx::engine.sm;
 	sm.End();
 
-	lbInfo.SetText(fontBase, xx::ToString(
-		"fps = ", fps, 
-		", draw call = ", sm.drawCall,
-		", vert count = ", sm.drawVerts,
-		", line point count = ", sm.drawLinePoints,
-		std::string_view(extraInfo)))
-		.SetPosition({ lbInfo.pos.x + 2, lbInfo.pos.y - 2 })
+	auto xy = xx::engine.ninePoints[1] + xx::XY{ 10, 10 };
+	auto s = xx::ToStringFormat("fps = {0}, draw call = {1}, vert count = {2}, line point count = {3}; {4}"
+		, fps, sm.drawCall, sm.drawVerts, sm.drawLinePoints, std::string_view(extraInfo));
+	lbInfo.SetText(fontBase, s, 32.f, xx::engine.w - 40)
+		.SetPosition(xy.MakeAdd(2, -2))
 		.SetColor({ 0, 0, 255, 255 })
-		.Draw();	// shadow
-
-	lbInfo.SetPosition({ lbInfo.pos.x - 2, lbInfo.pos.y + 2 })
+		.Draw()		// shadow
+		.SetPosition(xy)
 		.SetColor({ 255, 0, 0, 255 })
-		.Draw();
+		.Draw();	// body
 	return r;
 }

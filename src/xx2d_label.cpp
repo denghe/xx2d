@@ -2,26 +2,40 @@
 
 namespace xx {
 
-	Label& Label::SetText(BMFont bmf, std::string_view const& text, float const& fontSize) {
+	Label& Label::SetText(BMFont bmf, std::string_view const& text, float const& fontSize, float const& lineWidthLimit) {
 		dirty = 0xFFFFFFFFu;
 
-		// todo: utf8, kerning? sort by tex?
+		// todo: kerning? sort by tex?
 
 		auto c32s = xx::StringU8ToU32(text);
 
 		chars.clear();
-		auto s = fontSize / bmf.fontSize;
-		float px = 0, py = 0;
+		auto baseScale = fontSize / bmf.fontSize;
+		float px{}, py{}, maxpx{}, lineHeight = bmf.lineHeight * baseScale;
 		for (auto& t : c32s) {
-			if (auto&& r = bmf.GetChar((uint8_t)t)) {
+			if (t == '\r') continue;
+			else if (t == '\n') {
+				px = 0;
+				py -= lineHeight;
+			} else if (auto&& r = bmf.GetChar(t)) {
+				auto cw = r->xadvance * baseScale;
+				if (lineWidthLimit > 0) {
+					if (px + cw > lineWidthLimit) {
+						if (px > maxpx) {
+							maxpx = px;
+						}
+						px = 0;
+						py -= lineHeight;
+					}
+				}
 				auto&& c = chars.emplace_back();
 				c.tex = bmf.texs[r->page];
 
-				auto w = s * r->width;
-				auto h = s * r->height;
+				auto w = baseScale * r->width;
+				auto h = baseScale * r->height;
 
-				auto x = px + r->xoffset * s;
-				auto y = py - r->yoffset * s;
+				auto x = px + r->xoffset * baseScale;
+				auto y = py - r->yoffset * baseScale;
 
 				c.qv[0].x = x;                  c.qv[0].y = y;
 				c.qv[1].x = x;                  c.qv[1].y = y - h;
@@ -33,7 +47,7 @@ namespace xx {
 				c.qv[2].u = r->x + r->width;    c.qv[2].v = r->y + r->height;
 				c.qv[3].u = r->x + r->width;    c.qv[3].v = r->y;
 
-				px += r->xadvance * s;
+				px += cw;
 
 				// pos 0,0  anchor 0,0  scale 1,1 data store
 				c.posBak[0] = c.qv[0];
@@ -41,10 +55,10 @@ namespace xx {
 				c.posBak[2] = c.qv[2];
 				c.posBak[3] = c.qv[3];
 			} else {
-				px += bmf.fontSize * s;
+				px += bmf.fontSize * baseScale;
 			}
 		}
-		size = { px, (float)bmf.lineHeight * s };
+		size = { px, (float)bmf.lineHeight * baseScale };
 		return *this;
 	}
 
