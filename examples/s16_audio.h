@@ -1,17 +1,9 @@
 ﻿#pragma once
 #include "xx2d_pch.h"
 #include "scene_base.h"
+#include "xx2d_audio.h"
 
 namespace AudioTest {
-
-	struct Audio {
-		void* ctx{}, *bg{};
-		Audio();
-		~Audio();
-		void PlayBG(std::string_view fn);
-		void StopBG();
-		void Play(std::string_view fn);
-	};
 
 	struct Scene;
 	struct Button;
@@ -40,7 +32,7 @@ namespace AudioTest {
 		void Init(GameLooper* looper) override;
 		int Update() override;
 
-		Audio audio;
+		xx::Audio audio;
 		std::vector<Button> btns;
 		ButtonMouseEventListener meListener;
 	};

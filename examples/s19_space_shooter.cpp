@@ -18,6 +18,7 @@ namespace SpaceShooter {
 		pos = pos_;
 
 		body.SetPosition(pos).SetScale(owner->scale * scale).SetRotate(owner->rnd.Next<float>(M_PI*2));
+		owner->audio.Play("res/1.ogg");
 	}
 	bool DeathEffect::Update() {
 		frameIndex += 0.1f;
@@ -250,6 +251,7 @@ namespace SpaceShooter {
 		radius = 2 * owner->scale;
 
 		body.SetFrame(owner->framesBullet[0]).SetScale(owner->scale);
+		owner->audio.Play("res/3.ogg");
 	}
 	bool Bullet::Update() {
 
@@ -492,6 +494,9 @@ namespace SpaceShooter {
 		score.Init(this);
 		plane.Emplace()->Init(this);
 		// ...
+
+		// play bg music
+		audio.PlayBG("res/bg.ogg");
 
 		// run script
 		coros.Add(SceneLogic());

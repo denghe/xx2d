@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "xx2d_pch.h"
 #include "scene_base.h"
+#include "xx2d_audio.h"
 
 namespace SpaceShooter {
 
@@ -176,7 +177,7 @@ namespace SpaceShooter {
 		std::vector<xx::Shared<DeathEffect>> deathEffects;
 		// ...
 
-
+		xx::Audio audio;
 		xx::Coros coros;
 	};
 }
