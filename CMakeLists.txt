@@ -48,26 +48,33 @@ source_group("" FILES ${SRCS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRCS})
 
 
+target_precompile_headers(${name}
+	PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/src/xx2d_pch.h>
+)
+
+set_property(TARGET ${name} PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+
 if(MSVC)
 
-	add_compile_options(
-		$<$<CONFIG:MinSizeRel>:/MT>
-		$<$<CONFIG:Release>:/MT>
-		$<$<CONFIG:RelWithDebInfo>:/MT>
-	)
+	option(XX2D_ENABLE_STATIC_LINK "Enable static link" OFF)
+	if (XX2D_ENABLE_STATIC_LINK)
+		add_compile_options(
+			$<$<CONFIG:MinSizeRel>:/MT>
+			$<$<CONFIG:Release>:/MT>
+			$<$<CONFIG:RelWithDebInfo>:/MT>
+		)
+		target_compile_options(${name}
+			PRIVATE $<$<CONFIG:Release>:/MT>
+		)
+	endif()
 
 	add_definitions("-D_SECURE_SCL=0")
 	add_definitions("-D_HAS_ITERATOR_DEBUGGING=0")
 	add_compile_options($<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>)	# other proj enable multi-processor compilation
 
 	target_compile_options(${name}
-		PRIVATE $<$<CONFIG:Release>:/MT>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>	# this proj enable multi-processor compilation
-		PRIVATE $<$<CONFIG:MinSizeRel>:/GL>
-		PRIVATE $<$<CONFIG:Release>:/GL>
-		PRIVATE $<$<CONFIG:RelWithDebInfo>:/GL>
-		PRIVATE $<$<PLATFORM_ID:Windows>:/Yuxx2d_pch.h>	# use pre-compile header
 	)
 	target_link_options(${name}
 		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
@@ -75,11 +82,9 @@ if(MSVC)
 		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
 	)
 
-	set_source_files_properties(src/xx2d_pch.cpp PROPERTIES COMPILE_FLAGS "/Ycxx2d_pch.h")		# make pre-compile header
-
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
-#else()
+else()
 #    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")	# todo: only for release?
 endif()
 
