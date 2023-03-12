@@ -5,9 +5,11 @@
 namespace AudioTest {
 
 	struct Audio {
-		void* ctx{};
+		void* ctx{}, *bg{};
 		Audio();
 		~Audio();
+		void PlayBG(std::string_view fn);
+		void StopBG();
 		void Play(std::string_view fn);
 	};
 
@@ -20,11 +22,13 @@ namespace AudioTest {
 		int HandleMouseMove(ButtonMouseEventListener& L);
 		void HandleMouseUp(ButtonMouseEventListener& L);
 
-		void Init(Scene* const& scene, xx::XY const& pos, std::string_view const& txt, float const& fontSize);
+		void Init(Scene* const& scene_, xx::XY const& pos, int const& id_, std::string_view const& txt_, float const& fontSize);
 
 		Scene* scene{};
 		xx::XY leftBottom{}, rightTop{};	// bounding box
 		std::string txt;
+		int id{};
+
 
 		bool Inside(xx::XY const& point);	// bounding box contains point?
 
