@@ -61,7 +61,7 @@ if(MSVC)
 	add_compile_options($<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>)	# other proj enable multi-processor compilation
 
 	target_compile_options(${name}
-		PRIVATE $<$<PLATFORM_ID:Windows>:/MT>
+		PRIVATE $<$<CONFIG:Release>:/MT>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>	# this proj enable multi-processor compilation
 		PRIVATE $<$<CONFIG:MinSizeRel>:/GL>
