@@ -109,7 +109,7 @@ namespace SpaceGridAB {
 		for (auto& f : grid.results) {
 			f->border->Draw(cam);
 		}
-		looper->extraInfo = xx::ToString(", numAllBoxs = ", foos.size(), ", numScreenBoxs = ", grid.results.size());
+		looper->fpsViewer.extraInfo = xx::ToString(", numAllBoxs = ", foos.size(), ", numScreenBoxs = ", grid.results.size());
 		grid.ClearResults();
 
 

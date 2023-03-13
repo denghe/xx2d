@@ -64,7 +64,7 @@ namespace MainMenu {
 		menus.emplace_back().Init(looper, { 0, y }, "20: 你好", 32);
 		menus.emplace_back().Init(looper, { xstep, y }, "21: 世界", 32);
 
-		looper->extraInfo.clear();
+		looper->fpsViewer.extraInfo.clear();
 	}
 
 	int Scene::Update() {

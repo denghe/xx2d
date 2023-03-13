@@ -5,6 +5,7 @@
 #include <xx_file.h>
 #include <xx_ptr.h>
 #include <xx_coro_simple.h>
+#include "xx_threadpool.h"
 
 #include "xx2d_rnd.h"
 

@@ -1,15 +1,19 @@
 ﻿#pragma once
 #include "xx2d.h"
-#include "scene_base.h"
-#include "xx_coro_simple.h"
-#include <xx_threadpool.h>
+#include "xx2d_fps_viewer.h"
+
+struct GameLooper;
+struct SceneBase {
+	GameLooper* looper{};
+	virtual void Init(GameLooper*) = 0;
+	virtual int Update() = 0;
+	virtual ~SceneBase() {};
+};
 
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fontBase, font3500;
-	xx::SimpleLabel lbInfo;
-	std::string extraInfo;
-	int fps{}, fpsCounter{};
-	double fpsTimePool{}, timePool{};
+	xx::FpsViewer fpsViewer;
+	double timePool{};
 
 	xx::Shared<SceneBase> scene;
 

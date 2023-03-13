@@ -232,7 +232,7 @@ namespace PhysicsCircles {
 			}
 
 			// output log
-			looper->extraInfo = xx::ToString(", numCircles = ", cs.size(), ", numActives = ", grid.numActives, ", update elapsed secs = ", xx::NowSteadyEpochSeconds(secs));
+			looper->fpsViewer.extraInfo = xx::ToString(", numCircles = ", cs.size(), ", numActives = ", grid.numActives, ", update elapsed secs = ", xx::NowSteadyEpochSeconds(secs));
 		}
 
 		// draw

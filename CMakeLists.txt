@@ -16,7 +16,6 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 
 include_directories(
-	examples
 	glad
 	stb
 	glfw/include
@@ -122,9 +121,14 @@ include_directories(
 # examples
 
 
+include_directories(
+	headers
+	examples
+)
 
 set(ESRCS)
 file(GLOB ESRCS	#GLOB_RECURSE
+	headers/*.h
 	examples/*.h
 	examples/*.hpp
 	examples/*.inc
