@@ -1,5 +1,4 @@
-﻿#include "xx2d_pch.h"
-#include "game_looper.h"
+﻿#include "main.h"
 #include "s6_box_circle_cd.h"
 
 namespace BoxCircleCD {

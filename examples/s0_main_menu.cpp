@@ -1,5 +1,4 @@
-﻿#include "xx2d_pch.h"
-#include "game_looper.h"
+﻿#include "main.h"
 #include "s0_main_menu.h"
 #include "s1_tiledmap.h"
 #include "s2_dragable.h"

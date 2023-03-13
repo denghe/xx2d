@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "xx2d_pch.h"
+#include "xx2d.h"
 
 struct GameLooper;
 struct SceneBase {

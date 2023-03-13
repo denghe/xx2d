@@ -1,7 +1,5 @@
-﻿#include "xx2d_pch.h"
-#include "game_looper.h"
+﻿#include "main.h"
 #include "s19_space_shooter.h"
-#include "xx_coro_simple.h"
 
 // todo
 // space grid ?

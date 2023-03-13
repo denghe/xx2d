@@ -1,4 +1,4 @@
-﻿#include "xx2d_pch.h"
+﻿#include "xx2d.h"
 #include "xx2d_imgui.h"
 
 namespace xx {

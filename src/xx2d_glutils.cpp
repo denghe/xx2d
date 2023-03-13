@@ -1,4 +1,4 @@
-﻿#include "xx2d_pch.h"
+﻿#include "xx2d.h"
 #define GLAD_MALLOC(sz)       malloc(sz)
 #define GLAD_FREE(ptr)        free(ptr)
 #define GLAD_GL_IMPLEMENTATION

@@ -1,4 +1,4 @@
-﻿#include "xx2d_pch.h"
+﻿#include "xx2d.h"
 
 namespace xx {
 	Quad& Quad::SetTexture(Shared<GLTexture> const& t) {

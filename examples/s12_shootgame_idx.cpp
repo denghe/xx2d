@@ -1,5 +1,4 @@
-﻿#include "xx2d_pch.h"
-#include "game_looper.h"
+﻿#include "main.h"
 #include "s12_shootgame_idx.h"
 
 //#define ENABLE_DEBUG_DRAW

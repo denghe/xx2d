@@ -1,7 +1,5 @@
 ﻿#pragma once
-#include "xx2d_pch.h"
-#include "scene_base.h"
-#include "xx2d_audio.h"
+#include "main.h"
 
 namespace AudioTest {
 

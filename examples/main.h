@@ -1,8 +1,10 @@
 ﻿#pragma once
-#include "xx2d_pch.h"
+#include "xx2d.h"
 #include "scene_base.h"
+#include "xx_coro_simple.h"
+#include <xx_threadpool.h>
 
-struct GameLooper {
+struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fontBase, font3500;
 	xx::SimpleLabel lbInfo;
 	std::string extraInfo;
@@ -16,9 +18,9 @@ struct GameLooper {
 		xx::engine.DelayExecute([this] {
 			scene = xx::Make<LT>();
 			scene->Init(this);
-		});
+			});
 	}
 
-	void Init();
-	int Update();
+	int Init() override;
+	int Update() override;
 };

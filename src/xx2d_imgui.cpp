@@ -1,4 +1,4 @@
-﻿#include "xx2d_pch.h"
+﻿#include "xx2d.h"
 #ifdef XX2D_ENABLE_IMGUI
 #include <GLFW/glfw3.h>
 #include "imgui_impl_glfw.h"

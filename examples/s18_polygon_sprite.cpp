@@ -1,5 +1,4 @@
-﻿#include "xx2d_pch.h"
-#include "game_looper.h"
+﻿#include "main.h"
 #include "s18_polygon_sprite.h"
 
 namespace PolygonSpriteTest {

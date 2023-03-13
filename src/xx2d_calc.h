@@ -1,4 +1,4 @@
-﻿#include "xx2d_pch.h"
+﻿#include "xx2d.h"
 
 namespace xx {
 	const double pi2 = 3.14159265358979323846 * 2;

@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "xx2d_pch.h"
+#include "xx2d.h"
 
 // tiled map xml version data loader & container. full supported to version 1.9x( compress algorithm only support zstandard )
 // https://doc.mapeditor.org/en/stable/reference/tmx-map-format/#

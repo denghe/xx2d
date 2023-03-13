@@ -1,8 +1,7 @@
-﻿#include "xx2d_pch.h"
-#include "game_looper.h"
+﻿#include "main.h"
 #include "s0_main_menu.h"
 
-void GameLooper::Init() {
+int GameLooper::Init() {
 	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 	font3500 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
 
@@ -10,6 +9,8 @@ void GameLooper::Init() {
 
 	scene = xx::Make<MainMenu::Scene>();
 	scene->Init(this);
+
+	return 0;
 }
 
 int GameLooper::Update() {
@@ -45,4 +46,8 @@ int GameLooper::Update() {
 		.SetColor({ 255, 0, 0, 255 })
 		.Draw();	// body
 	return r;
+}
+
+int main() {
+	return xx::Make<GameLooper>()->Run();
 }

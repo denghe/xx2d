@@ -33,4 +33,9 @@
 #include "xx2d_movepath.h"
 #include "xx2d_polygon_sprite.h"
 #include "xx2d_simple_label.h"
+#include "xx2d_gamelooper.h"
+
+#include "xx2d_audio.h"
+
+#include "xx2d_imgui.h"
 // ...

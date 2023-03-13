@@ -1,7 +1,5 @@
-﻿#include "xx2d_pch.h"
-#include "game_looper.h"
+﻿#include "main.h"
 #include "s17_imgui.h"
-#include "xx2d_imgui.h"
 
 namespace ImGuiTest {
 
@@ -12,7 +10,7 @@ namespace ImGuiTest {
 
 		xx::engine.imguiLogic = [this] {
 			if (showDemoWindow) {
-#ifdef XX_ENABLE_IMGUI
+#ifdef XX2D_ENABLE_IMGUI
 				ImGui::ShowDemoWindow(&showDemoWindow);
 #endif
 			}
