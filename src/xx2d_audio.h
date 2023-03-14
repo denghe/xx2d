@@ -11,12 +11,13 @@ namespace xx {
 
 		// todo: file cache? maybe need it?
 
+		xx::ThreadPool<> tp{ 1 };
+
 		Audio();
 		~Audio();
 		void PlayBG(std::string_view const& fn);
 		void StopBG();
 		void Play(std::string_view const& fn);
-		bool CanPlay(std::string_view const& fn);
 	};
 
 }
