@@ -57,6 +57,10 @@ cmake 3.20+
 
 pull submodules
 
+# more examples
+
+https://github.com/denghe/xx2d_space_shooter
+
 # todo
 
 render texture
