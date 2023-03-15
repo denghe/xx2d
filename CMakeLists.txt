@@ -23,6 +23,7 @@ include_directories(
 	imgui
 	imgui/backends
 	miniaudio
+	3rd
 	xxlib
 	src
 )
@@ -34,6 +35,7 @@ file(GLOB SRCS	#GLOB_RECURSE
 	glfw/include/GLFW/*.h
 	pugixml/src/*.hpp
 	miniaudio/*.h
+	3rd/*.*
 	xxlib/*.h
 	src/*.cpp
 	src/*.h
@@ -122,22 +124,19 @@ include_directories(
 
 
 include_directories(
-	headers
 	examples
 )
 
-set(ESRCS)
-file(GLOB ESRCS	#GLOB_RECURSE
-	headers/*.h
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
 	examples/*.h
 	examples/*.hpp
 	examples/*.inc
 	examples/*.c
 	examples/*.cpp
 )
-source_group("" FILES ${ESRCS})
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${ESRCS})
-add_executable(examples ${ESRCS})
+add_executable(examples ${SRCS})
+
 target_link_libraries(examples ${name} glfw imgui pugixml libzstd_static)
 
 
@@ -160,3 +159,53 @@ if(MSVC)	# vs2022+
 	set_target_properties(examples PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 endif()
+
+
+
+
+###########################################################################################################################################
+###########################################################################################################################################
+###########################################################################################################################################
+# tools
+
+# movepath editor
+
+include_directories(
+	tools/movepath_editor
+)
+
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
+	tools/movepath_editor/*.h
+	tools/movepath_editor/*.hpp
+	tools/movepath_editor/*.inc
+	tools/movepath_editor/*.c
+	tools/movepath_editor/*.cpp
+)
+add_executable(tools_movepath_editor ${SRCS})
+
+target_link_libraries(tools_movepath_editor ${name} glfw imgui pugixml libzstd_static)
+
+
+if(MSVC)	# vs2022+
+
+	target_link_options(tools_movepath_editor
+		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
+		PRIVATE $<$<CONFIG:Release>:/LTCG>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
+	)
+
+	target_compile_options(tools_movepath_editor
+		PRIVATE $<$<PLATFORM_ID:Windows>:/std:c17>
+		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
+	)
+
+	set_source_files_properties(tools/movepath_editor/main.cpp PROPERTIES COMPILE_FLAGS "/Ycmain.h")
+	target_compile_options(tools_movepath_editor PRIVATE $<$<PLATFORM_ID:Windows>:/Yumain.h>)
+
+	set_target_properties(tools_movepath_editor PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
+endif()
+
+
+# todo: circle line editor?

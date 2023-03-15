@@ -121,7 +121,7 @@ namespace xx {
 		/**********************************************************************************/
 		// imgui
 
-		std::function<void()> imguiLogic;	// set this func for call imgui logic code
+		std::function<void()> imguiInit{ [] {} }, imguiDeinit{ [] {} }, imguiUpdate{};
 	};
 
 	// default / global instance

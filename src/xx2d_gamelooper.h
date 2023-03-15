@@ -3,11 +3,11 @@
 namespace xx {
 
 	struct GameLooperBase {
-		virtual int Init() { return 0; }
-		virtual int Update() { return 0; }
-		virtual void Deinit() {}
+		virtual void Init() {}				// call after EngineInit
+		virtual int Update() { return 0; }	// return non-zero mean quit loop
+		virtual void Deinit() {}			// call before EngineDestroy
 		virtual ~GameLooperBase() {};
-		int Run();
+		int Run();							// begin loop
 	};
 
 }

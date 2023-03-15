@@ -8,7 +8,7 @@ namespace ImGuiTest {
 
 		std::cout << "ImGuiTest::Scene::Init" << std::endl;
 
-		xx::engine.imguiLogic = [this] {
+		xx::engine.imguiUpdate = [this] {
 			if (showDemoWindow) {
 #ifdef XX2D_ENABLE_IMGUI
 				ImGui::ShowDemoWindow(&showDemoWindow);
@@ -22,6 +22,6 @@ namespace ImGuiTest {
 	}
 
 	Scene::~Scene() {
-		xx::engine.imguiLogic = {};
+		xx::engine.imguiUpdate = {};
 	}
 }

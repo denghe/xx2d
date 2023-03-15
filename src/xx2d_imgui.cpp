@@ -21,24 +21,27 @@ namespace xx {
 		// Setup Platform/Renderer backends
 		ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)wnd, true);
 		ImGui_ImplOpenGL3_Init("#version 300 es");
+
+		xx::engine.imguiInit();
 #endif
 	}
 
 	void ImGuiUpdate() {
 #ifdef XX2D_ENABLE_IMGUI
-		if (!xx::engine.imguiLogic) return;
-
+		if (!xx::engine.imguiUpdate) return;
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		xx::engine.imguiLogic();
+
+		xx::engine.imguiUpdate();
+
 		ImGui::Render();
 #endif
 	}
 
 	void ImGuiDraw() {
 #ifdef XX2D_ENABLE_IMGUI
-		if (!xx::engine.imguiLogic) return;
+		if (!xx::engine.imguiUpdate) return;
 
 		if (auto d = ImGui::GetDrawData()) {
 			ImGui_ImplOpenGL3_RenderDrawData(d);
@@ -48,6 +51,8 @@ namespace xx {
 
 	void ImGuiDestroy() {
 #ifdef XX2D_ENABLE_IMGUI
+		xx::engine.imguiDeinit();
+
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();

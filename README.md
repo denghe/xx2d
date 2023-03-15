@@ -9,7 +9,7 @@ performance ~= raylib, much more faster than cocos2dx
 # tips
 
 convert png to pkm:
-tools/etcpak.exe & drag_png_here_convert_pkm_etc2_rgba8.bat
+tools/pic2pkm/etcpak.exe & drag_png_here_convert_pkm_etc2_rgba8.bat
 
 compress pkm:
 https://github.com/facebook/zstd/releases

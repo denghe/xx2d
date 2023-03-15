@@ -66,16 +66,17 @@ namespace xx {
 
 		while (auto e = glGetError()) {};	// cleanup glfw3 error
 
-		xx::engine.EngineGLInit(wnd);
 		glfwSetCursorPos(wnd, xx::engine.mousePosition.x, xx::engine.mousePosition.y);
 
 		// ***************************************************************************************
 		//  user code call here
 		// ***************************************************************************************
 
-		int r{};
-		if (r = this->Init()) return r;				// looper init
+		Init();										// looper init
 
+		xx::engine.EngineGLInit(wnd);
+
+		int r{};
 		while (!glfwWindowShouldClose(wnd)) {
 			glfwPollEvents();
 			xx::engine.EngineUpdateBegin();

@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "xx2d.h"
+#include "movepathstore.h"
 #include "xx2d_fps_viewer.h"
 
 struct GameLooper;
@@ -11,20 +11,27 @@ struct SceneBase {
 };
 
 struct GameLooper : xx::GameLooperBase {
-	xx::BMFont fontBase, font3500;
+	xx::BMFont fnt;
 	xx::FpsViewer fpsViewer;
-	double timePool{};
 
 	xx::Shared<SceneBase> scene;
+
+	::MovePathStore::Data data;
+
+	std::optional<std::string> err;
+	ImFont* imfnt{};
 
 	template<typename LT>
 	void DelaySwitchTo() {
 		xx::engine.DelayExecute([this] {
 			scene = xx::Make<LT>();
 			scene->Init(this);
-			});
+		});
 	}
 
 	void Init() override;
 	int Update() override;
+
+	void ImGuiUpdate();
+	void ImGuiDrawWindow_Error();
 };

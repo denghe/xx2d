@@ -1,14 +1,13 @@
 ﻿#include "main.h"
 #include "s0_main_menu.h"
 
-int GameLooper::Init() {
+void GameLooper::Init() {
 	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 	font3500 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
 	fpsViewer.Init(fontBase);
 
 	scene = xx::Make<MainMenu::Scene>();
 	scene->Init(this);
-	return 0;
 }
 
 int GameLooper::Update() {
