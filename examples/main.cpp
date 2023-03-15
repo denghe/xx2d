@@ -24,5 +24,5 @@ int GameLooper::Update() {
 }
 
 int main() {
-	return GameLooper{}.Run();
+	return GameLooper{}.Run("xx2d's examples");
 }

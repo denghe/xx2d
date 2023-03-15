@@ -200,8 +200,8 @@ if(MSVC)	# vs2022+
 		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
 	)
 
-	set_source_files_properties(tools/movepath_editor/main.cpp PROPERTIES COMPILE_FLAGS "/Ycmain.h")
-	target_compile_options(tools_movepath_editor PRIVATE $<$<PLATFORM_ID:Windows>:/Yumain.h>)
+	set_source_files_properties(tools/movepath_editor/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+	target_compile_options(tools_movepath_editor PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>)
 
 	set_target_properties(tools_movepath_editor PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 

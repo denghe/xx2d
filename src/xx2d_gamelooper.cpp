@@ -3,7 +3,7 @@
 
 namespace xx {
 
-	int GameLooperBase::Run() {
+	int GameLooperBase::Run(std::string const& wndTitle) {
 		xx::engine.EngineInit();
 
 #ifdef _WIN32
@@ -20,7 +20,7 @@ namespace xx {
 			return -1;
 		auto sg_glfw = xx::MakeSimpleScopeGuard([] { glfwTerminate(); });
 
-		auto wnd = glfwCreateWindow(xx::engine.w, xx::engine.h, "xx2d game engine", nullptr, nullptr);
+		auto wnd = glfwCreateWindow(xx::engine.w, xx::engine.h, wndTitle.c_str(), nullptr, nullptr);
 		if (!wnd)
 			return -2;
 		auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
