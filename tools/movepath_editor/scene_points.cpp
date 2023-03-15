@@ -11,9 +11,13 @@ int Scene_Points::Update() {
 
 	// todo: edit logic
 
-	// draw
+	// draw begin
 	xx::XY offset{ (looper->leftPanelWidth + looper->margin) / 2, -looper->topPanelHeight / 2 };
 
+	// draw bg
+	//lsBody.FillBoxPoints
+
+	// draw points
 	cps.clear();
 	for(auto& p : line->points) {
 		xx::XY pos{ p.x, p.y };
@@ -23,12 +27,8 @@ int Scene_Points::Update() {
 	mp.Clear();
 	mp.FillCurve(line->isLoop, cps);
 
-	// handle error data
-	if (mp.totalDistance < 1.f) {
-		xx::CoutN(line->name, " data error!");
-		line = {};
-		return 0;
-	}
+	// draw body segments
+	if (mp.totalDistance < 0.001f) return 0;
 
 	xx::MovePathCache mpc;
 	mpc.Init(mp);

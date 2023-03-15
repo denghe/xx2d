@@ -132,10 +132,9 @@ namespace xx {
 				auto& point = points.emplace_back();
 				point.pos = last.pos;
 			}
-
-			// fill inc, radians, distance
-			Fill(loop);
 		}
+		// fill inc, radians, distance
+		Fill(loop);
 	}
 
 	void MovePathSteper::Init(xx::Shared<MovePath> mp) {
