@@ -28,6 +28,12 @@ namespace xx {
 		}
 	}
 
+	void MovePath::Clear() {
+		points.clear();
+		totalDistance = {};
+		loop = {};
+	}
+
 	void MovePath::Fill(bool loop) {
 		Fill(nullptr, points.size(), loop);
 	}

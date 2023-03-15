@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "main.h"
+#include "scene_points.h"
 
 int main() {
 	return GameLooper{}.Run("xx2d's movepath editor");
@@ -15,26 +16,31 @@ void GameLooper::Init() {
 	fnt = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 	fpsViewer.Init(fnt);
 
+	// load store data
 	auto [d, p] = xx::engine.ReadAllBytes("res/movepath.json"sv);
 	fileName = std::move(p);
 	ajson::load_from_buff(data, (char*)d.buf, d.len);
+	// make fixed memory for line edit & store
+	data.lines.reserve(100000);
+	data.groups.reserve(100000);
 
-	xx::engine.imguiInit = [this] { 
+	scene.Emplace()->Init(this);
+
+	xx::engine.imguiInit = [] { 
 		auto&& io = ImGui::GetIO();
 		io.Fonts->ClearFonts();
-
-		// support chinese text
-		// auto&& imfnt = io.Fonts->AddFontFromFileTTF("c:/windows/fonts/simhei.ttf", 24, {}, io.Fonts->GetGlyphRangesChineseFull());
 
 		ImFontConfig cfg;
 		cfg.SizePixels = 26.f;
 		auto&& imfnt = io.Fonts->AddFontDefault(&cfg);
 
+		// auto&& imfnt = io.Fonts->AddFontFromFileTTF("c:/windows/fonts/simhei.ttf", 24, {}, io.Fonts->GetGlyphRangesChineseFull());
+
 		io.Fonts->Build();
 		io.FontDefault = imfnt;
 	};
 
-	xx::engine.imguiDeinit = [this] {
+	xx::engine.imguiDeinit = [] {
 		auto&& io = ImGui::GetIO();
 		io.Fonts->ClearFonts();
 	};
@@ -43,9 +49,7 @@ void GameLooper::Init() {
 }
 
 int GameLooper::Update() {
-	if (scene) {
-		if (int r = scene->Update()) return r;
-	}
+	if (int r = scene->Update()) return r;
 	fpsViewer.Update();
 	return 0;
 }
@@ -72,9 +76,6 @@ void GameLooper::ImGuiUpdate() {
 	// ...
 }
 
-//scene = xx::Make<Scene_Menu>();
-//scene->Init(this);
-
 void GameLooper::ImGuiDrawWindow_Error() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
 	p.x += 300;
@@ -92,8 +93,8 @@ void GameLooper::ImGuiDrawWindow_Error() {
 
 void GameLooper::ImGuiDrawWindow_Left() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
-	p.x += 20;
-	p.y += 20;
+	p.x += margin;
+	p.y += margin;
 	ImGui::SetNextWindowPos(p);
 	ImGui::SetNextWindowSize(ImVec2(400, xx::engine.h - 80));
 	ImGui::Begin("lines", nullptr, ImGuiWindowFlags_NoMove |
@@ -102,12 +103,10 @@ void GameLooper::ImGuiDrawWindow_Left() {
 		ImGuiWindowFlags_NoResize);
 
 	for (auto& p : data.lines) {
-		ImGui::PushStyleColor(ImGuiCol_Button, p.name == currLineName ? pressColor : normalColor);
+		ImGui::PushStyleColor(ImGuiCol_Button, &p == scene->line ? pressColor : normalColor);
 		auto sg = xx::MakeScopeGuard([] { ImGui::PopStyleColor(1); });
 		if (ImGui::Button(p.name.c_str())) {
-			if (p.name == currLineName) continue;
-			currLineName = p.name;
-			//Draw();
+			scene->SetLine(&p);
 		}
 	}
 
@@ -116,10 +115,10 @@ void GameLooper::ImGuiDrawWindow_Left() {
 
 void GameLooper::ImGuiDrawWindow_Top() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
-	p.x += 20 + 420;
-	p.y += 20;
+	p.x += margin + leftPanelWidth + margin;
+	p.y += margin;
 	ImGui::SetNextWindowPos(p);
-	ImGui::SetNextWindowSize(ImVec2(xx::engine.w - p.x - 20, 40));
+	ImGui::SetNextWindowSize(ImVec2(xx::engine.w - p.x - margin, topPanelHeight));
 	ImGui::Begin("tips1", nullptr, ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoBringToFrontOnFocus |

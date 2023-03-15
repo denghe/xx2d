@@ -24,38 +24,22 @@ namespace MovePathStore {
 	};
 }
 
-//
-struct GameLooper;
-struct SceneBase {
-	GameLooper* looper{};
-	virtual void Init(GameLooper*) = 0;
-	virtual int Update() = 0;
-	virtual ~SceneBase() {};
-};
-
-//
+struct Scene_Points;
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fnt;
 	xx::FpsViewer fpsViewer;
 
-	xx::Shared<SceneBase> scene;
+	xx::Shared<Scene_Points> scene;
 
 	std::optional<std::string> err;
 	::MovePathStore::Data data;
 	std::string fileName;
-	std::string currLineName;
+
+	inline static const float leftPanelWidth{ 400 }, margin{ 20 }, topPanelHeight{ 40 };
 
 	inline static const ImVec4 normalColor{ 0, 0, 0, 1.0f };
 	inline static const ImVec4 pressColor{ 0.5f, 0, 0, 1.0f };
 	inline static const ImVec4 releaseColor{ 0, 0.5f, 0, 1.0f };
-
-	template<typename LT>
-	void DelaySwitchTo() {
-		xx::engine.DelayExecute([this] {
-			scene = xx::Make<LT>();
-			scene->Init(this);
-		});
-	}
 
 	void Init() override;
 	int Update() override;

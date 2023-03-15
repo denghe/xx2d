@@ -33,6 +33,7 @@ namespace xx {
 		std::vector<MovePathPoint> points;
 		float totalDistance{};
 		bool loop{};
+		void Clear();
 		void Fill(xx::XY const* ps, size_t len, bool loop);
 		void Fill(bool loop);
 		void FillFields(MovePathPoint& p1, MovePathPoint& p2);
