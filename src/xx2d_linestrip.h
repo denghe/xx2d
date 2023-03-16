@@ -17,9 +17,13 @@ namespace xx {
 		RGBA8 color{ 255, 255, 255, 255 };
 
 		std::vector<XY>& SetPoints();
+		LineStrip& SetPoints(std::initializer_list<XY> ps);
 
 		LineStrip& FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle = {}, int const& segments = 100, XY const& scale = { 1,1 });
 		LineStrip& FillBoxPoints(XY const& center, XY const& wh);
+		// ... more?
+
+		LineStrip& Clear();
 
 		LineStrip& SetSize(XY const& s);
 

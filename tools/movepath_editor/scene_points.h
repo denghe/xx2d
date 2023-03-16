@@ -6,11 +6,11 @@ struct Scene_Points {
 	int Update();
 
 	GameLooper* looper{};
-	xx::LineStrip lsBody, lsPoint;
+	xx::LineStrip lsPoint;
 	xx::MovePath mp;
 	std::vector<xx::CurvePoint> cps;
 	MovePathStore::Line* line{};
-	float zoom{ 0.5f };
+	float zoom{ 0.3f }, timePool{};
 	void SetLine(MovePathStore::Line* const& line);
 	// todo: more cmd func
 };

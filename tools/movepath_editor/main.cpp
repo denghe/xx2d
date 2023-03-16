@@ -72,7 +72,7 @@ void GameLooper::ImGuiUpdate() {
 	}
 
 	ImGuiDrawWindow_Left();
-	ImGuiDrawWindow_Top();
+	//ImGuiDrawWindow_Top();
 	// ...
 }
 
@@ -114,19 +114,19 @@ void GameLooper::ImGuiDrawWindow_Left() {
 }
 
 void GameLooper::ImGuiDrawWindow_Top() {
-	ImVec2 p = ImGui::GetMainViewport()->Pos;
-	p.x += margin + leftPanelWidth + margin;
-	p.y += margin;
-	ImGui::SetNextWindowPos(p);
-	ImGui::SetNextWindowSize(ImVec2(xx::engine.w - p.x - margin, topPanelHeight));
-	ImGui::Begin("tips1", nullptr, ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoTitleBar |
-		ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoResize |
-		ImGuiWindowFlags_NoScrollbar);
+	//ImVec2 p = ImGui::GetMainViewport()->Pos;
+	//p.x += margin + leftPanelWidth + margin;
+	//p.y += margin;
+	//ImGui::SetNextWindowPos(p);
+	//ImGui::SetNextWindowSize(ImVec2(xx::engine.w - p.x - margin, topPanelHeight));
+	//ImGui::Begin("tips1", nullptr, ImGuiWindowFlags_NoMove |
+	//	ImGuiWindowFlags_NoTitleBar |
+	//	ImGuiWindowFlags_NoBringToFrontOnFocus |
+	//	ImGuiWindowFlags_NoCollapse |
+	//	ImGuiWindowFlags_NoResize |
+	//	ImGuiWindowFlags_NoScrollbar);
 
-	ImGui::Text("Z/X: Zooom in/out;  W/S: cursor up/down; C/V: copy/paste; F: clear");
+	//ImGui::Text("Z/X: Zooom in/out;  W/S: cursor up/down; C/V: copy/paste; F: clear");
 
-	ImGui::End();
+	//ImGui::End();
 }

@@ -7,6 +7,12 @@ namespace xx {
 		return points;
 	}
 
+	LineStrip& LineStrip::SetPoints(std::initializer_list<XY> ps) {
+		dirty = true;
+		points = ps;
+		return *this;
+	}
+
 	LineStrip& LineStrip::FillCirclePoints(XY const& center, float const& radius, std::optional<float> const& angle, int const& segments, XY const& scale) {
 		dirty = true;
 		points.reserve(segments + 2);
@@ -32,6 +38,12 @@ namespace xx {
 		points[2] = { hwh.x,hwh.y };
 		points[3] = { hwh.x,-hwh.y };
 		points[4] = { -hwh.x,-hwh.y };
+		return *this;
+	}
+
+	LineStrip& LineStrip::Clear() {
+		dirty = true;
+		points.clear();
 		return *this;
 	}
 
