@@ -6,24 +6,32 @@
 namespace MovePathStore {
 	struct Point {
 		int x{}, y{};
-		float tension{};
-		int numSegments{};
+		float tension{ 0.3f };
+		int numSegments{ 100 };
 	};
 	struct Line {
 		std::string name;
 		bool isLoop{};
 		std::vector<Point> points;
 	};
-	struct Group {
-		std::string name;
-		std::vector<std::string> lineNames;	// old name: lineIndexs
-	};
 	struct Data {
 		uint32_t designWidth{}, designHeight{}, safeLength{};
 		std::vector<Line> lines;
-		std::vector<Group> groups;
 	};
 }
+
+struct DragableCircle;
+using DragableCircleMouseEventListener = xx::MouseEventListener<DragableCircle*>;
+
+struct GameLooper;
+struct DragableCircle {
+	bool HandleMouseDown(DragableCircleMouseEventListener& L);
+	int HandleMouseMove(DragableCircleMouseEventListener& L);
+	void HandleMouseUp(DragableCircleMouseEventListener& L);
+	GameLooper* looper{};
+	MovePathStore::Point* point{};
+	xx::XY pos{};
+};
 
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fnt;
@@ -31,10 +39,10 @@ struct GameLooper : xx::GameLooperBase {
 
 	std::optional<std::string> err;
 	::MovePathStore::Data data;
-	std::string fileName;
+	std::string fileName, newLineName, changeLineName;
 
-	inline static const float leftPanelWidth{ 400 }, margin{ 20 };
-	inline static const xx::XY errPanelSize{ 400, 300 };
+	inline static const float leftPanelWidth{ 400 }, margin{ 10 }, leftCmdPanelHeight{ 80 }, pointRadius{10.f};
+	inline static const xx::XY errPanelSize{ 400, 300 }, offset{ (leftPanelWidth + margin) / 2, 0 };
 
 	inline static const ImVec4 normalColor{ 0, 0, 0, 1.0f };
 	inline static const ImVec4 pressColor{ 0.5f, 0, 0, 1.0f };
@@ -45,16 +53,22 @@ struct GameLooper : xx::GameLooperBase {
 
 	void ImGuiUpdate();
 	void ImGuiDrawWindow_Error();
+	void ImGuiDrawWindow_LeftCmd();
 	void ImGuiDrawWindow_LeftTop();
 	void ImGuiDrawWindow_LeftBottom();
 
-
+	void LoadData();
+	void SaveData();
 
 	xx::LineStrip lsPoint;
 	xx::MovePath mp;
 	std::vector<xx::CurvePoint> cps;
 	MovePathStore::Line* line{};
 	double zoom{ 0.3 }, timePool{};
+
+	DragableCircleMouseEventListener meListener;
+	DragableCircle dc;
+
 	int UpdateLogic();
 	void SetLine(MovePathStore::Line* const& line);
 };
