@@ -8,6 +8,19 @@ void GameLooper::Init() {
 
 	scene = xx::Make<MainMenu::Scene>();
 	scene->Init(this);
+
+	xx::engine.imguiInit = [] {
+		auto&& io = ImGui::GetIO();
+		io.Fonts->ClearFonts();
+
+		//ImFontConfig cfg;
+		//cfg.SizePixels = 26.f;
+		//auto&& imfnt = io.Fonts->AddFontDefault(&cfg);
+		auto&& imfnt = io.Fonts->AddFontFromFileTTF("c:/windows/fonts/simhei.ttf", 24, {}, io.Fonts->GetGlyphRangesChineseFull());
+
+		io.Fonts->Build();
+		io.FontDefault = imfnt;
+	};
 }
 
 int GameLooper::Update() {

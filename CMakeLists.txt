@@ -91,6 +91,24 @@ else()
 endif()
 
 
+
+include_directories(
+	imgui/misc/cpp
+)
+
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
+	imgui/misc/cpp/*.h
+	imgui/misc/cpp/*.cpp
+)
+add_library(imguicpp ${SRCS})
+
+target_link_libraries(${name} imguicpp)
+
+
+
+
+
 SET(GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW_BUILD_DOCS" FORCE)
 SET(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "GLFW_BUILD_EXAMPLES" FORCE)
 SET(GLFW_BUILD_TESTS OFF CACHE BOOL "GLFW_BUILD_TESTS" FORCE)
@@ -184,7 +202,7 @@ file(GLOB SRCS	#GLOB_RECURSE
 )
 add_executable(tools_movepath_editor ${SRCS})
 
-target_link_libraries(tools_movepath_editor ${name} glfw imgui pugixml libzstd_static)
+target_link_libraries(tools_movepath_editor ${name} glfw imgui imguicpp pugixml libzstd_static)
 
 
 if(MSVC)	# vs2022+

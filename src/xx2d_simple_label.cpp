@@ -80,6 +80,10 @@ namespace xx {
 		color = c;
 		return *this;
 	}
+	SimpleLabel& SimpleLabel::SetColorA(uint8_t const& a) {
+		color.a = a;
+		return *this;
+	}
 
 	SimpleLabel& SimpleLabel::Draw() {
 		auto siz = chars.size();

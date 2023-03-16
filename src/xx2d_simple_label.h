@@ -42,6 +42,7 @@ namespace xx {
 		SimpleLabel& SetPositionY(float const& y);
 
 		SimpleLabel& SetColor(RGBA8 const& c);
+		SimpleLabel& SetColorA(uint8_t const& a);
 
 		SimpleLabel& Draw();
 	};

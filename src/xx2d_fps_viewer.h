@@ -7,11 +7,13 @@ namespace xx {
 		xx::SimpleLabel lbl;
 		std::string extraInfo;
 		int fps{}, counter{};
+		float marginLeft{};
 		double fpsTimePool{};
 
-		void Init(xx::BMFont& fnt_) {
+		void Init(xx::BMFont& fnt_, float const& marginLeft_ = {10}) {
 			fnt = &fnt_;
 			lbl.SetAnchor({ 0, 0 });
+			marginLeft = marginLeft_;
 		}
 
 		// call at the end
@@ -27,9 +29,9 @@ namespace xx {
 			auto& sm = xx::engine.sm;
 			sm.End();		// commit
 
-			auto xy = xx::engine.ninePoints[1] + xx::XY{ 10, 10 };
+			auto xy = xx::engine.ninePoints[1] + xx::XY{ marginLeft, 10 };
 
-			auto s = xx::ToStringFormat("fps = {0}, draw call = {1}, vert count = {2}, line point count = {3}; {4}"
+			auto s = xx::ToStringFormat("FPS = {0} DC = {1} VC = {2} PC = {3}; {4}"
 				, fps, sm.drawCall, sm.drawVerts, sm.drawLinePoints, std::string_view(extraInfo));
 
 			lbl.SetText(*fnt, s, 32.f, xx::engine.w - 40)

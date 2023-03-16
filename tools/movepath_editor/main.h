@@ -5,8 +5,11 @@
 // data store file json structs
 namespace MovePathStore {
 	struct Point {
-		float x{}, y{}, tension{};
+		int x{}, y{};
+		float tension{};
 		uint32_t numSegments{};
+		std::string sx, sy, st, sn;
+		std::pair<Point*, int> px, py, pt, pn;
 	};
 	struct Line {
 		std::string name;
@@ -24,18 +27,16 @@ namespace MovePathStore {
 	};
 }
 
-struct Scene_Points;
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fnt;
 	xx::FpsViewer fpsViewer;
-
-	xx::Shared<Scene_Points> scene;
 
 	std::optional<std::string> err;
 	::MovePathStore::Data data;
 	std::string fileName;
 
-	inline static const float leftPanelWidth{ 400 }, margin{ 20 }, topPanelHeight{ 40 };
+	inline static const float leftPanelWidth{ 400 }, margin{ 20 };
+	inline static const xx::XY errPanelSize{ 400, 300 };
 
 	inline static const ImVec4 normalColor{ 0, 0, 0, 1.0f };
 	inline static const ImVec4 pressColor{ 0.5f, 0, 0, 1.0f };
@@ -46,6 +47,16 @@ struct GameLooper : xx::GameLooperBase {
 
 	void ImGuiUpdate();
 	void ImGuiDrawWindow_Error();
-	void ImGuiDrawWindow_Left();
-	void ImGuiDrawWindow_Top();
+	void ImGuiDrawWindow_LeftTop();
+	void ImGuiDrawWindow_LeftBottom();
+
+
+
+	xx::LineStrip lsPoint;
+	xx::MovePath mp;
+	std::vector<xx::CurvePoint> cps;
+	MovePathStore::Line* line{};
+	double zoom{ 0.3 }, timePool{};
+	int UpdateLogic();
+	void SetLine(MovePathStore::Line* const& line);
 };
