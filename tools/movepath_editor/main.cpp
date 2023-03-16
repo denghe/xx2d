@@ -128,69 +128,58 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 		ImGuiWindowFlags_NoResize);
 
 	if (line) {
-		if (ImGui::BeginTable("pointstable", 4, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
+		if (ImGui::BeginTable("pointstable", 5, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
 
-			auto cb = [](ImGuiInputTextCallbackData* data)->int {
-				std::string s(data->Buf, data->BufTextLen);
-				auto& pair = *(std::pair<MovePathStore::Point*, int>*)data->UserData;
-				switch (pair.second) {
-				case 0:
-					xx::Convert(s.c_str(), pair.first->x);
-					break;
-				case 1:
-					xx::Convert(s.c_str(), pair.first->y);
-					break;
-				case 2:
-					xx::Convert(s.c_str(), pair.first->tension);
-					break;
-				case 3:
-					xx::Convert(s.c_str(), pair.first->numSegments);
-					break;
-				default:
-					throw std::logic_error("unknown type id");
-				}
-				return 1;
-			};
-			auto flag = ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_CallbackCompletion;
+			ImGui::TableSetupColumn("x", ImGuiTableColumnFlags_WidthFixed, 90);
+			ImGui::TableSetupColumn("y", ImGuiTableColumnFlags_WidthFixed, 90);
+			ImGui::TableSetupColumn("tension", ImGuiTableColumnFlags_WidthFixed, 70);
+			ImGui::TableSetupColumn("numSegments", ImGuiTableColumnFlags_WidthFixed, 70);
+			ImGui::TableSetupColumn("delete", ImGuiTableColumnFlags_WidthFixed, 32);
+			ImGui::TableHeadersRow();
 
-			int rowId = 0;
+			int rowId{}, removeRowId{ -1 };
 			for (auto& p : line->points) {
-				p.sx = xx::ToString(p.x);
-				p.sy = xx::ToString(p.y);
-				p.st = xx::ToString(p.tension);
-				p.sn = xx::ToString(p.numSegments);
-				p.px = { &p, 0 };
-				p.py = { &p, 1 };
-				p.pt = { &p, 2 };
-				p.pn = { &p, 3 };
 
-				ImGui::TableNextColumn();
-				ImGui::PushID(rowId * 4 + 0);
+				ImGui::TableNextRow();
+
+				ImGui::TableSetColumnIndex(0);
+				ImGui::PushID(rowId * 5 + 0);
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				ImGui::InputText("##", &p.sx, flag, cb, &p.px);
+				ImGui::InputInt("##", &p.x, 0, 0);
 				ImGui::PopID();
 
-				ImGui::TableNextColumn();
-				ImGui::PushID(rowId * 4 + 1);
+				ImGui::TableSetColumnIndex(1);
+				ImGui::PushID(rowId * 5 + 1);
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				ImGui::InputText("##", &p.sy, flag, cb, &p.py);
+				ImGui::InputInt("##", &p.y, 0, 0);
 				ImGui::PopID();
 
-				ImGui::TableNextColumn();
-				ImGui::PushID(rowId * 4 + 2);
+				ImGui::TableSetColumnIndex(2);
+				ImGui::PushID(rowId * 5 + 2);
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				ImGui::InputText("##", &p.st, flag, cb, &p.pt);
+				ImGui::InputFloat("##", &p.tension, 0.0f, 0.0f);
 				ImGui::PopID();
 
-				ImGui::TableNextColumn();
-				ImGui::PushID(rowId * 4 + 3);
+				ImGui::TableSetColumnIndex(3);
+				ImGui::PushID(rowId * 5 + 3);
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				ImGui::InputText("##", &p.sn, flag, cb, &p.pn);
+				ImGui::InputInt("##", &p.numSegments, 0, 0);
+				ImGui::PopID();
+
+				ImGui::TableSetColumnIndex(4);
+				ImGui::PushID(rowId * 5 + 4);
+				if (ImGui::Button("X", { 30, 30 })) {
+					removeRowId = rowId;
+				}
 				ImGui::PopID();
 
 				++rowId;
 			}
 			ImGui::EndTable();
+
+			if (removeRowId >= 0) {
+				line->points.erase(line->points.begin() + removeRowId);
+			}
 		}
 	}
 

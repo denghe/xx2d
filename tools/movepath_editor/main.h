@@ -7,9 +7,7 @@ namespace MovePathStore {
 	struct Point {
 		int x{}, y{};
 		float tension{};
-		uint32_t numSegments{};
-		std::string sx, sy, st, sn;
-		std::pair<Point*, int> px, py, pt, pn;
+		int numSegments{};
 	};
 	struct Line {
 		std::string name;
