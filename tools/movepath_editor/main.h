@@ -5,9 +5,7 @@
 // data store file json structs
 namespace MovePathStore {
 	struct Point {
-		int x{}, y{};
-		float tension{ 0.3f };
-		int numSegments{ 100 };
+		int x{}, y{}, tension{ 30 }, numSegments{ 100 };
 	};
 	struct Line {
 		std::string name;

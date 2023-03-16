@@ -282,7 +282,7 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 				ImGui::TableSetColumnIndex(2);
 				ImGui::PushID(rowId * 5 + 2);
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				ImGui::InputFloat("##", &p.tension, 0.0f, 0.0f);
+				ImGui::InputInt("##", &p.tension, 0.0f, 0.0f);
 				ImGui::PopID();
 
 				ImGui::TableSetColumnIndex(3);
@@ -371,7 +371,7 @@ int GameLooper::UpdateLogic() {
 	cps.clear();
 	for (auto& p : line->points) {
 		xx::XY pos{ (float)p.x, (float)p.y };
-		cps.emplace_back(pos, (float)p.tension, (int32_t)p.numSegments);
+		cps.emplace_back(pos, (float)p.tension / 100.f, (int32_t)p.numSegments);
 		lsPoint.SetPosition(pos * zoom + offset).SetColor({ 255,255,0,255 }).Draw();
 	}
 	if (line->points.size() < 2) return 0;
