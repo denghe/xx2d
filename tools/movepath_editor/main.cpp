@@ -128,7 +128,7 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 		ImGuiWindowFlags_NoResize);
 
 	if (line) {
-		if (ImGui::BeginTable("table2", 4, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
+		if (ImGui::BeginTable("pointstable", 4, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
 
 			auto cb = [](ImGuiInputTextCallbackData* data)->int {
 				std::string s(data->Buf, data->BufTextLen);
