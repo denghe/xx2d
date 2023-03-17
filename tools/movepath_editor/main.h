@@ -36,6 +36,9 @@ struct GameLooper : xx::GameLooperBase {
 	xx::FpsViewer fpsViewer;
 
 	std::optional<std::string> err;
+	bool exporting{};
+	std::string exportFileName;
+
 	::MovePathStore::Data data;
 	std::string fileName, newLineName, changeLineName;
 	MovePathStore::Point* selectedPoint{};
@@ -54,6 +57,7 @@ struct GameLooper : xx::GameLooperBase {
 
 	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, leftCmdPanelHeight1{ 80 }, leftCmdPanelHeight2{ 120 }, pointRadius{10.f};
 	inline static const xx::XY errPanelSize{ 400, 300 }, offset{ (leftPanelWidth + margin) / 2, 0 };
+	inline static const xx::XY exportPanelSize{ 1200, 200 };
 
 	inline static const ImVec4 normalColor{ 0, 0, 0, 1.0f };
 	inline static const ImVec4 pressColor{ 0.5f, 0, 0, 1.0f };
@@ -64,13 +68,18 @@ struct GameLooper : xx::GameLooperBase {
 
 	void ImGuiUpdate();
 	void ImGuiDrawWindow_Error();
+
 	void ImGuiDrawWindow_LeftTop0();
 	void ImGuiDrawWindow_LeftTop();
+
 	void ImGuiDrawWindow_LeftBottom0();
 	void ImGuiDrawWindow_LeftBottom();
 
+	void ImGuiDrawWindow_Export();
+
 	void LoadData();
 	void SaveData();
+	void ExportData();
 
 
 	int UpdateLogic();

@@ -62,8 +62,16 @@ void GameLooper::SaveData() {
 	ajson::save_to_file(data, fileName.c_str());
 }
 
+void GameLooper::ExportData() {
+	// todo
+	//xx::WriteAllBytes()
+	exporting = false;
+}
+
+
+
 int GameLooper::Update() {
-	if (!err.has_value()) {
+	if (!err.has_value() && !exporting) {
 		if (int r = UpdateLogic()) return r;
 	}
 	fpsViewer.Update();
@@ -74,6 +82,11 @@ void GameLooper::ImGuiUpdate() {
 
 	if (err.has_value()) {
 		ImGuiDrawWindow_Error();
+		return;
+	}
+
+	if (exporting) {
+		ImGuiDrawWindow_Export();
 		return;
 	}
 
@@ -90,7 +103,7 @@ void GameLooper::ImGuiDrawWindow_Error() {
 	p.y += (xx::engine.h - errPanelSize.y) / 2;
 	ImGui::SetNextWindowPos(p);
 	ImGui::SetNextWindowSize(ImVec2(errPanelSize.x, errPanelSize.y));
-	ImGui::Begin("Error", nullptr, ImGuiWindowFlags_NoMove |
+	ImGui::Begin("error", nullptr, ImGuiWindowFlags_NoMove |
 		//ImGuiWindowFlags_NoInputs |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
@@ -100,6 +113,39 @@ void GameLooper::ImGuiDrawWindow_Error() {
 	}
 	ImGui::End();
 }
+
+void GameLooper::ImGuiDrawWindow_Export() {
+	ImVec2 p = ImGui::GetMainViewport()->Pos;
+	p.x += (xx::engine.w - exportPanelSize.x) / 2;
+	p.y += (xx::engine.h - exportPanelSize.y) / 2;
+	ImGui::SetNextWindowPos(p);
+	ImGui::SetNextWindowSize(ImVec2(exportPanelSize.x, exportPanelSize.y));
+	ImGui::Begin("export", nullptr, ImGuiWindowFlags_NoMove |
+		//ImGuiWindowFlags_NoInputs |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoResize);
+
+	ImGui::Text("please input the output file name:");
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	ImGui::InputText("##exportFileName", &exportFileName);
+
+	ImGui::Dummy({ 0.0f, 26.0f });
+	ImGui::Separator();
+	ImGui::Dummy({ 0.0f, 5.0f });
+
+	ImGui::Dummy({ 0.0f, 0.0f });
+	ImGui::SameLine(ImGui::GetWindowWidth() - (ImGui::GetStyle().ItemSpacing.x + 120 + 10 + 120));
+	if (ImGui::Button("cancel", { 120, 35 })) {
+		exporting = false;
+	}
+	ImGui::SameLine(ImGui::GetWindowWidth() - (ImGui::GetStyle().ItemSpacing.x + 120));
+	if (ImGui::Button("export", { 120, 35 })) {
+		ExportData();
+	}
+
+	ImGui::End();
+}
+
 
 void GameLooper::ImGuiDrawWindow_LeftTop0() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
@@ -119,7 +165,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 		ImGui::End(); 
 	});
 
-	if (ImGui::Button("reload all")) {
+	if (ImGui::Button("reload")) {
 		std::string bak;
 		if (line) {
 			bak = line->name;
@@ -135,22 +181,34 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 		}
 		copyLine = {};
 	}
-	ImGui::SameLine({}, 50);
-	if (ImGui::Button("save all")) {
+	ImGui::SameLine({}, 40);
+	if (ImGui::Button("save")) {
 		SaveData();
 	}
+	ImGui::SameLine({}, 10);
+	if (ImGui::Button("export")) {
+		exporting = true;
+	}
 	if (line) {
-		ImGui::SameLine({}, 50);
+		ImGui::SameLine({}, 13);
 		ImGui::PushStyleColor(ImGuiCol_Button, copyLine ? pressColor : normalColor);
 		if (ImGui::Button( "copy")) {
 			copyLine = line;
 		}
 		ImGui::PopStyleColor(1);
 	}
+	if (copyLine && line && line != copyLine && line->points.empty()) {
+		ImGui::SameLine({}, 10);
+		ImGui::PushStyleColor(ImGuiCol_Button, pressColor);
+		if (ImGui::Button("paste")) {
+			line->points.insert(line->points.begin(), copyLine->points.begin(), copyLine->points.end());
+		}
+		ImGui::PopStyleColor(1);
+	}
 
 	ImGui::Text("%s", "name:");
 	ImGui::SameLine();
-	ImGui::SetNextItemWidth(150);
+	ImGui::SetNextItemWidth(285);
 	ImGui::InputText("##newLineName", &newLineName);
 	ImGui::SameLine();
 	if (ImGui::Button("create")) {
@@ -166,14 +224,6 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 			}
 		}
 		data.lines.emplace_back().name = newLineName;
-	}
-	if (copyLine && line && line != copyLine && line->points.empty()) {
-		ImGui::SameLine({}, 50);
-		ImGui::PushStyleColor(ImGuiCol_Button, pressColor);
-		if (ImGui::Button("paste")) {
-			line->points.insert(line->points.begin(), copyLine->points.begin(), copyLine->points.end());
-		}
-		ImGui::PopStyleColor(1);
 	}
 
 }
