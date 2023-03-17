@@ -19,6 +19,43 @@ namespace xx {
 		}
 	};
 
+	struct CurvePoints {
+		std::string name;
+		bool isLoop{};
+		std::vector<CurvePoint> points;
+	};
+
+	struct CurvesPointsCollection {
+		std::vector<CurvePoints> data;
+	};
+
+	// support read from movepath editor's export data
+	template<typename T>
+	struct DataFuncs<T, std::enable_if_t<std::is_base_of_v<CurvePoint, T>>> {
+		static inline int Read(Data_r& d, T& out) {
+			int x, y, t;
+			int r = d.Read(x, y, t, out.numSegments);
+			if (r) return r;
+			out.pos.x = x;
+			out.pos.y = y;
+			out.tension = t / 100.f;
+			return 0;
+		}
+	};
+	template<typename T>
+	struct DataFuncs<T, std::enable_if_t<std::is_base_of_v<CurvePoints, T>>> {
+		static inline int Read(Data_r& d, T& out) {
+			return d.Read(out.name, out.isLoop, out.points);
+		}
+	};
+	template<typename T>
+	struct DataFuncs<T, std::enable_if_t<std::is_base_of_v<CurvesPointsCollection, T>>> {
+		static inline int Read(Data_r& d, T& out) {
+			return d.Read(out.data);
+		}
+	};
+
+
 	struct MovePathPoint {
 		xx::XY pos{}, inc{};
 		float radians{}, distance{};

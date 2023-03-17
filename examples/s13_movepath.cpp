@@ -56,26 +56,41 @@ namespace MovePath {
 		monsters.pop_back();
 	}
 
+
+
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
-		monsters.reserve(200000);
 
-		coros.Add([](Scene* self)->xx::Coro {
-			xx::MovePath mp;
-			mp.FillCurve(true, { { 0, 0 }, { 200, 0 }, { 200, 100 }, { 0, 100 } });
+		xx::CurvesPointsCollection cpsc;
+		auto [d, p] = xx::engine.ReadAllBytes("res/movepath.bin");
+		if (int r = d.Read(cpsc)) {
+			throw std::logic_error(xx::ToString("read CurvesPointsCollection from ", p, " error! r = ", r));
+		}
+		mpcs.reserve(cpsc.data.size());
+		xx::MovePath mp;
+		for (auto& cps : cpsc.data) {
+			mp.Clear();
+			mp.FillCurve(cps.isLoop, cps.points);
 
 			auto mpc = xx::Make<xx::MovePathCache>();
 			mpc->Init(mp, 1);
+			mpcs.emplace_back(std::move(mpc));
+		}
 
+		monsters.reserve(200000);
+
+		coros.Add([](Scene* self)->xx::Coro {
 			auto hw = (int)xx::engine.hw;
 			auto hh = (int)xx::engine.hh;
 			auto r = 32;
 			for (size_t j = 0; j < 10000; j++) {
 				for (size_t i = 0; i < 20; i++) {
 					auto&& m = self->AddMonster();
-					xx::Pos<> v{ self->rnd.Next(-hw + r, hw - r), self->rnd.Next(-hh + r, hh - r) };
+					//xx::Pos<> v{ self->rnd.Next(-hw + r, hw - r), self->rnd.Next(-hh + r, hh - r) };
+					xx::Pos<> v{};
 					auto color = self->rnd.Get();
+					auto&& mpc = self->mpcs[self->rnd.Next(0, (int)self->mpcs.size() - 1)];
 					m->Init(v.As<float>(), mpc, 2, (xx::RGBA8&)color);
 				}
 				CoYield;
@@ -100,18 +115,15 @@ namespace MovePath {
 		}
 	}
 
+
+
+
+
 	void Looper::Init(GameLooper* looper) {
 		this->looper = looper;
 		std::cout << "MovePath::Looper::Init" << std::endl;
 
 		scene.Init(looper);
-
-		auto secs = xx::NowSteadyEpochSeconds();
-		size_t i = 0;
-		for (; i < 100; i++) {
-			scene.Update();
-		}
-		std::cout << "monsters.size == " << scene.monsters.size() << ". update " << i << " times. elapsed secs = " << xx::NowSteadyEpochSeconds(secs) << std::endl;
 	}
 
 	int Looper::Update() {

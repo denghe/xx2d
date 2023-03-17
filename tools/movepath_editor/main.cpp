@@ -62,16 +62,45 @@ void GameLooper::SaveData() {
 	ajson::save_to_file(data, fileName.c_str());
 }
 
+// for export MovePathStore
+namespace xx {
+	template<typename T>
+	struct DataFuncs<T, std::enable_if_t<std::is_same_v<::MovePathStore::Data, std::decay_t<T>>>> {
+		template<bool needReserve = true> static inline void Write(Data& d, T const& in) {
+			d.Write(in.lines);
+		}
+	};
+	template<typename T>
+	struct DataFuncs<T, std::enable_if_t<std::is_same_v<::MovePathStore::Line, std::decay_t<T>>>> {
+		template<bool needReserve = true> static inline void Write(Data& d, T const& in) {
+			d.Write(in.name, in.isLoop, in.points);
+		}
+	};
+	template<typename T>
+	struct DataFuncs<T, std::enable_if_t<std::is_same_v<::MovePathStore::Point, std::decay_t<T>>>> {
+		template<bool needReserve = true> static inline void Write(Data& d, T const& in) {
+			d.Write(in.x, in.y, in.tension, in.numSegments);
+		}
+	};
+}
+
 void GameLooper::ExportData() {
-	// todo
-	//xx::WriteAllBytes()
-	exporting = false;
+	// format: lines size + Line{ name size + name content + 1 byte isloop + points size + Point{ x,y,t,n }... }...
+	xx::Data d;
+	d.Write(data);
+	auto r = xx::WriteAllBytes(exportFileName, d);
+	if (r) {
+		msg = xx::ToString("WriteAllBytes to file: ", exportFileName, " error! r = ", r);
+	} else {
+		msg = xx::ToString("export success!");
+		exporting = false;
+	}
 }
 
 
 
 int GameLooper::Update() {
-	if (!err.has_value() && !exporting) {
+	if (!msg.has_value() && !exporting) {
 		if (int r = UpdateLogic()) return r;
 	}
 	fpsViewer.Update();
@@ -80,7 +109,7 @@ int GameLooper::Update() {
 
 void GameLooper::ImGuiUpdate() {
 
-	if (err.has_value()) {
+	if (msg.has_value()) {
 		ImGuiDrawWindow_Error();
 		return;
 	}
@@ -103,13 +132,21 @@ void GameLooper::ImGuiDrawWindow_Error() {
 	p.y += (xx::engine.h - errPanelSize.y) / 2;
 	ImGui::SetNextWindowPos(p);
 	ImGui::SetNextWindowSize(ImVec2(errPanelSize.x, errPanelSize.y));
-	ImGui::Begin("error", nullptr, ImGuiWindowFlags_NoMove |
+	ImGui::Begin("dialog", nullptr, ImGuiWindowFlags_NoMove |
 		//ImGuiWindowFlags_NoInputs |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
-	ImGui::Text(err->c_str());
-	if (ImGui::Button("ok")) {
-		err.reset();
+
+	ImGui::Text(msg->c_str());
+
+	ImGui::Dummy({ 0.0f, 62.0f });
+	ImGui::Separator();
+	ImGui::Dummy({ 0.0f, 5.0f });
+
+	ImGui::Dummy({ 0.0f, 0.0f });
+	ImGui::SameLine(ImGui::GetWindowWidth() - (ImGui::GetStyle().ItemSpacing.x + 90 + 10));
+	if (ImGui::Button("close", { 90, 35 })) {
+		msg.reset();
 	}
 	ImGui::End();
 }
@@ -169,9 +206,10 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 		std::string bak;
 		if (line) {
 			bak = line->name;
+			line = {};
 		}
 		LoadData();
-		if (line) {
+		if (bak.size()) {
 			for (auto& l : data.lines) {
 				if (l.name == bak) {
 					line = &l;
@@ -201,6 +239,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 		ImGui::SameLine({}, 10);
 		ImGui::PushStyleColor(ImGuiCol_Button, pressColor);
 		if (ImGui::Button("paste")) {
+			line->isLoop = copyLine->isLoop;
 			line->points.insert(line->points.begin(), copyLine->points.begin(), copyLine->points.end());
 		}
 		ImGui::PopStyleColor(1);
@@ -213,13 +252,13 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 	ImGui::SameLine();
 	if (ImGui::Button("create")) {
 		if (newLineName.empty()) {
-			err = "line name can't be null";
+			msg = "line name can't be null";
 			return;
 		}
 		bool found = false;
 		for (auto& l : data.lines) {
 			if (l.name == newLineName) {
-				err = "line name already exists";
+				msg = "line name already exists";
 				return;
 			}
 		}
@@ -317,13 +356,13 @@ void GameLooper::ImGuiDrawWindow_LeftBottom0() {
 		ImGui::SameLine();
 		if (ImGui::Button("change name")) {
 			if (changeLineName.empty()) {
-				err = "line name can't be null";
+				msg = "line name can't be null";
 			}
 			bool found = false;
 			for (auto& l : data.lines) {
 				if (&l == line) continue;
 				if (l.name == changeLineName) {
-					err = "line name already exists";
+					msg = "line name already exists";
 					found = true;
 					break;
 				}
@@ -338,7 +377,6 @@ void GameLooper::ImGuiDrawWindow_LeftBottom0() {
 		ImGui::SameLine({}, 28);
 		if (ImGui::Button("new point")) {
 			line->points.emplace_back();
-			selectedPoint = {};
 		}
 		ImGui::SameLine({}, 28);
 		if (ImGui::Button("flipX")) {
@@ -415,16 +453,17 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 			ImGui::TableHeadersRow();
 
 			int rowId{}, removeRowId{ -1 };
-			for (auto& p : line->points) {
+			for (int e = line->points.size(); rowId < e; ++rowId) {
+				auto& p = line->points[rowId];
 
 				ImGui::TableNextRow();
-				ImGui::PushStyleColor(ImGuiCol_Button, selectedPoint == &p ? pressColor : normalColor);
+				ImGui::PushStyleColor(ImGuiCol_Button, selectedPointIdex == rowId ? pressColor : normalColor);
 
 				int n = 0;
 				ImGui::TableSetColumnIndex(n);
 				ImGui::PushID(rowId * numCols + n);
 				if (ImGui::Button(">")) {
-					selectedPoint = &p;
+					selectedPointIdex = rowId;
 				}
 				ImGui::PopID();
 
@@ -433,7 +472,7 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 				ImGui::PushID(rowId * numCols + n);
 				if (ImGui::Button("+")) {
 					line->points.insert(line->points.begin() + rowId, MovePathStore::Point{});
-					selectedPoint = {};
+					selectedPointIdex = -1;
 				}
 				ImGui::PopID();
 
@@ -470,12 +509,11 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 				ImGui::PushID(rowId * numCols + n);
 				if (ImGui::Button("X")) {
 					removeRowId = rowId;
-					selectedPoint = {};
+					selectedPointIdex = -1;
 				}
 				ImGui::PopID();
 
 				ImGui::PopStyleColor(1);
-				++rowId;
 			}
 			ImGui::EndTable();
 
@@ -496,22 +534,37 @@ int GameLooper::UpdateLogic() {
 	if (!line) return 0;
 
 	timePool += xx::engine.delta;
-	while (timePool >= 1.f / 60) {
-		timePool -= 1.f / 60;
+	while (timePool >= 1.f / 10) {
+		timePool -= 1.f / 10;
+
+		if (xx::engine.mousePosition.x <= -xx::engine.w / 2 + leftPanelWidth + margin) continue;
 
 		if (xx::engine.Pressed(xx::KbdKeys::Z)) {
-			zoom += 0.02;
+			zoom += 0.1;
 			if (zoom >= 2) {
 				zoom = 2;
 			}
 		}
 		if (xx::engine.Pressed(xx::KbdKeys::X)) {
-			zoom -= 0.02;
+			zoom -= 0.1;
 			if (zoom <= 0.3) {
 				zoom = 0.3;
 			}
 		}
-
+		if (xx::engine.Pressed(xx::KbdKeys::A)) {
+			if (line) {
+				auto xy = (xx::engine.mousePosition - offset) / zoom;
+				auto& p = line->points.emplace_back();
+				p.x = xy.x;
+				p.y = xy.y;
+			}
+		}
+		if (xx::engine.Pressed(xx::KbdKeys::D)) {
+			if (line && selectedPointIdex >= 0) {
+				line->points.erase(line->points.begin() + selectedPointIdex);
+				selectedPointIdex = -1;
+			}
+		}
 	}
 
 	meListener.Update();
@@ -519,6 +572,7 @@ int GameLooper::UpdateLogic() {
 	int i = 0;
 	while (meListener.eventId && i != line->points.size()) {
 		dc.point = &line->points[i];
+		dc.idx = i;
 		meListener.Dispatch(&dc);
 		++i;
 	}
@@ -545,10 +599,11 @@ int GameLooper::UpdateLogic() {
 
 	// draw points
 	cps.clear();
-	for (auto& p : line->points) {
+	for (int i = 0, e = line->points.size(); i < e; ++i) {
+		auto& p = line->points[i];
 		xx::XY pos{ (float)p.x, (float)p.y };
 		cps.emplace_back(pos, (float)p.tension / 100.f, (int32_t)p.numSegments);
-		lsPoint.SetPosition(pos * zoom + offset).SetColor(&p == selectedPoint ? xx::RGBA8{ 255,0,0,255 } : xx::RGBA8{ 0,255,255,255 }).Draw();
+		lsPoint.SetPosition(pos * zoom + offset).SetColor(i == selectedPointIdex ? xx::RGBA8{ 255,0,0,255 } : xx::RGBA8{ 0,255,255,255 }).Draw();
 	}
 	if (line->points.size() < 2) return 0;
 	mp.Clear();
@@ -573,7 +628,7 @@ int GameLooper::UpdateLogic() {
 		.Draw()
 		.SetAnchor({ 0,1 })
 		.SetPosition(xx::engine.ninePoints[7].MakeAdd(leftPanelWidth + margin * 2, -margin))
-		.SetText(fnt, "Z/X: Zooom in/out"sv)
+		.SetText(fnt, "Z/X: Zooom in/out  A: add point  MB1: select & drag  D: remove selected point"sv)
 		.Draw();
 	return 0;
 }
@@ -583,7 +638,7 @@ void GameLooper::SetLine(MovePathStore::Line* const& line_) {
 	line = line_;
 	if (!line) return;
 	changeLineName = line->name;
-	selectedPoint = {};
+	selectedPointIdex = -1;
 }
 
 
@@ -592,7 +647,7 @@ bool DragableCircle::HandleMouseDown(DragableCircleMouseEventListener& L) {
 	auto dy = looper->offset.y + point->y * looper->zoom - L.downPos.y;
 	if (dx * dx + dy * dy < GameLooper::pointRadius * GameLooper::pointRadius) {
 		pos = xx::XY{ (float)point->x, (float)point->y };
-		looper->selectedPoint = point;
+		looper->selectedPointIdex = idx;
 		return true;
 	}
 	return false;

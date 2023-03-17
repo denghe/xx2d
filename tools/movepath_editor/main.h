@@ -5,7 +5,7 @@
 // data store file json structs
 namespace MovePathStore {
 	struct Point {
-		int x{}, y{}, tension{ 30 }, numSegments{ 100 };
+		int x{}, y{}, tension{ 20 }, numSegments{ 100 };
 	};
 	struct Line {
 		std::string name;
@@ -29,19 +29,20 @@ struct DragableCircle {
 	GameLooper* looper{};
 	MovePathStore::Point* point{};
 	xx::XY pos{};
+	int idx{};
 };
 
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fnt;
 	xx::FpsViewer fpsViewer;
 
-	std::optional<std::string> err;
+	std::optional<std::string> msg;
 	bool exporting{};
 	std::string exportFileName;
 
 	::MovePathStore::Data data;
 	std::string fileName, newLineName, changeLineName;
-	MovePathStore::Point* selectedPoint{};
+	int selectedPointIdex{ -1 };
 	xx::LineStrip lsPoint;
 	xx::MovePath mp;
 	std::vector<xx::CurvePoint> cps;
@@ -56,7 +57,7 @@ struct GameLooper : xx::GameLooperBase {
 	DragableCircle dc;
 
 	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, leftCmdPanelHeight1{ 80 }, leftCmdPanelHeight2{ 120 }, pointRadius{10.f};
-	inline static const xx::XY errPanelSize{ 400, 300 }, offset{ (leftPanelWidth + margin) / 2, 0 };
+	inline static const xx::XY errPanelSize{ 1200, 200 }, offset{ (leftPanelWidth + margin) / 2, 0 };
 	inline static const xx::XY exportPanelSize{ 1200, 200 };
 
 	inline static const ImVec4 normalColor{ 0, 0, 0, 1.0f };
