@@ -38,8 +38,17 @@ struct GameLooper : xx::GameLooperBase {
 	std::optional<std::string> err;
 	::MovePathStore::Data data;
 	std::string fileName, newLineName, changeLineName;
+	MovePathStore::Point* selectedPoint{};
+	xx::LineStrip lsPoint;
+	xx::MovePath mp;
+	std::vector<xx::CurvePoint> cps;
+	MovePathStore::Line* line{}, *copyLine{};
+	double zoom{ 0.3 }, timePool{};
 
-	inline static const float leftPanelWidth{ 400 }, margin{ 10 }, leftCmdPanelHeight{ 80 }, pointRadius{10.f};
+	DragableCircleMouseEventListener meListener;
+	DragableCircle dc;
+
+	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, leftCmdPanelHeight{ 80 }, pointRadius{10.f};
 	inline static const xx::XY errPanelSize{ 400, 300 }, offset{ (leftPanelWidth + margin) / 2, 0 };
 
 	inline static const ImVec4 normalColor{ 0, 0, 0, 1.0f };
@@ -58,14 +67,6 @@ struct GameLooper : xx::GameLooperBase {
 	void LoadData();
 	void SaveData();
 
-	xx::LineStrip lsPoint;
-	xx::MovePath mp;
-	std::vector<xx::CurvePoint> cps;
-	MovePathStore::Line* line{};
-	double zoom{ 0.3 }, timePool{};
-
-	DragableCircleMouseEventListener meListener;
-	DragableCircle dc;
 
 	int UpdateLogic();
 	void SetLine(MovePathStore::Line* const& line);

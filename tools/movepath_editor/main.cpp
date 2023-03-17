@@ -123,17 +123,37 @@ void GameLooper::ImGuiDrawWindow_LeftCmd() {
 	});
 
 	if (ImGui::Button("reload all")) {
+		std::string bak;
+		if (line) {
+			bak = line->name;
+		}
 		LoadData();
-		line = {};
+		if (line) {
+			for (auto& l : data.lines) {
+				if (l.name == bak) {
+					line = &l;
+					break;
+				}
+			}
+		}
+		copyLine = {};
 	}
 	ImGui::SameLine({}, 50);
 	if (ImGui::Button("save all")) {
 		SaveData();
 	}
+	if (line) {
+		ImGui::SameLine({}, 50);
+		ImGui::PushStyleColor(ImGuiCol_Button, copyLine ? pressColor : normalColor);
+		if (ImGui::Button( "copy")) {
+			copyLine = line;
+		}
+		ImGui::PopStyleColor(1);
+	}
 
 	ImGui::Text("%s", "name:");
 	ImGui::SameLine();
-	ImGui::SetNextItemWidth(200);
+	ImGui::SetNextItemWidth(150);
 	ImGui::InputText("##newLineName", &newLineName);
 	ImGui::SameLine();
 	if (ImGui::Button("create")) {
@@ -150,6 +170,15 @@ void GameLooper::ImGuiDrawWindow_LeftCmd() {
 		}
 		data.lines.emplace_back().name = newLineName;
 	}
+	if (copyLine && line && line != copyLine && line->points.empty()) {
+		ImGui::SameLine({}, 50);
+		ImGui::PushStyleColor(ImGuiCol_Button, pressColor);
+		if (ImGui::Button("paste")) {
+			line->points.insert(line->points.begin(), copyLine->points.begin(), copyLine->points.end());
+		}
+		ImGui::PopStyleColor(1);
+	}
+
 }
 
 void GameLooper::ImGuiDrawWindow_LeftTop() {
@@ -165,7 +194,9 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
 
-	if (ImGui::BeginTable("linesstable", 2, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
+	constexpr int numCols = 3;
+	if (ImGui::BeginTable("linesstable", numCols, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
+		ImGui::TableSetupColumn("select", ImGuiTableColumnFlags_WidthFixed);
 		ImGui::TableSetupColumn("line name", ImGuiTableColumnFlags_WidthStretch);
 		ImGui::TableSetupColumn("delete", ImGuiTableColumnFlags_WidthFixed, 32);
 		ImGui::TableHeadersRow();
@@ -175,19 +206,27 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 
 			ImGui::TableNextRow();
 
-			ImGui::TableSetColumnIndex(0);
-			ImGui::PushID(rowId * 2 + 0);
-			ImGui::SetNextItemWidth(-FLT_MIN);
+			int n = 0;
+
+			ImGui::TableSetColumnIndex(n);
+			ImGui::PushID(rowId * numCols + n);
 			ImGui::PushStyleColor(ImGuiCol_Button, &p == line ? pressColor : normalColor);
 			auto sg = xx::MakeScopeGuard([] { ImGui::PopStyleColor(1); });
-			if (ImGui::Button(p.name.c_str())) {
+			if (ImGui::Button("==>", { 60, 30 })) {
 				SetLine(&p);
-				changeLineName = p.name;
 			}
 			ImGui::PopID();
 
-			ImGui::TableSetColumnIndex(1);
-			ImGui::PushID(rowId * 5 + 1);
+			++n;
+			ImGui::TableSetColumnIndex(n);
+			ImGui::PushID(rowId * numCols + n);
+			ImGui::SetNextItemWidth(-FLT_MIN);
+			ImGui::Text(p.name.c_str());
+			ImGui::PopID();
+
+			++n;
+			ImGui::TableSetColumnIndex(n);
+			ImGui::PushID(rowId * numCols + n);
 			if (ImGui::Button("X", { 30, 30 })) {
 				removeRowId = rowId;
 			}
@@ -201,6 +240,9 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 			auto iter = data.lines.begin() + removeRowId;
 			if (line && &(*iter) == line) {
 				line = {};
+			}
+			if (copyLine && &(*iter) == copyLine) {
+				copyLine = {};
 			}
 			data.lines.erase(iter);
 		}
@@ -247,16 +289,19 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 
 
 		ImGui::Checkbox("loop", &line->isLoop);
-		ImGui::SameLine({}, 120);
+		ImGui::SameLine({}, 200);
 		if (ImGui::Button("new point")) {
 			line->points.emplace_back();
+			selectedPoint = {};
 		}
 
+		constexpr int numCols = 7;
+		if (ImGui::BeginTable("pointstable", numCols, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
 
-		if (ImGui::BeginTable("pointstable", 5, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
-
-			ImGui::TableSetupColumn("x", ImGuiTableColumnFlags_WidthFixed, 85);
-			ImGui::TableSetupColumn("y", ImGuiTableColumnFlags_WidthFixed, 85);
+			ImGui::TableSetupColumn("select", ImGuiTableColumnFlags_WidthFixed, 32);
+			ImGui::TableSetupColumn("insert", ImGuiTableColumnFlags_WidthFixed, 32);
+			ImGui::TableSetupColumn("x", ImGuiTableColumnFlags_WidthFixed, 80);
+			ImGui::TableSetupColumn("y", ImGuiTableColumnFlags_WidthFixed, 80);
 			ImGui::TableSetupColumn("tension", ImGuiTableColumnFlags_WidthFixed, 70);
 			ImGui::TableSetupColumn("numSegments", ImGuiTableColumnFlags_WidthFixed, 70);
 			ImGui::TableSetupColumn("delete", ImGuiTableColumnFlags_WidthFixed, 32);
@@ -267,35 +312,60 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 
 				ImGui::TableNextRow();
 
-				ImGui::TableSetColumnIndex(0);
-				ImGui::PushID(rowId * 5 + 0);
+				int n = 0;
+				ImGui::TableSetColumnIndex(n);
+				ImGui::PushID(rowId * numCols + n);
+				if (ImGui::Button(">", { 30, 30 })) {
+					selectedPoint = &p;
+				}
+				ImGui::PopID();
+
+				++n;
+				ImGui::TableSetColumnIndex(n);
+				ImGui::PushID(rowId * numCols + n);
+				if (ImGui::Button("+", { 30, 30 })) {
+					line->points.insert(line->points.begin() + rowId, MovePathStore::Point{});
+					selectedPoint = {};
+				}
+				ImGui::PopID();
+
+				++n;
+				ImGui::TableSetColumnIndex(n);
+				ImGui::PushID(rowId * numCols + n);
 				ImGui::SetNextItemWidth(-FLT_MIN);
 				ImGui::InputInt("##", &p.x, 0, 0);
 				ImGui::PopID();
 
-				ImGui::TableSetColumnIndex(1);
-				ImGui::PushID(rowId * 5 + 1);
+				++n;
+				ImGui::TableSetColumnIndex(n);
+				ImGui::PushID(rowId * numCols + n);
 				ImGui::SetNextItemWidth(-FLT_MIN);
 				ImGui::InputInt("##", &p.y, 0, 0);
 				ImGui::PopID();
 
-				ImGui::TableSetColumnIndex(2);
-				ImGui::PushID(rowId * 5 + 2);
+				++n;
+				ImGui::TableSetColumnIndex(n);
+				ImGui::PushID(rowId * numCols + n);
 				ImGui::SetNextItemWidth(-FLT_MIN);
 				ImGui::InputInt("##", &p.tension, 0.0f, 0.0f);
 				ImGui::PopID();
 
-				ImGui::TableSetColumnIndex(3);
-				ImGui::PushID(rowId * 5 + 3);
+				++n;
+				ImGui::TableSetColumnIndex(n);
+				ImGui::PushID(rowId * numCols + n);
 				ImGui::SetNextItemWidth(-FLT_MIN);
 				ImGui::InputInt("##", &p.numSegments, 0, 0);
 				ImGui::PopID();
 
-				ImGui::TableSetColumnIndex(4);
-				ImGui::PushID(rowId * 5 + 4);
+				++n;
+				ImGui::TableSetColumnIndex(n);
+				ImGui::PushID(rowId * numCols + n);
+				ImGui::PushStyleColor(ImGuiCol_Button, selectedPoint == &p ? pressColor : normalColor);
 				if (ImGui::Button("X", { 30, 30 })) {
 					removeRowId = rowId;
+					selectedPoint = {};
 				}
+				ImGui::PopStyleColor(1);
 				ImGui::PopID();
 
 				++rowId;
@@ -372,7 +442,7 @@ int GameLooper::UpdateLogic() {
 	for (auto& p : line->points) {
 		xx::XY pos{ (float)p.x, (float)p.y };
 		cps.emplace_back(pos, (float)p.tension / 100.f, (int32_t)p.numSegments);
-		lsPoint.SetPosition(pos * zoom + offset).SetColor({ 255,255,0,255 }).Draw();
+		lsPoint.SetPosition(pos * zoom + offset).SetColor(&p == selectedPoint ? xx::RGBA8{ 255,0,0,255 } : xx::RGBA8{ 0,255,255,255 }).Draw();
 	}
 	if (line->points.size() < 2) return 0;
 	mp.Clear();
@@ -397,7 +467,7 @@ int GameLooper::UpdateLogic() {
 		.Draw()
 		.SetAnchor({ 0,1 })
 		.SetPosition(xx::engine.ninePoints[7].MakeAdd(leftPanelWidth + margin * 2, -margin))
-		.SetText(fnt, "Z/X: Zooom in/out;  W/S: cursor up/down; C/V: copy/paste; F: clear"sv)
+		.SetText(fnt, "Z/X: Zooom in/out"sv)
 		.Draw();
 	return 0;
 }
@@ -406,6 +476,8 @@ void GameLooper::SetLine(MovePathStore::Line* const& line_) {
 	if (line == line_) return;
 	line = line_;
 	if (!line) return;
+	changeLineName = line->name;
+	selectedPoint = {};
 	// todo: clear points edit state ?
 }
 
@@ -415,6 +487,7 @@ bool DragableCircle::HandleMouseDown(DragableCircleMouseEventListener& L) {
 	auto dy = looper->offset.y + point->y * looper->zoom - L.downPos.y;
 	if (dx * dx + dy * dy < GameLooper::pointRadius * GameLooper::pointRadius) {
 		pos = xx::XY{ (float)point->x, (float)point->y };
+		looper->selectedPoint = point;
 		return true;
 	}
 	return false;
@@ -426,4 +499,5 @@ int DragableCircle::HandleMouseMove(DragableCircleMouseEventListener& L) {
 	return 0;
 }
 void DragableCircle::HandleMouseUp(DragableCircleMouseEventListener& L) {
+	point = {};
 }
