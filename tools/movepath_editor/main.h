@@ -45,10 +45,14 @@ struct GameLooper : xx::GameLooperBase {
 	MovePathStore::Line* line{}, *copyLine{};
 	double zoom{ 0.3 }, timePool{};
 
+	// affine trans
+	xx::XY afPos{}, afScale{ 1, 1 };
+	float afAngle{};
+
 	DragableCircleMouseEventListener meListener;
 	DragableCircle dc;
 
-	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, leftCmdPanelHeight{ 80 }, pointRadius{10.f};
+	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, leftCmdPanelHeight1{ 80 }, leftCmdPanelHeight2{ 120 }, pointRadius{10.f};
 	inline static const xx::XY errPanelSize{ 400, 300 }, offset{ (leftPanelWidth + margin) / 2, 0 };
 
 	inline static const ImVec4 normalColor{ 0, 0, 0, 1.0f };
@@ -60,8 +64,9 @@ struct GameLooper : xx::GameLooperBase {
 
 	void ImGuiUpdate();
 	void ImGuiDrawWindow_Error();
-	void ImGuiDrawWindow_LeftCmd();
+	void ImGuiDrawWindow_LeftTop0();
 	void ImGuiDrawWindow_LeftTop();
+	void ImGuiDrawWindow_LeftBottom0();
 	void ImGuiDrawWindow_LeftBottom();
 
 	void LoadData();

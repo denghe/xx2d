@@ -63,25 +63,23 @@ void GameLooper::SaveData() {
 }
 
 int GameLooper::Update() {
-	if (int r = UpdateLogic()) return r;
+	if (!err.has_value()) {
+		if (int r = UpdateLogic()) return r;
+	}
 	fpsViewer.Update();
 	return 0;
 }
 
 void GameLooper::ImGuiUpdate() {
 
-	ImGui::PushStyleColor(ImGuiCol_Button, normalColor);
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, pressColor);
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, releaseColor);
-	auto sgStyleColor = xx::MakeScopeGuard([] { ImGui::PopStyleColor(3); });
-
 	if (err.has_value()) {
 		ImGuiDrawWindow_Error();
 		return;
 	}
 
-	ImGuiDrawWindow_LeftCmd();
+	ImGuiDrawWindow_LeftTop0();
 	ImGuiDrawWindow_LeftTop();
+	ImGuiDrawWindow_LeftBottom0();
 	ImGuiDrawWindow_LeftBottom();
 	// ...
 }
@@ -93,7 +91,6 @@ void GameLooper::ImGuiDrawWindow_Error() {
 	ImGui::SetNextWindowPos(p);
 	ImGui::SetNextWindowSize(ImVec2(errPanelSize.x, errPanelSize.y));
 	ImGui::Begin("Error", nullptr, ImGuiWindowFlags_NoMove |
-		//ImGuiWindowFlags_NoBringToFrontOnFocus |
 		//ImGuiWindowFlags_NoInputs |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
@@ -104,14 +101,14 @@ void GameLooper::ImGuiDrawWindow_Error() {
 	ImGui::End();
 }
 
-void GameLooper::ImGuiDrawWindow_LeftCmd() {
+void GameLooper::ImGuiDrawWindow_LeftTop0() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
 	p.x += margin;
 	p.y += margin;
 	ImGui::SetNextWindowPos(p);
-	ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, leftCmdPanelHeight));
+	ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, leftCmdPanelHeight1));
 
-	ImGui::Begin("cmds", nullptr, ImGuiWindowFlags_NoMove |
+	ImGui::Begin("linescmds", nullptr, ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoBringToFrontOnFocus |
@@ -184,19 +181,18 @@ void GameLooper::ImGuiDrawWindow_LeftCmd() {
 void GameLooper::ImGuiDrawWindow_LeftTop() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
 	p.x += margin;
-	p.y += margin + leftCmdPanelHeight;
-	auto h = (xx::engine.h - margin * 3 - leftCmdPanelHeight) / 2;
+	p.y += margin + leftCmdPanelHeight1;
+	auto h = (xx::engine.h - margin * 3 - (leftCmdPanelHeight1 + leftCmdPanelHeight2)) / 2;
 	ImGui::SetNextWindowPos(p);
 	ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, h));
 	ImGui::Begin("lines", nullptr, ImGuiWindowFlags_NoMove |
-		//ImGuiWindowFlags_NoBringToFrontOnFocus |
 		ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
 
 	constexpr int numCols = 3;
 	if (ImGui::BeginTable("linesstable", numCols, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
-		ImGui::TableSetupColumn("select", ImGuiTableColumnFlags_WidthFixed);
+		ImGui::TableSetupColumn("select", ImGuiTableColumnFlags_WidthFixed, 60);
 		ImGui::TableSetupColumn("line name", ImGuiTableColumnFlags_WidthStretch);
 		ImGui::TableSetupColumn("delete", ImGuiTableColumnFlags_WidthFixed, 32);
 		ImGui::TableHeadersRow();
@@ -212,7 +208,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 			ImGui::PushID(rowId * numCols + n);
 			ImGui::PushStyleColor(ImGuiCol_Button, &p == line ? pressColor : normalColor);
 			auto sg = xx::MakeScopeGuard([] { ImGui::PopStyleColor(1); });
-			if (ImGui::Button("==>", { 60, 30 })) {
+			if (ImGui::Button("==>")) {
 				SetLine(&p);
 			}
 			ImGui::PopID();
@@ -227,7 +223,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 			++n;
 			ImGui::TableSetColumnIndex(n);
 			ImGui::PushID(rowId * numCols + n);
-			if (ImGui::Button("X", { 30, 30 })) {
+			if (ImGui::Button("X")) {
 				removeRowId = rowId;
 			}
 			ImGui::PopID();
@@ -251,22 +247,22 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 	ImGui::End();
 }
 
-void GameLooper::ImGuiDrawWindow_LeftBottom() {
+void GameLooper::ImGuiDrawWindow_LeftBottom0() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
 	p.x += margin;
-	auto h = (xx::engine.h - margin * 3 - leftCmdPanelHeight) / 2;
-	p.y += margin * 2 + leftCmdPanelHeight + h;
+	auto h = (xx::engine.h - margin * 3 - (leftCmdPanelHeight1 + leftCmdPanelHeight2)) / 2;
+	p.y += margin * 2 + leftCmdPanelHeight1 + h;
 	ImGui::SetNextWindowPos(p);
-	ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, h));
-	ImGui::Begin("points", nullptr, ImGuiWindowFlags_NoMove |
-		//ImGuiWindowFlags_NoBringToFrontOnFocus |
+	ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, leftCmdPanelHeight2));
+	ImGui::Begin("pointscmds", nullptr, ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
 
 	if (line) {
 
-		ImGui::SetNextItemWidth(200);
+		ImGui::SetNextItemWidth(296);
 		ImGui::InputText("##newLineName2", &changeLineName);
 		ImGui::SameLine();
 		if (ImGui::Button("change name")) {
@@ -289,11 +285,72 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 
 
 		ImGui::Checkbox("loop", &line->isLoop);
-		ImGui::SameLine({}, 200);
+		ImGui::SameLine({}, 28);
 		if (ImGui::Button("new point")) {
 			line->points.emplace_back();
 			selectedPoint = {};
 		}
+		ImGui::SameLine({}, 28);
+		if (ImGui::Button("flipX")) {
+			for (auto& p : line->points) {
+				p.x = -p.x;
+			}
+		}
+		ImGui::SameLine({}, 28);
+		if (ImGui::Button("flipY")) {
+			for (auto& p : line->points) {
+				p.y = -p.y;
+			}
+		}
+
+		// todo: rotate? move all?
+		ImGui::Text("p");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(65);
+		ImGui::InputFloat("##afPosx", &afPos.x);
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(65);
+		ImGui::InputFloat("##afPosy", &afPos.y);
+		ImGui::SameLine();
+		ImGui::Text("s");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(65);
+		ImGui::InputFloat("##afScalex", &afScale.x);
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(65);
+		ImGui::InputFloat("##afScaley", &afScale.y);
+		ImGui::SameLine();
+		ImGui::Text("r");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(65);
+		ImGui::InputFloat("##afAngle", &afAngle);
+		ImGui::SameLine();
+		if (ImGui::Button("go")) {
+			auto at = xx::AffineTransform::MakePosScaleRadians(afPos, afScale, afAngle * M_PI / 360.f);
+			for (auto& p : line->points) {
+				auto pos = at.Apply(xx::XY{ (float)p.x, (float)p.y });
+				p.x = pos.x;
+				p.y = pos.y;
+			}
+		}
+	}
+
+	ImGui::End();
+}
+
+void GameLooper::ImGuiDrawWindow_LeftBottom() {
+	ImVec2 p = ImGui::GetMainViewport()->Pos;
+	p.x += margin;
+	auto h = (xx::engine.h - margin * 3 - (leftCmdPanelHeight1 + leftCmdPanelHeight2)) / 2;
+	p.y += margin * 2 + leftCmdPanelHeight1 + leftCmdPanelHeight2 + h;
+	ImGui::SetNextWindowPos(p);
+	ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, h));
+	ImGui::Begin("points", nullptr, ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoResize);
+
+	if (line) {
 
 		constexpr int numCols = 7;
 		if (ImGui::BeginTable("pointstable", numCols, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
@@ -311,11 +368,12 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 			for (auto& p : line->points) {
 
 				ImGui::TableNextRow();
+				ImGui::PushStyleColor(ImGuiCol_Button, selectedPoint == &p ? pressColor : normalColor);
 
 				int n = 0;
 				ImGui::TableSetColumnIndex(n);
 				ImGui::PushID(rowId * numCols + n);
-				if (ImGui::Button(">", { 30, 30 })) {
+				if (ImGui::Button(">")) {
 					selectedPoint = &p;
 				}
 				ImGui::PopID();
@@ -323,7 +381,7 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 				++n;
 				ImGui::TableSetColumnIndex(n);
 				ImGui::PushID(rowId * numCols + n);
-				if (ImGui::Button("+", { 30, 30 })) {
+				if (ImGui::Button("+")) {
 					line->points.insert(line->points.begin() + rowId, MovePathStore::Point{});
 					selectedPoint = {};
 				}
@@ -360,14 +418,13 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 				++n;
 				ImGui::TableSetColumnIndex(n);
 				ImGui::PushID(rowId * numCols + n);
-				ImGui::PushStyleColor(ImGuiCol_Button, selectedPoint == &p ? pressColor : normalColor);
-				if (ImGui::Button("X", { 30, 30 })) {
+				if (ImGui::Button("X")) {
 					removeRowId = rowId;
 					selectedPoint = {};
 				}
-				ImGui::PopStyleColor(1);
 				ImGui::PopID();
 
+				ImGui::PopStyleColor(1);
 				++rowId;
 			}
 			ImGui::EndTable();
@@ -405,7 +462,6 @@ int GameLooper::UpdateLogic() {
 			}
 		}
 
-		// todo: more key
 	}
 
 	meListener.Update();
@@ -478,7 +534,6 @@ void GameLooper::SetLine(MovePathStore::Line* const& line_) {
 	if (!line) return;
 	changeLineName = line->name;
 	selectedPoint = {};
-	// todo: clear points edit state ?
 }
 
 
