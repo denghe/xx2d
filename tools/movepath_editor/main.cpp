@@ -46,16 +46,15 @@ void GameLooper::Init() {
 	meListener.Init(xx::Mbtns::Left);
 
 	LoadData();
+	MakeNewLineName();
 }
 
 void GameLooper::LoadData() {
 	// load store data
-	auto [d, p] = xx::engine.ReadAllBytes("res/movepath.json"sv);
+	auto&& [d, p] = xx::engine.ReadAllBytes("res/movepath.json"sv);
 	fileName = std::move(p);
 	data = {};
 	ajson::load_from_buff(data, (char*)d.buf, d.len);
-	// make fixed memory for easy access
-	data.lines.reserve(100000);
 }
 
 void GameLooper::SaveData() {
@@ -88,7 +87,7 @@ void GameLooper::ExportData() {
 	// format: lines size + Line{ name size + name content + 1 byte isloop + points size + Point{ x,y,t,n }... }...
 	xx::Data d;
 	d.Write(data);
-	auto r = xx::WriteAllBytes(exportFileName, d);
+	auto&& r = xx::WriteAllBytes(exportFileName, d);
 	if (r) {
 		msg = xx::ToString("WriteAllBytes to file: ", exportFileName, " error! r = ", r);
 	} else {
@@ -198,71 +197,43 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
 	
-	auto sgBegin = xx::MakeSimpleScopeGuard([] {
+	auto&& sgBegin = xx::MakeSimpleScopeGuard([] {
 		ImGui::End(); 
 	});
 
 	if (ImGui::Button("reload")) {
-		std::string bak;
-		if (line) {
-			bak = line->name;
-			line = {};
-		}
 		LoadData();
-		if (bak.size()) {
-			for (auto& l : data.lines) {
-				if (l.name == bak) {
-					line = &l;
-					break;
-				}
-			}
+		if (GetLineIndexByName(selectedLineName) == -1) {
+			selectedLineName.clear();
 		}
-		copyLine = {};
 	}
 	ImGui::SameLine({}, 40);
 	if (ImGui::Button("save")) {
 		SaveData();
 	}
-	ImGui::SameLine({}, 10);
+	ImGui::SameLine({}, 38);
 	if (ImGui::Button("export")) {
 		exporting = true;
 	}
-	if (line) {
-		ImGui::SameLine({}, 13);
-		ImGui::PushStyleColor(ImGuiCol_Button, copyLine ? pressColor : normalColor);
-		if (ImGui::Button( "copy")) {
-			copyLine = line;
+	if (selectedLineName.size()) {
+		ImGui::SameLine({}, 60);
+		if (ImGui::Button( "clone")) {
+			if (CreateNewLine()) {
+				auto&& l = GetSelectedLine();
+				auto&& t = data.lines.back();
+				t.isLoop = l->isLoop;
+				t.points = l->points;
+			}
 		}
-		ImGui::PopStyleColor(1);
-	}
-	if (copyLine && line && line != copyLine && line->points.empty()) {
-		ImGui::SameLine({}, 10);
-		ImGui::PushStyleColor(ImGuiCol_Button, pressColor);
-		if (ImGui::Button("paste")) {
-			line->isLoop = copyLine->isLoop;
-			line->points.insert(line->points.begin(), copyLine->points.begin(), copyLine->points.end());
-		}
-		ImGui::PopStyleColor(1);
 	}
 
 	ImGui::Text("%s", "name:");
 	ImGui::SameLine();
-	ImGui::SetNextItemWidth(285);
+	ImGui::SetNextItemWidth(286);
 	ImGui::InputText("##newLineName", &newLineName);
 	ImGui::SameLine();
 	if (ImGui::Button("create")) {
-		if (newLineName.empty()) {
-			msg = "line name can't be null";
-			return;
-		}
-		bool found = false;
-		for (auto& l : data.lines) {
-			if (l.name == newLineName) {
-				msg = "line name already exists";
-				return;
-			}
-		}
-		data.lines.emplace_back().name = newLineName;
+		CreateNewLine();
 	}
 
 }
@@ -271,7 +242,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
 	p.x += margin;
 	p.y += margin + leftCmdPanelHeight1;
-	auto h = (xx::engine.h - margin * 3 - (leftCmdPanelHeight1 + leftCmdPanelHeight2)) / 2;
+	auto&& h = (xx::engine.h - margin * 3 - (leftCmdPanelHeight1 + leftCmdPanelHeight2)) / 2;
 	ImGui::SetNextWindowPos(p);
 	ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, h));
 	ImGui::Begin("lines", nullptr, ImGuiWindowFlags_NoMove |
@@ -295,10 +266,10 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 
 			ImGui::TableSetColumnIndex(n);
 			ImGui::PushID(rowId * numCols + n);
-			ImGui::PushStyleColor(ImGuiCol_Button, &p == line ? pressColor : normalColor);
-			auto sg = xx::MakeScopeGuard([] { ImGui::PopStyleColor(1); });
+			ImGui::PushStyleColor(ImGuiCol_Button, p.name == selectedLineName ? pressColor : normalColor);
+			auto&& sg = xx::MakeScopeGuard([] { ImGui::PopStyleColor(1); });
 			if (ImGui::Button("==>")) {
-				SetLine(&p);
+				SelectLine(p.name);
 			}
 			ImGui::PopID();
 
@@ -322,12 +293,9 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 		ImGui::EndTable();
 
 		if (removeRowId >= 0) {
-			auto iter = data.lines.begin() + removeRowId;
-			if (line && &(*iter) == line) {
-				line = {};
-			}
-			if (copyLine && &(*iter) == copyLine) {
-				copyLine = {};
+			auto&& iter = data.lines.begin() + removeRowId;
+			if (iter->name == selectedLineName) {
+				selectedLineName.clear();
 			}
 			data.lines.erase(iter);
 		}
@@ -339,7 +307,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 void GameLooper::ImGuiDrawWindow_LeftBottom0() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
 	p.x += margin;
-	auto h = (xx::engine.h - margin * 3 - (leftCmdPanelHeight1 + leftCmdPanelHeight2)) / 2;
+	auto&& h = (xx::engine.h - margin * 3 - (leftCmdPanelHeight1 + leftCmdPanelHeight2)) / 2;
 	p.y += margin * 2 + leftCmdPanelHeight1 + h;
 	ImGui::SetNextWindowPos(p);
 	ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, leftCmdPanelHeight2));
@@ -349,7 +317,8 @@ void GameLooper::ImGuiDrawWindow_LeftBottom0() {
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
 
-	if (line) {
+	if (selectedLineName.size()) {
+		auto&& line = GetLineByName(selectedLineName);
 
 		ImGui::SetNextItemWidth(296);
 		ImGui::InputText("##newLineName2", &changeLineName);
@@ -391,32 +360,31 @@ void GameLooper::ImGuiDrawWindow_LeftBottom0() {
 			}
 		}
 
-		// todo: rotate? move all?
 		ImGui::Text("p");
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(65);
-		ImGui::InputFloat("##afPosx", &afPos.x);
+		ImGui::InputFloat("##afPosx", &afPos.x, {}, {}, "%.0f", ImGuiInputTextFlags_CharsDecimal);
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(65);
-		ImGui::InputFloat("##afPosy", &afPos.y);
+		ImGui::InputFloat("##afPosy", &afPos.y, {}, {}, "%.0f", ImGuiInputTextFlags_CharsDecimal);
 		ImGui::SameLine();
 		ImGui::Text("s");
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(65);
-		ImGui::InputFloat("##afScalex", &afScale.x);
+		ImGui::InputFloat("##afScalex", &afScale.x, {}, {}, "%.2f", ImGuiInputTextFlags_CharsDecimal);
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(65);
-		ImGui::InputFloat("##afScaley", &afScale.y);
+		ImGui::InputFloat("##afScaley", &afScale.y, {}, {}, "%.2f", ImGuiInputTextFlags_CharsDecimal);
 		ImGui::SameLine();
 		ImGui::Text("r");
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(65);
-		ImGui::InputFloat("##afAngle", &afAngle);
+		ImGui::InputFloat("##afAngle", &afAngle, {}, {}, "%.2f", ImGuiInputTextFlags_CharsDecimal);
 		ImGui::SameLine();
 		if (ImGui::Button("go")) {
-			auto at = xx::AffineTransform::MakePosScaleRadians(afPos, afScale, afAngle * M_PI / 360.f);
+			auto&& at = xx::AffineTransform::MakePosScaleRadians(afPos, afScale, afAngle * M_PI / 360.f);
 			for (auto& p : line->points) {
-				auto pos = at.Apply(xx::XY{ (float)p.x, (float)p.y });
+				auto&& pos = at.Apply(xx::XY{ (float)p.x, (float)p.y });
 				p.x = pos.x;
 				p.y = pos.y;
 			}
@@ -429,7 +397,7 @@ void GameLooper::ImGuiDrawWindow_LeftBottom0() {
 void GameLooper::ImGuiDrawWindow_LeftBottom() {
 	ImVec2 p = ImGui::GetMainViewport()->Pos;
 	p.x += margin;
-	auto h = (xx::engine.h - margin * 3 - (leftCmdPanelHeight1 + leftCmdPanelHeight2)) / 2;
+	auto&& h = (xx::engine.h - margin * 3 - (leftCmdPanelHeight1 + leftCmdPanelHeight2)) / 2;
 	p.y += margin * 2 + leftCmdPanelHeight1 + leftCmdPanelHeight2 + h;
 	ImGui::SetNextWindowPos(p);
 	ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, h));
@@ -438,7 +406,8 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
 
-	if (line) {
+	if (selectedLineName.size()) {
+		auto&& line = GetLineByName(selectedLineName);
 
 		constexpr int numCols = 7;
 		if (ImGui::BeginTable("pointstable", numCols, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
@@ -480,28 +449,28 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 				ImGui::TableSetColumnIndex(n);
 				ImGui::PushID(rowId * numCols + n);
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				ImGui::InputInt("##", &p.x, 0, 0);
+				ImGui::InputInt("##", &p.x, 0, 0, ImGuiInputTextFlags_CharsDecimal);
 				ImGui::PopID();
 
 				++n;
 				ImGui::TableSetColumnIndex(n);
 				ImGui::PushID(rowId * numCols + n);
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				ImGui::InputInt("##", &p.y, 0, 0);
+				ImGui::InputInt("##", &p.y, 0, 0, ImGuiInputTextFlags_CharsDecimal);
 				ImGui::PopID();
 
 				++n;
 				ImGui::TableSetColumnIndex(n);
 				ImGui::PushID(rowId * numCols + n);
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				ImGui::InputInt("##", &p.tension, 0.0f, 0.0f);
+				ImGui::InputInt("##", &p.tension, 0, 0, ImGuiInputTextFlags_CharsDecimal);
 				ImGui::PopID();
 
 				++n;
 				ImGui::TableSetColumnIndex(n);
 				ImGui::PushID(rowId * numCols + n);
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				ImGui::InputInt("##", &p.numSegments, 0, 0);
+				ImGui::InputInt("##", &p.numSegments, 0, 0, ImGuiInputTextFlags_CharsDecimal);
 				ImGui::PopID();
 
 				++n;
@@ -531,41 +500,83 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 
 
 int GameLooper::UpdateLogic() {
-	if (!line) return 0;
 
-	timePool += xx::engine.delta;
-	while (timePool >= 1.f / 10) {
-		timePool -= 1.f / 10;
+	//ImGui::IsItemActive() && ImGui::TempInputIsActive(ImGui::GetActiveID())
+	if (!ImGui::IsAnyItemActive()) {
+		if (xx::engine.Pressed(xx::KbdKeys::W) && KeyboardGCDCheck()) {
 
-		if (xx::engine.mousePosition.x <= -xx::engine.w / 2 + leftPanelWidth + margin) continue;
+			if (selectedLineName.empty()) {
+				if (data.lines.size()) {
+					selectedLineName = data.lines[0].name;
+				}
+			} else {
+				auto&& i = GetSelectedLineIndex();
+				assert(i != -1);
+				if (i > 0) {
+					selectedLineName = data.lines[i - 1].name;
+				}
+			}
+		}
 
-		if (xx::engine.Pressed(xx::KbdKeys::Z)) {
+		if (!ImGui::IsItemActive() && xx::engine.Pressed(xx::KbdKeys::S) && KeyboardGCDCheck()) {
+
+			if (selectedLineName.empty()) {
+				if (data.lines.size()) {
+					selectedLineName = data.lines[0].name;
+				}
+			} else {
+				auto&& i = GetSelectedLineIndex();
+				assert(i != -1);
+				if (i < (int)data.lines.size() - 1) {
+					selectedLineName = data.lines[i + 1].name;
+				}
+			}
+		}
+	}
+
+	auto&& line = GetSelectedLine();
+
+	if (!ImGui::IsAnyItemActive() && xx::engine.mousePosition.x > -xx::engine.w / 2 + leftPanelWidth + margin) {
+
+		if (xx::engine.Pressed(xx::KbdKeys::Z) && KeyboardGCDCheck()) {
 			zoom += 0.1;
 			if (zoom >= 2) {
 				zoom = 2;
 			}
 		}
-		if (xx::engine.Pressed(xx::KbdKeys::X)) {
+
+		if (xx::engine.Pressed(xx::KbdKeys::X) && KeyboardGCDCheck()) {
 			zoom -= 0.1;
 			if (zoom <= 0.3) {
 				zoom = 0.3;
 			}
 		}
-		if (xx::engine.Pressed(xx::KbdKeys::A)) {
+
+		if (xx::engine.Pressed(xx::KbdKeys::A) && KeyboardGCDCheck()) {
 			if (line) {
-				auto xy = (xx::engine.mousePosition - offset) / zoom;
+				auto&& xy = (xx::engine.mousePosition - offset) / zoom;
 				auto& p = line->points.emplace_back();
 				p.x = xy.x;
 				p.y = xy.y;
 			}
 		}
-		if (xx::engine.Pressed(xx::KbdKeys::D)) {
-			if (line && selectedPointIdex >= 0) {
-				line->points.erase(line->points.begin() + selectedPointIdex);
-				selectedPointIdex = -1;
+
+		if (xx::engine.Pressed(xx::KbdKeys::D) && KeyboardGCDCheck()) {
+			if (line) {
+				if (selectedPointIdex >= 0) {
+					line->points.erase(line->points.begin() + selectedPointIdex);
+					selectedPointIdex = -1;
+				} else {
+					line->points.pop_back();
+					if (selectedPointIdex >= line->points.size()) {
+						selectedPointIdex = -1;
+					}
+				}
 			}
 		}
 	}
+
+	if (!line) return 0;
 
 	meListener.Update();
 	dc.looper = this;
@@ -622,29 +633,101 @@ int GameLooper::UpdateLogic() {
 	}
 
 	xx::SimpleLabel lbl;
-	lbl.SetScale({ 0.85, 1 }).SetAnchor({ 0,0 }).SetColor({ 127,127,0,255 })
+	lbl.SetAnchor({ 0,0 }).SetColor({ 127,127,0,255 })
 		.SetPosition(xx::engine.ninePoints[1].MakeAdd(leftPanelWidth + margin * 2, 32 + margin))
 		.SetText(fnt, xx::ToString("zoom = ", zoom, ", points.size() = ", line->points.size()))
 		.Draw()
 		.SetAnchor({ 0,1 })
 		.SetPosition(xx::engine.ninePoints[7].MakeAdd(leftPanelWidth + margin * 2, -margin))
-		.SetText(fnt, "Z/X: Zooom in/out  A: add point  MB1: select & drag  D: remove selected point"sv)
+		.SetText(fnt, "Z/X: Zooom in/out  W/S: select prev/next line  A/D: add/remove selected or last point MB1: select & drag point"sv, 32
+			, xx::engine.w - (leftPanelWidth + margin * 3))
 		.Draw();
 	return 0;
 }
 
-void GameLooper::SetLine(MovePathStore::Line* const& line_) {
-	if (line == line_) return;
-	line = line_;
-	if (!line) return;
-	changeLineName = line->name;
+void GameLooper::SelectLine(std::string_view const& name) {
+	if (selectedLineName == name) return;
+	selectedLineName = name;
+	if (selectedLineName.empty()) return;
+	changeLineName = name;
 	selectedPointIdex = -1;
 }
 
+int GameLooper::GetLineIndexByName(std::string_view const& name) {
+	for (size_t i = 0, e = data.lines.size(); i < e; i++) {
+		if (name == data.lines[i].name) return i;
+	}
+	return -1;
+}
+
+int GameLooper::GetSelectedLineIndex() {
+	return GetLineIndexByName(selectedLineName);
+}
+MovePathStore::Line* GameLooper::GetLineByName(std::string_view const& name) {
+	for (size_t i = 0, e = data.lines.size(); i < e; i++) {
+		if (name == data.lines[i].name) return &data.lines[i];
+	}
+	return {};
+}
+MovePathStore::Line* GameLooper::GetSelectedLine() {
+	return GetLineByName(selectedLineName);
+}
+
+bool GameLooper::CreateNewLine() {
+	if (newLineName.empty()) {
+		msg = "line name can't be null";
+		return false;
+	}
+	bool found = false;
+	for (auto& l : data.lines) {
+		if (l.name == newLineName) {
+			msg = "line name already exists";
+			return false;
+		}
+	}
+	data.lines.emplace_back().name = newLineName;
+	MakeNewLineName();
+	return true;
+}
+
+void GameLooper::MakeNewLineName() {
+	if (data.lines.empty()) {
+		newLineName = "c1";
+	} else {
+		newLineName.clear();
+		int v{};
+
+		auto&& n = data.lines.back().name;
+		int i, e = (int)n.size() - 1;
+		for (i = e; i >= 0; --i) {
+			auto& c = n[i];
+			if (c < '0' || c > '9') break;
+		}
+		if (i == -1) {			// n is number
+			xx::SvToNumber(n, v);
+			xx::Append(newLineName, v + 1);
+		} else if (i == e) {	// suffix has not number
+			newLineName = n + "1";
+		} else {
+			xx::SvToNumber(std::string_view(n.data() + i + 1), v);
+			xx::Append(newLineName, std::string_view(n.data(), i + 1), v + 1);
+		}
+	}
+}
+
+
+int GameLooper::KeyboardGCDCheck() {
+	if (keyboardGCDNowSecs < xx::engine.nowSecs) return SetKeyboardGCD();
+	return 0;
+}
+int GameLooper::SetKeyboardGCD() {
+	keyboardGCDNowSecs = xx::engine.nowSecs + keyboardGCD;
+	return 1;
+}
 
 bool DragableCircle::HandleMouseDown(DragableCircleMouseEventListener& L) {
-	auto dx = looper->offset.x + point->x * looper->zoom - L.downPos.x;
-	auto dy = looper->offset.y + point->y * looper->zoom - L.downPos.y;
+	auto&& dx = looper->offset.x + point->x * looper->zoom - L.downPos.x;
+	auto&& dy = looper->offset.y + point->y * looper->zoom - L.downPos.y;
 	if (dx * dx + dy * dy < GameLooper::pointRadius * GameLooper::pointRadius) {
 		pos = xx::XY{ (float)point->x, (float)point->y };
 		looper->selectedPointIdex = idx;

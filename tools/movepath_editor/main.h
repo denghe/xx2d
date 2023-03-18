@@ -41,13 +41,12 @@ struct GameLooper : xx::GameLooperBase {
 	std::string exportFileName;
 
 	::MovePathStore::Data data;
-	std::string fileName, newLineName, changeLineName;
+	std::string fileName, newLineName, changeLineName, selectedLineName;
 	int selectedPointIdex{ -1 };
 	xx::LineStrip lsPoint;
 	xx::MovePath mp;
 	std::vector<xx::CurvePoint> cps;
-	MovePathStore::Line* line{}, *copyLine{};
-	double zoom{ 0.3 }, timePool{};
+	double zoom{ 0.3 }, keyboardGCD{ 0.1 }, keyboardGCDNowSecs{};
 
 	// affine trans
 	xx::XY afPos{}, afScale{ 1, 1 };
@@ -84,5 +83,14 @@ struct GameLooper : xx::GameLooperBase {
 
 
 	int UpdateLogic();
-	void SetLine(MovePathStore::Line* const& line);
+
+	void SelectLine(std::string_view const& name);
+	int GetLineIndexByName(std::string_view const& name);
+	int GetSelectedLineIndex();
+	MovePathStore::Line* GetLineByName(std::string_view const& name);
+	MovePathStore::Line* GetSelectedLine();
+	bool CreateNewLine();
+	void MakeNewLineName();
+	int KeyboardGCDCheck();
+	int SetKeyboardGCD();
 };
