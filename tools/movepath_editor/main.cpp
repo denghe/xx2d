@@ -2,6 +2,7 @@
 #include "main.h"
 #include "imgui_stdlib.h"
 
+// todo: line icon ( need runtime generate texture ? )
 
 int main() {
 	return GameLooper{}.Run("xx2d'ss movepath editor");
@@ -200,7 +201,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 
 	if (ImGui::Button("reload")) {
 		LoadData();
-		if (GetLineIndexByName(selectedLineName) == -1) {
+		if (GetSelectedLineIndex() == -1) {
 			selectedLineName.clear();
 			ClearEditState();
 		}
@@ -339,7 +340,7 @@ void GameLooper::ImGuiDrawWindow_LeftBottom0() {
 				}
 			}
 			if (!found) {
-				line->name = changeLineName;
+				selectedLineName = line->name = changeLineName;
 			}
 		}
 
@@ -410,6 +411,7 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 
 	if (selectedLineName.size()) {
 		auto&& line = GetLineByName(selectedLineName);
+		assert(line);
 
 		constexpr int numCols = 7;
 		if (ImGui::BeginTable("pointstable", numCols, {}, ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 7))) {
@@ -508,13 +510,13 @@ int GameLooper::UpdateLogic() {
 		if (xx::engine.Pressed(xx::KbdKeys::W) && KeyboardGCDCheck()) {
 			if (selectedLineName.empty()) {
 				if (data.lines.size()) {
-					selectedLineName = data.lines[0].name;
+					SelectLine(data.lines[0].name);
 				}
 			} else {
 				auto&& i = GetSelectedLineIndex();
 				assert(i != -1);
 				if (i > 0) {
-					selectedLineName = data.lines[i - 1].name;
+					SelectLine(data.lines[i - 1].name);
 				}
 			}
 			ClearEditState();
@@ -523,13 +525,13 @@ int GameLooper::UpdateLogic() {
 		if (xx::engine.Pressed(xx::KbdKeys::S) && KeyboardGCDCheck()) {
 			if (selectedLineName.empty()) {
 				if (data.lines.size()) {
-					selectedLineName = data.lines[0].name;
+					SelectLine(data.lines[0].name);
 				}
 			} else {
 				auto&& i = GetSelectedLineIndex();
 				assert(i != -1);
 				if (i < (int)data.lines.size() - 1) {
-					selectedLineName = data.lines[i + 1].name;
+					SelectLine(data.lines[i + 1].name);
 				}
 			}
 			ClearEditState();
@@ -634,7 +636,7 @@ int GameLooper::UpdateLogic() {
 		auto& p = line->points[i];
 		xx::XY pos{ (float)p.x, (float)p.y };
 		cps.emplace_back(pos, (float)p.tension / 100.f, (int32_t)p.numSegments);
-		lsPoint.SetPosition(pos * zoom + offset).SetColor(i == selectedPointIdex ? xx::RGBA8{ 255,0,0,255 } : xx::RGBA8{ 0,255,255,255 }).Draw();
+		lsPoint.SetPosition(pos * zoom + offset).SetColor(i == selectedPointIdex ? xx::RGBA8{ 255,0,0,255 } : i == 0 ? xx::RGBA8{ 0,255,255,255 } : xx::RGBA8{ 255,255,255,255 }).Draw();
 	}
 	if (line->points.size() < 2) return 0;
 	mp.Clear();

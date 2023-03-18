@@ -46,7 +46,7 @@ struct GameLooper : xx::GameLooperBase {
 	xx::LineStrip lsPoint;
 	xx::MovePath mp;
 	std::vector<xx::CurvePoint> cps;
-	double zoom{ 0.3 }, keyboardGCD{ 0.1 }, keyboardGCDNowSecs{};
+	double zoom{ 0.3 }, keyboardGCD{ 0.2 }, keyboardGCDNowSecs{};
 
 	// affine trans
 	xx::XY afPos{}, afScale{ 1, 1 };
