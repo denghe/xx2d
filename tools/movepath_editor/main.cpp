@@ -575,13 +575,13 @@ int GameLooper::UpdateLogic() {
 		}
 
 		if (xx::engine.Pressed(xx::KbdKeys::D) && KeyboardGCDCheck()) {
-			if (line) {
+			if (line && line->points.size()) {
 				if (selectedPointIdex >= 0) {
 					line->points.erase(line->points.begin() + selectedPointIdex);
 					selectedPointIdex = -1;
 				} else {
 					line->points.pop_back();
-					if (selectedPointIdex >= line->points.size()) {
+					if (selectedPointIdex >= (int)line->points.size()) {
 						selectedPointIdex = -1;
 					}
 				}
@@ -594,7 +594,7 @@ int GameLooper::UpdateLogic() {
 	meListener.Update();
 	dc.looper = this;
 	int i = 0;
-	while (meListener.eventId && i != line->points.size()) {
+	while (meListener.eventId && i < line->points.size()) {
 		dc.point = &line->points[i];
 		dc.idx = i;
 		meListener.Dispatch(&dc);

@@ -71,8 +71,16 @@ if(MSVC)	# vs2022+
 	set_source_files_properties(src/xx2d.cpp PROPERTIES COMPILE_FLAGS "/Ycxx2d.h")
 	target_compile_options(${name} PRIVATE $<$<PLATFORM_ID:Windows>:/Yuxx2d.h>)
 
-	add_definitions("-D_SECURE_SCL=0")
-	add_definitions("-D_HAS_ITERATOR_DEBUGGING=0")
+
+	target_compile_definitions(${name} PUBLIC
+		"$<$<CONFIG:MinSizeRel>:_SECURE_SCL=0>"
+		"$<$<CONFIG:MinSizeRel>:_HAS_ITERATOR_DEBUGGING=0>"
+		"$<$<CONFIG:Release>:_SECURE_SCL=0>"
+		"$<$<CONFIG:Release>:_HAS_ITERATOR_DEBUGGING=0>"
+		"$<$<CONFIG:RelWithDebInfo>:_SECURE_SCL=0>"
+		"$<$<CONFIG:RelWithDebInfo>:_HAS_ITERATOR_DEBUGGING=0>"
+	)
+
 	add_compile_options($<$<PLATFORM_ID:Windows>:/MP${Biogears_BUILD_PARALLEL_LEVEL}>)	# other proj enable multi-processor compilation
 
 	target_compile_options(${name}
