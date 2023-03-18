@@ -498,10 +498,9 @@ void GameLooper::ImGuiDrawWindow_LeftBottom() {
 
 int GameLooper::UpdateLogic() {
 
-	//ImGui::IsItemActive() && ImGui::TempInputIsActive(ImGui::GetActiveID())
 	if (!ImGui::IsAnyItemActive()) {
-		if (xx::engine.Pressed(xx::KbdKeys::W) && KeyboardGCDCheck()) {
 
+		if (xx::engine.Pressed(xx::KbdKeys::W) && KeyboardGCDCheck()) {
 			if (selectedLineName.empty()) {
 				if (data.lines.size()) {
 					selectedLineName = data.lines[0].name;
@@ -515,8 +514,7 @@ int GameLooper::UpdateLogic() {
 			}
 		}
 
-		if (!ImGui::IsItemActive() && xx::engine.Pressed(xx::KbdKeys::S) && KeyboardGCDCheck()) {
-
+		if (xx::engine.Pressed(xx::KbdKeys::S) && KeyboardGCDCheck()) {
 			if (selectedLineName.empty()) {
 				if (data.lines.size()) {
 					selectedLineName = data.lines[0].name;
@@ -529,11 +527,29 @@ int GameLooper::UpdateLogic() {
 				}
 			}
 		}
+
+		if (xx::engine.Pressed(xx::KbdKeys::Up) && KeyboardGCDCheck()) {
+			if (selectedLineName.size()) {
+				if (auto&& i = GetSelectedLineIndex(); i > 0) {
+					std::swap(data.lines[i], data.lines[i - 1]);
+				}
+			}
+		}
+
+		if (xx::engine.Pressed(xx::KbdKeys::Down) && KeyboardGCDCheck()) {
+			if (selectedLineName.size()) {
+				if (auto&& i = GetSelectedLineIndex(); i < (int)data.lines.size() - 1) {
+					std::swap(data.lines[i], data.lines[i + 1]);
+				}
+			}
+		}
+
 	}
 
 	auto&& line = GetSelectedLine();
 
-	if (!ImGui::IsAnyItemActive() && xx::engine.mousePosition.x > -xx::engine.w / 2 + leftPanelWidth + margin) {
+	if (!ImGui::IsAnyItemActive() &&
+		xx::engine.mousePosition.x > -xx::engine.w / 2 + leftPanelWidth + margin) {		// limit mouse pos in  edit area
 
 		if (xx::engine.Pressed(xx::KbdKeys::Z) && KeyboardGCDCheck()) {
 			zoom += 0.05;
@@ -632,7 +648,7 @@ int GameLooper::UpdateLogic() {
 	xx::SimpleLabel lbl;
 	lbl.SetAnchor({ 0,0 }).SetColor({ 127,127,0,255 })
 		.SetPosition(xx::engine.ninePoints[1].MakeAdd(leftPanelWidth + margin * 2, 32 + margin))
-		.SetText(fnt, xx::ToString("zoom = ", zoom, ", points.size() = ", line->points.size()))
+		.SetText(fnt, xx::ToString("Arrow Up/Down: move line   zoom = ", zoom, ", points.size() = ", line->points.size()))
 		.Draw()
 		.SetAnchor({ 0,1 })
 		.SetPosition(xx::engine.ninePoints[7].MakeAdd(leftPanelWidth + margin * 2, -margin))
