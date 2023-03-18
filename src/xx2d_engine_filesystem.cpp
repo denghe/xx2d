@@ -36,7 +36,7 @@ namespace xx {
 	}
 
 
-	std::string Engine::GetFullPath(std::string_view fn) {
+	std::string Engine::GetFullPath(std::string_view fn, bool fnIsFileName) {
 		// prepare
 		fn = xx::Trim(fn);
 
@@ -48,10 +48,14 @@ namespace xx {
 		for (ptrdiff_t i = searchPaths.size() - 1; i >= 0; --i) {
 			tmpPath = searchPaths[i];
 			tmpPath /= fn;
-			if (std::filesystem::exists(tmpPath) && std::filesystem::is_regular_file(tmpPath))
-				return tmpPath.string();
+			if (std::filesystem::exists(tmpPath)) {
+				if (fnIsFileName) {
+					if (std::filesystem::is_regular_file(tmpPath)) return tmpPath.string();
+				} else {
+					if (std::filesystem::is_directory(tmpPath)) return tmpPath.string();
+				}
+			}
 		}
-
 		// not found
 		return {};
 	}

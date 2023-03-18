@@ -34,7 +34,7 @@ namespace xx {
 			auto s = xx::ToStringFormat("FPS = {0} DC = {1} VC = {2} PC = {3}; {4}"
 				, fps, sm.drawCall, sm.drawVerts, sm.drawLinePoints, std::string_view(extraInfo));
 
-			lbl.SetText(*fnt, s, 32.f, xx::engine.w - 40)
+			lbl.SetText(*fnt, s, 32.f, xx::engine.w - 10 - marginLeft)
 				.SetPosition(xy.MakeAdd(2, -2))
 				.SetColor({ 0, 0, 255, 255 })
 				.Draw()		// shadow

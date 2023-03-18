@@ -17,7 +17,7 @@ namespace xx {
 		void SearchPathReset();
 
 		// search file by searchPaths + fn. not found return ""
-		std::string GetFullPath(std::string_view fn);
+		std::string GetFullPath(std::string_view fn, bool fnIsFileName = true);
 
 		// read all data by full path
 		xx::Data ReadAllBytesWithFullPath(std::string_view const& fp, bool autoDecompress = true);

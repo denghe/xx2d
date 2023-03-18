@@ -35,22 +35,19 @@ void GameLooper::Init() {
 
 	xx::engine.imguiUpdate = [this] { ImGuiUpdate(); };
 
-
-	// load fnt
 	fnt = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 	fpsViewer.Init(fnt, leftPanelWidth + margin * 2);
 
-	// 
 	lsPoint.FillCirclePoints({}, pointRadius, {}, 16);
 
 	meListener.Init(xx::Mbtns::Left);
 
 	LoadData();
+	exportFileName = xx::engine.GetFullPath("res", false) + "/movepath.bin";
 	MakeNewLineName();
 }
 
 void GameLooper::LoadData() {
-	// load store data
 	auto&& [d, p] = xx::engine.ReadAllBytes("res/movepath.json"sv);
 	fileName = std::move(p);
 	data = {};
@@ -539,16 +536,16 @@ int GameLooper::UpdateLogic() {
 	if (!ImGui::IsAnyItemActive() && xx::engine.mousePosition.x > -xx::engine.w / 2 + leftPanelWidth + margin) {
 
 		if (xx::engine.Pressed(xx::KbdKeys::Z) && KeyboardGCDCheck()) {
-			zoom += 0.1;
+			zoom += 0.05;
 			if (zoom >= 2) {
 				zoom = 2;
 			}
 		}
 
 		if (xx::engine.Pressed(xx::KbdKeys::X) && KeyboardGCDCheck()) {
-			zoom -= 0.1;
-			if (zoom <= 0.3) {
-				zoom = 0.3;
+			zoom -= 0.05;
+			if (zoom <= 0.2) {
+				zoom = 0.2;
 			}
 		}
 
