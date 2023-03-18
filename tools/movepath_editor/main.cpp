@@ -202,6 +202,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 		LoadData();
 		if (GetLineIndexByName(selectedLineName) == -1) {
 			selectedLineName.clear();
+			ClearEditState();
 		}
 	}
 	ImGui::SameLine({}, 40);
@@ -220,6 +221,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 				auto&& t = data.lines.back();
 				t.isLoop = l->isLoop;
 				t.points = l->points;
+				SelectLine(t.name);
 			}
 		}
 	}
@@ -230,7 +232,9 @@ void GameLooper::ImGuiDrawWindow_LeftTop0() {
 	ImGui::InputText("##newLineName", &newLineName);
 	ImGui::SameLine();
 	if (ImGui::Button("create")) {
-		CreateNewLine();
+		if (CreateNewLine()) {
+			SelectLine(data.lines.back().name);
+		}
 	}
 
 }
@@ -293,6 +297,7 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 			auto&& iter = data.lines.begin() + removeRowId;
 			if (iter->name == selectedLineName) {
 				selectedLineName.clear();
+				ClearEditState();
 			}
 			data.lines.erase(iter);
 		}
@@ -512,6 +517,7 @@ int GameLooper::UpdateLogic() {
 					selectedLineName = data.lines[i - 1].name;
 				}
 			}
+			ClearEditState();
 		}
 
 		if (xx::engine.Pressed(xx::KbdKeys::S) && KeyboardGCDCheck()) {
@@ -526,6 +532,7 @@ int GameLooper::UpdateLogic() {
 					selectedLineName = data.lines[i + 1].name;
 				}
 			}
+			ClearEditState();
 		}
 
 		if (xx::engine.Pressed(xx::KbdKeys::Up) && KeyboardGCDCheck()) {
@@ -663,7 +670,7 @@ void GameLooper::SelectLine(std::string_view const& name) {
 	selectedLineName = name;
 	if (selectedLineName.empty()) return;
 	changeLineName = name;
-	selectedPointIdex = -1;
+	ClearEditState();
 }
 
 int GameLooper::GetLineIndexByName(std::string_view const& name) {
@@ -738,7 +745,14 @@ int GameLooper::SetKeyboardGCD() {
 	return 1;
 }
 
+void GameLooper::ClearEditState() {
+	selectedPointIdex = -1;
+	dc.idx = -1;
+	meListener.handler = {};
+}
+
 bool DragableCircle::HandleMouseDown(DragableCircleMouseEventListener& L) {
+	if (idx == -1) return false;
 	auto&& dx = looper->offset.x + point->x * looper->zoom - L.downPos.x;
 	auto&& dy = looper->offset.y + point->y * looper->zoom - L.downPos.y;
 	if (dx * dx + dy * dy < GameLooper::pointRadius * GameLooper::pointRadius) {

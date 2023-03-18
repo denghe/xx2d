@@ -93,4 +93,5 @@ struct GameLooper : xx::GameLooperBase {
 	void MakeNewLineName();
 	int KeyboardGCDCheck();
 	int SetKeyboardGCD();
+	void ClearEditState();
 };

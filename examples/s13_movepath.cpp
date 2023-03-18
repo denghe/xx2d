@@ -63,7 +63,7 @@ namespace MovePath {
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 
 		xx::CurvesPointsCollection cpsc;
-		auto [d, p] = xx::engine.ReadAllBytes("res/movepath.bin");
+		auto [d, p] = xx::engine.ReadAllBytes("res/mp.bin");
 		if (int r = d.Read(cpsc)) {
 			throw std::logic_error(xx::ToString("read CurvesPointsCollection from ", p, " error! r = ", r));
 		}
