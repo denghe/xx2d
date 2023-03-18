@@ -139,8 +139,8 @@ namespace xx {
 					c->_sgcNext = {};
 				}
 			}
-			c->_sgcIdx = -1;
 			assert(cells[c->_sgcIdx] != c);
+			c->_sgcIdx = -1;
 
 			// stat
 			--numItems;
