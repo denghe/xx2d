@@ -1,5 +1,6 @@
 ﻿#include "main.h"
 #include "s17_imgui.h"
+#include "imgui.h"
 
 namespace ImGuiTest {
 

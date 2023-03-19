@@ -1,5 +1,6 @@
 ﻿#include "main.h"
 #include "s0_main_menu.h"
+#include "imgui.h"
 
 void GameLooper::Init() {
 	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
