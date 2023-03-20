@@ -24,7 +24,7 @@ namespace xx {
 	struct Engine;
 	struct ShaderManager {
 		// all shader instance container
-		std::array<xx::Shared<Shader>, 4> shaders{};
+		std::array<xx::Shared<Shader>, 5> shaders{};
 
 		// store current shaders index
 		size_t cursor = -1;
@@ -69,7 +69,7 @@ namespace xx {
 	using QuadVerts = std::array<XYUVRGBA8, 4>;
 
 
-	// for draw quad	// todo: change to vertex mode
+	// for draw quad
 	struct Shader_Quad : Shader {
 		static const size_t index = 0;	// index at sm->shaders
 
@@ -155,8 +155,8 @@ namespace xx {
 
 	/***************************************************************************************************/
 
-	// for draw multi verts
-	struct Shader_Verts : Shader {
+	// for draw multi verts with texture
+	struct Shader_TexVerts : Shader {
 		static const size_t index = 3;	// index at sm->shaders
 
 		GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
@@ -164,7 +164,7 @@ namespace xx {
 		GLBuffer vb, ib;
 
 		static const size_t maxTexNums = maxVertNums / 3;
-		static const size_t maxIndexNums = maxVertNums * 4;	// 1.5 for quad, 4 for texture packer polygon algorithm
+		static const size_t maxIndexNums = maxVertNums * 4;
 		GLuint lastTextureId = 0;
 		std::unique_ptr<std::pair<GLuint, GLsizei>[]> texs = std::make_unique<std::pair<GLuint, GLsizei>[]>(maxTexNums);	// tex id + count
 		size_t texsCount = 0;
@@ -182,8 +182,29 @@ namespace xx {
 	};
 
 
+	/***************************************************************************************************/
 
+	// for draw multi verts without texture ( solid trangles )
+	struct Shader_Verts : Shader {
+		static const size_t index = 4;	// index at sm->shaders
+
+		GLint uCxy = -1, aPos = -1, aColor = -1;
+		GLVertexArrays va;
+		GLBuffer vb, ib;
+
+		static const size_t maxIndexNums = maxVertNums * 4;
+		std::unique_ptr<XYRGBA8[]> verts = std::make_unique<XYRGBA8[]>(maxVertNums);
+		size_t vertsCount = 0;
+		std::unique_ptr<uint16_t[]> indexs = std::make_unique<uint16_t[]>(maxIndexNums);
+		size_t indexsCount = 0;
+
+		void Init(ShaderManager*) override;
+		void Begin() override;
+		void End() override;
+
+		void Commit();
+		std::tuple<size_t, XYRGBA8*, uint16_t*> Draw(size_t const& numVerts, size_t const& numIndexs);
+	};
 
 	// ... more shader struct here
-
 }

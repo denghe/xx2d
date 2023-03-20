@@ -2,38 +2,45 @@
 
 namespace xx {
 
-	void Shader_Verts::Init(ShaderManager* sm) {
+	void Shader_TexVerts::Init(ShaderManager* sm) {
 		this->sm = sm;
 		v = LoadGLVertexShader({ R"(#version 300 es
 precision highp float;
 uniform vec2 uCxy;	// screen center coordinate
 
 in vec2 aPos;
+in vec2 aTexCoord;
 in vec4 aColor;
 
 out vec4 vColor;
+out vec2 vTexCoord;
 
 void main() {
 	gl_Position = vec4(aPos * uCxy, 0, 1);
+	vTexCoord = aTexCoord;
 	vColor = aColor;
 })"sv });
 
 		f = LoadGLFragmentShader({ R"(#version 300 es
 precision highp float;
+uniform sampler2D uTex0;
 
 in vec4 vColor;
+in vec2 vTexCoord;
 
 out vec4 oColor;
 
 void main() {
-	oColor = vColor;
+	oColor = vColor * texture(uTex0, vTexCoord / vec2(textureSize(uTex0, 0)));
 })"sv });
 
 		p = LinkGLProgram(v, f);
 
 		uCxy = glGetUniformLocation(p, "uCxy");
+		uTex0 = glGetUniformLocation(p, "uTex0");
 
 		aPos = glGetAttribLocation(p, "aPos");
+		aTexCoord = glGetAttribLocation(p, "aTexCoord");
 		aColor = glGetAttribLocation(p, "aColor");
 		CheckGLError();
 
@@ -43,13 +50,15 @@ void main() {
 		glGenBuffers(1, (GLuint*)&ib);
 
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYRGBA8), 0);
+		glVertexAttribPointer(aPos, 2, GL_FLOAT, GL_FALSE, sizeof(XYUVRGBA8), 0);
 		glEnableVertexAttribArray(aPos);
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"
 #endif
-		glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYRGBA8), (GLvoid*)offsetof(XYRGBA8, r));
+		glVertexAttribPointer(aTexCoord, 2, GL_UNSIGNED_SHORT, GL_FALSE, sizeof(XYUVRGBA8), (GLvoid*)offsetof(XYUVRGBA8, u));
+		glEnableVertexAttribArray(aTexCoord);
+		glVertexAttribPointer(aColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(XYUVRGBA8), (GLvoid*)offsetof(XYUVRGBA8, r));
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -64,7 +73,7 @@ void main() {
 		CheckGLError();
 	}
 
-	void Shader_Verts::Begin() {
+	void Shader_TexVerts::Begin() {
 		if (sm->cursor != index) {
 			// here can check shader type for combine batch
 			sm->shaders[sm->cursor]->End();
@@ -72,40 +81,56 @@ void main() {
 		}
 
 		glUseProgram(p);
+		glUniform1i(uTex0, 0);
 		glUniform2f(uCxy, 2 / engine.w, 2 / engine.h);
 
 		glBindVertexArray(va);
 	}
 
-	void Shader_Verts::End() {
-		if (indexsCount) {
+	void Shader_TexVerts::End() {
+		if (texsCount) {
 			Commit();
 		}
 	}
 
-	void Shader_Verts::Commit() {
+	void Shader_TexVerts::Commit() {
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(XYRGBA8) * vertsCount, verts.get(), GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(XYUVRGBA8) * vertsCount, verts.get(), GL_STREAM_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexsCount, indexs.get(), GL_STREAM_DRAW);
 
-		glDrawElements(GL_TRIANGLES, indexsCount, GL_UNSIGNED_SHORT, (GLvoid*)0);
+		size_t j = 0;
+		for (size_t i = 0; i < texsCount; i++) {
+			glBindTexture(GL_TEXTURE_2D, texs[i].first);
+			glDrawElements(GL_TRIANGLES, texs[i].second, GL_UNSIGNED_SHORT, (GLvoid*)j);
+			j += texs[i].second * 2;
+		}
 		CheckGLError();
 
-		sm->drawVerts += indexsCount;
-		sm->drawCall += 1;
+		sm->drawVerts += j / 2;
+		sm->drawCall += texsCount;
 
+		lastTextureId = 0;
+		texsCount = 0;
 		vertsCount = 0;
 		indexsCount = 0;
 	}
 
-	std::tuple<size_t, XYRGBA8*, uint16_t*> Shader_Verts::Draw(size_t const& numVerts, size_t const& numIndexs) {
+	std::tuple<size_t, XYUVRGBA8*, uint16_t*> Shader_TexVerts::Draw(GLTexture& tex, size_t const& numVerts, size_t const& numIndexs) {
 		assert(numVerts <= maxVertNums);
 		assert(numIndexs <= maxIndexNums);
 		if (vertsCount + numVerts > maxVertNums || indexsCount + numIndexs > maxIndexNums) {
 			Commit();
 		}
-		std::tuple<size_t, XYRGBA8*, uint16_t*> r{ vertsCount, &verts[vertsCount], &indexs[indexsCount] };
+		if (lastTextureId != tex) {
+			lastTextureId = tex;
+			texs[texsCount].first = tex;
+			texs[texsCount].second = numIndexs;
+			++texsCount;
+		} else {
+			texs[texsCount - 1].second += numIndexs;
+		}
+		std::tuple<size_t, XYUVRGBA8*, uint16_t*> r{ vertsCount, &verts[vertsCount], &indexs[indexsCount] };
 		vertsCount += numVerts;
 		indexsCount += numIndexs;
 		return r;

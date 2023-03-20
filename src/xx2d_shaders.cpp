@@ -30,6 +30,7 @@ namespace xx {
 		shaders[Shader_Quad::index] = xx::Make<Shader_Quad>();
 		shaders[Shader_QuadInstance::index] = xx::Make<Shader_QuadInstance>();
 		shaders[Shader_LineStrip::index] = xx::Make<Shader_LineStrip>();
+		shaders[Shader_TexVerts::index] = xx::Make<Shader_TexVerts>();
 		shaders[Shader_Verts::index] = xx::Make<Shader_Verts>();
 		// ...
 

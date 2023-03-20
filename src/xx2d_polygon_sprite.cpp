@@ -185,7 +185,7 @@ namespace xx {
 
 	void PolygonSprite::Draw() {
 		Commit();
-		auto [offset, pv, pi] = engine.sm.GetShader<xx::Shader_Verts>().Draw(*frame->tex, vs.size(), is.size());
+		auto [offset, pv, pi] = engine.sm.GetShader<xx::Shader_TexVerts>().Draw(*frame->tex, vs.size(), is.size());
 		memcpy(pv, vs.data(), sizeof(typename decltype(vs)::value_type) * vs.size());
 		for (size_t i = 0; i < is.size(); i++) {
 			pi[i] = offset + is[i];
@@ -201,7 +201,7 @@ namespace xx {
 
 	void PolygonSprite::Draw(AffineTransform const& t) {
 		Commit();
-		auto [offset, pv, pi] = engine.sm.GetShader<xx::Shader_Verts>().Draw(*frame->tex, vs.size(), is.size());
+		auto [offset, pv, pi] = engine.sm.GetShader<xx::Shader_TexVerts>().Draw(*frame->tex, vs.size(), is.size());
 		for (size_t i = 0; i < vs.size(); ++i) {
 			(XY&)pv[i].x = t.Apply(vs[i]);
 			memcpy(&pv[i].u, &vs[i].u, 8);	// 8: uv & color
