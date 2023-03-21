@@ -15,7 +15,7 @@ struct Foo {
 ...
 FooMouseEventListener meListener;
 ...
-meListener.Init(this, Mbtns::Left);
+meListener.Init(Mbtns::Left);
 ...
 meListener.Update();
 auto&& iter = foos.begin();
@@ -64,6 +64,10 @@ namespace xx {
 				if (handler && lastPos != engine.mousePosition) {	// move
 					if ((eventId = handler->HandleMouseMove(*this))) {
 						handler = {};
+						// todo: if eventId == 1 { lastPos = downPos = engine.mousePosition; downTime = engine.nowSecs; }
+						if (eventId == 4) {
+							eventId = 0;
+						}
 					} else {
 						lastPos = engine.mousePosition;
 					}
@@ -75,6 +79,7 @@ namespace xx {
 		template<typename H>
 		void Dispatch(H&& h) {
 			assert(!handler);
+			// todo: switch case ?
 			if (h->HandleMouseDown(*this)) {
 				handler = std::forward<H>(h);
 				eventId = {};
