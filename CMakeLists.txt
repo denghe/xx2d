@@ -68,9 +68,15 @@ if(MSVC)	# vs2022+
 #		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
 #	)
 
+	target_link_options(${name} PUBLIC
+		$<$<CONFIG:Debug>:/NODEFAULTLIB:libcmtd.lib>
+		$<$<CONFIG:MinSizeRel>:/NODEFAULTLIB:libcmt.lib>
+		$<$<CONFIG:Release>:/NODEFAULTLIB:libcmt.lib>
+		$<$<CONFIG:RelWithDebInfo>:/NODEFAULTLIB:libcmt.lib>
+	)
+
 	set_source_files_properties(src/xx2d.cpp PROPERTIES COMPILE_FLAGS "/Ycxx2d.h")
 	target_compile_options(${name} PRIVATE $<$<PLATFORM_ID:Windows>:/Yuxx2d.h>)
-
 
 	target_compile_definitions(${name} PUBLIC
 		"$<$<CONFIG:MinSizeRel>:_SECURE_SCL=0>"
