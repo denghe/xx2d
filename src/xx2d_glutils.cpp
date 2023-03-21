@@ -44,9 +44,15 @@ namespace xx {
 			uint16_t encodedHeight = (p[10] << 8) | p[11];		// 4 align height
 			uint16_t width = (p[12] << 8) | p[13];				// width
 			uint16_t height = (p[14] << 8) | p[15];				// height
-			assert((format == 1 || format == 3) && width > 0 && height > 0 && encodedWidth >= width && encodedWidth - width < 4
-				&& encodedHeight >= height && encodedHeight - height < 4 && buf.size() == 16 + encodedWidth * encodedHeight);
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 8 - 4 * (width & 0x1));
+			assert(width > 0 && height > 0 && encodedWidth >= width && encodedWidth - width < 4 && encodedHeight >= height && encodedHeight - height < 4);
+			if (format == 1) {
+				assert(buf.size() == 16 + encodedWidth * encodedHeight / 2);
+			} else if (format == 3) {
+				assert(buf.size() == 16 + encodedWidth * encodedHeight);
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 8 - 4 * (width & 0x1));
+			} else {
+				throw std::logic_error(xx::ToString("unsppported PKM 20 format. only support ETC2_RGB_NO_MIPMAPS & ETC2_RGBA_NO_MIPMAPS. fn = ", fullPath));
+			}
 			auto t = GenBindGLTexture();
 			glCompressedTexImage2D(GL_TEXTURE_2D, 0, format == 3 ? GL_COMPRESSED_RGBA8_ETC2_EAC : GL_COMPRESSED_RGB8_ETC2, (GLsizei)width, (GLsizei)height, 0, (GLsizei)(buf.size() - 16), p + 16);
 			glBindTexture(GL_TEXTURE_2D, 0);
