@@ -32,9 +32,7 @@ namespace xx {
 			});
 
 		glfwSetCharCallback(wnd, [](GLFWwindow* wnd, unsigned int key) {
-			if (xx::engine.kbdInputs.size() < 512) {
 				xx::engine.kbdInputs.push_back(key);
-			}
 			});
 
 		//glfwSetScrollCallback(wnd, MouseScrollCallback);

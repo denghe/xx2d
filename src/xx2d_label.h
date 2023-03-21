@@ -40,7 +40,7 @@ namespace xx {
 		// change user data funcs
 
 		// default anchor: 0, 1
-		Label& SetText(BMFont bmf, std::string_view const& text, float const& fontSize = 32.f, float const& lineWidthLimit = 0.f);
+		Label& SetText(BMFont const& bmf, std::string_view const& text, float const& fontSize = 32.f, float const& lineWidthLimit = 0.f);
 
 		Label& SetAnchor(XY const& a);
 

@@ -13,6 +13,7 @@ namespace xx {
 		struct Char {
 			XY pos;
 			uint16_t tx, ty, tw, th;
+			RGBA8 color;
 		};
 		std::vector<Char> chars;
 		XY size{};
@@ -30,7 +31,8 @@ namespace xx {
 		// change user data funcs
 
 		// default anchor: 0, 1
-		SimpleLabel& SetText(BMFont bmf, std::string_view const& text, float const& fontSize = 32.f, float const& lineWidthLimit = 0.f);
+		SimpleLabel& SetText(BMFont const& bmf, std::u32string_view const& text, float const& fontSize = 32.f, float const& lineWidthLimit = 0.f);
+		SimpleLabel& SetText(BMFont const& bmf, std::string_view const& text, float const& fontSize = 32.f, float const& lineWidthLimit = 0.f);
 
 		SimpleLabel& SetAnchor(XY const& a);
 
@@ -43,6 +45,9 @@ namespace xx {
 
 		SimpleLabel& SetColor(RGBA8 const& c);
 		SimpleLabel& SetColorA(uint8_t const& a);
+
+		SimpleLabel& SetColor(RGBA8 const& c, size_t const& i);
+		SimpleLabel& SetColorA(uint8_t const& a, size_t const& i);
 
 		SimpleLabel& Draw();
 	};

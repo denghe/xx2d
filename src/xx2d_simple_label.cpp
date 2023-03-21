@@ -2,18 +2,17 @@
 
 namespace xx {
 
-	SimpleLabel& SimpleLabel::SetText(BMFont bmf, std::string_view const& text, float const& fontSize, float const& lineWidthLimit) {
+	SimpleLabel& SimpleLabel::SetText(BMFont const& bmf, std::u32string_view const& text, float const& fontSize, float const& lineWidthLimit) {
 		assert(bmf.texs.size() == 1);
 
-		// todo: kerning? auto wrap line ?
+		// todo: kerning?
 
 		tex = bmf.texs[0];
-		auto c32s = xx::StringU8ToU32(text);
 
 		chars.clear();
 		baseScale = fontSize / bmf.fontSize;
 		float px{}, py{}, maxpx{}, lineHeight = bmf.lineHeight * baseScale;
-		for (auto& t : c32s) {
+		for (auto& t : text) {
 			if (t == '\r') continue;
 			else if (t == '\n') {
 				px = 0;
@@ -38,6 +37,7 @@ namespace xx {
 				c.ty = r->y;
 				c.tw = r->width;
 				c.th = r->height;
+				c.color = color;
 
 				px += cw;
 			} else {
@@ -47,6 +47,11 @@ namespace xx {
 		size = { std::max(px, maxpx), -py + lineHeight};
 		return *this;
 	}
+	SimpleLabel& SimpleLabel::SetText(BMFont const& bmf, std::string_view const& text, float const& fontSize, float const& lineWidthLimit) {
+		auto c32s = xx::StringU8ToU32(text);
+		return SetText(bmf, c32s, fontSize, lineWidthLimit);
+	}
+
 
 	SimpleLabel& SimpleLabel::SetAnchor(XY const& a) {
 		anchor = a;
@@ -78,10 +83,27 @@ namespace xx {
 
 	SimpleLabel& SimpleLabel::SetColor(RGBA8 const& c) {
 		color = c;
+		for (auto& ch : chars) {
+			ch.color = c;
+		}
 		return *this;
 	}
 	SimpleLabel& SimpleLabel::SetColorA(uint8_t const& a) {
 		color.a = a;
+		for (auto& c : chars) {
+			c.color.a = a;
+		}
+		return *this;
+	}
+
+	SimpleLabel& SimpleLabel::SetColor(RGBA8 const& c, size_t const& i) {
+		assert(chars.size());
+		chars[i].color = c;
+		return *this;
+	}
+	SimpleLabel& SimpleLabel::SetColorA(uint8_t const& a, size_t const& i) {
+		assert(chars.size());
+		chars[i].color.a = a;
 		return *this;
 	}
 
@@ -94,7 +116,7 @@ namespace xx {
 			auto& c = chars[i];
 			auto& q = qs[i];
 			q.anchor = {0, 1};
-			q.color = color;
+			q.color = c.color;
 			q.pos = xy + c.pos * scale;
 			q.radians = 0;
 			q.scale = s;

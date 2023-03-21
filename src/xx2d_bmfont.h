@@ -23,7 +23,7 @@ namespace xx {
 		void Load(std::string_view const& fn);
 
 		// texture index: page
-		Char* GetChar(char32_t const& charId);
+		Char const* GetChar(char32_t const& charId) const;
 	};
 
 }

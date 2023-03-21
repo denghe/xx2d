@@ -2,7 +2,7 @@
 
 namespace xx {
 
-	Label& Label::SetText(BMFont bmf, std::string_view const& text, float const& fontSize, float const& lineWidthLimit) {
+	Label& Label::SetText(BMFont const& bmf, std::string_view const& text, float const& fontSize, float const& lineWidthLimit) {
 		dirty = 0xFFFFFFFFu;
 
 		// todo: kerning? sort by tex?

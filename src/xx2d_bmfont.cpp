@@ -156,7 +156,7 @@ namespace xx {
         }
     }
 
-    BMFont::Char* BMFont::GetChar(char32_t const& charId) {
+    BMFont::Char const* BMFont::GetChar(char32_t const& charId) const {
         assert(charId >= 0);
         if (charId < 256) {
             auto& c = charArray[charId];
