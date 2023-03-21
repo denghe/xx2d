@@ -47,7 +47,7 @@ namespace SpaceShooter {
 		Scene* owner{};
 		xx::XY pos{}, inc{};
 		int64_t avaliableFrameNumber{};
-		xx::Label body;
+		xx::SimpleLabel body;
 
 		void Init(Scene* const& owner_, xx::XY const& pos_, std::string_view const& txt_);
 		bool Update();

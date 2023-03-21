@@ -92,7 +92,7 @@ namespace AudioTest {
 		txt = txt_;
 		id = id_;
 		content.SetText(scene->looper->fontBase, txt, fontSize)
-			.SetPosition(pos).Commit();
+			.SetPosition(pos);
 		auto siz = content.size + xx::XY{ 20, 4 };
 		border.FillBoxPoints({}, siz)
 			.SetPosition(pos);

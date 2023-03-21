@@ -79,7 +79,7 @@ namespace ShootGame {
 
 	struct HPLabel {
 		Scene* scene{};
-		xx::Label lbl;
+		xx::SimpleLabel lbl;
 		std::string txt;
 		xx::XY pos{}, inc{};
 		int life{};
