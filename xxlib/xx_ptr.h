@@ -451,6 +451,13 @@ namespace xx {
     /************************************************************************************/
     // helpers
 
+    // 标识内存可移动
+    template<typename T>
+    struct IsPod<Shared<T>, void> : std::true_type {};
+    template<typename T>
+    struct IsPod<Weak<T>, void> : std::true_type {};
+
+
     template<typename T>
     struct IsShared : std::false_type {
     };
