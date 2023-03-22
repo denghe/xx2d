@@ -13,20 +13,24 @@ namespace xx {
 
 	void Engine::EngineGLInit(void* wnd) {
 		ImGuiInit(wnd);
+
+		sm.GLInit();
 		sm.Init();
 	}
 
 	void Engine::EngineUpdateBegin() {
+		assert(w >= 0 && h >= 0);
+		delta = xx::NowSteadyEpochSeconds(nowSecs);
+
 		ImGuiUpdate();
 
-		delta = xx::NowSteadyEpochSeconds(nowSecs);
 		sm.Begin();
 
-		assert(w >= 0 && h >= 0);
 		glViewport(0, 0, w, h);
-		glDepthMask(true);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDepthMask(false);
+		glClear(GL_COLOR_BUFFER_BIT);
+		//glDepthMask(true);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//glDepthMask(false);
 	}
 
 	void Engine::EngineUpdateEnd() {

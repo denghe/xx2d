@@ -52,7 +52,7 @@ namespace MainMenu {
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -xstep, y }, "13: move path", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "14: scissor", 32);
-		menus.emplace_back().Init(looper, { xstep, y }, "15: render texture (todo)", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "15: render texture", 32);
 
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -xstep, y }, "16: audio", 32);
@@ -61,8 +61,8 @@ namespace MainMenu {
 
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -xstep, y }, "19: space shooter", 32);
-		menus.emplace_back().Init(looper, { 0, y }, "20: 你好", 32);
-		menus.emplace_back().Init(looper, { xstep, y }, "21: 世界", 32);
+		menus.emplace_back().Init(looper, { 0, y }, "20: dynamic atlas ( todo )", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "21: ", 32);
 
 		looper->fpsViewer.extraInfo.clear();
 	}
@@ -136,7 +136,6 @@ namespace MainMenu {
 			} else {
 				throw std::logic_error("unhandled menu");
 			}
-				//looper->DelaySwitchTo<::Scene>();	// todo: movepath editor ?
 				//looper->DelaySwitchTo<::Scene>();	// todo: circle editor ?
 				//looper->DelaySwitchTo<::Scene>();	// todo: anim frame editor ?
 		}

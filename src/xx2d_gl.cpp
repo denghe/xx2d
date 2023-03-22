@@ -1,4 +1,5 @@
 ﻿#include "xx2d.h"
+
 #define GLAD_MALLOC(sz)       malloc(sz)
 #define GLAD_FREE(ptr)        free(ptr)
 #define GLAD_GL_IMPLEMENTATION
@@ -17,15 +18,15 @@
 
 namespace xx {
 
-	GLuint GenBindGLTexture() {
-		GLuint t = 0;
+	GLuint LoadGLTexture_core() {
+		GLuint t{};
 		glGenTextures(1, &t);
 		glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
 		glBindTexture(GL_TEXTURE_2D, t);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST/*GL_LINEAR*/);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT/*GL_CLAMP_TO_EDGE*/);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT/*GL_CLAMP_TO_EDGE*/);
 		return t;
 	}
 
@@ -53,7 +54,7 @@ namespace xx {
 			} else {
 				throw std::logic_error(xx::ToString("unsppported PKM 20 format. only support ETC2_RGB_NO_MIPMAPS & ETC2_RGBA_NO_MIPMAPS. fn = ", fullPath));
 			}
-			auto t = GenBindGLTexture();
+			auto t = LoadGLTexture_core();
 			glCompressedTexImage2D(GL_TEXTURE_2D, 0, format == 3 ? GL_COMPRESSED_RGBA8_ETC2_EAC : GL_COMPRESSED_RGB8_ETC2, (GLsizei)width, (GLsizei)height, 0, (GLsizei)(buf.size() - 16), p + 16);
 			glBindTexture(GL_TEXTURE_2D, 0);
 			CheckGLError();
@@ -70,7 +71,7 @@ namespace xx {
 				if (comp == 4) {
 					glPixelStorei(GL_UNPACK_ALIGNMENT, 8 - 4 * (w & 0x1));
 				}
-				auto t = GenBindGLTexture();
+				auto t = LoadGLTexture_core();
 				glTexImage2D(GL_TEXTURE_2D, 0, c, w, h, 0, c, GL_UNSIGNED_BYTE, image);
 				glBindTexture(GL_TEXTURE_2D, 0);
 				stbi_image_free(image);
@@ -149,4 +150,25 @@ namespace xx {
 		return GLProgram(program);
 	}
 
+	std::pair<GLFrameBuffer, GLTexture> MakeGLFrameBuffer(uint32_t const& w, uint32_t const& h) {
+		GLuint f{};
+		glGenFramebuffers(1, &f);
+		glBindFramebuffer(GL_FRAMEBUFFER, f);
+
+		auto t = LoadGLTexture_core();
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, {});
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, t, 0);
+
+		//GLuint r{};
+		//glGenRenderbuffers(1, &r);
+		//glBindRenderbuffer(GL_RENDERBUFFER, r);
+		//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+		//glBindRenderbuffer(GL_RENDERBUFFER, 0);
+		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, r);
+
+		assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		return { GLFrameBuffer(f), GLTexture(t, w, h, "") };
+	}
 }

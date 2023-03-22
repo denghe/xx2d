@@ -29,6 +29,9 @@ namespace xx {
 		// store current shaders index
 		size_t cursor = -1;
 
+		// init global gl env
+		void GLInit();
+
 		// make & call all shaders Init
 		void Init();
 

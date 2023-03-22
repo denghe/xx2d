@@ -20,6 +20,10 @@ namespace xx {
 			return -1;
 		auto sg_glfw = xx::MakeSimpleScopeGuard([] { glfwTerminate(); });
 
+		glfwDefaultWindowHints();
+		glfwWindowHint(GLFW_DEPTH_BITS, 0);
+		glfwWindowHint(GLFW_STENCIL_BITS, 0);
+
 		auto wnd = glfwCreateWindow(xx::engine.w, xx::engine.h, wndTitle.c_str(), nullptr, nullptr);
 		if (!wnd)
 			return -2;

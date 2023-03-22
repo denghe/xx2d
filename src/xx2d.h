@@ -9,8 +9,8 @@
 
 #include "xx2d_rnd.h"
 
-#include "xx2d_glres.h"
-#include "xx2d_glutils.h"
+#include <glad.h>
+#include "xx2d_gl.h"
 
 #include "xx2d_enums.h"
 #include "xx2d_prims.h"

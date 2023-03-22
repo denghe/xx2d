@@ -4,27 +4,27 @@
 namespace RenderTextureTest {
 
 	void RenderTexture::Init(xx::Pos<> wh) {
-		tex.Emplace();
-		auto bytesPerRow = wh.x * 4;
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 8 - 4 * (wh.x & 0x1));
-		auto data = malloc(bytesPerRow * wh.y);	// todo: free data?
-		auto t = xx::GenBindGLTexture();
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)wh.x, (GLsizei)wh.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		CheckGLError();
-		*tex = { t, wh.x, wh.y, "" };
-		// todo
+		auto&& r = xx::MakeGLFrameBuffer(wh.x, wh.y);
+		fb = std::move(r.first);
+		tex.Emplace(std::move(r.second));
 	}
+
 	void RenderTexture::Begin() {
 		xx::engine.sm.End();
-		//GLint bak;
-		//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &bak);
-		// todo
+
+		glBindFramebuffer(GL_FRAMEBUFFER, fb);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		xx::engine.sm.GLInit();
 	}
+
 	void RenderTexture::End() {
 		xx::engine.sm.End();
-		// todo
-		//glDeleteFramebuffers(1, &???);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		xx::engine.sm.GLInit();
 	}
 
 
@@ -32,19 +32,31 @@ namespace RenderTextureTest {
 		this->looper = looper;
 		std::cout << "RenderTextureTest::Scene::Init" << std::endl;
 
-		spr.SetTexture(xx::engine.LoadSharedTexture("res/tiledmap2/tree.png"))
-			.SetScale(3);
 
-		//rt.Init({ 200, 200 });
+		//RenderTexture rt;
+		//rt.Init({ (int)xx::engine.w, (int)xx::engine.h });
 		//rt.Begin();
 		//spr.Draw();
 		//rt.End();
+		//auto tex = std::move(rt.tex);
+		//spr2.SetTexture(tex);
 
-		//spr2.SetTexture(rt);	// todo
+
+		// todo: set current frame buffer width, height to shader ? 
+		// todo: flip y ??
+
+		spr.SetTexture(xx::engine.LoadSharedTexture("res/tiledmap2/tree.png"))
+			.SetScale(3);
+
+		auto tex = RenderToTexture([this] {
+			spr.Draw();
+		});
+		spr2.SetTexture(tex).SetFlipY(true);
+
 	}
 
 	int Scene::Update() {
-		//spr2.Draw();
+		spr2.Draw();
 		return 0;
 	}
 

@@ -2,7 +2,7 @@
 
 namespace xx {
 
-	void ShaderManager::Init() {
+	void ShaderManager::GLInit() {
 		// set gl global env for all shaders
 
 		glEnable(GL_PRIMITIVE_RESTART);
@@ -24,8 +24,8 @@ namespace xx {
 		glActiveTexture(GL_TEXTURE0);
 
 		CheckGLError();
-
-
+	}
+	void ShaderManager::Init() {
 		// make all
 		shaders[Shader_Quad::index] = xx::Make<Shader_Quad>();
 		shaders[Shader_QuadInstance::index] = xx::Make<Shader_QuadInstance>();
