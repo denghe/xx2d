@@ -3,33 +3,27 @@
 
 namespace RenderTextureTest {
 
-	struct RenderTexture {
-		xx::GLFrameBuffer fb;
-		xx::Shared<xx::GLTexture> tex;
-		void Init(xx::Pos<> wh);
-		void Begin();
-		void End();
-	};
-
 	template<typename F>
-	xx::Shared<xx::GLTexture> RenderToTexture(F&& func) {
-		auto [f, t] = xx::MakeGLFrameBuffer(xx::engine.w, xx::engine.h);
+	xx::Shared<xx::GLTexture> RenderToTexture(uint16_t const& w, uint16_t const& h, F&& func) {
 		xx::engine.sm.End();
-
+		auto bw = xx::engine.w;
+		auto bh = xx::engine.h;
+		xx::engine.w = w;
+		xx::engine.h = h;
+		auto [f, t] = xx::MakeGLFrameBuffer(w, h);
 		glBindFramebuffer(GL_FRAMEBUFFER, f);
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glViewport(0, 0, w, h);
+		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);	// todo: move to args
 		glClear(GL_COLOR_BUFFER_BIT);
-
-		xx::engine.sm.GLInit();
 
 		func();
 
 		xx::engine.sm.End();
-
+		xx::engine.w = bw;
+		xx::engine.h = bh;
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		xx::engine.sm.GLInit();
-
+		glViewport(0, 0, bw, bh);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		return xx::Make<xx::GLTexture>(std::move(t));
 	}
 
