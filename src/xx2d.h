@@ -35,6 +35,7 @@
 #include "xx2d_polygon_sprite.h"
 #include "xx2d_simple_label.h"
 #include "xx2d_gamelooper.h"
+#include "xx2d_framebuffer.h"
 
 #include "xx2d_audio.h"
 

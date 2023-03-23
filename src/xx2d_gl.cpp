@@ -150,25 +150,49 @@ namespace xx {
 		return GLProgram(program);
 	}
 
-	std::pair<GLFrameBuffer, GLTexture> MakeGLFrameBuffer(uint32_t const& w, uint32_t const& h) {
+	GLFrameBuffer MakeGLFrameBuffer() {
 		GLuint f{};
 		glGenFramebuffers(1, &f);
 		glBindFramebuffer(GL_FRAMEBUFFER, f);
-
-		auto t = LoadGLTexture_core();
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, {});
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, t, 0);
-
-		//GLuint r{};
-		//glGenRenderbuffers(1, &r);
-		//glBindRenderbuffer(GL_RENDERBUFFER, r);
-		//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
-		//glBindRenderbuffer(GL_RENDERBUFFER, 0);
-		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, r);
-
-		assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		return { GLFrameBuffer(f), GLTexture(t, w, h, "") };
+		CheckGLError();
+		return GLFrameBuffer(f);
 	}
+
+	GLTexture MakeGLFrameBufferTexture(uint32_t const& w, uint32_t const& h, bool const& hasAlpha) {
+		auto t = LoadGLTexture_core();
+		auto c = hasAlpha ? GL_RGBA : GL_RGB;
+		glTexImage2D(GL_TEXTURE_2D, 0, c, w, h, 0, c, GL_UNSIGNED_BYTE, {});
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return GLTexture(t, w, h, "");
+	}
+
+	void BindGLFrameBufferTexture(GLuint const& f, GLuint const& t) {
+		glBindFramebuffer(GL_FRAMEBUFFER, f);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, t, 0);
+		assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	}
+
+	void UnbindGLFrameBuffer() {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	//std::pair<GLFrameBuffer, GLTexture> MakeGLFrameBuffer(uint32_t const& w, uint32_t const& h) {
+	//	auto f = MakeGLFrameBuffer();
+
+	//	auto t = LoadGLTexture_core();
+	//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, {});
+	//	glBindTexture(GL_TEXTURE_2D, 0);
+	//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, t, 0);
+
+	//	//GLuint r{};
+	//	//glGenRenderbuffers(1, &r);
+	//	//glBindRenderbuffer(GL_RENDERBUFFER, r);
+	//	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+	//	//glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	//	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, r);
+
+	//	assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//	return { std::move(f), GLTexture(t, w, h, "") };
+	//}
 }

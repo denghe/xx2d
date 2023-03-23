@@ -4,7 +4,7 @@
 namespace xx {
 
 	int GameLooperBase::Run(std::string const& wndTitle) {
-		xx::engine.EngineInit();
+		xx::engine.Init();
 
 #ifdef _WIN32
 		SetConsoleOutputCP(65001);
@@ -76,16 +76,16 @@ namespace xx {
 
 		Init();										// looper init
 
-		xx::engine.EngineGLInit(wnd);
+		xx::engine.GLInit(wnd);
 
 		int r{};
 		while (!glfwWindowShouldClose(wnd)) {
 			glfwPollEvents();
-			xx::engine.EngineUpdateBegin();
+			xx::engine.UpdateBegin();
 
 			r = this->Update();						// looper update
 
-			xx::engine.EngineUpdateEnd();
+			xx::engine.UpdateEnd();
 			glfwSwapBuffers(wnd);
 
 			if (r) break;
@@ -93,7 +93,7 @@ namespace xx {
 
 		this->Deinit();								// looper deinit
 
-		xx::engine.EngineDestroy();
+		xx::engine.Destroy();
 
 		return r;
 	}

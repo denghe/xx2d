@@ -97,7 +97,7 @@ namespace xx {
 		/**********************************************************************************/
 		// delay funcs
 
-		std::vector<std::function<void()>> delayFuncs;	// call + clear at EngineUpdateEnd
+		std::vector<std::function<void()>> delayFuncs;	// call + clear at Engine.UpdateEnd
 
 		// add delay execute func to queue.
 		template<typename F>
@@ -110,11 +110,12 @@ namespace xx {
 
 		double nowSecs{}, delta{};	// seconds. update before call Update()
 
-		void EngineInit();
-		void EngineGLInit(void* wnd);
-		void EngineUpdateBegin();
-		void EngineUpdateEnd();
-		void EngineDestroy();
+		void Init();
+		void GLInit(void* wnd);
+		void UpdateBegin();
+		void GLClear(RGBA8 const& c = {});	// glViewport + glClear
+		void UpdateEnd();
+		void Destroy();
 
 		// ...
 

@@ -5,20 +5,20 @@ namespace xx {
 
 	Engine engine;
 
-	void Engine::EngineInit() {
+	void Engine::Init() {
 		nowSecs = xx::NowSteadyEpochSeconds();
 		delta = 0;
 		SearchPathReset();
 	}
 
-	void Engine::EngineGLInit(void* wnd) {
+	void Engine::GLInit(void* wnd) {
 		ImGuiInit(wnd);
 
 		sm.GLInit();
 		sm.Init();
 	}
 
-	void Engine::EngineUpdateBegin() {
+	void Engine::UpdateBegin() {
 		assert(w >= 0 && h >= 0);
 		delta = xx::NowSteadyEpochSeconds(nowSecs);
 
@@ -26,6 +26,11 @@ namespace xx {
 
 		sm.Begin();
 
+		GLClear();
+	}
+
+	void Engine::GLClear(RGBA8 const& c) {
+		glClearColor(c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f);
 		glViewport(0, 0, w, h);
 		glClear(GL_COLOR_BUFFER_BIT);
 		//glDepthMask(true);
@@ -33,7 +38,7 @@ namespace xx {
 		//glDepthMask(false);
 	}
 
-	void Engine::EngineUpdateEnd() {
+	void Engine::UpdateEnd() {
 		sm.End();
 
 		if (!delayFuncs.empty()) {
@@ -46,7 +51,7 @@ namespace xx {
 		xx::ImGuiDraw();
 	}
 
-	void Engine::EngineDestroy() {
+	void Engine::Destroy() {
 		textureCache.clear();
 		// ...
 		xx::ImGuiDestroy();

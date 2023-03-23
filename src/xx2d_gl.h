@@ -84,5 +84,10 @@ namespace xx {
 
 	GLProgram LinkGLProgram(GLuint const& vs, GLuint const& fs);
 
-	std::pair<GLFrameBuffer, GLTexture> MakeGLFrameBuffer(uint32_t const& w, uint32_t const& h);
+	GLFrameBuffer MakeGLFrameBuffer();
+	GLTexture MakeGLFrameBufferTexture(uint32_t const& w, uint32_t const& h, bool const& hasAlpha);
+	void BindGLFrameBufferTexture(GLuint const& f, GLuint const& t);
+	void UnbindGLFrameBuffer();
+
+	//std::pair<GLFrameBuffer, GLTexture> MakeGLFrameBuffer(uint32_t const& w, uint32_t const& h);
 }

@@ -10,9 +10,10 @@ namespace RenderTextureTest {
 		spr.SetTexture(xx::engine.LoadSharedTexture("res/tiledmap2/tree.png"))
 			.SetScale(3);
 
-		auto tex = RenderToTexture(300, 500, [this] {
+		auto tex = xx::FrameBuffer::Draw({ 300,500 }, true, {20,20,20,255}, [this] {
 			spr.Draw();
 		});
+
 		spr2.SetTexture(tex).SetFlipY(true);
 
 	}
