@@ -647,11 +647,16 @@ int GameLooper::UpdateLogic() {
 		xx::MovePathCache mpc;
 		mpc.Init(mp);
 
-		auto& ps = ls.Clear().SetPoints();
+		auto& ps = ls.SetColor({ 255,255,255,255 }).SetPosition(offset).SetScale(zoom).Clear().SetPoints();
 		for (auto& p : mpc.points) {
 			ps.emplace_back(p.pos);
+			if (ps.size() == 65535) {		// batch commit
+				ls.Draw();
+				ls.Clear();
+				ps.emplace_back(p.pos);
+			}
 		}
-		ls.SetColor({ 255,255,255,255 }).SetPosition(offset).SetScale(zoom).Draw();
+		ls.Draw();
 	}
 
 	xx::SimpleLabel lbl;
