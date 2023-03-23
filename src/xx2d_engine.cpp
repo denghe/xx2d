@@ -24,15 +24,18 @@ namespace xx {
 
 		ImGuiUpdate();
 
+		sm.ClearCounter();
 		sm.Begin();
 
-		GLClear();
+		GLClear(RGBA8{0,0,0,0});
 	}
 
-	void Engine::GLClear(RGBA8 const& c) {
-		glClearColor(c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f);
+	void Engine::GLClear(std::optional<RGBA8> const& c) {
 		glViewport(0, 0, w, h);
-		glClear(GL_COLOR_BUFFER_BIT);
+		if (c.has_value()) {
+			glClearColor(c->r / 255.f, c->g / 255.f, c->b / 255.f, c->a / 255.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
 		//glDepthMask(true);
 		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		//glDepthMask(false);

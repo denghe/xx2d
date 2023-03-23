@@ -35,7 +35,10 @@ namespace xx {
 		// make & call all shaders Init
 		void Init();
 
-		// zero counters & begin default shader
+		// zero performance counters
+		void ClearCounter();
+
+		// begin default shader
 		void Begin();
 
 		// end current shader

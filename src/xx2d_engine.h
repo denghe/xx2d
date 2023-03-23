@@ -113,7 +113,7 @@ namespace xx {
 		void Init();
 		void GLInit(void* wnd);
 		void UpdateBegin();
-		void GLClear(RGBA8 const& c = {});	// glViewport + glClear
+		void GLClear(std::optional<RGBA8> const& c = {});	// glViewport + glClear
 		void UpdateEnd();
 		void Destroy();
 

@@ -41,8 +41,11 @@ namespace xx {
 		cursor = Shader_Quad::index;
 	}
 
-	void ShaderManager::Begin() {
+	void ShaderManager::ClearCounter() {
 		drawCall = drawVerts = drawLinePoints = 0;
+	}
+
+	void ShaderManager::Begin() {
 		shaders[cursor]->Begin();
 	}
 

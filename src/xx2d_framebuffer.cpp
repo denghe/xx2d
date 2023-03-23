@@ -1,18 +1,19 @@
 ﻿#include "xx2d.h"
 
 namespace xx {
-	void FrameBuffer::Init() {
+	FrameBuffer& FrameBuffer::Init() {
 		if (fb) {
 			throw std::logic_error("excessive initializations ?");
 		}
 		fb = MakeGLFrameBuffer();
+		return *this;
 	}
 
-	xx::Shared<GLTexture> FrameBuffer::MakeTex(xx::Pos<> const& wh, bool const& hasAlpha) {
+	xx::Shared<GLTexture> FrameBuffer::MakeTexture(xx::Pos<> const& wh, bool const& hasAlpha) {
 		return xx::Make<GLTexture>(MakeGLFrameBufferTexture(wh.x, wh.y, hasAlpha));
 	}
 
-	void FrameBuffer::Begin(xx::Shared<GLTexture>& t, RGBA8 const& c) {
+	void FrameBuffer::Begin(xx::Shared<GLTexture>& t, std::optional<RGBA8> const& c) {
 		xx::engine.sm.End();
 		bak.x = xx::engine.w;
 		bak.y = xx::engine.h;
