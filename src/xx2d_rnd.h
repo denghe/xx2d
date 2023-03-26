@@ -132,9 +132,11 @@ namespace xx {
 
         template<typename V>
         V Next(V from, V to) {
-            assert(to >= from);
             if (from == to) return from;
             else {
+                if (to < from) {
+                    std::swap(from, to);
+                }
                 if constexpr (std::is_floating_point_v<V>) {
                     return from + Next<V>() * (to - from);
                 } else {

@@ -18,15 +18,25 @@
 
 namespace xx {
 
+	void GLTexParmCore(GLuint const& a1, GLuint const& a2) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, a1);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, a1);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, a2);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, a2);
+	}
+
+	void GLTexParm(GLuint const& t, GLuint const& a1, GLuint const& a2) {
+		glBindTexture(GL_TEXTURE_2D, t);
+		GLTexParmCore(a1, a2);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
 	GLuint LoadGLTexture_core() {
 		GLuint t{};
 		glGenTextures(1, &t);
 		glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
 		glBindTexture(GL_TEXTURE_2D, t);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST/*GL_LINEAR*/);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST/*GL_LINEAR*/);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT/*GL_CLAMP_TO_EDGE*/);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT/*GL_CLAMP_TO_EDGE*/);
+		GLTexParmCore();
 		return t;
 	}
 

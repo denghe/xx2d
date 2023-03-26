@@ -76,7 +76,7 @@ namespace xx {
 
 
 		/**********************************************************************************/
-		// window & input
+		// window & input & helpers
 
 		float w = 1800, h = 1000, hw = w / 2, hh = h / 2;
 		std::array<XY, 10> ninePoints;
@@ -89,10 +89,16 @@ namespace xx {
 		bool Pressed(Mbtns const& b);	// return mbtnStates[(size_t)b];
 		bool Pressed(KbdKeys const& k);	// return kbdStates[(size_t)k];
 
+		Rnd rnd;	// global random generator ( not thread safe )
+
 		/**********************************************************************************/
-		// shader
+		// shader, gl state ...
 
 		ShaderManager sm;
+
+		uint32_t blendFunc1{}, blendFunc2{};
+		bool GLBlendFunc(uint32_t const& f1 = GL_SRC_ALPHA, uint32_t const& f2 = GL_ONE_MINUS_SRC_ALPHA);	// changed: return true
+		void GLClear(std::optional<RGBA8> const& c = {});	// glViewport + glClear
 
 		/**********************************************************************************/
 		// delay funcs
@@ -113,7 +119,6 @@ namespace xx {
 		void Init();
 		void GLInit(void* wnd);
 		void UpdateBegin();
-		void GLClear(std::optional<RGBA8> const& c = {});	// glViewport + glClear
 		void UpdateEnd();
 		void Destroy();
 

@@ -41,6 +41,14 @@ namespace xx {
 		//glDepthMask(false);
 	}
 
+	bool Engine::GLBlendFunc(uint32_t const& f1, uint32_t const& f2) {
+		if (blendFunc1 == f1 && blendFunc2 == f2) return false;
+		blendFunc1 = f1;
+		blendFunc2 = f2;
+		glBlendFunc(f1, f2);
+		return true;
+	}
+
 	void Engine::UpdateEnd() {
 		sm.End();
 
