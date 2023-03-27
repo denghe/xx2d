@@ -19,7 +19,7 @@
 #include "s17_imgui.h"
 #include "s18_polygon_sprite.h"
 #include "s19_space_shooter.h"
-#include "s21_partical.h"
+#include "s21_particle.h"
 
 namespace MainMenu {
 
@@ -62,8 +62,8 @@ namespace MainMenu {
 
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -xstep, y }, "19: space shooter", 32);
-		menus.emplace_back().Init(looper, { 0, y }, "20: dynamic atlas ( todo )", 32);
-		menus.emplace_back().Init(looper, { xstep, y }, "21: partical ( todo )", 32);
+		menus.emplace_back().Init(looper, { 0, y }, "20: particle", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "21: dynamic atlas ( todo )", 32);
 
 		looper->fpsViewer.extraInfo.clear();
 	}
@@ -133,8 +133,8 @@ namespace MainMenu {
 			} else if (txt.starts_with("19:"sv)) {
 				looper->DelaySwitchTo<SpaceShooter::Scene>();
 			} else if (txt.starts_with("20:"sv)) {
+				looper->DelaySwitchTo<ParticleTest::Scene>();
 			} else if (txt.starts_with("21:"sv)) {
-				looper->DelaySwitchTo<ParticalTest::Scene>();
 			} else {
 				throw std::logic_error("unhandled menu");
 			}

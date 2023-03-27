@@ -131,23 +131,37 @@ namespace xx {
         }
 
         template<typename V>
-        V Next(V from, V to) {
+        V Next(V const& from, V const& to) {
             if (from == to) return from;
-            else {
-                if (to < from) {
-                    std::swap(from, to);
-                }
-                if constexpr (std::is_floating_point_v<V>) {
-                    return from + Next<V>() * (to - from);
-                } else {
-                    return from + Next<V>() % (to - from + 1);
-                }
+            assert(from < to);
+            if constexpr (std::is_floating_point_v<V>) {
+                return from + Next<V>() * (to - from);
+            } else {
+                return from + Next<V>() % (to - from + 1);
             }
         }
 
         template<typename V>
-        V Next(V to) {
+        V Next2(V from, V to) {
+            if (from == to) return from;
+            if (to < from) {
+                std::swap(from, to);
+            }
+            if constexpr (std::is_floating_point_v<V>) {
+                return from + Next<V>() * (to - from);
+            } else {
+                return from + Next<V>() % (to - from + 1);
+            }
+        }
+
+        template<typename V>
+        V Next(V const& to) {
             return Next((V)0, to);
+        }
+
+        template<typename V>
+        V Next(std::pair<V, V> const& fromTo) {
+            return Next(fromTo.first, fromTo.second);
         }
     };
 

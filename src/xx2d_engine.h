@@ -96,9 +96,11 @@ namespace xx {
 
 		ShaderManager sm;
 
-		uint32_t blendFunc1{}, blendFunc2{};
-		bool GLBlendFunc(uint32_t const& f1 = GL_SRC_ALPHA, uint32_t const& f2 = GL_ONE_MINUS_SRC_ALPHA);	// changed: return true
 		void GLClear(std::optional<RGBA8> const& c = {});	// glViewport + glClear
+
+		std::pair<uint32_t, uint32_t> blendFuncs;
+		void GLBlendFunc(std::pair<uint32_t, uint32_t> const& bfs = { GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA });
+
 
 		/**********************************************************************************/
 		// delay funcs
