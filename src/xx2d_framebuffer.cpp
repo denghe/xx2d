@@ -9,7 +9,7 @@ namespace xx {
 		return *this;
 	}
 
-	xx::Shared<GLTexture> FrameBuffer::MakeTexture(xx::Pos<> const& wh, bool const& hasAlpha) {
+	xx::Shared<GLTexture> FrameBuffer::MakeTexture(xx::Pos<uint32_t> const& wh, bool const& hasAlpha) {
 		return xx::Make<GLTexture>(MakeGLFrameBufferTexture(wh.x, wh.y, hasAlpha));
 	}
 

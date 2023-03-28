@@ -212,5 +212,27 @@ namespace xx {
 		std::tuple<size_t, XYRGBA8*, uint16_t*> Draw(size_t const& numVerts, size_t const& numIndexs);
 	};
 
+	/***************************************************************************************************/
+
+	struct XYUV : XY, UV {};
+
+	struct Shader_Yuva2Rgba : Shader {
+
+		static const size_t index = 5;	// index at sm->shaders
+
+		GLint uCxy = -1, uStrideHeight = -1, uTexY = -1, uTexU = -1, uTexV = -1, uTexA = -1, aPos = -1, aTexCoord = -1;
+		GLVertexArrays va;
+		GLBuffer vb, ib;
+
+		static void Init();
+		void Init(ShaderManager*) override;
+		void Begin() override;
+		void End() override;
+
+		void Draw(uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride, uint32_t const& w, uint32_t const& h, XY const& pos);
+	};
+
+
+
 	// ... more shader struct here
 }

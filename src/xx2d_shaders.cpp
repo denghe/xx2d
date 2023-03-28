@@ -30,6 +30,7 @@ namespace xx {
 		shaders[Shader_LineStrip::index] = xx::Make<Shader_LineStrip>();
 		shaders[Shader_TexVerts::index] = xx::Make<Shader_TexVerts>();
 		shaders[Shader_Verts::index] = xx::Make<Shader_Verts>();
+		shaders[Shader_Yuva2Rgba::index] = xx::Make<Shader_Yuva2Rgba>();
 		// ...
 
 		// init all

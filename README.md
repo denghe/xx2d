@@ -47,6 +47,10 @@ tiled map ( 1.92 full support ) loader & helpers( cam, util funcs )
 
 scissors
 
+frame buffer ( render texture )
+
+vp9 alpha webm to texture
+
 audio ( miniaudio + stb vorbise ) ( .exe + 400kb )
 
 imgui ( .exe + 800kb )
@@ -62,8 +66,6 @@ pull submodules
 https://github.com/denghe/xx2d_space_shooter
 
 # todo
-
-render texture
 
 edit box, rich text?
 

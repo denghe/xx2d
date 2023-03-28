@@ -16,7 +16,7 @@ namespace xx {
 
 		FrameBuffer& Init();
 
-		Shared<GLTexture> MakeTexture(Pos<> const& wh, bool const& hasAlpha = true);
+		Shared<GLTexture> MakeTexture(Pos<uint32_t> const& wh, bool const& hasAlpha = true);
 
 		template<typename Func>
 		void DrawTo(Shared<GLTexture>& t, std::optional<RGBA8> const& c, Func&& func) {
@@ -26,7 +26,7 @@ namespace xx {
 		}
 
 		template<typename Func>
-		Shared<GLTexture> Draw(Pos<> const& wh, bool const& hasAlpha, std::optional<RGBA8> const& c, Func&& func) {
+		Shared<GLTexture> Draw(Pos<uint32_t> const& wh, bool const& hasAlpha, std::optional<RGBA8> const& c, Func&& func) {
 			auto t = MakeTexture(wh, hasAlpha);
 			DrawTo(t, c, std::forward<Func>(func));
 			return t;

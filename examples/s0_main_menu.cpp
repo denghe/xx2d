@@ -64,7 +64,7 @@ namespace MainMenu {
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -xstep, y }, "19: space shooter", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "20: particle", 32);
-		menus.emplace_back().Init(looper, { xstep, y }, "21: xxmv ( todo )", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "21: xxmv (vp9 webm)", 32);
 
 		looper->fpsViewer.extraInfo.clear();
 	}
