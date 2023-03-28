@@ -62,8 +62,8 @@ out vec4 oColor;
 
 void main() {
 	float y = texture( uTexY, vTexCoord / uSiz ).r;
-	float u = texture( uTexU, vTexCoord / vec2(2.f, 1.f) / uSiz ).r;
-	float v = texture( uTexV, vTexCoord / vec2(2.f, 1.f) / uSiz ).r;
+	float u = texture( uTexU, vTexCoord / uSiz ).r;
+	float v = texture( uTexV, vTexCoord / uSiz ).r;
 	float a = texture( uTexA, vTexCoord / uSiz ).r;
 
 	y = 1.1643f * (y - 0.0625f);
@@ -207,19 +207,30 @@ namespace XxmvTest {
 			, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData
 			, uint32_t const& yaStride, uint32_t const& uvStride)->int {
 
+			auto tex = xx::FrameBuffer().Init().Draw({ 500, 500 }, true, {}, [&]() {
 				shader.Draw(yData, uData, vData, aData, yaStride, uvStride, w, h, {});
+			});
 
-			return 1;
+			texs.push_back(tex);
+				
+			return 0;
 		});
 
-		auto tex = xx::FrameBuffer().Init().Draw({ 500, 500 }, true, {}, [&]() {
-			mv.ForeachFrame(h);
-		});
+		mv.ForeachFrame(h);
 
-		spr.SetTexture(tex);
+		spr.SetTexture(texs[cursor]);
 	}
 
 	int Scene::Update() {
+		timePool += xx::engine.delta;
+		while (timePool >= 1.f / 60) {
+			timePool -= 1.f / 60;
+
+			if (++cursor == texs.size()) {
+				cursor = 0;
+			}
+			spr.SetTexture(texs[cursor]);
+		}
 		spr.Draw();
 		return 0;
 	}
