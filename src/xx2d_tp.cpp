@@ -4,7 +4,7 @@ namespace xx {
 
 	void TP::Fill(std::string_view plistFn, bool sortByName) {
 		std::string rootPath;
-		if (auto&& [d, fp] = engine.ReadAllBytes(plistFn); !d) {
+		if (auto&& [d, fp] = engine.LoadFileData(plistFn); !d) {
 			throw std::logic_error("read file error: " + std::string(plistFn));
 		} else {
 			plistFullPath = fp;

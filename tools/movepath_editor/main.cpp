@@ -49,7 +49,7 @@ void GameLooper::Init() {
 }
 
 void GameLooper::LoadData() {
-	auto&& [d, p] = xx::engine.ReadAllBytes("res/movepath.json"sv);
+	auto&& [d, p] = xx::engine.LoadFileData("res/movepath.json"sv);
 	fileName = std::move(p);
 	data = {};
 	ajson::load_from_buff(data, (char*)d.buf, d.len);

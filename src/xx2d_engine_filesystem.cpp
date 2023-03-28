@@ -61,7 +61,7 @@ namespace xx {
 	}
 
 
-	xx::Data Engine::ReadAllBytesWithFullPath(std::string_view const& fp, bool autoDecompress) {
+	xx::Data Engine::LoadFileDataWithFullPath(std::string_view const& fp, bool autoDecompress) {
 		xx::Data d;
 		if (int r = xx::ReadAllBytes(fp, d)) throw std::logic_error(xx::ToString("file read error. r = ", r, ", fn = ", fp));
 		if (d.len == 0) throw std::logic_error(xx::ToString("file content is empty. fn = ", fp));
@@ -76,10 +76,10 @@ namespace xx {
 	}
 
 
-	std::pair<xx::Data, std::string> Engine::ReadAllBytes(std::string_view const& fn, bool autoDecompress) {
+	std::pair<xx::Data, std::string> Engine::LoadFileData(std::string_view const& fn, bool autoDecompress) {
 		auto p = GetFullPath(fn);
 		if (p.empty()) throw std::logic_error("fn can't find: " + std::string(fn));
-		auto d = ReadAllBytesWithFullPath(p, autoDecompress);
+		auto d = LoadFileDataWithFullPath(p, autoDecompress);
 		return { std::move(d), std::move(p) };
 	}
 

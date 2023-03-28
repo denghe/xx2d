@@ -69,7 +69,7 @@ namespace xx {
             const int nParticlesCreated = static_cast<unsigned int>(f_particles_needed);
             emissionResidue = f_particles_needed - nParticlesCreated;
 
-            par = &particles[particlesAlive];
+            par = particles.data() + particlesAlive;
 
             for (i = 0, e = (int)particles.size(); i < nParticlesCreated; i++) {
                 if (particlesAlive >= e) break;
@@ -96,10 +96,10 @@ namespace xx {
                 par->spin = engine.rnd.Next(cfg->spin.first, cfg->spin.first + (cfg->spin.second - cfg->spin.first) * cfg->spinVar);
                 par->spinDelta = (cfg->spin.second - par->spin) / par->terminalAge;
 
-                par->color.r = engine.rnd.Next(cfg->color.first.r, cfg->color.first.r + (cfg->color.second.r - cfg-> color.first.r) * cfg->colorVar);
-                par->color.g = engine.rnd.Next(cfg->color.first.g, cfg->color.first.g + (cfg->color.second.g - cfg-> color.first.g) * cfg->colorVar);
-                par->color.b = engine.rnd.Next(cfg->color.first.b, cfg->color.first.b + (cfg->color.second.b - cfg-> color.first.b) * cfg->colorVar);
-                par->color.a = engine.rnd.Next(cfg->color.first.a, cfg->color.first.a + (cfg->color.second.a - cfg-> color.first.a) * cfg->alphaVar);
+                par->color.r = engine.rnd.Next2(cfg->color.first.r, cfg->color.first.r + (cfg->color.second.r - cfg-> color.first.r) * cfg->colorVar);
+                par->color.g = engine.rnd.Next2(cfg->color.first.g, cfg->color.first.g + (cfg->color.second.g - cfg-> color.first.g) * cfg->colorVar);
+                par->color.b = engine.rnd.Next2(cfg->color.first.b, cfg->color.first.b + (cfg->color.second.b - cfg-> color.first.b) * cfg->colorVar);
+                par->color.a = engine.rnd.Next2(cfg->color.first.a, cfg->color.first.a + (cfg->color.second.a - cfg-> color.first.a) * cfg->alphaVar);
 
                 par->colorDelta = (cfg->color.second - par->color) / par->terminalAge;
 

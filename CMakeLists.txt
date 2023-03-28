@@ -23,6 +23,7 @@ include_directories(
 	imgui
 	imgui/backends
 	miniaudio
+	libvpx_prebuilt/includes
 	3rd
 	xxlib
 	src
@@ -149,6 +150,8 @@ include_directories(
 
 
 
+
+
 ###########################################################################################################################################
 ###########################################################################################################################################
 ###########################################################################################################################################
@@ -170,6 +173,9 @@ file(GLOB SRCS	#GLOB_RECURSE
 add_executable(examples ${SRCS})
 
 target_link_libraries(examples ${name} glfw imgui pugixml libzstd_static)
+if(MSVC)	# vs2022+
+	target_link_libraries(examples ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
+endif()
 
 
 if(MSVC)	# vs2022+

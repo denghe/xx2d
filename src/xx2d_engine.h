@@ -20,10 +20,10 @@ namespace xx {
 		std::string GetFullPath(std::string_view fn, bool fnIsFileName = true);
 
 		// read all data by full path
-		xx::Data ReadAllBytesWithFullPath(std::string_view const& fp, bool autoDecompress = true);
+		xx::Data LoadFileDataWithFullPath(std::string_view const& fp, bool autoDecompress = true);
 
 		// read all data by GetFullPath( fn )
-		std::pair<xx::Data, std::string> ReadAllBytes(std::string_view const& fn, bool autoDecompress = true);
+		std::pair<xx::Data, std::string> LoadFileData(std::string_view const& fn, bool autoDecompress = true);
 
 		/**********************************************************************************/
 		// fonts

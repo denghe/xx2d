@@ -5,7 +5,7 @@ namespace xx {
 
     // reference from cocos CCFontFNT.cpp  parseBinaryConfigFile. detail: http://www.angelcode.com/products/bmfont/doc/file_format.html
     void BMFont::Load(std::string_view const& fn) {
-        auto [d, p] = engine.ReadAllBytes(fn);
+        auto [d, p] = engine.LoadFileData(fn);
         if (d.len < 4) throw std::logic_error(xx::ToString("BMFont file's size is too small. fn = ", p));
         if (std::string_view((char*)d.buf, 3) != "BMF"sv) throw std::logic_error(xx::ToString("bad BMFont format. fn = ", p));
         if (d[3] != 3) throw std::logic_error(xx::ToString("BMFont only support version 3. fn = ", p));

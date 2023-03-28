@@ -3,7 +3,7 @@
 namespace xx {
 
 	TP Engine::LoadTPData(std::string_view const& fn) {
-		auto [d, p] = ReadAllBytes(fn);
+		auto [d, p] = LoadFileData(fn);
 		TP c;
 		std::string rootPath;
 		if (auto i = p.find_last_of("/"); i != p.npos) {
