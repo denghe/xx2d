@@ -37,6 +37,7 @@
 #include "xx2d_gamelooper.h"
 #include "xx2d_framebuffer.h"
 #include "xx2d_particle.h"
+#include "xx2d_mv.h"
 
 #include "xx2d_audio.h"
 

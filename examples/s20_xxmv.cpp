@@ -12,12 +12,21 @@ namespace XxmvTest {
 		int r = mv.Load(d);
 		assert(!r);
 
-		r = mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
+		// test decode performance
+		auto secs = xx::NowEpochSeconds();
+		int counter = 0, n = 100;
+
+		xx::Mv::YuvaHandler h([&](int const& frameIndex, uint32_t const& w, uint32_t const& h, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
 			// todo
-			std::cout << frameIndex << std::endl;
+			++counter;
 			return 0;
 		});
-		assert(!r);
+
+		for (size_t i = 0; i < n; i++) {
+			r = mv.ForeachFrame(h);
+			assert(!r);
+		}
+		xx::CoutN("decode ", mv.count * n, " frames. elapsed secs = ", xx::NowEpochSeconds(secs));
 
 		// todo
 	}
