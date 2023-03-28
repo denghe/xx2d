@@ -34,11 +34,9 @@ namespace xx {
 
 		// init all
 		for (auto& s : shaders) {
+			if (!s) break;
 			s->Init(this);
 		}
-
-		// set default
-		cursor = Shader_Quad::index;
 	}
 
 	void ShaderManager::ClearCounter() {

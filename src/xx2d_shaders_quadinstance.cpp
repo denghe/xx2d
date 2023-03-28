@@ -105,6 +105,7 @@ void main() {
 		}
 
 		glUseProgram(p);
+		glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
 		glUniform1i(uTex0, 0);
 		glUniform2f(uCxy, 2 / engine.w, 2 / engine.h);
 

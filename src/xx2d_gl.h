@@ -77,7 +77,7 @@ namespace xx {
 
 	void GLTexParm(GLuint const& t, GLuint const& a1 = GL_NEAREST/*GL_LINEAR*/, GLuint const& a2 = GL_REPEAT/*GL_CLAMP_TO_EDGE*/);
 
-	GLuint LoadGLTexture_core();
+	GLuint LoadGLTexture_core(int textureUnit = 0);
 
 	// fn must be absolute path. GetFullPath recommend
 	GLTexture LoadGLTexture(std::string_view const& buf, std::string_view const& fullPath);

@@ -24,10 +24,10 @@ namespace xx {
 	struct Engine;
 	struct ShaderManager {
 		// all shader instance container
-		std::array<xx::Shared<Shader>, 5> shaders{};
+		std::array<xx::Shared<Shader>, 16> shaders;		// 16 can change larger
 
 		// store current shaders index
-		size_t cursor = -1;
+		size_t cursor{};
 
 		// init global gl env
 		void GLInit();

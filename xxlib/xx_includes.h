@@ -189,3 +189,9 @@ T& operator=(T &&) = default;
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 using namespace std::chrono_literals;
+
+
+#ifdef __GNUC__
+//#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#endif

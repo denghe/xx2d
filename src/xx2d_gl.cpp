@@ -31,10 +31,10 @@ namespace xx {
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	GLuint LoadGLTexture_core() {
+	GLuint LoadGLTexture_core(int textureUnit) {
 		GLuint t{};
 		glGenTextures(1, &t);
-		glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
+		glActiveTexture(GL_TEXTURE0 + textureUnit);
 		glBindTexture(GL_TEXTURE_2D, t);
 		GLTexParmCore();
 		return t;

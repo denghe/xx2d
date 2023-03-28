@@ -8,5 +8,6 @@ namespace XxmvTest {
 		int Update() override;
 
 		xx::Mv mv;
+		xx::Quad spr;
 	};
 }
