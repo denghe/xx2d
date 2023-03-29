@@ -2,8 +2,9 @@
 
 namespace xx {
 
-    void Particle::Init(xx::Shared<ParticleConfig> cfg_, size_t const& cap) {
+    void Particle::Init(xx::Shared<ParticleConfig> cfg_, size_t const& cap, std::pair<uint32_t, uint32_t> blendFuncs_) {
         particles.resize(cap);
+        blendFuncs = blendFuncs_;
         cfg = std::move(cfg_);
 
         pos = prevPos = rootPos = {};
@@ -155,10 +156,10 @@ namespace xx {
 
     void Particle::Draw() {
         std::pair<uint32_t, uint32_t> blendBak{};
-        if (engine.blendFuncs.first != GL_SRC_ALPHA || engine.blendFuncs.second != GL_ONE) {
+        if (engine.blendFuncs != blendFuncs) {
             engine.sm.End();
             blendBak = engine.blendFuncs;
-            engine.GLBlendFunc({ GL_SRC_ALPHA, GL_ONE });
+            engine.GLBlendFunc(blendFuncs);
         }
 
         auto bak = cfg->sprite.color;
