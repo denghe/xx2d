@@ -42,19 +42,15 @@ out vec4 oColor;
 
 void main() {
 	float y = texture( uTexY, vTexCoord ).r;
-	float u = texture( uTexU, vTexCoord ).r;
-	float v = texture( uTexV, vTexCoord ).r;
+	float u = texture( uTexU, vTexCoord ).r - 0.5f;
+	float v = texture( uTexV, vTexCoord ).r - 0.5f;
 	float a = texture( uTexA, vTexCoord ).r;
 
-	y = 1.1643f * (y - 0.0625f);
-	u = u - 0.5f;
-	v = v - 0.5f;
+    float r = y + 1.402f * v;
+    float g = y - 0.344f * u - 0.714f * v;
+    float b = y + 1.772f * u;
 
-	float r = y + 1.5958f * v;
-	float g = y - 0.39173f * u - 0.81290f * v;
-	float b = y + 2.017f * u;
-
-	oColor = vec4(r, g, b, a);
+    oColor = vec4(r, g, b, a);
 })"sv });
 
 		p = LinkGLProgram(v, f);

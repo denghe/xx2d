@@ -20,7 +20,7 @@ namespace XxmvTest {
 		mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h
 		, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
 
-			auto tex = xx::FrameBuffer().Init().Draw({ w, h }, true, {}, [&]() {
+			auto tex = xx::FrameBuffer().Init().Draw({ w, h }, true, xx::RGBA8{}, [&]() {
 				shader.Draw(yData, uData, vData, aData, yaStride, uvStride, w, h, {});
 			});
 
