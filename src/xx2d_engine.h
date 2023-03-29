@@ -98,6 +98,7 @@ namespace xx {
 
 		void GLClear(std::optional<RGBA8> const& c = {});	// glViewport + glClear
 
+		std::pair<uint32_t, uint32_t> blendFuncsDefault{ GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA };
 		std::pair<uint32_t, uint32_t> blendFuncs;
 		void GLBlendFunc(std::pair<uint32_t, uint32_t> const& bfs = { GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA });
 

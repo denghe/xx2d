@@ -12,7 +12,7 @@ convert png to pkm:
 tools/png2pkm_astc/drag_png_here_convert_pkm_etc2_rgba8.bat
 
 convert png to astc:
-tools/png2pkm_astc/drag_png_here_convert_astc6x6.bat
+tools/png2pkm_astc/drag_png_here_convert_astc6x6_medium.bat
 
 compress file by zstd:
 tools/drag_file_here_zstd.bat

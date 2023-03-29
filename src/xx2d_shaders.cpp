@@ -17,7 +17,7 @@ namespace xx {
 		glDepthMask(false);
 
 		glEnable(GL_BLEND);
-		engine.GLBlendFunc();
+		engine.GLBlendFunc(engine.blendFuncsDefault);
 
 		glActiveTexture(GL_TEXTURE0);
 
