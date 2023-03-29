@@ -72,6 +72,93 @@ namespace xx {
 		}
 
 		/***********************************************************************************************************************************/
+		// astc
+		else if (buf.starts_with("\x13\xab\xa1\x5c"sv) && buf.size() >= 16) {
+			struct Header {
+				uint8_t magic[4], block_x, block_y, block_z, dim_x[3], dim_y[3], dim_z[3];
+			};
+			auto p = (uint8_t*)buf.data();
+			auto& header = *(Header*)p;
+
+			uint32_t block_x = std::max((uint32_t)header.block_x, 1u);
+			uint32_t block_y = std::max((uint32_t)header.block_y, 1u);
+			GLsizei w = header.dim_x[0] + (header.dim_x[1] << 8) + (header.dim_x[2] << 16);
+			GLsizei h = header.dim_y[0] + (header.dim_y[1] << 8) + (header.dim_y[2] << 16);
+
+			int fmt{};
+			GLuint t;
+			if (w == 0 || h == 0 || block_x < 4 || block_y < 4) goto LabError;
+
+			switch (block_x) {
+			case 4:
+				if (block_y == 4) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
+					break;
+				} else goto LabError;
+			case 5:
+				if (block_y == 4) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
+					break;
+				} else if (block_y == 5) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
+					break;
+				} else goto LabError;
+			case 6:
+				if (block_y == 5) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_6x5_KHR;
+					break;
+				} else if (block_y == 6) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+					break;
+				} else goto LabError;
+			case 8:
+				if (block_y == 5) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_8x5_KHR;
+					break;
+				} else if (block_y == 6) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_8x6_KHR;
+					break;
+				} else if (block_y == 8) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+					break;
+				} else goto LabError;
+			case 10:
+				if (block_y == 5) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_10x5_KHR;
+					break;
+				} else if (block_y == 6) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_10x6_KHR;
+					break;
+				} else if (block_y == 8) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_10x8_KHR;
+					break;
+				} else if (block_y == 10) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+					break;
+				} else goto LabError;
+			case 12:
+				if (block_y == 10) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_12x10_KHR;
+					break;
+				} else if (block_y == 12) {
+					fmt = GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
+					break;
+				} else goto LabError;
+			default:
+				goto LabError;
+			}
+
+			t = LoadGLTexture_core();
+			glCompressedTexImage2D(GL_TEXTURE_2D, 0, fmt, w, h, 0, (GLsizei)(buf.size() - 16), p + 16);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			CheckGLError();
+			return { t, w, h, fullPath };
+
+		LabError:
+			throw std::logic_error(xx::ToString("bad astc file header. fn = ", fullPath));
+		}
+
+		/***********************************************************************************************************************************/
 		// png
 
 		else if (buf.starts_with("\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"sv)) {
