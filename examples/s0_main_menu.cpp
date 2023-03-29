@@ -140,8 +140,7 @@ namespace MainMenu {
 			} else {
 				throw std::logic_error("unhandled menu");
 			}
-				//looper->DelaySwitchTo<::Scene>();	// todo: circle editor ?
-				//looper->DelaySwitchTo<::Scene>();	// todo: anim frame editor ?
+				// todo: circle editor ? anim frame editor ? particle editor ? png -> webm -> xxmv ?
 		}
 	}
 
