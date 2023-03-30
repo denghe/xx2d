@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "xx2d.h"
+#include "xx_listlink.h"
 
 namespace xx {
 
@@ -40,20 +41,19 @@ namespace xx {
 	struct Particle {
 
 		void Init(xx::Shared<ParticleConfig> cfg_, size_t const& cap = 1000, std::pair<uint32_t, uint32_t> blendFuncs_ = { GL_ONE, GL_ONE_MINUS_SRC_ALPHA });
-		void Update(float fDeltaTime);
+		void Update(float delta);
 
 		void FireAt(XY const& xy);
 		void Fire();
-		void MoveTo(XY const& xy, bool bMoveParticles = false);
-		void Stop(bool bKillParticles = false);
+		void MoveTo(XY const& xy, bool moveParticles = false);
+		void Stop(bool killParticles = false);
 
 		void Draw();
 
 		xx::Shared<ParticleConfig> cfg;
 		std::pair<uint32_t, uint32_t> blendFuncs;
 
-		std::vector<ParticleItem> particles;
-		int particlesAlive;
+		xx::ListLink<ParticleItem, int> particles;
 
 		float age, emissionResidue, scale;
 		XY prevPos, pos, rootPos;

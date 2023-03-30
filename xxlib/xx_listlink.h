@@ -3,7 +3,7 @@
 
 namespace xx {
 
-	// container for Add order visit members ( fast than map 10+ times )
+	// fast add/remove container. can visit members by Add order ( faster than map 10+ times )
 
 	/*
 	* example:
@@ -20,7 +20,7 @@ int main() {
 		xx::ListLink<int, int> ll;
 		ll.Reserve(m);
 		for (size_t j = 1; j <= m; j++) {
-			new (ll.Add()) int(2);
+			new (&ll.Add()) int(2);
 		}
 
 		int prev = -1, next{};
@@ -29,12 +29,12 @@ int main() {
 				next = ll.Remove(idx, prev);
 			} else {
 				next = ll.Next(idx);
+				prev = idx;
 			}
-			prev = idx;
 			idx = next;
 		}
-		new (ll.Add()) int(2);
-		new (ll.Add()) int(4);
+		new (&ll.Add()) int(2);
+		new (&ll.Add()) int(4);
 
 		for (auto idx = ll.head; idx != -1; idx = ll.Next(idx)) {
 			counter += ll[idx];
@@ -85,23 +85,13 @@ int main() {
 
 		Node* buf{};
 		SizeType cap{}, len{};
-		SizeType head{ -1 }, tail{ -1 }, freeList{ -1 }, freeCount{};
+		SizeType head{ -1 }, tail{ -1 }, freeHead{ -1 }, freeCount{};
 
 		ListLink() = default;
 		ListLink(ListLink const&) = delete;
 		ListLink& operator=(ListLink const&) = delete;
 		~ListLink() {
-			if (!cap) return;
-			if constexpr (IsPod_v<T>) {
-				while (head >= 0) {
-					buf[head].value.~T();
-					head = buf[head].next;
-				}
-			}
-			::free(buf);
-			buf = {};
-			cap = 0;
-			Clear();
+			Clear<true>();
 		}
 
 		void Reserve(SizeType const& cap_) noexcept {
@@ -129,12 +119,12 @@ int main() {
 			buf = newBuf;
 		}
 
-		// return value: new ( ll.Add() ) T( ... );
-		T* Add() {
+		// return value: new ( &ll.Add() ) T( ... );
+		T& Add() {
 			SizeType idx;
 			if (freeCount > 0) {
-				idx = freeList;
-				freeList = buf[idx].next;
+				idx = freeHead;
+				freeHead = buf[idx].next;
 				freeCount--;
 			} else {
 				if (len == cap) {
@@ -154,7 +144,7 @@ int main() {
 				head = tail = idx;
 			}
 
-			return &buf[idx].value;
+			return buf[idx].value;
 		}
 
 		// return next index
@@ -173,8 +163,8 @@ int main() {
 				buf[prevIdx].next = r;
 			}
 			buf[idx].value.~T();
-			buf[idx].next = freeList;
-			freeList = idx;
+			buf[idx].next = freeHead;
+			freeHead = idx;
 			++freeCount;
 			return r;
 		}
@@ -183,8 +173,23 @@ int main() {
 			return buf[idx].next;
 		}
 
+		template<bool freeBuf = false>
 		void Clear() {
-			head = tail = freeList = -1;
+
+			if (!cap) return;
+			if constexpr (IsPod_v<T>) {
+				while (head >= 0) {
+					buf[head].value.~T();
+					head = buf[head].next;
+				}
+			}
+			if constexpr (freeBuf) {
+				::free(buf);
+				buf = {};
+				cap = 0;
+			}
+
+			head = tail = freeHead = -1;
 			freeCount = 0;
 			len = 0;
 		}
@@ -196,6 +201,10 @@ int main() {
 		T& operator[](SizeType const& idx) noexcept {
 			assert(idx < len);
 			return buf[idx].value;
+		}
+
+		SizeType Left() const {
+			return cap - len + freeCount;
 		}
 	};
 }

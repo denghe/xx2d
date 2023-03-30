@@ -7,12 +7,13 @@ namespace ParticleTest {
 		this->looper = looper;
 		std::cout << "ParticalTest::Scene::Init" << std::endl;
 
-        auto tex = xx::engine.LoadSharedTexture("res/particles/circle.astc");
+        auto tex = xx::engine.LoadSharedTexture("res/particles/circle.astc");   // premultiply alpha
+        //auto tex = xx::engine.LoadSharedTexture("res/particles/p11.png");
         xx::GLTexParm(*tex, GL_LINEAR);
 
         auto cfg = xx::Make<xx::ParticleConfig>();
         cfg->sprite.SetTexture(tex);
-        cfg->emission = 2000;
+        cfg->emission = 5000;
         cfg->lifetime = -1.f;
         cfg->particleLife = { 2.f, 3.5f };
         cfg->direction = 0;
@@ -30,7 +31,8 @@ namespace ParticleTest {
         cfg->colorVar = 0.5;
         cfg->alphaVar = 1;
 
-        p.Init(cfg, 20000, { GL_ONE, GL_ONE }); // GL_ONE / GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
+        p.Init(cfg, 20000, { GL_ONE, GL_ONE_MINUS_SRC_ALPHA });   // for premultiply alpha
+        //p.Init(cfg, 20000, { GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA });
 	}
 
 	int Scene::Update() {
