@@ -55,7 +55,7 @@ scissors
 
 frame buffer ( render texture )
 
-vp9 alpha webm to texture
+vp9 alpha webm to texture ( .exe + 300k )
 
 audio ( miniaudio + stb vorbise ) ( .exe + 400kb )
 
@@ -73,9 +73,7 @@ https://github.com/denghe/xx2d_space_shooter
 
 # todo
 
-edit box, rich text?
-
-more texture format support?
+edit box, rich text? runtime auto combine texture?
 
 spine?
 
