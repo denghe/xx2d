@@ -1,9 +1,11 @@
 ﻿#include "xx2d.h"
 
+#ifndef __EMSCRIPTEN__
 #define GLAD_MALLOC(sz)       malloc(sz)
 #define GLAD_FREE(ptr)        free(ptr)
 #define GLAD_GL_IMPLEMENTATION
 #include <glad.h>
+#endif
 
 #define STBI_NO_JPEG
 //#define STBI_NO_PNG

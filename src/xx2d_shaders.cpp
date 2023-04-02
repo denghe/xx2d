@@ -5,11 +5,13 @@ namespace xx {
 	void ShaderManager::GLInit() {
 		// set gl global env for all shaders
 
+#ifndef __EMSCRIPTEN__
 		glEnable(GL_PRIMITIVE_RESTART);
 		glPrimitiveRestartIndex(65535);
 		glPointSize(5);
 
 		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+#endif
 
 		glDisable(GL_CULL_FACE);
 
