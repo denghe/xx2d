@@ -75,6 +75,9 @@ namespace xx {
 
 		/***********************************************************************************************************************************/
 		// astc
+		
+#ifndef __EMSCRIPTEN__
+		
 		else if (buf.starts_with("\x13\xab\xa1\x5c"sv) && buf.size() >= 16) {
 			struct Header {
 				uint8_t magic[4], block_x, block_y, block_z, dim_x[3], dim_y[3], dim_z[3];
@@ -160,6 +163,7 @@ namespace xx {
 			throw std::logic_error(xx::ToString("bad astc file header. fn = ", fullPath));
 		}
 
+#endif
 		/***********************************************************************************************************************************/
 		// png
 

@@ -1,4 +1,5 @@
 ﻿#include "xx2d.h"
+#ifndef __EMSCRIPTEN__
 #include "vpx_decoder.h"
 #include "vp8dx.h"
 
@@ -128,3 +129,4 @@ namespace xx {
 	}
 
 }
+#endif
