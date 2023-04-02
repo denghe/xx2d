@@ -424,7 +424,7 @@ namespace xx {
 			TryFill(ts.source, c.attribute("source"));
 
 			auto&& fp = rootPath + ts.source;	// to fullpath
-			if (auto&& d = engine.ReadAllBytesWithFullPath(fp); !d) {
+			if (auto&& d = engine.LoadFileDataWithFullPath(fp); !d) {
 				throw std::logic_error("read file error: " + fp);
 			} else if (auto&& r = docTsx.load_buffer(d.buf, d.len); r.status) {
 				throw std::logic_error("docTsx.load_buffer error: " + std::string(r.description()));
@@ -738,7 +738,7 @@ namespace xx {
 				auto&& o = L.objects.emplace_back();
 				if (auto&& aTemplate = cObject.attribute("template"); !aTemplate.empty()) {
 					auto&& fn = rootPath + aTemplate.as_string();
-					if (auto&& [d, fp] = engine.ReadAllBytes(fn); !d) {
+					if (auto&& [d, fp] = engine.LoadFileData(fn); !d) {
 						throw std::logic_error("read file error: " + fn);
 					} else if (auto&& r = docTx.load_buffer(d.buf, d.len); r.status) {
 						throw std::logic_error("docTx.load_buffer error: " + std::string(r.description()));
@@ -784,7 +784,7 @@ namespace xx {
 			: map(map) {
 
 			// load file & calc rootPath
-			if (auto&& [d, fp] = engine.ReadAllBytes(tmxfn); !d) {
+			if (auto&& [d, fp] = engine.LoadFileData(tmxfn); !d) {
 				throw std::logic_error("read file error: " + std::string(tmxfn));
 			} else if (auto&& r = docTmx.load_buffer(d.buf, d.len); r.status) {
 				throw std::logic_error("docTmx.load_buffer error: " + std::string(r.description()));

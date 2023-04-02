@@ -37,6 +37,9 @@ int GameLooper::Update() {
 	return r;
 }
 
+
+
+
 int main() {
 	return GameLooper{}.Run("xx2d's examples");
 }

@@ -9,11 +9,17 @@ performance ~= raylib, much more faster than cocos2dx
 # tips
 
 convert png to pkm:
-tools/pic2pkm/etcpak.exe & drag_png_here_convert_pkm_etc2_rgba8.bat
+tools/png2pkm_astc/drag_png_here_convert_pkm_etc2_rgba8.bat
 
-compress pkm:
-https://github.com/facebook/zstd/releases
-zstd.exe --ultra -22 ?????.pkm -o ?????.pkm.zstd
+convert png to astc:
+tools/png2pkm_astc/drag_png_here_convert_astc6x6_medium.bat
+
+compress file by zstd:
+tools/drag_file_here_zstd.bat
+
+compress pngs to vp9 webm:
+ffmpeg.exe -f image2 -framerate 60 -i "%d.png" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 50k -speed 0 xxx_50k_vp9.webm
+
 
 # feature
 
@@ -23,7 +29,7 @@ auto uncompress zstd file( detect by header: 28 B5 2F FD )
 
 shader manager with autobatch
 
-texture ( current support pkm2, png format only, detect by file content ) cache
+texture ( current support pkm2, astc, png format only, detect by header ) cache
 
 texture packer ( polygon algorithm support. format: cocos3.x plist ) loader & frame cache
 
@@ -47,6 +53,10 @@ tiled map ( 1.92 full support ) loader & helpers( cam, util funcs )
 
 scissors
 
+frame buffer ( render texture )
+
+vp9 alpha webm to texture ( .exe + 300k )
+
 audio ( miniaudio + stb vorbise ) ( .exe + 400kb )
 
 imgui ( .exe + 800kb )
@@ -63,11 +73,7 @@ https://github.com/denghe/xx2d_space_shooter
 
 # todo
 
-render texture
-
-edit box, rich text?
-
-more texture format support?
+edit box, rich text? runtime auto combine texture?
 
 spine?
 

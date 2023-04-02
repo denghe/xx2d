@@ -35,7 +35,8 @@ namespace Quads {
 		this->looper = looper;
 		std::cout << "Quads::Scene::Init" << std::endl;
 
-		tex = xx::engine.LoadTextureFromCache("res/sword.pkm");
+		//tex = xx::engine.LoadTextureFromCache("res/sword.pkm");
+		tex = xx::engine.LoadTextureFromCache("res/sword.astc");
 	}
 
 	int Scene::Update() {

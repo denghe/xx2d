@@ -16,3 +16,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "libvpx_prebuilt"]
+	path = libvpx_prebuilt
+	url = https://github.com/denghe/libvpx_prebuilt.git

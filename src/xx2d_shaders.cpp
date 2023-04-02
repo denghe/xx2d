@@ -19,7 +19,7 @@ namespace xx {
 		glDepthMask(false);
 
 		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		engine.GLBlendFunc(engine.blendFuncsDefault);
 
 		glActiveTexture(GL_TEXTURE0);
 
@@ -32,15 +32,14 @@ namespace xx {
 		shaders[Shader_LineStrip::index] = xx::Make<Shader_LineStrip>();
 		shaders[Shader_TexVerts::index] = xx::Make<Shader_TexVerts>();
 		shaders[Shader_Verts::index] = xx::Make<Shader_Verts>();
+		shaders[Shader_Yuva2Rgba::index] = xx::Make<Shader_Yuva2Rgba>();
 		// ...
 
 		// init all
 		for (auto& s : shaders) {
+			if (!s) break;
 			s->Init(this);
 		}
-
-		// set default
-		cursor = Shader_Quad::index;
 	}
 
 	void ShaderManager::ClearCounter() {

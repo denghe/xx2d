@@ -20,10 +20,10 @@ namespace xx {
 		std::string GetFullPath(std::string_view fn, bool fnIsFileName = true);
 
 		// read all data by full path
-		xx::Data ReadAllBytesWithFullPath(std::string_view const& fp, bool autoDecompress = true);
+		xx::Data LoadFileDataWithFullPath(std::string_view const& fp, bool autoDecompress = true);
 
 		// read all data by GetFullPath( fn )
-		std::pair<xx::Data, std::string> ReadAllBytes(std::string_view const& fn, bool autoDecompress = true);
+		std::pair<xx::Data, std::string> LoadFileData(std::string_view const& fn, bool autoDecompress = true);
 
 		/**********************************************************************************/
 		// fonts
@@ -76,7 +76,7 @@ namespace xx {
 
 
 		/**********************************************************************************/
-		// window & input
+		// window & input & helpers
 
 		float w = 1800, h = 1000, hw = w / 2, hh = h / 2;
 		std::array<XY, 10> ninePoints;
@@ -89,10 +89,19 @@ namespace xx {
 		bool Pressed(Mbtns const& b);	// return mbtnStates[(size_t)b];
 		bool Pressed(KbdKeys const& k);	// return kbdStates[(size_t)k];
 
+		Rnd rnd;	// global random generator ( not thread safe )
+
 		/**********************************************************************************/
-		// shader
+		// shader, gl state ...
 
 		ShaderManager sm;
+
+		void GLClear(std::optional<RGBA8> const& c = {});	// glViewport + glClear
+
+		std::pair<uint32_t, uint32_t> blendFuncsDefault{ GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA };
+		std::pair<uint32_t, uint32_t> blendFuncs;
+		void GLBlendFunc(std::pair<uint32_t, uint32_t> const& bfs = { GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA });
+
 
 		/**********************************************************************************/
 		// delay funcs
@@ -113,7 +122,6 @@ namespace xx {
 		void Init();
 		void GLInit(void* wnd);
 		void UpdateBegin();
-		void GLClear(std::optional<RGBA8> const& c = {});	// glViewport + glClear
 		void UpdateEnd();
 		void Destroy();
 

@@ -3,7 +3,7 @@
 namespace xx {
 
 	GLTexture Engine::LoadTexture(std::string_view const& fn) {
-		auto [d, p] = ReadAllBytes(fn);
+		auto [d, p] = LoadFileData(fn);
 		return LoadGLTexture(d, p);
 	}
 
@@ -17,7 +17,7 @@ namespace xx {
 		if (auto iter = textureCache.find(p); iter != textureCache.end())
 			return iter->second;
 		else {
-			auto t = xx::Make<GLTexture>(LoadGLTexture(ReadAllBytesWithFullPath(p), p));
+			auto t = xx::Make<GLTexture>(LoadGLTexture(LoadFileDataWithFullPath(p), p));
 			textureCache.emplace(std::move(p), t);
 			return t;
 		}

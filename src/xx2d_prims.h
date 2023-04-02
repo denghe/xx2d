@@ -159,6 +159,37 @@ namespace xx {
         bool operator!=(RGBA8 const&) const = default;
     };
 
+    // 4 floats color
+    struct RGBA {
+        float r, g, b, a;
+
+        operator RGBA8() const {
+            return { uint8_t(r * 255), uint8_t(g * 255), uint8_t(b * 255), uint8_t(a * 255) };
+        }
+
+        RGBA operator+(RGBA const& v) const {
+            return { r + v.r, g + v.g, b + v.b, a + v.a };
+        }
+        RGBA operator-(RGBA const& v) const {
+            return { r - v.r, g - v.g, b - v.b, a - v.a };
+        }
+
+        RGBA operator*(IsArithmetic auto const& v) const {
+            return { r * v, g * v, b * v, a * v };
+        }
+        RGBA operator/(IsArithmetic auto const& v) const {
+            return { r / v, g / v, b / v, a / v };
+        }
+
+        RGBA& operator+=(RGBA const& v) {
+            r += v.r;
+            g += v.g;
+            b += v.b;
+            a += v.a;
+            return *this;
+        }
+    };
+
     // pos + size
     struct Rect : XY {
         XY wh;
