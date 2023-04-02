@@ -43,7 +43,7 @@
 #include "xx2d_particle.h"
 #include "xx2d_mv.h"
 
-#ifdef __EMSCRIPTEN__
+#ifndef __EMSCRIPTEN__
 #include "xx2d_audio.h"
 
 #include "xx2d_imgui.h"
