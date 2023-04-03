@@ -7,6 +7,7 @@ namespace xx {
 		void* wnd{};
 #endif
 		virtual void Init() {}						// call after EngineInit
+		virtual void AfterGLInit() {}				// call after EngineGLInit
 		virtual int Update() { return 0; }			// return non-zero mean quit loop
 		virtual void Deinit() {}					// call before EngineDestroy
 		virtual ~GameLooperBase() {};

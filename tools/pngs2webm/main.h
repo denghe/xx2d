@@ -12,7 +12,6 @@ namespace MovePathStore {
 		std::string name;
 		bool isLoop{};
 		std::vector<Point> points;
-		xx::Shared<xx::GLTexture> tex;
 	};
 	struct Data {
 		uint32_t designWidth{}, designHeight{}, safeLength{};
@@ -37,10 +36,6 @@ struct DragableCircle {
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fnt;
 	xx::FpsViewer fpsViewer;
-	xx::FrameBuffer fb;
-	xx::MovePathCache mpc;
-	xx::LineStrip ls;
-
 
 	std::optional<std::string> msg;
 	bool exporting{};
@@ -70,7 +65,6 @@ struct GameLooper : xx::GameLooperBase {
 	inline static const ImVec4 releaseColor{ 0, 0.5f, 0, 1.0f };
 
 	void Init() override;
-	void AfterGLInit() override;
 	int Update() override;
 
 	void ImGuiUpdate();
@@ -83,8 +77,6 @@ struct GameLooper : xx::GameLooperBase {
 	void ImGuiDrawWindow_LeftBottom();
 
 	void ImGuiDrawWindow_Export();
-
-	void DrawIcon(MovePathStore::Line& line);
 
 	void LoadData();
 	void SaveData();

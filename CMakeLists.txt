@@ -246,4 +246,48 @@ if(MSVC)	# vs2022+
 endif()
 
 
-# todo: circle line editor?
+
+###########################################################################################################################################
+###########################################################################################################################################
+###########################################################################################################################################
+# tools
+
+# pngs 2 webm ( res viewer )
+
+
+include_directories(
+	tools/pngs2webm
+)
+
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
+	tools/pngs2webm/*.h
+	tools/pngs2webm/*.hpp
+	tools/pngs2webm/*.inc
+	tools/pngs2webm/*.c
+	tools/pngs2webm/*.cpp
+)
+add_executable(tools_pngs2webm ${SRCS})
+
+target_link_libraries(tools_pngs2webm ${name} glfw imgui imguicpp pugixml libzstd_static)
+
+
+if(MSVC)	# vs2022+
+
+	target_link_options(tools_pngs2webm
+		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
+		PRIVATE $<$<CONFIG:Release>:/LTCG>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
+	)
+
+	target_compile_options(tools_pngs2webm
+		PRIVATE $<$<PLATFORM_ID:Windows>:/std:c17>
+		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
+	)
+
+	set_source_files_properties(tools/pngs2webm/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+	target_compile_options(tools_pngs2webm PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>)
+
+	set_target_properties(tools_pngs2webm PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
+endif()

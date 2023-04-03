@@ -2,11 +2,13 @@
 #include "main.h"
 #include "imgui_stdlib.h"
 
-// todo: line icon ( need runtime generate texture ? )
+// todo
 
 int main() {
-	return GameLooper{}.Run("xx2d'ss movepath editor");
+	return GameLooper{}.Run("xx2d's pngs to webm / res viewer");
 }
+
+// todo
 
 #include "ajson.hpp"
 AJSON(::MovePathStore::Point, x, y, tension, numSegments);
@@ -14,6 +16,7 @@ AJSON(::MovePathStore::Line, name, isLoop, points);
 AJSON(::MovePathStore::Data, designWidth, designHeight, safeLength, lines);
 
 void GameLooper::Init() {
+
 	xx::engine.imguiInit = [] { 
 		auto&& io = ImGui::GetIO();
 		io.Fonts->ClearFonts();
@@ -34,10 +37,6 @@ void GameLooper::Init() {
 	};
 
 	xx::engine.imguiUpdate = [this] { ImGuiUpdate(); };
-}
-
-void GameLooper::AfterGLInit() {
-	fb.Init();
 
 	fnt = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 	fpsViewer.Init(fnt, leftPanelWidth + margin * 2);
@@ -47,36 +46,8 @@ void GameLooper::AfterGLInit() {
 	meListener.Init(xx::Mbtns::Left);
 
 	LoadData();
-
 	exportFileName = xx::engine.GetFullPath("res", false) + "/movepath.bin";
 	MakeNewLineName();
-}
-
-void GameLooper::DrawIcon(MovePathStore::Line& line) {
-	cps.clear();
-	for (int i = 0, e = line.points.size(); i < e; ++i) {
-		auto& p = line.points[i];
-		xx::XY pos{ (float)p.x, -(float)p.y };	// flip y for render to texture
-		cps.emplace_back(pos, (float)p.tension / 100.f, std::max((int32_t)p.numSegments, 10));
-	}
-	mp.Clear();
-	mp.FillCurve(line.isLoop, cps);
-
-	if (mp.totalDistance > 1.f) {
-		mpc.Init(mp);
-		line.tex = fb.Draw({ 48,32 }, true, xx::RGBA8{}, [&] {
-			auto& ps = ls.Clear().SetPoints();
-			for (auto& p : mpc.points) {
-				ps.emplace_back(p.pos);
-				if (ps.size() == 65535) {		// batch commit
-					ls.Draw();
-					ls.Clear();
-					ps.emplace_back(p.pos);
-				}
-			}
-			ls.Draw();
-		});
-	}
 }
 
 void GameLooper::LoadData() {
@@ -84,20 +55,10 @@ void GameLooper::LoadData() {
 	fileName = std::move(p);
 	data = {};
 	ajson::load_from_buff(data, (char*)d.buf, d.len);
-
-	ls.SetPosition({}).SetScale(0.016).SetColor({ 255,255,127,255 });
-	for (auto& line : data.lines) {
-		if (line.points.size() < 2) {
-			line.tex.Reset();
-			continue;
-		}
-		DrawIcon(line);
-	}
 }
 
 void GameLooper::SaveData() {
 	ajson::save_to_file(data, fileName.c_str());
-	LoadData();
 }
 
 // for export MovePathStore
@@ -311,15 +272,8 @@ void GameLooper::ImGuiDrawWindow_LeftTop() {
 			ImGui::PushID(rowId * numCols + n);
 			ImGui::PushStyleColor(ImGuiCol_Button, p.name == selectedLineName ? pressColor : normalColor);
 			auto&& sg = xx::MakeScopeGuard([] { ImGui::PopStyleColor(1); });
-
-			if (p.tex) {
-				if (ImGui::ImageButton(p.name.data(), ImTextureID((GLuint)*p.tex), {48,32})) {
-					SelectLine(p.name);
-				}
-			} else {
-				if (ImGui::Button("==>")) {
-					SelectLine(p.name);
-				}
+			if (ImGui::Button("==>")) {
+				SelectLine(p.name);
 			}
 			ImGui::PopID();
 
@@ -661,6 +615,7 @@ int GameLooper::UpdateLogic() {
 
 	// draw begin
 	xx::XY offset{ (leftPanelWidth + margin) / 2, 0 };
+	xx::LineStrip ls;
 	ls.SetScale(zoom).SetPosition(offset);
 
 	// draw bg
@@ -691,6 +646,7 @@ int GameLooper::UpdateLogic() {
 
 	// draw body segments
 	if (mp.totalDistance > 1.f) {
+		xx::MovePathCache mpc;
 		mpc.Init(mp);
 
 		auto& ps = ls.SetColor({ 255,255,255,255 }).SetPosition(offset).SetScale(zoom).Clear().SetPoints();
