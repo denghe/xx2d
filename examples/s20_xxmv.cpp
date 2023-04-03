@@ -9,9 +9,9 @@ namespace XxmvTest {
 
 		xx::Shader_Yuva2Rgba::Init();
 
-		auto [d, f] = xx::engine.LoadFileData("res/st_k100.xxmv");
+		auto [d, f] = xx::engine.LoadFileData("res/st_m_50.webm");
 
-		int r = mv.Load(d);
+		int r = mv.LoadFromWebm(d);
 		assert(!r);
 
 		auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuva2Rgba>();
@@ -28,7 +28,7 @@ namespace XxmvTest {
 
 			return 0;
 		});
-		xx::CoutN("convert res/st_k100.xxmv all frames to texs. elapsed secs = ", xx::NowEpochSeconds(secs));
+		xx::CoutN("convert ",f ," all frames to texs. elapsed secs = ", xx::NowEpochSeconds(secs));
 
 		spr.SetTexture(texs[cursor]);
 	}

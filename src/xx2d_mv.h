@@ -15,8 +15,10 @@ namespace xx {
 		std::vector<uint8_t*> bufs;	// fill by Load
 		uint32_t count = 0;	// fill by Load
 
-		// load data from .xxmv. return 0 mean success
-		int Load(xx::Data_r d);
+		// return 0 mean success
+		int LoadFromXxmv(xx::Data_r d);
+		int LoadFromWebm(xx::Data_r d);
+		int SaveToXxmv(std::filesystem::path const& path);
 
 		operator bool() const;
 
@@ -32,5 +34,6 @@ namespace xx {
 	protected:
 		int GetFrameBuf(uint32_t const& idx, uint8_t const*& rgbBuf, uint32_t& rgbBufLen) const;
 		int GetFrameBuf(uint32_t idx, uint8_t const*& rgbBuf, uint32_t& rgbBufLen, uint8_t const*& aBuf, uint32_t& aBufLen) const;
+		int FillBufs();
 	};
 }

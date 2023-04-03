@@ -8,11 +8,21 @@ struct GameLooper : xx::GameLooperBase {
 	xx::FpsViewer fpsViewer;
 
 	std::optional<std::string> msg;
-
+	std::string zoomString;
+	std::string resPath;
 	std::string fileNamePrefix;
+	std::vector<std::string> files;
+	std::string ratesString;
+	int fps = 30;
+	std::string fpsString;
+	std::set<int> rates;
+	std::string selectedFile;
+	std::string selectedFileInfo;
+	//xx::Webm mv;
 	double zoom{ 0.3 }, keyboardGCD{ 0.2 }, keyboardGCDNowSecs{};
+	xx::XY offset{};
 
-	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, rightTopPanelHeight{ 120 };
+	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, rightTopPanelHeight{ 140 };
 	inline static const xx::XY errPanelSize{ 1200, 200 };
 
 	inline static const ImVec4 normalColor{ 0, 0, 0, 1.0f };
@@ -31,4 +41,22 @@ struct GameLooper : xx::GameLooperBase {
 
 	int KeyboardGCDCheck();
 	int SetKeyboardGCD();
+
+	//void DrawSelectedFile();
+	//void ReloadFiles();
+	//void ConvertFiles();
+	//bool Convertable();
+	//bool IsPic(std::string_view sv);
+	//std::vector<std::string_view> GetPicFiles();
+	//std::string_view GetSameName(std::vector<std::string_view> const& fs);
+	//void FillRates();
+	//void FillFps();
+	//void FillDefaultResPath();
+
+	void MoveUp();
+	void MoveDown();
+	void MoveTop();
+	void MoveBottom();
+	void ZoomOut();
+	void ZoomIn();
 };
