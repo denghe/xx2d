@@ -2,8 +2,6 @@
 #include "main.h"
 #include "imgui_stdlib.h"
 
-// todo: line icon ( need runtime generate texture ? )
-
 int main() {
 	return GameLooper{}.Run("xx2d'ss movepath editor");
 }
