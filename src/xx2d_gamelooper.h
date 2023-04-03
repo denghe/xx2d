@@ -3,7 +3,9 @@
 namespace xx {
 
 	struct GameLooperBase {
+#ifdef __EMSCRIPTEN__
 		void* wnd{};
+#endif
 		virtual void Init() {}						// call after EngineInit
 		virtual int Update() { return 0; }			// return non-zero mean quit loop
 		virtual void Deinit() {}					// call before EngineDestroy

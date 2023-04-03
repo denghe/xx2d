@@ -37,8 +37,9 @@ namespace xx {
 			return -2;
 #ifndef __EMSCRIPTEN__
 		auto sg_wnd = xx::MakeSimpleScopeGuard([&] { glfwDestroyWindow(wnd); });
-#endif
+#else
 		this->wnd = wnd;
+#endif
 
 		// reference from raylib rcore.c
 		glfwSetKeyCallback(wnd, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {

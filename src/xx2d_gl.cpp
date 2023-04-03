@@ -177,6 +177,7 @@ namespace xx {
 				auto t = LoadGLTexture_core();
 				glTexImage2D(GL_TEXTURE_2D, 0, c, w, h, 0, c, GL_UNSIGNED_BYTE, image);
 				glBindTexture(GL_TEXTURE_2D, 0);
+				CheckGLError();
 				stbi_image_free(image);
 				return { t, w, h, fullPath };
 			} else {
