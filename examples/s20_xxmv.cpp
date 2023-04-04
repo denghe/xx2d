@@ -11,12 +11,23 @@ namespace XxmvTest {
 
 		auto [d, f] = xx::engine.LoadFileData("res/st_m_50.webm");
 
-		int r = mv.LoadFromWebm(d);
-		assert(!r);
+		int r = mv.Load(d);
+		if (r) {
+			std::cout << "load error. r = " << r << std::endl;
+		}
 
 		auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuva2Rgba>();
+		int c = 0;
 
 		auto secs = xx::NowEpochSeconds();
+		mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h
+		, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
+
+			++c;
+			return 0;
+		});
+		xx::CoutN("calc ", f, " all frames. numFrames = ", texs.size() , ". c = ", c, ".  elapsed secs = ", xx::NowEpochSeconds(secs));
+		
 		mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h
 		, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
 
@@ -28,7 +39,8 @@ namespace XxmvTest {
 
 			return 0;
 		});
-		xx::CoutN("convert ",f ," all frames to texs. elapsed secs = ", xx::NowEpochSeconds(secs));
+		xx::CoutN("convert ", f, " all frames to texs. numFrames = ", texs.size() , " elapsed secs = ", xx::NowEpochSeconds(secs));
+
 
 		spr.SetTexture(texs[cursor]);
 	}

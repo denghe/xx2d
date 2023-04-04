@@ -1,5 +1,4 @@
 ﻿#include "xx2d.h"
-#ifndef __EMSCRIPTEN__
 #include <vpx_decoder.h>
 #include <vp8dx.h>
 #include <ebml_parser.h>
@@ -164,6 +163,14 @@ namespace xx {
 		return FillBufs();
 	}
 
+	int Mv::Load(xx::Data_r d) {
+		if (d.len < 8) return __LINE__;
+		if (memcmp(d.buf, "\x1a\x45\xdf\xa3", 4) == 0) return LoadFromWebm(d);
+		else if (memcmp(d.buf, "XXMV", 4) == 0) return LoadFromXxmv(d);
+		else return __LINE__;
+	}
+
+
 	Mv::operator bool() const {
 		return count != 0;
 	}
@@ -258,4 +265,4 @@ namespace xx {
 	}
 
 }
-#endif
+

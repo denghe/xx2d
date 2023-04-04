@@ -1,6 +1,8 @@
 ﻿#include "main.h"
 #include "s0_main_menu.h"
+#ifndef __EMSCRIPTEN__
 #include "imgui.h"
+#endif
 
 void GameLooper::Init() {
 	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
@@ -10,6 +12,7 @@ void GameLooper::Init() {
 	scene = xx::Make<MainMenu::Scene>();
 	scene->Init(this);
 
+#ifndef __EMSCRIPTEN__
 	xx::engine.imguiInit = [] {
 		auto&& io = ImGui::GetIO();
 		io.Fonts->ClearFonts();
@@ -22,6 +25,7 @@ void GameLooper::Init() {
 		io.Fonts->Build();
 		io.FontDefault = imfnt;
 	};
+#endif
 }
 
 int GameLooper::Update() {
@@ -41,5 +45,10 @@ int GameLooper::Update() {
 
 
 int main() {
-	return GameLooper{}.Run("xx2d's examples");
+#ifndef __EMSCRIPTEN__
+	auto g = std::make_unique<GameLooper>();
+#else
+	auto g = new GameLooper();
+#endif
+	return g->Run("xx2d's examples");
 }

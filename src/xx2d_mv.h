@@ -19,6 +19,7 @@ namespace xx {
 		int LoadFromXxmv(xx::Data_r d);
 		int LoadFromWebm(xx::Data_r d);
 		int SaveToXxmv(std::filesystem::path const& path);
+		int Load(xx::Data_r d);	// auto switch webm & xxmv
 
 		operator bool() const;
 

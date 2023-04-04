@@ -137,20 +137,25 @@ void main() {
 		xyuv[3].u = w;
 		xyuv[3].v = 0;
 
+#ifdef __EMSCRIPTEN__
+		auto c = GL_LUMINANCE;
+#else
+		auto c = GL_RED;
+#endif
 		auto texY = LoadGLTexture_core(0);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, yaStride, h, 0, GL_RED, GL_UNSIGNED_BYTE, yData);
+		glTexImage2D(GL_TEXTURE_2D, 0, c, yaStride, h, 0, c, GL_UNSIGNED_BYTE, yData);
 		CheckGLError();
 
 		auto texU = LoadGLTexture_core(1);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, uvStride, h / 2, 0, GL_RED, GL_UNSIGNED_BYTE, uData);
+		glTexImage2D(GL_TEXTURE_2D, 0, c, uvStride, h / 2, 0, c, GL_UNSIGNED_BYTE, uData);
 		CheckGLError();
 
 		auto texV = LoadGLTexture_core(2);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, uvStride, h / 2, 0, GL_RED, GL_UNSIGNED_BYTE, vData);
+		glTexImage2D(GL_TEXTURE_2D, 0, c, uvStride, h / 2, 0, c, GL_UNSIGNED_BYTE, vData);
 		CheckGLError();
 
 		auto texA = LoadGLTexture_core(3);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, yaStride, h, 0, GL_RED, GL_UNSIGNED_BYTE, aData);
+		glTexImage2D(GL_TEXTURE_2D, 0, c, yaStride, h, 0, c, GL_UNSIGNED_BYTE, aData);
 		CheckGLError();
 
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
