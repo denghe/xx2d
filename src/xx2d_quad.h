@@ -25,6 +25,8 @@ namespace xx {
 		Quad& AddPositionY(float const& y);
 
 		Quad& SetColor(RGBA8 const& c);
+		Quad& SetColorA(uint8_t const& a);
+		Quad& SetColorA(float const& a);
 
 		void Draw() const;
 	};

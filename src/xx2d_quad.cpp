@@ -79,6 +79,15 @@ namespace xx {
 		color = c;
 		return *this;
 	}
+	Quad& Quad::SetColorA(uint8_t const& a) {
+		color.a = a;
+		return *this;
+
+	}
+	Quad& Quad::SetColorA(float const& a) {
+		color.a = 255 * a;
+		return *this;
+	}
 
 	void Quad::Draw() const {
 		engine.sm.GetShader<Shader_QuadInstance>().Draw(*tex, (QuadInstanceData*)this);

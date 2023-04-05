@@ -3,15 +3,16 @@
 
 namespace ActionTest {
 
-	xx::Coro Foo::Action_Shake() {
+	xx::Coro Foo::Action_Shake(float r1, float r2, float step) {
 		CoYield;
-		float r1 = -0.07f, r2 = 0.07f, step = 0.01f;
 		while (true) {
 			for (radians = r1; radians < r2; radians += 0.01f) {
 				CoYield;
+				if (dying) CoReturn;
 			}
 			for (radians = r2; radians >= r1; radians -= 0.01f) {
 				CoYield;
+				if (dying) CoReturn;
 			}
 		}
 	}
@@ -28,14 +29,35 @@ namespace ActionTest {
 			}
 			CoYield;
 		}
+		dying = true;
 	}
 
 	xx::Coro Foo::Action_Shake_MoveTo(xx::XY tar) {
 		CoYield;
 		xx::Coros cs;
-		cs.Add(Action_Shake());
+		cs.Add(Action_Shake(-0.1f, 0.1f, 0.03f));
 		cs.Add(Action_MoveTo(tar));
 		while (cs()) CoYield;
+		cs.Add(Action_FadeOut(1.f / 60));
+		cs.Add(Action_ScaleTo(0, 1.f / 60));
+		while (cs()) CoYield;
+		dead = true;
+	}
+
+	xx::Coro Foo::Action_FadeOut(float step) {
+		CoYield;
+		for (; alpha >= 0; alpha -= step) {
+			CoYield;
+		}
+		alpha = 0;
+	}
+
+	xx::Coro Foo::Action_ScaleTo(float s, float step) {
+		CoYield;
+		for (; scale >= s; scale -= step) {
+			CoYield;
+		}
+		scale = s;
 	}
 
 
@@ -43,24 +65,24 @@ namespace ActionTest {
 		scene = scene_;
 		pos = xx::engine.mousePosition;
 		speed = 2.f;
-		action.emplace(Action_Shake());
+		action.emplace(Action_Shake(-0.07f, 0.07f, 0.01));
 		DrawInit();
 	}
 
-	int Foo::Update() {
+	bool Foo::Update() {
 		if (action.has_value()) {
 			if (action->Resume()) {
 				action.reset();
 			}
 		}
-		return 0;
+		return dead;
 	}
 
 	void Foo::DrawInit() {
 		body.SetTexture(scene->tex);
 	}
 	void Foo::Draw() {
-		body.SetPosition(pos).SetRotate(radians).Draw();
+		body.SetPosition(pos).SetRotate(radians).SetColorA(alpha).SetScale(scale).Draw();
 	}
 
 	void Scene::Init(GameLooper* looper) {
@@ -84,6 +106,7 @@ namespace ActionTest {
 			if (xx::engine.Pressed(xx::Mbtns::Right)) {
 				for (auto idx = foos.head; idx != -1; idx = foos.Next(idx)) {
 					auto& foo = foos[idx];
+					if (foo.dying) continue;
 					foo.action.emplace(foo.Action_Shake_MoveTo(xx::engine.mousePosition));
 				}
 			}
