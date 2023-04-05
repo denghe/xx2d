@@ -137,6 +137,7 @@ int main() {
 				::memcpy((void*)newBuf, (void*)buf, len * sizeof(Node));
 			} else {
 				for (SizeType i = 0; i < len; ++i) {
+					newBuf[i].next = buf[i].next;
 					new (&newBuf[i].value) T((T&&)buf[i].value);
 					buf[i].value.~T();
 				}
@@ -237,6 +238,28 @@ int main() {
 		}
 		bool Empty() const {
 			return len - freeCount == 0;
+		}
+
+		// maybe slowly than direct for?
+		template<typename F>
+		void Foreach(F&& f) {
+			for (auto idx = head; idx != -1; idx = Next(idx)) {
+				f(buf[idx].value);
+			}
+		}
+
+		template<typename F>
+		void ForeachRemove(F&& f) {
+			int prev = -1, next{};
+			for (auto idx = head; idx != -1;) {
+				if (f(buf[idx].value)) {
+					next = Remove(idx, prev);
+				} else {
+					next = Next(idx);
+					prev = idx;
+				}
+				idx = next;
+			}
 		}
 	};
 }

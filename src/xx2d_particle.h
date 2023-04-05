@@ -46,8 +46,10 @@ namespace xx {
 		void Fire();
 		void MoveTo(XY const& xy, bool moveParticles = false);
 		void Stop(bool killParticles = false);
+		bool Empty() const;
 
-		void Draw();
+		void Draw() const;
+
 
 		xx::Shared<ParticleConfig> cfg;
 		std::pair<uint32_t, uint32_t> blendFuncs;

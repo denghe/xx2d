@@ -7,8 +7,8 @@ namespace ParticleTest {
 		this->looper = looper;
 		std::cout << "ParticalTest::Scene::Init" << std::endl;
 
-        auto tex = xx::engine.LoadSharedTexture("res/particles/circle.astc");   // premultiply alpha
-        //auto tex = xx::engine.LoadSharedTexture("res/particles/p11.png");
+        //auto tex = xx::engine.LoadSharedTexture("res/particles/circle.astc");   // premultiply alpha
+        auto tex = xx::engine.LoadSharedTexture("res/particles/p11.png");
         xx::GLTexParm(*tex, GL_LINEAR);
 
         auto cfg = xx::Make<xx::ParticleConfig>();
@@ -27,12 +27,12 @@ namespace ParticleTest {
         cfg->sizeVar = 0.4;
         cfg->spin = {};
         cfg->spinVar = 0;
-        cfg->color = { { 1, 0, 0, 0.7 },{ 0, 1, 1, 0.3 } };
+        cfg->color = { { 1, 0, 0, 1 },{ 0, 1, 1, 0 } };
         cfg->colorVar = 0.5;
         cfg->alphaVar = 1;
 
-        p.Init(cfg, 20000, { GL_ONE, GL_ONE_MINUS_SRC_ALPHA });   // for premultiply alpha
-        //p.Init(cfg, 20000, { GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA });
+        //p.Init(cfg, 20000, { GL_ONE, GL_ONE_MINUS_SRC_ALPHA });   // for premultiply alpha    // known issue: alpha
+        p.Init(cfg, 20000, { GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA });
 	}
 
 	int Scene::Update() {

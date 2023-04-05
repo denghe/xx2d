@@ -155,7 +155,12 @@ namespace xx {
         }
     }
 
-    void Particle::Draw() {
+    bool Particle::Empty() const {
+        return particles.Count() == 0;
+    }
+
+
+    void Particle::Draw() const {
         std::pair<uint32_t, uint32_t> blendBak{};
         if (engine.blendFuncs != blendFuncs) {
             engine.sm.End();

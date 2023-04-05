@@ -22,6 +22,7 @@
 #include "s20_xxmv.h"
 #include "s21_particle.h"
 #include "s22_action.h"
+#include "s23_more_particle.h"
 
 namespace MainMenu {
 
@@ -69,7 +70,7 @@ namespace MainMenu {
 
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -xstep, y }, "22: action", 32);
-		menus.emplace_back().Init(looper, { 0, y }, "23: ", 32);
+		menus.emplace_back().Init(looper, { 0, y }, "23: more particles", 32);
 		menus.emplace_back().Init(looper, { xstep, y }, "24: ", 32);
 
 		looper->fpsViewer.extraInfo.clear();
@@ -145,6 +146,8 @@ namespace MainMenu {
 				looper->DelaySwitchTo<XxmvTest::Scene>();
 			} else if (txt.starts_with("22:"sv)) {
 				looper->DelaySwitchTo<ActionTest::Scene>();
+			} else if (txt.starts_with("23:"sv)) {
+				looper->DelaySwitchTo<MoreParticleTest::Scene>();
 			} else {
 				throw std::logic_error("unhandled menu");
 			}
