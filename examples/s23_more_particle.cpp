@@ -29,9 +29,9 @@ namespace MoreParticleTest {
 
 	void ExplodeEffect::Init(Scene* scene_, xx::XY const& pos_) {
 		pos = pos_;
-		ring.SetPosition(pos).SetScale(0.01).SetTexture(scene_->cfg->sprite.tex);
-		particle.Init(scene_->cfg, 2000);
-		actions.Add(Action_ScaleTo(2.f, 2.f / 15));
+		ring.SetPosition(pos).SetScale(0.01).SetTexture(scene_->texRing).SetColorA((uint8_t)200);
+		particle.Init(scene_->cfg, 20);
+		actions.Add(Action_ScaleTo(3.f, 3.f / 15));
 		actions.Add(Action_FadeOut(255 / 15));
 		actions.Add(Action_Explode());
 	}
@@ -50,22 +50,24 @@ namespace MoreParticleTest {
 		this->looper = looper;
 		std::cout << "ParticalTest::Scene::Init" << std::endl;
 
-		auto tex = xx::engine.LoadSharedTexture("res/particles/p11.png");
-		xx::GLTexParm(*tex, GL_LINEAR);
+		texRing = xx::engine.LoadSharedTexture("res/particles/p11.png");
+		texStar = xx::engine.LoadSharedTexture("res/particles/p1.png");
+		xx::GLTexParm(*texRing, GL_LINEAR);
+		xx::GLTexParm(*texStar, GL_LINEAR);
 
 		cfg.Emplace();
-		cfg->sprite.SetTexture(tex);
-		cfg->emission = 5000;
-		cfg->lifetime = 0.03f;
+		cfg->sprite.SetTexture(texStar);
+		cfg->emission = 500;
+		cfg->lifetime = 0.05f;
 		cfg->particleLife = { 0.15f, 0.25f };
 		cfg->direction = 0;
 		cfg->spread = M_PI * 2;
 		cfg->relative = {};
-		cfg->speed = { -100.f, 150.f };
-		cfg->gravity = { -200.f, 180.f };
+		cfg->speed = { 0.f, 250.f };
+		cfg->gravity = { 0.f, 250.f };
 		cfg->radialAccel = { -130.f, 200.f };
 		cfg->tangentialAccel = { -200.f, 270.f };
-		cfg->size = { 0.1f, 0.2f };
+		cfg->size = { 0.2f, 0.4f };
 		cfg->sizeVar = 0.4;
 		cfg->spin = {};
 		cfg->spinVar = 0;

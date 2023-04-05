@@ -22,6 +22,7 @@ namespace MoreParticleTest {
 		int Update() override;
 
 		float timePool{};
+		xx::Shared<xx::GLTexture> texRing, texStar;
 		xx::Shared<xx::ParticleConfig> cfg;
 		xx::ListLink<ExplodeEffect> ps;
 		int32_t c{};
