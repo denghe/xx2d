@@ -73,6 +73,10 @@ namespace xx {
             }
             return coros.Count();
         }
+
+        int32_t Count() const {
+            return coros.Count();
+        }
     };
 }
 
