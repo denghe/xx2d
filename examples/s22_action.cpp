@@ -33,6 +33,7 @@ namespace ActionTest {
 	xx::Coro Foo::Action_Shake_MoveTo(xx::XY tar) {
 		CoYield;
 		xx::Coros cs;
+		cs.Reserve(2);
 		cs.Add(Action_Shake(-0.1f, 0.1f, 0.03f));
 		cs.Add(Action_MoveTo(tar));
 		while (cs() && cs.Count() == 2) CoYield;	// wait one

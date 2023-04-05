@@ -77,6 +77,10 @@ namespace xx {
         int32_t Count() const {
             return coros.Count();
         }
+
+        void Reserve(int32_t cap) {
+            coros.Reserve(cap);
+        }
     };
 }
 
