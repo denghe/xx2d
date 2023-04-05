@@ -111,7 +111,7 @@ namespace ActionTest {
 				}
 			}
 
-			foos.ForeachRemove([](auto& foo)->bool {
+			foos.Foreach([](auto& foo)->bool {
 				return foo.Update();
 			});
 		}

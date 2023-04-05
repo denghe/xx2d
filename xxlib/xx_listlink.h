@@ -243,22 +243,21 @@ int main() {
 		// maybe slowly than direct for?
 		template<typename F>
 		void Foreach(F&& f) {
-			for (auto idx = head; idx != -1; idx = Next(idx)) {
-				f(buf[idx].value);
-			}
-		}
-
-		template<typename F>
-		void ForeachRemove(F&& f) {
-			int prev = -1, next{};
-			for (auto idx = head; idx != -1;) {
-				if (f(buf[idx].value)) {
-					next = Remove(idx, prev);
-				} else {
-					next = Next(idx);
-					prev = idx;
+			if constexpr (std::is_void_v<decltype(f(buf[0].value))>) {
+				for (auto idx = head; idx != -1; idx = Next(idx)) {
+					f(buf[idx].value);
 				}
-				idx = next;
+			} else {
+				int prev = -1, next{};
+				for (auto idx = head; idx != -1;) {
+					if (f(buf[idx].value)) {
+						next = Remove(idx, prev);
+					} else {
+						next = Next(idx);
+						prev = idx;
+					}
+					idx = next;
+				}
 			}
 		}
 	};

@@ -39,7 +39,7 @@ namespace xx {
 
 	struct Particle {
 
-		void Init(xx::Shared<ParticleConfig> cfg_, size_t const& cap = 1000, std::pair<uint32_t, uint32_t> blendFuncs_ = { GL_ONE, GL_ONE_MINUS_SRC_ALPHA });
+		void Init(xx::Shared<ParticleConfig> cfg_, size_t const& cap = 1000, std::pair<uint32_t, uint32_t> blendFuncs_ = { GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA });
 		void Update(float delta);
 
 		void FireAt(XY const& xy);
