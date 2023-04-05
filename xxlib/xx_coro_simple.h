@@ -43,11 +43,13 @@ namespace xx {
     };
 
     struct Coros {
-        Coros() = default;
         Coros(Coros const&) = delete;
         Coros& operator=(Coros const&) = delete;
         Coros(Coros&&) = default;
         Coros& operator=(Coros&&) = default;
+        Coros(int32_t cap = 8) {
+            coros.Reserve(cap);
+        }
 
         xx::ListLink<Coro, int32_t> coros;
 
