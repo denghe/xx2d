@@ -1,22 +1,8 @@
 ﻿#pragma once
 
-// important: only support static function or lambda !!!  COPY data by res !!! do not ref !!!
+// important: only support static function or lambda !!!  COPY data from arguments !!! do not ref !!!
 
-#if __has_include(<coroutine>)
-#include <coroutine>
-#elif __has_include(<experimental/coroutine>)
-#include <experimental/coroutine>
-#else
-static_assert(false, "No co_await support");
-#endif
-#include <cassert>
-#include <variant>
-#include <memory>
-#include <utility>
-#include <vector>
-#include <chrono>
-using namespace std::literals;
-using namespace std::literals::chrono_literals;
+#include "xx_listlink.h"
 
 namespace cxx14 {}
 namespace xx {
@@ -50,12 +36,11 @@ namespace xx {
 
         void operator()() { h.resume(); }
         operator bool() { return h.done(); }
+        bool Resume() { h.resume(); return h.done(); }
 
     private:
         handle_type h;
     };
-
-    typedef std::aligned_storage_t<sizeof(Coro), alignof(Coro)> CoroStore;
 
     struct Coros {
         Coros() = default;
@@ -64,44 +49,31 @@ namespace xx {
         Coros(Coros&&) = default;
         Coros& operator=(Coros&&) = default;
 
-        std::vector<CoroStore> coros;
-
-        ~Coros() {
-            Clear();
-        }
+        xx::ListLink<Coro, int32_t> coros;
 
         void Add(Coro&& g) {
             if (g) return;
-            new (&coros.emplace_back()) Coro(std::move(g));
+            new (&coros.Add()) Coro(std::move(g));
         }
 
         void Clear() {
-            for (auto& o : coros) {
-                reinterpret_cast<Coro&>(o).~Coro();
-            }
-            coros.clear();
+            coros.Clear();
         }
 
-        operator bool() const {
-            return !coros.empty();
-        }
-
-        Coro& At(size_t const& idx) {
-            return reinterpret_cast<Coro&>(coros[idx]);
-        }
-
-        void operator()() {
-            for (auto i = (ptrdiff_t)coros.size() - 1; i >= 0; --i) {
-                At(i)();    // maybe add new coro here, vector realloc
-                if (auto& c = At(i)) {
-                    c.~Coro();
-                    coros[i] = coros[coros.size() - 1];
-                    coros.pop_back();
+        bool operator()() {
+            int prev = -1, next{};
+            for (auto idx = coros.head; idx != -1;) {
+                if (coros[idx].Resume()) {
+                    next = coros.Remove(idx, prev);
+                } else {
+                    next = coros.Next(idx);
+                    prev = idx;
                 }
+                idx = next;
             }
+            return coros.Count();
         }
     };
-
 }
 
 #define CoType xx::Coro

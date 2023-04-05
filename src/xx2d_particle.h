@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "xx2d.h"
-#include "xx_listlink.h"
 
 namespace xx {
 

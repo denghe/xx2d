@@ -29,6 +29,13 @@
 #include <condition_variable>
 #include <fstream>
 #include <filesystem>
+#if __has_include(<coroutine>)
+#include <coroutine>
+#elif __has_include(<experimental/coroutine>)
+#include <experimental/coroutine>
+#else
+static_assert(false, "No co_await support");
+#endif
 #if __has_include(<span>)
 #include <span>
 #endif

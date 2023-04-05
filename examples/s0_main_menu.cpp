@@ -21,6 +21,7 @@
 #include "s19_space_shooter.h"
 #include "s20_xxmv.h"
 #include "s21_particle.h"
+#include "s22_action.h"
 
 namespace MainMenu {
 
@@ -31,7 +32,7 @@ namespace MainMenu {
 		meListener.Init(xx::Mbtns::Left);
 
 		float x = 0, xstep = xx::engine.w / 3 - 50;
-		float y = 300, yinc = 100;
+		float y = 400, yinc = 100;
 		menus.emplace_back().Init(looper, { -xstep, y }, "1: tiledmap", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "2: dragable", 32);
 		menus.emplace_back().Init(looper, { xstep, y }, "3: box button", 32);
@@ -65,6 +66,11 @@ namespace MainMenu {
 		menus.emplace_back().Init(looper, { -xstep, y }, "19: space shooter", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "20: particle", 32);
 		menus.emplace_back().Init(looper, { xstep, y }, "21: xxmv (vp9 webm)", 32);
+
+		y -= yinc;
+		menus.emplace_back().Init(looper, { -xstep, y }, "22: action", 32);
+		menus.emplace_back().Init(looper, { 0, y }, "23: ", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "24: ", 32);
 
 		looper->fpsViewer.extraInfo.clear();
 	}
@@ -137,6 +143,8 @@ namespace MainMenu {
 				looper->DelaySwitchTo<ParticleTest::Scene>();
 			} else if (txt.starts_with("21:"sv)) {
 				looper->DelaySwitchTo<XxmvTest::Scene>();
+			} else if (txt.starts_with("22:"sv)) {
+				looper->DelaySwitchTo<ActionTest::Scene>();
 			} else {
 				throw std::logic_error("unhandled menu");
 			}

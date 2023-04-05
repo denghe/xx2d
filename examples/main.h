@@ -13,7 +13,6 @@ struct SceneBase {
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fontBase, font3500;
 	xx::FpsViewer fpsViewer;
-	double timePool{};
 
 	xx::Shared<SceneBase> scene;
 

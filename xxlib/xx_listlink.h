@@ -90,6 +90,32 @@ int main() {
 		ListLink() = default;
 		ListLink(ListLink const&) = delete;
 		ListLink& operator=(ListLink const&) = delete;
+		ListLink(ListLink&& o) {
+			buf = o.buf;
+			cap = o.cap;
+			len = o.len;
+			head = o.head;
+			tail = o.tail;
+			freeHead = o.freeHead;
+			freeCount = o.freeCount;
+			o.buf = {};
+			o.cap = {};
+			o.len = {};
+			o.head = -1;
+			o.tail = -1;
+			o.freeHead = -1;
+			o.freeCount = {};
+		}
+		ListLink& operator=(ListLink&& o) {
+			std::swap(buf, o.buf);
+			std::swap(cap, o.cap);
+			std::swap(len, o.len);
+			std::swap(head, o.head);
+			std::swap(tail, o.tail);
+			std::swap(freeHead, o.freeHead);
+			std::swap(freeCount, o.freeCount);
+			return *this;
+		}
 		~ListLink() {
 			Clear<true>();
 		}
@@ -205,6 +231,12 @@ int main() {
 
 		SizeType Left() const {
 			return cap - len + freeCount;
+		}
+		SizeType Count() const {
+			return len - freeCount;
+		}
+		bool Empty() const {
+			return len - freeCount == 0;
 		}
 	};
 }
