@@ -9,6 +9,7 @@ namespace ShootGameWithIndex {
 	struct Bullet;
 	struct Monster;
 	struct HPLabel;
+	using MonsterIter = xx::ListDoubleLink<Monster>::IndexAndVersion;
 
 	struct Scene {
 		GameLooper* looper{};
@@ -16,15 +17,14 @@ namespace ShootGameWithIndex {
 
 		xx::Shared<xx::GLTexture> tex;
 		xx::Shared<Player> player;
-		std::vector<xx::Shared<Monster>> monsters;
-		std::vector<xx::Shared<HPLabel>> labels;
+		xx::ListDoubleLink<Monster> monsters;
+		xx::ListLink<HPLabel> labels;
 		std::vector<xx::Quad*> tmp;
 		xx::Coros coros;
 		xx::Rnd rnd;
 		bool running{};
 
 		void EraseMonster(Monster* const& m);
-		void EraseMonster(int idx);
 
 		void Init(GameLooper* looper);
 		void Update();
@@ -74,9 +74,9 @@ namespace ShootGameWithIndex {
 		xx::XY pos{}, inc{};
 		float radius{}, speed{};
 		int life{};
-		int indexAtMonsters{ -1 };
+		MonsterIter indexAtMonsters{};
 
-		void Init(Scene* const& scene);
+		void Init(Scene* const& scene, MonsterIter const& indexAtMonsters);
 		int Update();
 		~Monster();
 

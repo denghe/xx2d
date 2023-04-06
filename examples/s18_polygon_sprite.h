@@ -17,7 +17,7 @@ namespace PolygonSpriteTest {
 		int Update() override;
 
 		xx::Shared<xx::Frame> f;
-		std::vector<xx::Shared<Sword>> ts;
+		xx::ListLink<Sword> ts;
 		float timePool{}, radians{};
 	};
 

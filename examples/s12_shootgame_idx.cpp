@@ -9,16 +9,9 @@ namespace ShootGameWithIndex {
 	// scene
 	/*************************************************************************/
 
-	void Scene::EraseMonster(int idx) {
-		assert(idx != -1);
-		monsters[idx]->indexAtMonsters = -1;
-		monsters.back()->indexAtMonsters = idx;
-		monsters[idx] = std::move(monsters.back());
-		monsters.pop_back();
-	}
 	void Scene::EraseMonster(Monster* const& m) {
 		assert(m);
-		EraseMonster(m->indexAtMonsters);
+		monsters.Remove(m->indexAtMonsters);
 	}
 
 	void Scene::Init(GameLooper* looper) {
@@ -26,14 +19,17 @@ namespace ShootGameWithIndex {
 		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 
 		sgMonsters.Init(400, 400, 32);
+		monsters.Reserve(100000);	// importent ! can't realloc buf !
 
 		player.Emplace()->Init(this);
+
+		
 
 		running = true;
 		coros.Add([](Scene* scene)->xx::Coro {
 			while (scene->running) {
 				for (size_t i = 0; i < 20; ++i) {
-					scene->monsters.emplace_back().Emplace()->Init(scene);
+					scene->monsters.Emplace().Init(scene, scene->monsters.Tail());
 				}
 				CoYield;
 			}
@@ -46,14 +42,11 @@ namespace ShootGameWithIndex {
 		coros();
 
 		/*********************************************/
-		// move monsters
+		// move & erase monsters
 
-		for (auto i = (ptrdiff_t)monsters.size() - 1; i >= 0; --i) {
-			auto& m = monsters[i];
-			if (!m->Update()) {
-				EraseMonster(m);
-			}
-		}
+		monsters.Foreach([](auto& m)->bool {
+			return !m.Update();
+		});
 
 		/*********************************************/
 		// move bullets & players
@@ -61,15 +54,11 @@ namespace ShootGameWithIndex {
 		player->Update();
 
 		/*********************************************/
-		// move labels
+		// move & erase labels
 
-		for (auto i = (ptrdiff_t)labels.size() - 1; i >= 0; --i) {
-			auto& o = labels[i];
-			if (!o->Update()) {
-				o = labels.back();
-				labels.pop_back();
-			}
-		}
+		labels.Foreach([](auto& o) {
+			return !o.Update();
+		});
 
 	}
 
@@ -82,10 +71,10 @@ namespace ShootGameWithIndex {
 			b->DrawCommit();
 			tmp.push_back(&b->body);
 		}
-		for (auto& m : monsters) {
-			m->DrawCommit();
-			tmp.push_back(&m->body);
-		}
+		monsters.Foreach([&](auto& m) {
+			m.DrawCommit();
+			tmp.push_back(&m.body);
+		});
 
 		// draw tex: sort by y
 		std::sort(tmp.begin(), tmp.end(), [](auto const& a, auto const& b) {
@@ -97,10 +86,10 @@ namespace ShootGameWithIndex {
 		tmp.clear();
 
 		// draw label
-		for (auto& l : labels) {
-			l->DrawCommit();
-			l->lbl.Draw();
-		}
+		labels.Foreach([](auto& o) {
+			o.DrawCommit();
+			o.lbl.Draw();
+		});
 
 #ifdef ENABLE_DEBUG_DRAW
 		// draw debug rings
@@ -257,7 +246,7 @@ namespace ShootGameWithIndex {
 			}
 		}, &limit);
 		if (r) {
-			scene->labels.emplace_back().Emplace()->Init(scene, r->pos, r->radius);	// pop up damage hp
+			scene->labels.Emplace().Init(scene, r->pos, r->radius);	// pop up damage hp
 			scene->EraseMonster(r);
 			return 0;
 		}
@@ -284,9 +273,9 @@ namespace ShootGameWithIndex {
 	// monster
 	/*************************************************************************/
 
-	void Monster::Init(Scene* const& scene) {
+	void Monster::Init(Scene* const& scene, MonsterIter const& indexAtMonsters) {
 		this->scene = scene;
-		this->indexAtMonsters = scene->monsters.size() - 1;
+		this->indexAtMonsters = indexAtMonsters;
 
 		this->radius = scene->rnd.Next(4, 32);
 		this->speed = 1;

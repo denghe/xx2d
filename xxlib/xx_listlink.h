@@ -179,7 +179,8 @@ namespace xx {
 			return len - freeCount == 0;
 		}
 
-		// maybe slowly than direct for?
+		// ll.Foreach( [&](auto& o) { o..... } );
+		// ll.Foreach( [&](auto& o)->bool { if ( o.... ) return ... } );
 		template<typename F>
 		void Foreach(F&& f) {
 			if constexpr (std::is_void_v<decltype(f(buf[0].value))>) {

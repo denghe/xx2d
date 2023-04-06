@@ -26,10 +26,8 @@ namespace PolygonSpriteTest {
 		body.AddPosition({ -3,-3 }).SetColor(c).Draw();
 	}
 
-
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
-
 		std::cout << "PolygonSpriteTest::Scene::Init" << std::endl;
 
 		xx::TP tp;
@@ -46,21 +44,17 @@ namespace PolygonSpriteTest {
 
 			for (size_t i = 0; i < 100; i++) {
 				radians += 0.005;
-				ts.emplace_back().Emplace()->Init(this, {}, radians, 0.1);
+				ts.Emplace().Init(this, {}, radians, 0.1);
 			}
 
-			for (auto i = (ptrdiff_t)ts.size() - 1; i >= 0; --i) {
-				auto& o = ts[i];
-				if (o->Update()) {
-					o = ts.back();
-					ts.pop_back();
-				}
-			}
+			ts.Foreach([](auto& m) {
+				return m.Update();
+			});
 		}
 
-		for (auto& o : ts) {
-			o->Draw();
-		}
+		ts.Foreach([](auto& m) {
+			m.Draw();
+		});
 
 		return 0;
 	}

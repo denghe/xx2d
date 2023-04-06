@@ -24,7 +24,7 @@ namespace Sprites {
 
 	void Mouse::Draw() {
 		auto c = body.color;
-		body.AddPosition({ 3,3 }).SetColor({ 255,127,127,127 }).Draw();
+		body.AddPosition({ 3,3 }).SetColor({ 255,127,127,127 }).Draw();	// shadow
 		body.AddPosition({ -3,-3 }).SetColor(c).Draw();
 	}
 
@@ -32,7 +32,7 @@ namespace Sprites {
 		this->looper = looper;
 		std::cout << "Sprites::Scene::Init" << std::endl;
 
-		tex = xx::engine.LoadTextureFromCache("res/sword.pkm");
+		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 	}
 
 	int Scene::Update() {
@@ -43,21 +43,17 @@ namespace Sprites {
 
 			for (size_t i = 0; i < 100; i++) {
 				radians += 0.005;
-				ms.emplace_back().Emplace()->Init(this, {}, radians, 0.1);
+				ms.Emplace().Init(this, {}, radians, 1);
 			}
 
-			for (auto i = (ptrdiff_t)ms.size() - 1; i >= 0; --i) {
-				auto& m = ms[i];
-				if (m->Update()) {
-					m = ms.back();
-					ms.pop_back();
-				}
-			}
+			ms.Foreach([](auto& m)->bool {
+				return m.Update();
+			});
 		}
 
-		for (auto& m : ms) {
-			m->Draw();
-		}
+		ms.Foreach([](auto& m) {
+			m.Draw();
+		});
 
 		return 0;
 	}

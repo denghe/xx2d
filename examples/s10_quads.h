@@ -4,7 +4,7 @@
 namespace Quads {
 
 	struct Scene;
-	struct Mouse2 {
+	struct Mouse {
 		xx::Quad body;
 		xx::XY baseInc{};
 		void Init(Scene* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color = { 255,255,255,255 });
@@ -17,7 +17,7 @@ namespace Quads {
 		int Update() override;
 
 		xx::Shared<xx::GLTexture> tex;
-		std::vector<xx::Shared<Mouse2>> ms;
+		xx::ListLink<Mouse> ms;
 		float timePool{}, radians{};
 	};
 

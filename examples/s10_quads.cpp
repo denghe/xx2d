@@ -3,40 +3,36 @@
 
 namespace Quads {
 
-	void Mouse2::Init(Scene* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
-		body.SetTexture(owner->tex);
-		body.pos = pos;
-		body.scale = { scale, scale };
-		body.radians = -radians + M_PI / 2;
-		body.color = color;
+	// https://stackoverflow.com/questions/14066933/direct-way-of-computing-clockwise-angle-between-2-vectors
+
+	void Mouse::Init(Scene* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color) {
+		body.SetTexture(owner->tex)
+			.SetPosition(pos)
+			.SetScale(scale)
+			.SetRotate(-radians + M_PI / 2)
+			.SetColor(color);
 		baseInc = { std::sin(body.radians), std::cos(body.radians) };
 		baseInc *= 2;
 	}
 
-	int Mouse2::Update() {
-		body.pos += baseInc;
+	int Mouse::Update() {
+		body.AddPosition(baseInc);
 		if (body.pos.x * body.pos.x > (1800 / 2) * (1800 / 2)
 			|| body.pos.y * body.pos.y > (1000 / 2) * (1000 / 2)) return 1;
 		return 0;
 	}
 
-	void Mouse2::Draw() {
+	void Mouse::Draw() {
 		auto c = body.color;
-		body.pos += xx::XY{ 3, 3 };
-		body.color = { 255,127,127,127 };
-		body.Draw();						// shadow
-		body.pos -= xx::XY{ 3, 3 };
-		body.color = c;
-		body.Draw();
+		body.AddPosition({ 3,3 }).SetColor({ 255,127,127,127 }).Draw();	// shadow
+		body.AddPosition({ -3,-3 }).SetColor(c).Draw();
 	}
-
 
 	void Scene::Init(GameLooper* looper) {
 		this->looper = looper;
 		std::cout << "Quads::Scene::Init" << std::endl;
 
-		//tex = xx::engine.LoadTextureFromCache("res/sword.pkm");
-		tex = xx::engine.LoadTextureFromCache("res/sword.astc");
+		tex = xx::engine.LoadTextureFromCache("res/mouse.pkm");
 	}
 
 	int Scene::Update() {
@@ -47,21 +43,17 @@ namespace Quads {
 
 			for (size_t i = 0; i < 100; i++) {
 				radians += 0.005;
-				ms.emplace_back().Emplace()->Init(this, {}, radians, 0.1);
+				ms.Emplace().Init(this, {}, radians, 1);
 			}
 
-			for (auto i = (ptrdiff_t)ms.size() - 1; i >= 0; --i) {
-				auto& m = ms[i];
-				if (m->Update()) {
-					m = ms.back();
-					ms.pop_back();
-				}
-			}
+			ms.Foreach([](auto& m)->bool {
+				return m.Update();
+			});
 		}
 
-		for (auto& m : ms) {
-			m->Draw();
-		}
+		ms.Foreach([](auto& m) {
+			m.Draw();
+		});
 
 		return 0;
 	}

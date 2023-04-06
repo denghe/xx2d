@@ -4,8 +4,11 @@
 #include <xx_helpers.h>
 #include <xx_file.h>
 #include <xx_ptr.h>
-#include <xx_coro_simple.h>
-#include "xx_threadpool.h"
+#include <xx_coro_simple.h>	// xx_listlink.h
+#include <xx_listdoublelink.h>
+#ifndef __EMSCRIPTEN__
+#include <xx_threadpool.h>
+#endif
 
 #include "xx2d_rnd.h"
 

@@ -17,7 +17,7 @@ namespace Sprites {
 		int Update() override;
 
 		xx::Shared<xx::GLTexture> tex;
-		std::vector<xx::Shared<Mouse>> ms;
+		xx::ListLink<Mouse> ms;
 		float timePool{}, radians{};
 	};
 

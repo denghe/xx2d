@@ -281,6 +281,8 @@ namespace xx {
 			return len - freeCount == 0;
 		}
 
+		// ll.Foreach( [&](auto& o) { o..... } );
+		// ll.Foreach( [&](auto& o)->bool { if ( o.... ) return ... } );
 		template<typename F>
 		void Foreach(F&& f) {
 			if constexpr (std::is_void_v<decltype(f(buf[0].value))>) {
@@ -298,6 +300,8 @@ namespace xx {
 			}
 		}
 
+		// ll.ForeachReverse( [&](auto& o) { o..... } );
+		// ll.ForeachReverse( [&](auto& o)->bool { if ( o.... ) return ... } );
 		template<typename F>
 		void ForeachReverse(F&& f) {
 			if constexpr (std::is_void_v<decltype(f(buf[0].value))>) {
@@ -319,9 +323,6 @@ namespace xx {
 
 
 /*
-#include "main.h"
-
-#include <xx_listdoublelink.h>
 int main() {
 	int counter, n = 1, m = 5000000;
 	auto secs = xx::NowEpochSeconds();
@@ -332,14 +333,14 @@ int main() {
 		xx::ListLink<int, int> ll;
 		ll.Reserve(m);
 		for (size_t j = 1; j <= m; j++) {
-			new (&ll.Add()) int(j);
+			ll.Emplace(j);
 		}
 
 		ll.Foreach([](auto& o)->bool {
 			return o == 2 || o == 4;
 			});
-		new (&ll.Add()) int(2);
-		new (&ll.Add()) int(4);
+		ll.Emplace(2);
+		ll.Emplace(4);
 
 		ll.Foreach([&](auto& o) {
 			counter += o;
@@ -498,7 +499,6 @@ int main() {
 			Scene* scene;
 			Monsters::IndexAndVersion iter;
 			xx::Weak<Monster> target;
-			Monster(Scene* const& scene, Monsters::IndexAndVersion const& iter) : scene(scene), iter(iter) {}
 			bool Update() { return true; }
 			void Draw() {}
 		};
@@ -507,7 +507,7 @@ int main() {
 			Monsters monsters;
 			void Run() {
 				for (size_t i = 0; i < 100; i++) {
-					monsters.Add()(xx::Make<Monster>(this, monsters.GetTailIndexAndVersion()));
+					monsters.Emplace().Emplace(this, monsters.Tail());
 				}
 				monsters.ForeachReverse([](auto& m)->bool {
 					return m->Update();
@@ -522,7 +522,39 @@ int main() {
 		scene.Run();
 	}
 
+
+	{
+		struct Monster;
+		using Monsters = xx::ListDoubleLink<Monster>;
+		using MonsterIV = Monsters::IndexAndVersion;
+
+		struct Scene;
+		struct Monster {
+			Scene* scene;
+			MonsterIV iv, target{};
+			bool Update() { return true; }
+			void Draw() {}
+		};
+
+		struct Scene {
+			Monsters monsters;
+			void Run() {
+				for (size_t i = 0; i < 100; i++) {
+					monsters.Add()(this, monsters.Tail());
+				}
+				monsters.ForeachReverse([](auto& m)->bool {
+					return m.Update();
+				});
+				monsters.Foreach([](auto& m) {
+					m.Draw();
+				});
+			}
+		};
+
+		Scene scene;
+		scene.Run();
+	}
+
 	return 0;
 }
-
 */
