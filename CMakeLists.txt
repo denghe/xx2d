@@ -200,6 +200,54 @@ endif()
 
 
 
+###########################################################################################################################################
+###########################################################################################################################################
+###########################################################################################################################################
+# tests
+
+
+include_directories(
+	tests
+)
+
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
+	tests/*.h
+	tests/*.hpp
+	tests/*.inc
+	tests/*.c
+	tests/*.cpp
+)
+add_executable(tests ${SRCS})
+
+target_link_libraries(tests ${name} glfw imgui pugixml libzstd_static)
+if(MSVC)	# vs2022+
+	target_link_libraries(tests ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
+endif()
+
+
+if(MSVC)	# vs2022+
+
+	target_link_options(tests
+		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
+		PRIVATE $<$<CONFIG:Release>:/LTCG>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
+	)
+
+	target_compile_options(tests
+		PRIVATE $<$<PLATFORM_ID:Windows>:/std:c17>
+		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
+	)
+
+	set_source_files_properties(tests/main.cpp PROPERTIES COMPILE_FLAGS "/Ycmain.h")
+	target_compile_options(tests PRIVATE $<$<PLATFORM_ID:Windows>:/Yumain.h>)
+
+	set_target_properties(tests PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
+endif()
+
+
+
 
 ###########################################################################################################################################
 ###########################################################################################################################################

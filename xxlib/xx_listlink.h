@@ -6,7 +6,7 @@ namespace xx {
 	// fast add/remove container. can visit members by Add order ( faster than map 10+ times )
 
 	/*
-	* example:
+	* example: ( more example at : xx_listdoublelink.h )
 
 #include <xx_listlink.h>
 
@@ -20,7 +20,7 @@ int main() {
 		xx::ListLink<int, int> ll;
 		ll.Reserve(m);
 		for (size_t j = 1; j <= m; j++) {
-			new (&ll.Add()) int(2);
+			new (&ll.Add()) int(j);
 		}
 
 		int prev = -1, next{};
@@ -123,6 +123,7 @@ int main() {
 		void Reserve(SizeType const& newCap) noexcept {
 			assert(newCap > 0);
 			if (newCap <= cap) return;
+			cap = newCap;
 			if constexpr (IsPod_v<T>) {
 				buf = (Node*)realloc(buf, sizeof(Node) * newCap);
 			} else {
