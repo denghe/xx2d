@@ -120,30 +120,21 @@ int main() {
 			Clear<true>();
 		}
 
-		void Reserve(SizeType const& cap_) noexcept {
-			assert(cap_ > 0);
-			if (cap_ <= cap) return;
-			if (!cap) {
-				buf = (Node*)::malloc(cap_ * sizeof(Node));
-				cap = cap_;
-				return;
-			}
-			do {
-				cap *= 2;
-			} while (cap < cap_);
-			auto newBuf = (Node*)::malloc(cap * sizeof(Node));
-
+		void Reserve(SizeType const& newCap) noexcept {
+			assert(newCap > 0);
+			if (newCap <= cap) return;
 			if constexpr (IsPod_v<T>) {
-				::memcpy((void*)newBuf, (void*)buf, len * sizeof(Node));
+				buf = (Node*)realloc(buf, sizeof(Node) * newCap);
 			} else {
+				auto newBuf = (Node*)::malloc(newCap * sizeof(Node));
 				for (SizeType i = 0; i < len; ++i) {
 					newBuf[i].next = buf[i].next;
 					new (&newBuf[i].value) T((T&&)buf[i].value);
 					buf[i].value.~T();
 				}
+				::free(buf);
+				buf = newBuf;
 			}
-			::free(buf);
-			buf = newBuf;
 		}
 
 		// return value: new ( &ll.Add() ) T( ... );
@@ -222,10 +213,13 @@ int main() {
 		}
 
 		T const& operator[](SizeType const& idx) const noexcept {
+			assert(idx >= 0);
 			assert(idx < len);
 			return buf[idx].value;
 		}
+
 		T& operator[](SizeType const& idx) noexcept {
+			assert(idx >= 0);
 			assert(idx < len);
 			return buf[idx].value;
 		}
@@ -233,9 +227,11 @@ int main() {
 		SizeType Left() const {
 			return cap - len + freeCount;
 		}
+
 		SizeType Count() const {
 			return len - freeCount;
 		}
+
 		bool Empty() const {
 			return len - freeCount == 0;
 		}
@@ -248,8 +244,7 @@ int main() {
 					f(buf[idx].value);
 				}
 			} else {
-				int prev = -1, next{};
-				for (auto idx = head; idx != -1;) {
+				for (SizeType prev = -1, next, idx = head; idx != -1;) {
 					if (f(buf[idx].value)) {
 						next = Remove(idx, prev);
 					} else {
