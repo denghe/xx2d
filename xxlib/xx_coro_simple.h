@@ -55,7 +55,7 @@ namespace xx {
 
         void Add(Coro&& g) {
             if (g) return;
-            new (&coros.Add()) Coro(std::move(g));
+            coros.Emplace(std::move(g));
         }
 
         void Clear() {

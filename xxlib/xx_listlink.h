@@ -1,79 +1,10 @@
 ﻿#pragma once
-#include "xx_includes.h"
+#include "xx_typetraits.h"
 
 namespace xx {
 
 	// fast add/remove container. can visit members by Add order ( faster than map 10+ times )
-
-	/*
-	* example: ( more example at : xx_listdoublelink.h )
-
-#include <xx_listlink.h>
-
-int main() {
-
-	int counter = 0, n = 1, m = 5000000;
-	auto secs = xx::NowEpochSeconds();
-
-	for (size_t i = 0; i < n; i++) {
-
-		xx::ListLink<int, int> ll;
-		ll.Reserve(m);
-		for (size_t j = 1; j <= m; j++) {
-			new (&ll.Add()) int(j);
-		}
-
-		int prev = -1, next{};
-		for (auto idx = ll.head; idx != -1;) {
-			if (ll[idx] == 2 || ll[idx] == 4) {
-				next = ll.Remove(idx, prev);
-			} else {
-				next = ll.Next(idx);
-				prev = idx;
-			}
-			idx = next;
-		}
-		new (&ll.Add()) int(2);
-		new (&ll.Add()) int(4);
-
-		for (auto idx = ll.head; idx != -1; idx = ll.Next(idx)) {
-			counter += ll[idx];
-		}
-	}
-
-	xx::CoutN("ListLink counter = ", counter, " secs = ", xx::NowEpochSeconds(secs));
-
-	counter = 0;
-	for (size_t i = 0; i < n; i++) {
-
-		std::map<int, int> ll;
-		int autoInc{};
-		for (size_t j = 1; j <= m; j++) {
-			ll[++autoInc] = j;
-		}
-
-		for(auto it = ll.begin(); it != ll.end();) {
-			if (it->second == 2 || it->second == 4) {
-				it = ll.erase(it);
-			} else {
-				++it;
-			}
-		}
-		ll[++autoInc] = 2;
-		ll[++autoInc] = 4;
-
-		for (auto&& kv : ll) {
-			counter += kv.second;
-		}
-	}
-
-	xx::CoutN("map counter = ", counter, " secs = ", xx::NowEpochSeconds(secs));
-
-	return 0;
-}
-
-	
-	*/
+	// Example at the xx_listdoublelink.h
 
 	template<typename T, typename SizeType = ptrdiff_t>
 	struct ListLink {
@@ -138,8 +69,9 @@ int main() {
 			}
 		}
 
-		// return value: new ( &ll.Add() ) T( ... );
-		T& Add() {
+		// auto& o = Add()( ... );
+		template<typename U = T>
+		TCtor<U> Add() {
 			SizeType idx;
 			if (freeCount > 0) {
 				idx = freeHead;
@@ -163,7 +95,12 @@ int main() {
 				head = tail = idx;
 			}
 
-			return buf[idx].value;
+			return { (U*)&buf[idx].value };
+		}
+
+		template<typename U = T, typename...Args>
+		U& Emplace(Args&&...args) {
+			return Add<U>()(std::forward<Args>(args)...);
 		}
 
 		// return next index

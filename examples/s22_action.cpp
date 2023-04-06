@@ -100,7 +100,7 @@ namespace ActionTest {
 			timePool -= 1.f / 60;
 
 			if (xx::engine.Pressed(xx::Mbtns::Left)) {
-				(new (&foos.Add()) Foo())->Init(this);
+				foos.Emplace().Init(this);
 			}
 
 			if (xx::engine.Pressed(xx::Mbtns::Right)) {

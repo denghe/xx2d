@@ -467,6 +467,19 @@ namespace xx {
 
 
     /************************************************************************************/
+    // 辅助调用构造函数的容器
+
+    template<typename U>
+    struct TCtor {
+        U* p;
+        template<typename...Args>
+        U& operator()(Args&&...args) {
+            return *new (p) U(std::forward<Args>(args)...);
+        }
+    };
+
+
+    /************************************************************************************/
     // literal string 的模板值容器
 
     template<size_t n>

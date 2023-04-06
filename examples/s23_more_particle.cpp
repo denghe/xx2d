@@ -84,8 +84,7 @@ namespace MoreParticleTest {
 		    timePool -= 1.f / 60;
 
 		    if (xx::engine.Pressed(xx::Mbtns::Left)) {
-		        auto& p = *new (&ps.Add()) ExplodeEffect();
-				p.Init(this, xx::engine.mousePosition);
+				ps.Emplace().Init(this, xx::engine.mousePosition);
 		    }
 
 		    ps.Foreach([](auto& p) {

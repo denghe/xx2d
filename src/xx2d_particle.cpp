@@ -77,7 +77,7 @@ namespace xx {
                 n = left;
             }
             for (i = 0; i < n; i++) {
-                auto&& p = particles.Add();
+                auto&& p = particles.Emplace();
 
                 p.age = 0.0f;
                 p.terminalAge = rnd.Next(cfg->particleLife);

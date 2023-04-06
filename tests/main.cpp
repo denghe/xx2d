@@ -11,14 +11,14 @@ int main() {
 		xx::ListLink<int, int> ll;
 		ll.Reserve(m);
 		for (size_t j = 1; j <= m; j++) {
-			new (&ll.Add()) int(j);
+			ll.Emplace(j);
 		}
 
 		ll.Foreach([](auto& o)->bool {
 			return o == 2 || o == 4;
 			});
-		new (&ll.Add()) int(2);
-		new (&ll.Add()) int(4);
+		ll.Emplace(2);
+		ll.Emplace(4);
 
 		ll.Foreach([&](auto& o) {
 			counter += o;
