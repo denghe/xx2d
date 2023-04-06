@@ -3,7 +3,7 @@
 
 namespace xx {
 
-	// double link + version's xx::ListLink but performance slow 3/5
+	// double link + version's xx::ListLink but performance slowly 1/2
 
 	/*
 
@@ -128,6 +128,15 @@ int main() {
 			VersionType version;
 		};
 
+		template<typename U>
+		struct TCtor {
+			U* p;
+			template<typename...Args>
+			U& operator()(Args&&...args) {
+				return *new (p) U(std::forward<Args>(args)...);
+			}
+		};
+
 		Node* buf{};
 		SizeType cap{}, len{};
 		SizeType head{ -1 }, tail{ -1 }, freeHead{ -1 }, freeCount{};
@@ -187,9 +196,19 @@ int main() {
 			}
 		}
 
-		// return value: new ( &ll.At( ll.Add() ) ) T( ... );
-		template<bool add_to_tail = true>
-		IndexAndVersion Add() {
+		IndexAndVersion GetHeadIndexAndVersion() const {
+			assert(head >= 0);
+			return { head, buf[head].version };
+		}
+
+		IndexAndVersion GetTailIndexAndVersion() const {
+			assert(tail >= 0);
+			return { tail, buf[tail].version };
+		}
+
+		// auto& o = Add()( ... ll.GetTailIndexAndVersion() ... );
+		template<bool add_to_tail = true, typename U = T>
+		TCtor<U> Add() {
 
 			SizeType idx;
 			if (freeCount > 0) {
@@ -229,7 +248,13 @@ int main() {
 			}
 
 			buf[idx].version = ++version;
-			return { idx, version };
+			return { (U*)&buf[idx].value };
+		}
+
+
+		template<bool add_to_tail = true, typename U = T, typename...Args>
+		U& Emplace(Args&&...args) {
+			return Add<add_to_tail, U>()( std::forward<Args>(args)... );
 		}
 
 		bool Exists(SizeType const& idx) const {
