@@ -177,7 +177,6 @@ int main() {
 			Scene* scene;
 			Monsters::IndexAndVersion iter;
 			xx::Weak<Monster> target;
-			Monster(Scene* const& scene, Monsters::IndexAndVersion const& iter) : scene(scene), iter(iter) {}
 			bool Update() { return true; }
 			void Draw() {}
 		};
@@ -186,13 +185,46 @@ int main() {
 			Monsters monsters;
 			void Run() {
 				for (size_t i = 0; i < 100; i++) {
-					monsters.Emplace().Emplace(this, monsters.GetTailIndexAndVersion());
+					monsters.Emplace().Emplace(this, monsters.Tail());
 				}
 				monsters.ForeachReverse([](auto& m)->bool {
 					return m->Update();
 				});
 				monsters.Foreach([](auto& m) {
 					m->Draw();
+				});
+			}
+		};
+
+		Scene scene;
+		scene.Run();
+	}
+
+
+	{
+		struct Monster;
+		using Monsters = xx::ListDoubleLink<Monster>;
+		using MonsterIV = Monsters::IndexAndVersion;
+
+		struct Scene;
+		struct Monster {
+			Scene* scene;
+			MonsterIV iv, target{};
+			bool Update() { return true; }
+			void Draw() {}
+		};
+
+		struct Scene {
+			Monsters monsters;
+			void Run() {
+				for (size_t i = 0; i < 100; i++) {
+					monsters.Add()(this, monsters.Tail());
+				}
+				monsters.ForeachReverse([](auto& m)->bool {
+					return m.Update();
+				});
+				monsters.Foreach([](auto& m) {
+					m.Draw();
 				});
 			}
 		};

@@ -69,9 +69,8 @@ namespace xx {
 			}
 		}
 
-		// auto& o = Add()( ... );
-		template<typename U = T>
-		TCtor<U> Add() {
+		//auto&& o = new (&ll.AddCore()) T( ... );
+		[[nodiscard]] T& AddCore() {
 			SizeType idx;
 			if (freeCount > 0) {
 				idx = freeHead;
@@ -95,12 +94,18 @@ namespace xx {
 				head = tail = idx;
 			}
 
-			return { (U*)&buf[idx].value };
+			return buf[idx].value;
+		}
+
+		// auto& o = Add()( ... );
+		template<typename U = T>
+		[[nodiscard]] TCtor<U> Add() {
+			return { (U*)&AddCore() };
 		}
 
 		template<typename U = T, typename...Args>
 		U& Emplace(Args&&...args) {
-			return Add<U>()(std::forward<Args>(args)...);
+			return *new (&AddCore()) U(std::forward<Args>(args)...);
 		}
 
 		// return next index

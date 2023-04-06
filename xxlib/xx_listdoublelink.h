@@ -16,8 +16,8 @@ namespace xx {
 		};
 
 		struct IndexAndVersion {
-			SizeType index;
-			VersionType version;
+			SizeType index{ -1 };
+			VersionType version{ 0 };
 		};
 
 		Node* buf{};
@@ -78,19 +78,20 @@ namespace xx {
 			}
 		}
 
-		IndexAndVersion GetHeadIndexAndVersion() const {
+		IndexAndVersion Head() const {
 			assert(head >= 0);
 			return { head, buf[head].version };
 		}
 
-		IndexAndVersion GetTailIndexAndVersion() const {
+		IndexAndVersion Tail() const {
 			assert(tail >= 0);
 			return { tail, buf[tail].version };
 		}
 
-		// auto& o = Add()( ... ll.GetTailIndexAndVersion() ... );
-		template<bool add_to_tail = true, typename U = T>
-		TCtor<U> Add() {
+
+		//auto&& o = new (&ll.AddCore()) T( ... );
+		template<bool add_to_tail = true>
+		[[nodiscard]] T& AddCore() {
 
 			SizeType idx;
 			if (freeCount > 0) {
@@ -130,23 +131,28 @@ namespace xx {
 			}
 
 			buf[idx].version = ++version;
-			return { (U*)&buf[idx].value };
+			return buf[idx].value;
 		}
 
+		// auto& o = Add()( ... ll.Tail() ... );
+		template<bool add_to_tail = true, typename U = T>
+		[[nodiscard]] TCtor<U> Add() {
+			return { (U*)&AddCore<add_to_tail>() };
+		}
 
 		template<bool add_to_tail = true, typename U = T, typename...Args>
 		U& Emplace(Args&&...args) {
-			return Add<add_to_tail, U>()( std::forward<Args>(args)... );
+			return *new (&AddCore<add_to_tail>()) U(std::forward<Args>(args)...);
 		}
 
 		bool Exists(SizeType const& idx) const {
 			assert(idx >= 0);
-			assert(idx < len);
+			if (idx >= len) return false;
 			return buf[idx].version >= 0;
 		}
 		bool Exists(IndexAndVersion const& iv) const {
 			assert(iv.index >= 0);
-			assert(iv.index < len);
+			if (iv.index >= len) return false;
 			return buf[iv.index].version == iv.version;
 		}
 
@@ -218,7 +224,7 @@ namespace xx {
 
 
 
-		template<bool freeBuf = false>
+		template<bool freeBuf = false, bool zeroVersion = false>
 		void Clear() {
 
 			if (!cap) return;
@@ -237,6 +243,10 @@ namespace xx {
 			head = tail = freeHead = -1;
 			freeCount = 0;
 			len = 0;
+
+			if constexpr (zeroVersion) {
+				version = 0;
+			}
 		}
 
 		T const& operator[](SizeType const& idx) const noexcept {
