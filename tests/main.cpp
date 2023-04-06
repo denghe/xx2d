@@ -186,7 +186,7 @@ int main() {
 			Monsters monsters;
 			void Run() {
 				for (size_t i = 0; i < 100; i++) {
-					monsters.Add()(xx::Make<Monster>(this, monsters.GetTailIndexAndVersion()));
+					monsters.Emplace().Emplace(this, monsters.GetTailIndexAndVersion());
 				}
 				monsters.ForeachReverse([](auto& m)->bool {
 					return m->Update();
