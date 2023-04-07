@@ -11,7 +11,9 @@ namespace xx {
 
 		// todo: file cache? maybe need it?
 
+#ifndef __EMSCRIPTEN__
 		xx::ThreadPool<> tp{ 1 };
+#endif
 
 		Audio();
 		~Audio();
