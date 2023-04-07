@@ -6,7 +6,7 @@ namespace xx {
 	// fast add/remove container. can visit members by Add order ( faster than map 10+ times )
 	// Example at the xx_listdoublelink.h
 
-	template<typename T, typename SizeType = ptrdiff_t>
+	template<typename T, typename SizeType = ptrdiff_t, SizeType initCap = 64>
 	struct ListLink {
 
 		struct Node {
@@ -78,7 +78,11 @@ namespace xx {
 				freeCount--;
 			} else {
 				if (len == cap) {
-					Reserve(cap ? cap * 2 : 64);
+					if constexpr (initCap <= 0) {
+						throw std::logic_error("Memory usage has reached the maximum limit!");
+					} else {
+						Reserve(cap ? cap * 2 : initCap);
+					}
 				}
 				idx = len;
 				len++;

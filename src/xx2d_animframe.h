@@ -19,7 +19,7 @@ namespace xx {
     };
 
     // single texture -> frame
-    Shared<Frame> MakeFrame(Shared<GLTexture>&& t);
+    Shared<Frame> MakeFrame(Shared<GLTexture> t);
 
     struct AnimFrame {
         Shared<Frame> frame;

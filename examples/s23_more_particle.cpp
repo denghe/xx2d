@@ -50,6 +50,8 @@ namespace MoreParticleTest {
 		this->looper = looper;
 		std::cout << "ParticalTest::Scene::Init" << std::endl;
 
+		ps.Reserve(10000);
+
 		texRing = xx::engine.LoadSharedTexture("res/particles/p11.png");
 		texStar = xx::engine.LoadSharedTexture("res/particles/p1.png");
 		xx::GLTexParm(*texRing, GL_LINEAR);
@@ -84,7 +86,9 @@ namespace MoreParticleTest {
 		    timePool -= 1.f / 60;
 
 		    if (xx::engine.Pressed(xx::Mbtns::Left)) {
-				ps.Emplace().Init(this, xx::engine.mousePosition);
+				for (size_t i = 0; i < 100; i++) {
+					ps.Emplace().Init(this, xx::engine.mousePosition);
+				}
 		    }
 
 		    ps.Foreach([](auto& p) {

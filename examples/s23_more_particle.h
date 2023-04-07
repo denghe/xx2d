@@ -4,6 +4,8 @@
 namespace MoreParticleTest {
 
 	struct Scene;
+
+	// important: memory can't move !!!  container need reserve !!!
 	struct ExplodeEffect {
 		xx::Particle particle;
 		xx::Quad ring;
@@ -24,7 +26,7 @@ namespace MoreParticleTest {
 		float timePool{};
 		xx::Shared<xx::GLTexture> texRing, texStar;
 		xx::Shared<xx::ParticleConfig> cfg;
-		xx::ListLink<ExplodeEffect> ps;
+		xx::ListLink<ExplodeEffect, int, 0> ps;
 		int32_t c{};
 	};
 }
