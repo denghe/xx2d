@@ -1,6 +1,8 @@
 ﻿#include "pch.h"
 #include "main.h"
-#include "imgui_stdlib.h"
+#include <imgui_stdlib.h>
+#include <command.h>
+#include <ranges>
 
 /*
 main ui layout:
@@ -35,33 +37,6 @@ int main() {
 	return GameLooper{}.Run("xx2d's pngs to webm / res viewer");
 }
 
-#define WIN32_LEAN_AND_MEAN
-#include <process.h>
-#include <windows.h>
-inline static int PopupConsole(LPCSTR exePath, LPSTR cmdLineArgs) {
-	STARTUPINFOA si;
-	PROCESS_INFORMATION pi;
-	memset(&si, 0, sizeof(si));
-	si.cb = sizeof(si);
-	if (!CreateProcessA(
-		exePath,
-		cmdLineArgs,
-		NULL,
-		NULL,
-		FALSE,
-		CREATE_NEW_CONSOLE,
-		NULL,
-		NULL,
-		&si,
-		&pi
-	)) {
-		auto e = GetLastError();
-		CloseHandle(pi.hThread);
-		return __LINE__;
-	}
-	return 0;
-}
-
 
 void GameLooper::Init() {
 
@@ -82,6 +57,12 @@ void GameLooper::Init() {
 
 	fnt = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 	fpsViewer.Init(fnt, leftPanelWidth + margin * 2);
+
+	if (!FindFFMpegExe()) {
+		msg = "can't find ffmpeg.exe! please set system environt PATH & restart tool!";
+	}
+
+	FillDefaultResPath();
 }
 
 int GameLooper::Update() {
@@ -96,7 +77,9 @@ int GameLooper::Update() {
 		if (xx::engine.Pressed(xx::KbdKeys::X) && KeyboardGCDCheck()) ZoomIn();
 	}
 
-	// todo: right button content draw?
+	if (contentViewer.has_value()) {
+		contentViewer->Update();
+	}
 	
 	fpsViewer.Update();
 	return 0;
@@ -111,7 +94,6 @@ void GameLooper::ImGuiUpdate() {
 
 	ImGuiDrawWindow_Left();
 	ImGuiDrawWindow_RightTop();
-	ImGuiDrawWindow_RightBottom();
 	// ...
 }
 
@@ -158,31 +140,32 @@ void GameLooper::ImGuiDrawWindow_Left() {
 		ImGui::TableSetupColumn("file name", ImGuiTableColumnFlags_WidthStretch);
 		ImGui::TableHeadersRow();
 
-		//int rowId{}, removeRowId{ -1 };
-		//for (auto& p : data.lines) {
+		int rowId{}, removeRowId{ -1 };
+		for (auto& f : files) {
 
-		//	ImGui::TableNextRow();
+			ImGui::TableNextRow();
 
-		//	int n = 0;
+			int n = 0;
 
-		//	ImGui::TableSetColumnIndex(n);
-		//	ImGui::PushID(rowId * numCols + n);
-		//	ImGui::PushStyleColor(ImGuiCol_Button, p.name == selectedLineName ? pressColor : normalColor);
-		//	auto&& sg = xx::MakeScopeGuard([] { ImGui::PopStyleColor(1); });
-		//	if (ImGui::Button("==>")) {
-		//		SelectLine(p.name);
-		//	}
-		//	ImGui::PopID();
+			ImGui::TableSetColumnIndex(n);
+			ImGui::PushID(rowId * numCols + n);
+			ImGui::PushStyleColor(ImGuiCol_Button, f == selectedFile ? pressColor : normalColor);
+			auto&& sg = xx::MakeScopeGuard([] { ImGui::PopStyleColor(1); });
+			if (ImGui::Button("==>")) {
+				selectedFile = f;
+				DrawSelectedFile();
+			}
+			ImGui::PopID();
 
-		//	++n;
-		//	ImGui::TableSetColumnIndex(n);
-		//	ImGui::PushID(rowId * numCols + n);
-		//	ImGui::SetNextItemWidth(-FLT_MIN);
-		//	ImGui::Text(p.name.c_str());
-		//	ImGui::PopID();
+			++n;
+			ImGui::TableSetColumnIndex(n);
+			ImGui::PushID(rowId * numCols + n);
+			ImGui::SetNextItemWidth(-FLT_MIN);
+			ImGui::Text(f.c_str());
+			ImGui::PopID();
 
-		//	++rowId;
-		//}
+			++rowId;
+		}
 		ImGui::EndTable();
 	}
 
@@ -198,15 +181,49 @@ void GameLooper::ImGuiDrawWindow_RightTop() {
 	ImGui::SetNextWindowPos(p);
 	ImGui::SetNextWindowSize(ImVec2(w, rightTopPanelHeight));
 	ImGui::Begin("controlpanel", nullptr, ImGuiWindowFlags_NoMove |
+		ImGuiWindowFlags_NoBringToFrontOnFocus |
 		ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize);
 
+	ImGui::Text("ffmpeg.exe path：");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	ImGui::InputText("##ffmpeg.exe path：", &ffmpegPath);
+
+	ImGui::Text("root dir：");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	ImGui::InputText("##root dir：", &resPath);
+
+	if (ImGui::Button("refresh")) {
+		ReloadFiles();
+	}
+	ImGui::SameLine();
+	ImGui::Text("filename prefix filter：");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	ImGui::InputText("##filename prefix filter：", &fileNamePrefix);
+
+	if (Convertable()) {
+		ImGui::Text("rate[, rate ...]：");
+		ImGui::SameLine();
+		ImGui::PushItemWidth(300);
+		ImGui::InputText("##rate[, rate ...]：", &ratesString);
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		ImGui::Text("fps：");
+		ImGui::SameLine();
+		ImGui::PushItemWidth(120);
+		ImGui::InputInt("##fps：", &fps, 15);
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+		if (ImGui::Button("call FFMPEG.EXE to convert current pic list to webm ( every rate )")) {
+			ConvertFiles();
+		}
+	}
+
 	ImGui::End();
-}
-
-void GameLooper::ImGuiDrawWindow_RightBottom() {
-
 }
 
 
@@ -219,269 +236,12 @@ int GameLooper::SetKeyboardGCD() {
 	return 1;
 }
 
-void GameLooper::MoveUp() {
 
-}
-void GameLooper::MoveDown() {
-
-}
-void GameLooper::MoveTop() {
-
-}
-void GameLooper::MoveBottom() {
-
-}
-void GameLooper::ZoomOut() {
-
-}
-void GameLooper::ZoomIn() {
-
-}
-
-
-/*
-
-
-bool HelloWorld::init() {
-	if (!this->BaseType::init()) return false;
-
-	DW = AppDelegate::designWidth;
-	DH = AppDelegate::designHeight;
-	DW_2 = DW / 2;
-	DH_2 = DH / 2;
-
-	CX = MARGIN + FILE_LIST_WIDTH + (DW - MARGIN - FILE_LIST_WIDTH) / 2;
-	CY = (DH - MARGIN - CONTROL_PANEL_HEIGHT) / 2;
-
-	previewArea = cocos2d::Node::create();
-	addChild(previewArea);
-	previewArea->setPosition(CX, CY);
-
-	fileNamePrefix.resize(1024);
-	ratesString.resize(1024);
-	resPath.resize(1024);
-	fpsString.resize(1024);
-	zoomString.resize(1024);
-
-	fpsString = "30";
-	ratesString = "10,20,40,60,80,100,150,200,300";
-
-	zoom = 1;
-	zoomString = std::to_string(zoom);
-
-	FillDefaultResPath();
-
-	auto kbListener = cocos2d::EventListenerKeyboard::create();
-	kbListener->onKeyPressed = [this](cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
-		switch (keyCode) {
-			case cocos2d::EventKeyboard::KeyCode::KEY_W:
-				MoveUp();
-				return;
-			case cocos2d::EventKeyboard::KeyCode::KEY_S:
-				MoveDown();
-				return;
-			case cocos2d::EventKeyboard::KeyCode::KEY_D:
-				MoveBottom();
-				return;
-			case cocos2d::EventKeyboard::KeyCode::KEY_A:
-				MoveTop();
-				return;
-			case cocos2d::EventKeyboard::KeyCode::KEY_Z:
-				ZoomOut();
-				return;
-			case cocos2d::EventKeyboard::KeyCode::KEY_X:
-				ZoomIn();
-				return;
-		}
-	};
-	cocos2d::Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(kbListener, this);
-
-	scheduleUpdate();
-	return true;
-}
-
-void HelloWorld::onEnter() {
-	this->BaseType::onEnter();
-	//...
-	cocos2d::extension::ImGuiPresenter::getInstance()->addFont("c:/windows/fonts/simhei.ttf", 16, cocos2d::extension::ImGuiPresenter::CHS_GLYPH_RANGE::FULL);
-	cocos2d::extension::ImGuiPresenter::getInstance()->addRenderLoop("#test", CC_CALLBACK_0(HelloWorld::onDrawImGui, this), this);
-}
-
-void HelloWorld::onExit() {
-	cocos2d::extension::ImGuiPresenter::getInstance()->removeRenderLoop("#test");
-	cocos2d::extension::ImGuiPresenter::getInstance()->clearFonts();
-
-	cocos2d::extension::ImGuiPresenter::destroyInstance();
-	//...
-	this->BaseType::onExit();
-}
-
-void HelloWorld::onDrawImGui() {
-	ImGui::StyleColorsDark();
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-	auto sgStyleVar = xx::MakeScopeGuard([] { ImGui::PopStyleVar(1); });
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, pressColor);
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, releaseColor);
-	auto sgStyleColor = xx::MakeScopeGuard([] { ImGui::PopStyleColor(2); });
-	posBegin = ImGui::GetMainViewport()->Pos;
-
-	if (!ok) {
-		DrawError();
-		return;
-	}
-	DrawToolbar();
-	DrawFilesList();
-}
-
-void HelloWorld::DrawError() {
-	auto p = posBegin;
-	p.x += 300;
-	p.y += 450;
-	ImGui::SetNextWindowPos(p);
-	ImGui::SetNextWindowSize(ImVec2(DW - 300 * 2, DH - 450 * 2));
-	ImGui::Begin("错误", nullptr, ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoInputs |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoResize);
-	ImGui::Text(errorMessage.c_str());
-	ImGui::End();
-}
-
-void HelloWorld::DrawToolbar() {
-	auto p = posBegin;
-	p.x += MARGIN + FILE_LIST_WIDTH + MARGIN;
-	p.y += MARGIN;
-	ImGui::SetNextWindowPos(p);
-	ImGui::SetNextWindowSize(ImVec2(DW - (MARGIN + FILE_LIST_WIDTH + MARGIN + MARGIN), CONTROL_PANEL_HEIGHT));
-	ImGui::Begin("控制面板", nullptr, ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoDocking |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoResize);
-
-	ImGui::Text("根目录：");
-	ImGui::SameLine();
-	ImGui::InputText("a", resPath.data(), 1024);
-
-	if (ImGui::Button("刷新")) {
-		ReloadFiles();
-	}
-	ImGui::SameLine();
-	ImGui::Text("文件名前缀 过滤：");
-	ImGui::SameLine();
-	ImGui::InputText("c", fileNamePrefix.data(), 1024);
-
-	ImGui::Text("码率(逗号间隔)：");
-	ImGui::SameLine();
-	ImGui::PushItemWidth(300);
-	ImGui::InputText("d", ratesString.data(), 1024);
-	ImGui::PopItemWidth();
-	ImGui::SameLine();
-	ImGui::Text("帧率：");
-	ImGui::SameLine();
-	ImGui::PushItemWidth(100);
-	ImGui::InputText("e", fpsString.data(), 1024);
-	ImGui::PopItemWidth();
-	if (Convertable()) {
-		ImGui::SameLine();
-		if (ImGui::Button("用 C:\\ffmpeg.exe 将 当前列出的图片 按每一种码率, 分别 转为一个 webm")) {
-			ConvertFiles();
-		}
-	}
-
-	ImGui::Text("预览缩放比例：");
-	ImGui::SameLine();
-	ImGui::PushItemWidth(100);
-	if (ImGui::InputText("b", zoomString.data(), 1024)) {
-		DrawSelectedFile();
-	}
-	ImGui::PopItemWidth();
-	ImGui::SameLine();
-	ImGui::Text(selectedFileInfo.c_str());
-	ImGui::End();
-}
-
-void HelloWorld::DrawFilesList() {
-	auto p = posBegin;
-	p.x += MARGIN;
-	p.y += MARGIN;
-	ImGui::SetNextWindowPos(p);
-	ImGui::SetNextWindowSize(ImVec2(FILE_LIST_WIDTH, DH - MARGIN - MARGIN));
-	ImGui::Begin("文件列表", nullptr, ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoDocking |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoResize);
-
-	ImGui::BeginChild("文件列表Scrolling");
-	for (auto& f : files) {
-		ImGui::PushStyleColor(ImGuiCol_Button, f == selectedFile ? pressColor : normalColor);
-		auto sg = xx::MakeScopeGuard([] { ImGui::PopStyleColor(1); });
-		if (ImGui::Button(f.c_str())) {
-			if (f != selectedFile) {
-				selectedFile = f;
-				DrawSelectedFile();
-			}
-		}
-	}
-	ImGui::EndChild();
-	ImGui::End();
-}
-
-void HelloWorld::DrawSelectedFile() {
-	previewArea->removeAllChildrenWithCleanup(true);
-	selectedFileInfo.clear();
-	if (selectedFile.empty()) return;
-
-	auto fullPath = std::filesystem::path(resPath.c_str()) / selectedFile;
-	auto fileSize = std::filesystem::file_size(fullPath) / 1000;
-	zoom = (float)std::strtod(zoomString.data(), nullptr);
-	if (zoom < 0.001f) {
-		zoom = 0.001f;
-	}
-	if (zoom > 100.f) {
-		zoom = 100.f;
-	}
-	zoomString = std::to_string(zoom);
-
-	if (IsPic(selectedFile) || selectedFile.ends_with(".pkm"sv) || selectedFile.ends_with(".pkm.gz"sv)) {
-		auto sprite = cocos2d::Sprite::create(fullPath.string());
-		previewArea->addChild(sprite);
-		sprite->setScale(zoom);
-		auto wh = sprite->getTexture()->getContentSize();
-		xx::Append(selectedFileInfo, "file size = ", fileSize, "k, width = ", (int)wh.width, ", height = ", (int)wh.height);
-
-	} else if (selectedFile.ends_with(".webm"sv)) {
-		int r = mv.LoadFromWebm(fullPath);
-		if (r) return;
-		cocos2d::SpriteFrameCache::getInstance()->removeSpriteFrames();
-		r = mv.FillToSpriteFrameCache(selectedFile, "_", "");
-		if (r) return;
-
-		cocos2d::Vector<cocos2d::SpriteFrame*> sfs;
-		auto sfc = cocos2d::SpriteFrameCache::getInstance();
-		for (uint32_t i = 1; i <= mv.count; ++i) {
-			auto sf = sfc->getSpriteFrameByName(selectedFile + "_" + std::to_string(i));
-			assert(sf);
-			sfs.pushBack(sf);
-		}
-		auto a = cocos2d::Animation::createWithSpriteFrames(sfs, mv.duration / 1000.f / mv.count);
-
-		auto sprite = cocos2d::Sprite::create();
-		previewArea->addChild(sprite);
-		sprite->setScale(zoom);
-		sprite->runAction(cocos2d::RepeatForever::create(cocos2d::Animate::create(a)));
-
-		xx::Append(selectedFileInfo, "file size = ", fileSize, "k, width = ", mv.width, ", height = ", mv.height, ", count = ", mv.count, ", duration = ", (int)mv.duration);
-	}
-}
-
-void HelloWorld::ReloadFiles() {
+void GameLooper::ReloadFiles() {
 	selectedFile.clear();
-	previewArea->removeAllChildrenWithCleanup(true);
+	contentViewer.reset();
 
-	auto res = std::string_view(resPath.data());
+	std::string_view res(resPath);
 	if (!std::filesystem::exists(res) || !std::filesystem::is_directory(res)) {
 		FillDefaultResPath();
 		res = std::string_view(resPath);
@@ -505,11 +265,130 @@ void HelloWorld::ReloadFiles() {
 		}
 	}
 
-	// 排序( 如果含有数字，以其中的数字部分大小来排 )
+	// sort by name with number
 	std::sort(files.begin(), files.end(), [](std::string const& a, std::string const& b)->bool {
 		return xx::InnerNumberToFixed(a) < xx::InnerNumberToFixed(b);
 		});
 }
+
+void GameLooper::FillDefaultResPath() {
+	resPath = std::filesystem::absolute("res").string();
+	if (resPath.back() != '\\' && resPath.back() != '/') {
+		resPath += '\\';
+	}
+}
+
+bool GameLooper::Convertable() {
+	auto fs = GetPicFiles();
+	if (fs.empty()) return false;
+	auto name = GetSameName(fs);
+	if (name.empty()) return false;
+
+	// todo: check fs: real type == .ext
+
+	FillRates();
+	return !ratesString.empty();
+}
+
+std::vector<std::string_view> GameLooper::GetPicFiles() {
+	std::vector<std::string_view> picFiles;
+	for (auto& f : files) {
+		if (IsPic(f)) {
+			picFiles.push_back(f);
+		}
+	}
+	return picFiles;
+}
+
+bool GameLooper::IsPic(std::string_view sv) {
+	if (sv.ends_with(".png"sv)) return true;
+	else if (sv.ends_with(".jpg"sv)) return true;
+	else if (sv.ends_with(".webp"sv)) return true;
+	return false;
+}
+
+void ContentViewer::Init(GameLooper* looper_) {
+	looper = looper_;
+	// todo: draw selected file
+	// fill selectedFileInfo
+	assert(looper->selectedFile.size());
+
+	// todo: check file name, get real type, draw ?
+}
+
+void ContentViewer::Update() {
+	// todo
+	//previewArea->removeAllChildrenWithCleanup(true);
+	//selectedFileInfo.clear();
+	//if (selectedFile.empty()) return;
+
+	//auto fullPath = std::filesystem::path(resPath.c_str()) / selectedFile;
+	//auto fileSize = std::filesystem::file_size(fullPath) / 1000;
+	//zoom = (float)std::strtod(zoomString.data(), nullptr);
+	//if (zoom < 0.001f) {
+	//	zoom = 0.001f;
+	//}
+	//if (zoom > 100.f) {
+	//	zoom = 100.f;
+	//}
+	//zoomString = std::to_string(zoom);
+
+	//if (IsPic(selectedFile) || selectedFile.ends_with(".pkm"sv) || selectedFile.ends_with(".pkm.gz"sv)) {
+	//	auto sprite = cocos2d::Sprite::create(fullPath.string());
+	//	previewArea->addChild(sprite);
+	//	sprite->setScale(zoom);
+	//	auto wh = sprite->getTexture()->getContentSize();
+	//	xx::Append(selectedFileInfo, "file size = ", fileSize, "k, width = ", (int)wh.width, ", height = ", (int)wh.height);
+
+	//} else if (selectedFile.ends_with(".webm"sv)) {
+	//	int r = mv.LoadFromWebm(fullPath);
+	//	if (r) return;
+	//	cocos2d::SpriteFrameCache::getInstance()->removeSpriteFrames();
+	//	r = mv.FillToSpriteFrameCache(selectedFile, "_", "");
+	//	if (r) return;
+
+	//	cocos2d::Vector<cocos2d::SpriteFrame*> sfs;
+	//	auto sfc = cocos2d::SpriteFrameCache::getInstance();
+	//	for (uint32_t i = 1; i <= mv.count; ++i) {
+	//		auto sf = sfc->getSpriteFrameByName(selectedFile + "_" + std::to_string(i));
+	//		assert(sf);
+	//		sfs.pushBack(sf);
+	//	}
+	//	auto a = cocos2d::Animation::createWithSpriteFrames(sfs, mv.duration / 1000.f / mv.count);
+
+	//	auto sprite = cocos2d::Sprite::create();
+	//	previewArea->addChild(sprite);
+	//	sprite->setScale(zoom);
+	//	sprite->runAction(cocos2d::RepeatForever::create(cocos2d::Animate::create(a)));
+
+	//	xx::Append(selectedFileInfo, "file size = ", fileSize, "k, width = ", mv.width, ", height = ", mv.height, ", count = ", mv.count, ", duration = ", (int)mv.duration);
+	//}
+}
+
+void ContentViewer::ZoomIn() {
+	// todo
+}
+
+void ContentViewer::ZoomOut() {
+	// todo
+}
+
+
+
+bool GameLooper::FindFFMpegExe() {
+	auto lines = std::move(raymii::Command::exec("where ffmpeg.exe").output);
+	if (lines.size()) {
+		std::string_view line(lines);
+		ffmpegPath = xx::Trim(xx::SplitOnce(line, "\n"));
+	}
+	return ffmpegPath.size();
+}
+
+void GameLooper::DrawSelectedFile() {
+	contentViewer.emplace();
+	contentViewer->Init(this);
+}
+
 
 #define WIN32_LEAN_AND_MEAN
 #include <process.h>
@@ -538,12 +417,12 @@ inline static int PopupConsole(LPCSTR exePath, LPSTR cmdLineArgs) {
 	return 0;
 }
 
-void HelloWorld::ConvertFiles() {
+void GameLooper::ConvertFiles() {
 	auto fs = GetPicFiles();
 	assert(!fs.empty());
 	auto name = GetSameName(fs);
 	assert(name.size());
-	// 去掉一些图片名类似 xxxx (数字) 的括号和空格部分
+	// remove " (" num ")"
 	while (name.ends_with('(')) {
 		name = name.substr(0, name.size() - 1);
 	}
@@ -552,12 +431,12 @@ void HelloWorld::ConvertFiles() {
 	}
 	if (name.empty()) return;
 
-	// 设置当前目录
+	// set curr dir
 	SetCurrentDirectoryA(resPath.c_str());
 
 	if (fs.size() > 1) {
 
-		// 拼接 ffmpeg_input.txt
+		// append ffmpeg_input.txt
 		std::string txt;
 		for (auto& f : fs) {
 			txt += "file '";
@@ -570,8 +449,8 @@ void HelloWorld::ConvertFiles() {
 		std::string inputFN = "ffmpeg_input.txt";
 		xx::WriteAllBytes(inputFN, txt.c_str(), txt.size());
 
-		// 拼接 ffmpeg 命令行，每种码率 弹一个窗执行
-		// 原型: c:\ffmpeg.exe -f concat -safe 0 -i ffmpeg_input.txt -c:v libvpx-vp9 -pix_fmt yuva420p -b:v ?????K -speed 0 ??????.webm
+		// append ffmpeg cmd line for every rate
+		// cmd: ffmpeg.exe -f concat -safe 0 -i ffmpeg_input.txt -c:v libvpx-vp9 -pix_fmt yuva420p -b:v ?????K -speed 0 ??????.webm
 		for (auto& r : rates) {
 			auto rs = std::to_string(r);
 
@@ -579,50 +458,33 @@ void HelloWorld::ConvertFiles() {
 			args += name;
 			args += "__" + std::to_string(fps) + "fps_" + rs + "k__.webm";
 
-			PopupConsole("C:\\ffmpeg.exe", (LPSTR)args.c_str());
+			PopupConsole(ffmpegPath.c_str(), (LPSTR)args.c_str());
 		}
 	} else {
 
 		for (auto& r : rates) {
 			auto rs = std::to_string(r);
 
-			// 原型: c:\ffmpeg.exe -f image2 -framerate 1 -i "??????" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v ?????K -speed 0 ??????.webm
+			// cmd: ffmpeg.exe -f image2 -framerate 1 -i "??????" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v ?????K -speed 0 ??????.webm
 			std::string args = " -f image2 -framerate 1 -i \"" + std::string(fs[0]) + "\" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v " + rs + "K -speed 0 ";
 			args += name;
 			args += "__" + rs + "k__.webm";
 
-			PopupConsole("C:\\ffmpeg.exe", (LPSTR)args.c_str());
+			PopupConsole(ffmpegPath.c_str(), (LPSTR)args.c_str());
 		}
 	}
 }
 
-bool HelloWorld::IsPic(std::string_view sv) {
-	if (sv.ends_with(".png"sv)) return true;
-	else if (sv.ends_with(".jpg"sv)) return true;
-	else if (sv.ends_with(".webp"sv)) return true;
-	return false;
-}
-
-std::vector<std::string_view> HelloWorld::GetPicFiles() {
-	std::vector<std::string_view> picFiles;
-	for (auto& f : files) {
-		if (IsPic(f)) {
-			picFiles.push_back(f);
-		}
-	}
-	return picFiles;
-}
-
-std::string_view HelloWorld::GetSameName(std::vector<std::string_view> const& fs) {
+std::string_view GameLooper::GetSameName(std::vector<std::string_view> const& fs) {
 	if (fs.empty()) return "";
-	// 找出最短长度
+	// find shortest
 	auto len = std::numeric_limits<size_t>::max();
 	for (auto& f : fs) {
 		if (len > f.size()) {
 			len = f.size();
 		}
 	}
-	// 一个个字符找不同
+	// foreach find diff
 	for (size_t i = 0; i < len; i++) {
 		char c = fs[0][i];
 		for (auto& f : fs) {
@@ -634,18 +496,8 @@ std::string_view HelloWorld::GetSameName(std::vector<std::string_view> const& fs
 	return fs[0].substr(0, len);
 }
 
-bool HelloWorld::Convertable() {
-	auto fs = GetPicFiles();
-	if (fs.empty()) return false;
-	auto name = GetSameName(fs);
-	if (name.empty()) return false;
-	FillFps();
-	FillRates();
-	return !ratesString.empty();
-}
-
-void HelloWorld::FillRates() {
-	// 过滤掉 ratesString 中的非 数字 逗号, 连续逗号，尾逗号
+void GameLooper::FillRates() {
+	// filter ratesString
 	rates.clear();
 	std::string s;
 	std::string_view sv(ratesString.data());
@@ -671,24 +523,10 @@ void HelloWorld::FillRates() {
 	}
 }
 
-void HelloWorld::FillFps() {
-	fps = std::strtol(fpsString.c_str(), nullptr, 10);
-	if (fps <= 0 || fps > 120) {
-		fps = 30;
-	}
-	fpsString = std::to_string(fps);
-}
 
-void HelloWorld::FillDefaultResPath() {
-	resPath = std::filesystem::absolute(AppDelegate::resPath).string();
-	if (resPath.back() != '\\' && resPath.back() != '/') {
-		resPath += '\\';
-	}
-}
-
-void HelloWorld::MoveUp() {
+void GameLooper::MoveUp() {
 	if (selectedFile.empty()) {
-		MoveTop();
+		MoveBottom();
 		return;
 	}
 	auto iter = std::find(files.begin(), files.end(), selectedFile);
@@ -698,9 +536,9 @@ void HelloWorld::MoveUp() {
 	}
 }
 
-void HelloWorld::MoveDown() {
+void GameLooper::MoveDown() {
 	if (selectedFile.empty()) {
-		MoveBottom();
+		MoveTop();
 		return;
 	}
 	auto iter = std::find(files.begin(), files.end(), selectedFile);
@@ -709,25 +547,26 @@ void HelloWorld::MoveDown() {
 	DrawSelectedFile();
 }
 
-void HelloWorld::MoveBottom() {
+void GameLooper::MoveBottom() {
 	if (files.empty()) return;
 	selectedFile = files.back();
 	DrawSelectedFile();
 }
 
-void HelloWorld::MoveTop() {
+void GameLooper::MoveTop() {
 	if (files.empty()) return;
 	selectedFile = files.front();
 	DrawSelectedFile();
 }
 
-void HelloWorld::ZoomOut() {
-
+void GameLooper::ZoomOut() {
+	if (contentViewer.has_value()) {
+		contentViewer->ZoomOut();
+	}
 }
 
-void HelloWorld::ZoomIn() {
-
+void GameLooper::ZoomIn() {
+	if (contentViewer.has_value()) {
+		contentViewer->ZoomIn();
+	}
 }
-
-
-*/
