@@ -30,7 +30,7 @@ struct GameLooper : xx::GameLooperBase {
 	double zoom{ 0.3 }, keyboardGCD{ 0.2 }, keyboardGCDNowSecs{};
 	xx::XY offset{};
 
-	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, rightTopPanelHeight{ 115 };
+	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, rightTopPanelHeight{ 150 };
 	inline static const xx::XY errPanelSize{ 1200, 200 };
 
 	inline static const ImVec4 normalColor{ 0, 0, 0, 1.0f };
