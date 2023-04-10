@@ -73,6 +73,8 @@ void main() {
 			sm->cursor = index;
 		}
 
+		engine.GLEnableBlend();
+
 		glUseProgram(p);
 		glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
 		glUniform1i(uTex0, 0);

@@ -94,9 +94,11 @@ void main() {
 			sm->shaders[sm->cursor]->End();
 			sm->cursor = index;
 		}
+		engine.GLDisableBlend();
 	}
 
-	void Shader_Yuva2Rgba::End() {}
+	void Shader_Yuva2Rgba::End() {
+	}
 
 
 	void Shader_Yuva2Rgba::Draw(uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride, uint32_t const& w, uint32_t const& h, XY const& pos) {

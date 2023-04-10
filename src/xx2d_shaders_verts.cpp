@@ -64,6 +64,8 @@ void main() {
 			sm->cursor = index;
 		}
 
+		engine.GLEnableBlend();
+
 		glUseProgram(p);
 		glUniform2f(uCxy, 2 / engine.w, 2 / engine.h);
 

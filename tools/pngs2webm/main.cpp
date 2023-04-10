@@ -374,20 +374,21 @@ void GameLooper::ConvertFiles() {
 		for (auto& f : fs) {
 			txt += "file '";
 			txt += f;
-			txt += "'\r\nduration " + std::to_string(1. / fps) + "\r\n";
+			txt += "'\r\n";// duration " + std::to_string(1. / fps) + "\r\n";
 		}
-		txt += "file '";
-		txt += fs.back();
-		txt += "'";
+		txt.pop_back();
+		txt.pop_back();
 		std::string inputFN = "ffmpeg_input.txt";
 		xx::WriteAllBytes(inputFN, txt.c_str(), txt.size());
+
+		// tips: 200 fps will receive min file size
 
 		// append ffmpeg cmd line for every rate
 		// cmd: ffmpeg.exe -f concat -safe 0 -i ffmpeg_input.txt -c:v libvpx-vp9 -pix_fmt yuva420p -b:v ?????K -speed 0 ??????.webm
 		for (auto& r : rates) {
 			auto rs = std::to_string(r);
 
-			std::string args = " -f concat -safe 0 -i " + inputFN + " -c:v libvpx-vp9 -pix_fmt yuva420p -b:v " + rs + "K -speed 0 ";
+			std::string args = " -r " + std::to_string(fps) + " -f concat -safe 0 -i " + inputFN + " -c:v libvpx-vp9 -pix_fmt yuva420p -b:v " + rs + "K -speed 0 ";
 			args += genNamePrefix;
 			args += "__" + std::to_string(fps) + "fps_" + rs + "k__.webm";
 
@@ -566,14 +567,11 @@ struct ContentViewer_Webm : ContentViewerBase {
 		int r = mv.Load(xx::Data_r(buf.data(), buf.size()));
 		// todo: r
 
-		xx::engine.sm.End();
-		xx::engine.GLDisableBlend();
-
-		auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuva2Rgba>();
 		mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h
 			, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
 
 				auto tex = xx::FrameBuffer().Init().Draw({ w, h }, true, xx::RGBA8{}, [&]() {
+					auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuva2Rgba>();
 					shader.Draw(yData, uData, vData, aData, yaStride, uvStride, w, h, {});
 					});
 
@@ -581,9 +579,6 @@ struct ContentViewer_Webm : ContentViewerBase {
 
 				return 0;
 			});
-
-		xx::engine.sm.End();
-		xx::engine.GLEnableBlend();
 
 		quad.SetTexture(texs[cursor]).SetScale(zoom);
 

@@ -48,12 +48,17 @@ namespace xx {
 	}
 
 	void Engine::GLEnableBlend() {
-		glEnable(GL_BLEND);
+		if (!blendEnabled) {
+			glEnable(GL_BLEND);
+			blendEnabled = true;
+		}
 	}
 	void Engine::GLDisableBlend() {
-		glDisable(GL_BLEND);
+		if (blendEnabled) {
+			glDisable(GL_BLEND);
+			blendEnabled = false;
+		}
 	}
-
 
 	void Engine::UpdateEnd() {
 		sm.End();
