@@ -566,6 +566,9 @@ struct ContentViewer_Webm : ContentViewerBase {
 		int r = mv.Load(xx::Data_r(buf.data(), buf.size()));
 		// todo: r
 
+		xx::engine.sm.End();
+		xx::engine.GLDisableBlend();
+
 		auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuva2Rgba>();
 		mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h
 			, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
@@ -578,6 +581,9 @@ struct ContentViewer_Webm : ContentViewerBase {
 
 				return 0;
 			});
+
+		xx::engine.sm.End();
+		xx::engine.GLEnableBlend();
 
 		quad.SetTexture(texs[cursor]).SetScale(zoom);
 

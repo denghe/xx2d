@@ -47,6 +47,14 @@ namespace xx {
 		glBlendFunc(bfs.first, bfs.second);
 	}
 
+	void Engine::GLEnableBlend() {
+		glEnable(GL_BLEND);
+	}
+	void Engine::GLDisableBlend() {
+		glDisable(GL_BLEND);
+	}
+
+
 	void Engine::UpdateEnd() {
 		sm.End();
 

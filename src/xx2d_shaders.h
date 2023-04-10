@@ -223,6 +223,7 @@ namespace xx {
 		GLint uCxy = -1, uStrideHeight = -1, uTexY = -1, uTexU = -1, uTexV = -1, uTexA = -1, aPos = -1, aTexCoord = -1;
 		GLVertexArrays va;
 		GLBuffer vb, ib;
+		bool needRestoreBlend{};
 
 		//static void Init();
 		void Init(ShaderManager*) override;

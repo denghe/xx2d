@@ -14,6 +14,9 @@ namespace XxmvTest {
 			std::cout << "load error. r = " << r << std::endl;
 		}
 
+		xx::engine.sm.End();
+		xx::engine.GLDisableBlend();
+
 		auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuva2Rgba>();
 		int c = 0;
 
@@ -39,6 +42,8 @@ namespace XxmvTest {
 		});
 		xx::CoutN("convert ", f, " all frames to texs. numFrames = ", texs.size() , " elapsed secs = ", xx::NowEpochSeconds(secs));
 
+		xx::engine.sm.End();
+		xx::engine.GLEnableBlend();
 
 		spr.SetTexture(texs[cursor]);	
 	}
