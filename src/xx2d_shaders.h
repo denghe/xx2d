@@ -224,7 +224,7 @@ namespace xx {
 		GLVertexArrays va;
 		GLBuffer vb, ib;
 
-		static void Init();
+		//static void Init();
 		void Init(ShaderManager*) override;
 		void Begin() override;
 		void End() override;

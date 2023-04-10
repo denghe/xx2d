@@ -3,31 +3,34 @@
 #include "xx2d_fps_viewer.h"
 #include "imgui.h"
 
+
+
 struct GameLooper;
-struct ContentViewer {
+struct ContentViewerBase {
 	GameLooper* looper;
-	void Init(GameLooper* looper_);
-	void Update();
-	void ZoomIn();
-	void ZoomOut();
+	//virtual void Init(GameLooper* looper_) = 0;
+	virtual void Update() = 0;
+	virtual void ZoomIn() = 0;
+	virtual void ZoomOut() = 0;
+	virtual ~ContentViewerBase() {}
 };
 
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fnt;
 	xx::FpsViewer fpsViewer;
-	std::optional<ContentViewer> contentViewer;
+	xx::Shared<ContentViewerBase> contentViewer;
 
 	std::optional<std::string> msg;
 	std::string ffmpegPath;
 	std::string resPath;
 	std::string fileNamePrefix;
 	std::vector<std::string> files;
-	int fps = 30;
+	int fps{ 30 };
 	std::set<int> rates;
-	std::string ratesString;
+	std::string ratesString{"20,30,50,80,100,150,200"};
 	std::string selectedFile;
-	//xx::Webm mv;
-	double zoom{ 0.3 }, keyboardGCD{ 0.2 }, keyboardGCDNowSecs{};
+	std::string genNamePrefix;
+	double keyboardGCD{ 0.2 }, keyboardGCDNowSecs{};
 	xx::XY offset{};
 
 	inline static const float leftPanelWidth{ 480 }, margin{ 10 }, rightTopPanelHeight{ 150 };

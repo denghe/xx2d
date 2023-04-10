@@ -46,13 +46,15 @@ namespace xx {
 
 		// search file. order by search paths desc
 		for (ptrdiff_t i = searchPaths.size() - 1; i >= 0; --i) {
-			tmpPath = searchPaths[i];
-			tmpPath /= fn;
+			tmpPath = (std::u8string&)searchPaths[i];
+			tmpPath /= (std::u8string_view&)fn;
 			if (std::filesystem::exists(tmpPath)) {
 				if (fnIsFileName) {
-					if (std::filesystem::is_regular_file(tmpPath)) return tmpPath.string();
+					if (std::filesystem::is_regular_file(tmpPath))
+						return (std::string&&)tmpPath.u8string();
 				} else {
-					if (std::filesystem::is_directory(tmpPath)) return tmpPath.string();
+					if (std::filesystem::is_directory(tmpPath))
+						return (std::string&&)tmpPath.u8string();
 				}
 			}
 		}
@@ -63,8 +65,10 @@ namespace xx {
 
 	xx::Data Engine::LoadFileDataWithFullPath(std::string_view const& fp, bool autoDecompress) {
 		xx::Data d;
-		if (int r = xx::ReadAllBytes(fp, d)) throw std::logic_error(xx::ToString("file read error. r = ", r, ", fn = ", fp));
-		if (d.len == 0) throw std::logic_error(xx::ToString("file content is empty. fn = ", fp));
+		if (int r = xx::ReadAllBytes((std::u8string_view&)fp, d)) 
+			throw std::logic_error(xx::ToString("file read error. r = ", r, ", fn = ", fp));
+		if (d.len == 0)
+			throw std::logic_error(xx::ToString("file content is empty. fn = ", fp));
 		if (autoDecompress && d.len >= 4) {
 			if (d[0] == 0x28 && d[1] == 0xB5 && d[2] == 0x2F && d[3] == 0xFD) {	// zstd
 				xx::Data d2;
@@ -78,7 +82,8 @@ namespace xx {
 
 	std::pair<xx::Data, std::string> Engine::LoadFileData(std::string_view const& fn, bool autoDecompress) {
 		auto p = GetFullPath(fn);
-		if (p.empty()) throw std::logic_error("fn can't find: " + std::string(fn));
+		if (p.empty()) 
+			throw std::logic_error("fn can't find: " + std::string(fn));
 		auto d = LoadFileDataWithFullPath(p, autoDecompress);
 		return { std::move(d), std::move(p) };
 	}

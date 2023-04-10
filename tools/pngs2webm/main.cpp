@@ -40,7 +40,7 @@ int main() {
 
 void GameLooper::Init() {
 
-	xx::engine.imguiInit = [] { 
+	xx::engine.imguiInit = [] {
 		auto&& io = ImGui::GetIO();
 		io.Fonts->ClearFonts();
 		auto&& imfnt = io.Fonts->AddFontFromFileTTF("c:/windows/fonts/simhei.ttf", 24, {}, io.Fonts->GetGlyphRangesChineseFull());
@@ -77,10 +77,10 @@ int GameLooper::Update() {
 		if (xx::engine.Pressed(xx::KbdKeys::X) && KeyboardGCDCheck()) ZoomIn();
 	}
 
-	if (contentViewer.has_value()) {
+	if (contentViewer) {
 		contentViewer->Update();
 	}
-	
+
 	fpsViewer.Update();
 	return 0;
 }
@@ -205,20 +205,20 @@ void GameLooper::ImGuiDrawWindow_RightTop() {
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::InputText("##filename prefix filter：", &fileNamePrefix);
 
+	ImGui::Text("rate[, rate ...]：");
+	ImGui::SameLine();
+	ImGui::PushItemWidth(300);
+	ImGui::InputText("##rate[, rate ...]：", &ratesString);
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+	ImGui::Text("fps：");
+	ImGui::SameLine();
+	ImGui::PushItemWidth(120);
+	ImGui::InputInt("##fps：", &fps, 15);
+	ImGui::PopItemWidth();
 	if (Convertable()) {
-		ImGui::Text("rate[, rate ...]：");
 		ImGui::SameLine();
-		ImGui::PushItemWidth(300);
-		ImGui::InputText("##rate[, rate ...]：", &ratesString);
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-		ImGui::Text("fps：");
-		ImGui::SameLine();
-		ImGui::PushItemWidth(120);
-		ImGui::InputInt("##fps：", &fps, 15);
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
-		if (ImGui::Button("call FFMPEG.EXE to convert current pic list to webm ( every rate )")) {
+		if (ImGui::Button(xx::ToString("convert to ", genNamePrefix + "__??fps_??k__.webm").c_str())) {
 			ConvertFiles();
 		}
 	}
@@ -239,29 +239,27 @@ int GameLooper::SetKeyboardGCD() {
 
 void GameLooper::ReloadFiles() {
 	selectedFile.clear();
-	contentViewer.reset();
+	contentViewer.Reset();
 
-	std::string_view res(resPath);
+	std::u8string_view res((std::u8string&)resPath);
 	if (!std::filesystem::exists(res) || !std::filesystem::is_directory(res)) {
 		FillDefaultResPath();
-		res = std::string_view(resPath);
 	} else {
-		resPath = std::filesystem::absolute(res).string();
+		resPath = (std::string&)std::filesystem::absolute(res).u8string();
 		if (resPath.back() != '\\' && resPath.back() != '/') {
 			resPath += '\\';
 		}
-		res = std::string_view(resPath);
 	}
+	res = std::u8string_view((std::u8string&)resPath);
 
-	auto len = strlen(fileNamePrefix.data());
-	std::string_view prefix(fileNamePrefix.data(), len);
+	std::u8string_view prefix((std::u8string&)fileNamePrefix);
 	files.clear();
 	for (auto&& o : std::filesystem::directory_iterator(res)) {
 		if (!o.is_regular_file()) continue;
-		auto oStr = std::filesystem::absolute(o).string();
-		auto subStr = std::string_view(oStr).substr(res.size());
+		auto oStr = std::filesystem::absolute(o).u8string();
+		auto subStr = std::u8string_view(oStr).substr(res.size());
 		if (subStr.starts_with(prefix)) {
-			files.push_back(oStr.substr(res.size()));
+			files.push_back((std::string&)oStr.substr(res.size()));
 		}
 	}
 
@@ -281,10 +279,17 @@ void GameLooper::FillDefaultResPath() {
 bool GameLooper::Convertable() {
 	auto fs = GetPicFiles();
 	if (fs.empty()) return false;
-	auto name = GetSameName(fs);
-	if (name.empty()) return false;
+	genNamePrefix = GetSameName(fs);
+	if (genNamePrefix.empty()) return false;
 
-	// todo: check fs: real type == .ext
+	// remove " (" num ")"
+	while (genNamePrefix.ends_with('(')) {
+		genNamePrefix = genNamePrefix.substr(0, genNamePrefix.size() - 1);
+	}
+	while (genNamePrefix.ends_with(' ')) {
+		genNamePrefix = genNamePrefix.substr(0, genNamePrefix.size() - 1);
+	}
+	if (genNamePrefix.empty()) return false;
 
 	FillRates();
 	return !ratesString.empty();
@@ -307,74 +312,6 @@ bool GameLooper::IsPic(std::string_view sv) {
 	return false;
 }
 
-void ContentViewer::Init(GameLooper* looper_) {
-	looper = looper_;
-	// todo: draw selected file
-	// fill selectedFileInfo
-	assert(looper->selectedFile.size());
-
-	// todo: check file name, get real type, draw ?
-}
-
-void ContentViewer::Update() {
-	// todo
-	//previewArea->removeAllChildrenWithCleanup(true);
-	//selectedFileInfo.clear();
-	//if (selectedFile.empty()) return;
-
-	//auto fullPath = std::filesystem::path(resPath.c_str()) / selectedFile;
-	//auto fileSize = std::filesystem::file_size(fullPath) / 1000;
-	//zoom = (float)std::strtod(zoomString.data(), nullptr);
-	//if (zoom < 0.001f) {
-	//	zoom = 0.001f;
-	//}
-	//if (zoom > 100.f) {
-	//	zoom = 100.f;
-	//}
-	//zoomString = std::to_string(zoom);
-
-	//if (IsPic(selectedFile) || selectedFile.ends_with(".pkm"sv) || selectedFile.ends_with(".pkm.gz"sv)) {
-	//	auto sprite = cocos2d::Sprite::create(fullPath.string());
-	//	previewArea->addChild(sprite);
-	//	sprite->setScale(zoom);
-	//	auto wh = sprite->getTexture()->getContentSize();
-	//	xx::Append(selectedFileInfo, "file size = ", fileSize, "k, width = ", (int)wh.width, ", height = ", (int)wh.height);
-
-	//} else if (selectedFile.ends_with(".webm"sv)) {
-	//	int r = mv.LoadFromWebm(fullPath);
-	//	if (r) return;
-	//	cocos2d::SpriteFrameCache::getInstance()->removeSpriteFrames();
-	//	r = mv.FillToSpriteFrameCache(selectedFile, "_", "");
-	//	if (r) return;
-
-	//	cocos2d::Vector<cocos2d::SpriteFrame*> sfs;
-	//	auto sfc = cocos2d::SpriteFrameCache::getInstance();
-	//	for (uint32_t i = 1; i <= mv.count; ++i) {
-	//		auto sf = sfc->getSpriteFrameByName(selectedFile + "_" + std::to_string(i));
-	//		assert(sf);
-	//		sfs.pushBack(sf);
-	//	}
-	//	auto a = cocos2d::Animation::createWithSpriteFrames(sfs, mv.duration / 1000.f / mv.count);
-
-	//	auto sprite = cocos2d::Sprite::create();
-	//	previewArea->addChild(sprite);
-	//	sprite->setScale(zoom);
-	//	sprite->runAction(cocos2d::RepeatForever::create(cocos2d::Animate::create(a)));
-
-	//	xx::Append(selectedFileInfo, "file size = ", fileSize, "k, width = ", mv.width, ", height = ", mv.height, ", count = ", mv.count, ", duration = ", (int)mv.duration);
-	//}
-}
-
-void ContentViewer::ZoomIn() {
-	// todo
-}
-
-void ContentViewer::ZoomOut() {
-	// todo
-}
-
-
-
 bool GameLooper::FindFFMpegExe() {
 	auto lines = std::move(raymii::Command::exec("where ffmpeg.exe").output);
 	if (lines.size()) {
@@ -382,11 +319,6 @@ bool GameLooper::FindFFMpegExe() {
 		ffmpegPath = xx::Trim(xx::SplitOnce(line, "\n"));
 	}
 	return ffmpegPath.size();
-}
-
-void GameLooper::DrawSelectedFile() {
-	contentViewer.emplace();
-	contentViewer->Init(this);
 }
 
 
@@ -420,19 +352,20 @@ inline static int PopupConsole(LPCSTR exePath, LPSTR cmdLineArgs) {
 void GameLooper::ConvertFiles() {
 	auto fs = GetPicFiles();
 	assert(!fs.empty());
-	auto name = GetSameName(fs);
-	assert(name.size());
+	genNamePrefix = GetSameName(fs);
+	assert(genNamePrefix.size());
 	// remove " (" num ")"
-	while (name.ends_with('(')) {
-		name = name.substr(0, name.size() - 1);
+	while (genNamePrefix.ends_with('(')) {
+		genNamePrefix = genNamePrefix.substr(0, genNamePrefix.size() - 1);
 	}
-	while (name.ends_with(' ')) {
-		name = name.substr(0, name.size() - 1);
+	while (genNamePrefix.ends_with(' ')) {
+		genNamePrefix = genNamePrefix.substr(0, genNamePrefix.size() - 1);
 	}
-	if (name.empty()) return;
+	if (genNamePrefix.empty()) return;
 
 	// set curr dir
-	SetCurrentDirectoryA(resPath.c_str());
+	//SetCurrentDirectoryA(resPath.c_str());
+	std::filesystem::current_path((std::u8string&)resPath);
 
 	if (fs.size() > 1) {
 
@@ -455,7 +388,7 @@ void GameLooper::ConvertFiles() {
 			auto rs = std::to_string(r);
 
 			std::string args = " -f concat -safe 0 -i " + inputFN + " -c:v libvpx-vp9 -pix_fmt yuva420p -b:v " + rs + "K -speed 0 ";
-			args += name;
+			args += genNamePrefix;
 			args += "__" + std::to_string(fps) + "fps_" + rs + "k__.webm";
 
 			PopupConsole(ffmpegPath.c_str(), (LPSTR)args.c_str());
@@ -467,7 +400,7 @@ void GameLooper::ConvertFiles() {
 
 			// cmd: ffmpeg.exe -f image2 -framerate 1 -i "??????" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v ?????K -speed 0 ??????.webm
 			std::string args = " -f image2 -framerate 1 -i \"" + std::string(fs[0]) + "\" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v " + rs + "K -speed 0 ";
-			args += name;
+			args += genNamePrefix;
 			args += "__" + rs + "k__.webm";
 
 			PopupConsole(ffmpegPath.c_str(), (LPSTR)args.c_str());
@@ -560,13 +493,185 @@ void GameLooper::MoveTop() {
 }
 
 void GameLooper::ZoomOut() {
-	if (contentViewer.has_value()) {
+	if (contentViewer) {
 		contentViewer->ZoomOut();
 	}
 }
 
 void GameLooper::ZoomIn() {
-	if (contentViewer.has_value()) {
+	if (contentViewer) {
 		contentViewer->ZoomIn();
+	}
+}
+
+
+
+// png, pkm2, astc
+struct ContentViewer_Pic : ContentViewerBase {
+	xx::Quad quad;
+	std::string info, info2;
+	float zoom{1.f};
+	void Init(GameLooper* looper_, std::string_view const& buf, std::string fullPath, std::string info_) {
+		looper = looper_;
+		info = std::move(info_);
+
+		auto&& tex = xx::Make<xx::GLTexture>(xx::LoadGLTexture(buf, fullPath));	// todo: try ?
+
+		// auto fill? calc zoom?
+
+		quad.SetTexture(tex).SetScale(zoom);
+
+		xx::Append(info2, ", width = ", quad.Size().x, ", height = ", quad.Size().y);
+	}
+	void Update() override {
+		xx::XY pos{ (GameLooper::leftPanelWidth + GameLooper::margin * 2) / 2.f, -(GameLooper::rightTopPanelHeight + GameLooper::margin * 2) / 2.f };
+		quad.SetPosition(pos).Draw();
+
+		pos = xx::engine.ninePoints[7] + xx::XY{ GameLooper::leftPanelWidth + GameLooper::margin * 2, -(GameLooper::rightTopPanelHeight + GameLooper::margin * 2) };
+		auto limitWidth = xx::engine.w - (GameLooper::leftPanelWidth + GameLooper::margin * 3);
+		xx::SimpleLabel().SetPosition(pos).SetAnchor({0,1}).SetText(looper->fnt, info + info2, 32.f, limitWidth).Draw();
+	}
+	void ZoomIn() override {
+		if (zoom > 0.1f) {
+			zoom -= 0.1f;
+		} else {
+			zoom = 0.1f;
+		}
+		quad.SetScale(zoom);
+	}
+	void ZoomOut() override {
+		if (zoom < 10.f) {
+			zoom += 0.1f;
+		} else {
+			zoom = 10.f;
+		}
+		quad.SetScale(zoom);
+	}
+};
+
+// webm, xxmv
+struct ContentViewer_Webm : ContentViewerBase {
+	xx::Quad quad;
+	xx::List<xx::Shared<xx::GLTexture>> texs;
+	xx::Mv mv;
+	std::string info, info2;
+	float zoom{1.f};
+	int cursor{};
+	float timePool{}, delay{};
+
+	void Init(GameLooper* looper_, std::string_view const& buf, std::string fullPath, std::string info_) {
+		looper = looper_;
+		info = std::move(info_);
+
+		int r = mv.Load(xx::Data_r(buf.data(), buf.size()));
+		// todo: r
+
+		auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuva2Rgba>();
+		mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h
+			, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
+
+				auto tex = xx::FrameBuffer().Init().Draw({ w, h }, true, xx::RGBA8{}, [&]() {
+					shader.Draw(yData, uData, vData, aData, yaStride, uvStride, w, h, {});
+					});
+
+				texs.Add(tex);
+
+				return 0;
+			});
+
+		quad.SetTexture(texs[cursor]).SetScale(zoom);
+
+		delay = mv.duration / (float)mv.count / 1000.f;
+		
+		xx::Append(info2, ", width = ", mv.width, ", height = ", mv.height, ", count = ", mv.count, ", duration = ", mv.duration);
+	}
+	void Update() override {
+		timePool += xx::engine.delta;
+		while (timePool >= delay) {
+			timePool -= delay;
+
+			if (++cursor == texs.len) {
+				cursor = 0;
+			}
+			quad.SetTexture(texs[cursor]);
+		}
+
+		xx::XY pos{ (GameLooper::leftPanelWidth + GameLooper::margin * 2) / 2.f, -(GameLooper::rightTopPanelHeight + GameLooper::margin * 2) / 2.f };
+		quad.SetPosition(pos).Draw();
+
+		pos = xx::engine.ninePoints[7] + xx::XY{ GameLooper::leftPanelWidth + GameLooper::margin * 2, -(GameLooper::rightTopPanelHeight + GameLooper::margin * 2) };
+		auto limitWidth = xx::engine.w - (GameLooper::leftPanelWidth + GameLooper::margin * 3);
+		xx::SimpleLabel().SetPosition(pos).SetAnchor({0,1}).SetText(looper->fnt, info + info2, 32.f, limitWidth).Draw();
+	}
+	void ZoomIn() override {
+		if (zoom > 0.1f) {
+			zoom -= 0.1f;
+		} else {
+			zoom = 0.1f;
+		}
+		quad.SetScale(zoom);
+	}
+	void ZoomOut() override {
+		if (zoom < 10.f) {
+			zoom += 0.1f;
+		} else {
+			zoom = 10.f;
+		}
+		quad.SetScale(zoom);
+	}
+};
+
+
+void GameLooper::DrawSelectedFile() {
+	auto fullPath = std::filesystem::path((std::u8string&)resPath) / (std::u8string&)selectedFile;
+
+	std::string info;
+	xx::Data d;
+	int r = xx::ReadAllBytes(fullPath, d);
+	if (r) {
+		msg = xx::ToString("read ", fullPath, " error! r = ", r);
+		return;
+	}
+	std::string_view buf(d);
+
+	if (buf.starts_with("\x28\xB5\x2F\xFD"sv)) {	// zstd
+		xx::Append(info, "zstd file size = ", d.len);
+		xx::Data d2;
+		ZstdDecompress(d, d2);
+		d = std::move(d2);
+		buf = d;
+		xx::Append(info, ", decompress size = ", d.len);
+	} else {
+		xx::Append(info, "file size = ", d.len);
+	}
+
+	// check d header & switch file type
+	if (buf.starts_with("\x1a\x45\xdf\xa3"sv)) {
+		xx::Append(info, ", content type: webm");
+		auto v = xx::Make<ContentViewer_Webm>();
+		contentViewer = v;
+		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
+	} else if (buf.starts_with("XXMV 1.0"sv)) {
+		xx::Append(info, ", content type: xxmv");
+		auto v = xx::Make<ContentViewer_Webm>();
+		contentViewer = v;
+		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
+	} else if (buf.starts_with("PKM 20"sv)) {
+		xx::Append(info, ", content type: pkm2");
+		auto v = xx::Make<ContentViewer_Pic>();
+		contentViewer = v;
+		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
+	} else if (buf.starts_with("\x13\xab\xa1\x5c"sv)) {
+		xx::Append(info, ", content type: astc");
+		auto v = xx::Make<ContentViewer_Pic>();
+		contentViewer = v;
+		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
+	} else if (buf.starts_with("\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"sv)) {
+		xx::Append(info, ", content type: png");
+		auto v = xx::Make<ContentViewer_Pic>();
+		contentViewer = v;
+		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
+	} else {
+		contentViewer.Reset();
 	}
 }

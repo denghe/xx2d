@@ -7,8 +7,6 @@ namespace XxmvTest {
 		this->looper = looper;
 		std::cout << "XxmvTest::Scene::Init" << std::endl;
 
-		xx::Shader_Yuva2Rgba::Init();
-
 		auto [d, f] = xx::engine.LoadFileData("res/st_m_50.webm");
 
 		int r = mv.Load(d);
@@ -42,7 +40,7 @@ namespace XxmvTest {
 		xx::CoutN("convert ", f, " all frames to texs. numFrames = ", texs.size() , " elapsed secs = ", xx::NowEpochSeconds(secs));
 
 
-		spr.SetTexture(texs[cursor]);
+		spr.SetTexture(texs[cursor]);	
 	}
 
 	int Scene::Update() {

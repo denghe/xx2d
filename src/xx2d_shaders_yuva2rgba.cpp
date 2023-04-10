@@ -2,13 +2,13 @@
 
 namespace xx {
 
-	void Shader_Yuva2Rgba::Init() {
-		if (!engine.sm.shaders[index]) {
-			auto s = Make<Shader_Yuva2Rgba>();
-			engine.sm.shaders[index] = s;
-			s->Init(&engine.sm);
-		}
-	}
+	//void Shader_Yuva2Rgba::Init() {
+	//	if (!engine.sm.shaders[index]) {
+	//		auto s = Make<Shader_Yuva2Rgba>();
+	//		engine.sm.shaders[index] = s;
+	//		s->Init(&engine.sm);
+	//	}
+	//}
 
 	void Shader_Yuva2Rgba::Init(ShaderManager* sm_) {
 		sm = sm_;

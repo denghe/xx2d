@@ -169,7 +169,7 @@ namespace xx {
 
 		else if (buf.starts_with("\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"sv)) {
 			int w, h, comp;
-			if (auto image = stbi_load(std::string(fullPath).c_str(), &w, &h, &comp, STBI_rgb_alpha)) {
+			if (auto image = stbi_load_from_memory((stbi_uc*)buf.data(), buf.size(), &w, &h, &comp, STBI_rgb_alpha)) {
 				auto c = comp == 3 ? GL_RGB : GL_RGBA;
 				if (comp == 4) {
 					glPixelStorei(GL_UNPACK_ALIGNMENT, 8 - 4 * (w & 0x1));

@@ -318,7 +318,9 @@ file(GLOB SRCS	#GLOB_RECURSE
 add_executable(tools_pngs2webm ${SRCS})
 
 target_link_libraries(tools_pngs2webm ${name} glfw imgui imguicpp pugixml libzstd_static)
-
+if(MSVC)	# vs2022+
+	target_link_libraries(tools_pngs2webm ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
+endif()
 
 if(MSVC)	# vs2022+
 
