@@ -208,6 +208,7 @@ endif()
 
 include_directories(
 	tests
+	spine-runtimes/spine-cpp/spine-cpp/include
 )
 
 set(SRCS)
@@ -224,6 +225,9 @@ target_link_libraries(tests ${name} glfw imgui pugixml libzstd_static)
 if(MSVC)	# vs2022+
 	target_link_libraries(tests ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
 endif()
+
+add_subdirectory(spine-runtimes/spine-cpp)
+target_link_libraries(tests spine-cpp)
 
 
 if(MSVC)	# vs2022+

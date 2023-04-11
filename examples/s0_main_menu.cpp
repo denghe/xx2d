@@ -151,7 +151,7 @@ namespace MainMenu {
 			} else {
 				throw std::logic_error("unhandled menu");
 			}
-				// todo: circle editor ? anim frame editor ? particle editor ? png -> webm -> xxmv include trim ?
+				// todo: circle editor ? points editor ? anim frame editor ? particle editor ?
 		}
 	}
 

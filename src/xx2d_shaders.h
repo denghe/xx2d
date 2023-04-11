@@ -233,6 +233,30 @@ namespace xx {
 		void Draw(uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride, uint32_t const& w, uint32_t const& h, XY const& pos);
 	};
 
+	/***************************************************************************************************/
+
+	// for draw multi trangles with texture ( for spine )
+	struct Shader_Spine : Shader {
+		static const size_t index = 6;	// index at sm->shaders
+
+		GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
+		GLVertexArrays va;
+		GLBuffer vb;
+
+		static const size_t maxTexNums = maxVertNums / 3;
+		GLuint lastTextureId = 0;
+		std::unique_ptr<std::pair<GLuint, GLsizei>[]> texs = std::make_unique<std::pair<GLuint, GLsizei>[]>(maxTexNums);	// tex id + count
+		size_t texsCount = 0;
+		std::unique_ptr<XYUVRGBA8[]> verts = std::make_unique<XYUVRGBA8[]>(maxVertNums);
+		size_t vertsCount = 0;
+
+		void Init(ShaderManager*) override;
+		void Begin() override;
+		void End() override;
+
+		void Commit();
+		XYUVRGBA8* Draw(GLTexture& tex, size_t const& numVerts);
+	};
 
 
 	// ... more shader struct here
