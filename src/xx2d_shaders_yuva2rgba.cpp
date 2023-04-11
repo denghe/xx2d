@@ -94,8 +94,9 @@ void main() {
 			// here can check shader type for combine batch
 			sm->shaders[sm->cursor]->End();
 			sm->cursor = index;
+
+			engine.GLDisableBlend();
 		}
-		engine.GLDisableBlend();
 	}
 
 	void Shader_Yuva2Rgba::End() {

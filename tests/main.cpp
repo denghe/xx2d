@@ -242,7 +242,8 @@ namespace spine {
 		virtual void load(AtlasPage& page, const String& path) {
 
 			std::string_view fn(path.buffer(), path.length());
-			auto tex = xx::engine.LoadSharedTexture(fn);
+			auto tex = xx::engine.LoadTextureFromCache(fn);
+
 			xx::GLTexParm(*tex
 				, page.magFilter == TextureFilter_Linear ? GL_LINEAR : GL_NEAREST
 				, (page.uWrap == TextureWrap_Repeat && page.vWrap == TextureWrap_Repeat) ? GL_REPEAT : GL_CLAMP_TO_EDGE
@@ -266,6 +267,7 @@ namespace spine {
 
 
 	void callback(AnimationState* state, EventType type, TrackEntry* entry, Event* event) {
+#if 0
 		SP_UNUSED(state);
 		const String& animationName = (entry && entry->getAnimation()) ? entry->getAnimation()->getName() : String("");
 
@@ -291,6 +293,7 @@ namespace spine {
 			break;
 		}
 		fflush(stdout);
+#endif
 	}
 
 	std::shared_ptr<SkeletonData> readSkeletonJsonData(const String& filename, Atlas* atlas, float scale) {
@@ -371,7 +374,9 @@ void GameLooper::Init() {
 	auto skelFN = xx::engine.GetFullPath("spine-runtimes/spine-sfml/cpp/data/spineboy-pro.skel");
 	auto atlasFN = xx::engine.GetFullPath("spine-runtimes/spine-sfml/cpp/data/spineboy-pma.atlas");
 
-	coros.Add(spine::GoSpineBoy(skelFN.c_str(), atlasFN.c_str(), 1.f));
+	for (size_t i = 0; i < 1000; i++) {
+		coros.Add(spine::GoSpineBoy(skelFN.c_str(), atlasFN.c_str(), 0.5f));
+	}
 }
 
 int GameLooper::Update() {

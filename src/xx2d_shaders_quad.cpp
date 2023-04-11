@@ -83,17 +83,17 @@ void main() {
 			// here can check shader type for combine batch
 			sm->shaders[sm->cursor]->End();
 			sm->cursor = index;
+
+			engine.GLEnableBlend();
+
+			glUseProgram(p);
+			glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
+			glUniform1i(uTex0, 0);
+			glUniform2f(uCxy, 2 / engine.w, 2 / engine.h);
+
+			glBindVertexArray(va);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 		}
-
-		engine.GLEnableBlend();
-
-		glUseProgram(p);
-		glActiveTexture(GL_TEXTURE0/* + textureUnit*/);
-		glUniform1i(uTex0, 0);
-		glUniform2f(uCxy, 2 / engine.w, 2 / engine.h);
-
-		glBindVertexArray(va);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 	}
 
 	void Shader_Quad::End() {
