@@ -3,6 +3,7 @@
 #include <imgui_stdlib.h>
 #include <command.h>
 #include <ranges>
+#include <xx2d_simple_box_button.h>
 
 /*
 main ui layout:
@@ -46,6 +47,8 @@ void GameLooper::Init() {
 		auto&& imfnt = io.Fonts->AddFontFromFileTTF("c:/windows/fonts/simhei.ttf", 24, {}, io.Fonts->GetGlyphRangesChineseFull());
 		io.Fonts->Build();
 		io.FontDefault = imfnt;
+
+		io.IniFilename = nullptr;
 	};
 
 	xx::engine.imguiDeinit = [] {
@@ -207,7 +210,7 @@ void GameLooper::ImGuiDrawWindow_RightTop() {
 
 	ImGui::Text("rate[, rate ...]：");
 	ImGui::SameLine();
-	ImGui::PushItemWidth(300);
+	ImGui::PushItemWidth(380);
 	ImGui::InputText("##rate[, rate ...]：", &ratesString);
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
@@ -556,6 +559,10 @@ struct ContentViewer_Webm : ContentViewerBase {
 	xx::List<xx::Shared<xx::GLTexture>> texs;
 	xx::Mv mv;
 	std::string info, info2;
+
+	xx::MouseEventListener_SimpleBoxButton sbbL;
+	xx::SimpleBoxButton sbb;
+
 	float zoom{1.f};
 	int cursor{};
 	float timePool{}, delay{};
@@ -565,7 +572,19 @@ struct ContentViewer_Webm : ContentViewerBase {
 		info = std::move(info_);
 
 		int r = mv.Load(xx::Data_r(buf.data(), buf.size()));
-		// todo: r
+		if (r) {
+			looper->msg = xx::ToString("mv.Load ", fullPath, " error! r = ", r);
+			looper->contentViewer.Reset();
+			return;
+		}
+
+		sbbL.Init(xx::Mbtns::Left);
+		sbb.Init(looper->fnt, {}, "save to xxmv", 32, [this, fn = fullPath + ".xxmv"] {
+			int r = mv.SaveToXxmv(fn);
+			if (r) {
+				looper->msg = xx::ToString("mv.SaveToXxmv ", fn, " error! r = ", r);
+			}
+		});
 
 		mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h
 			, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
@@ -584,8 +603,9 @@ struct ContentViewer_Webm : ContentViewerBase {
 
 		delay = mv.duration / (float)mv.count / 1000.f;
 		
-		xx::Append(info2, ", width = ", mv.width, ", height = ", mv.height, ", count = ", mv.count, ", duration = ", mv.duration);
+		xx::Append(info2, ", width = ", mv.width, ", height = ", mv.height, ", count = ", mv.count, ", duration = ", mv.duration, ", fps = ", (uint64_t)mv.count * 1000 / (uint64_t)mv.duration);
 	}
+
 	void Update() override {
 		timePool += xx::engine.delta;
 		while (timePool >= delay) {
@@ -603,7 +623,20 @@ struct ContentViewer_Webm : ContentViewerBase {
 		pos = xx::engine.ninePoints[7] + xx::XY{ GameLooper::leftPanelWidth + GameLooper::margin * 2, -(GameLooper::rightTopPanelHeight + GameLooper::margin * 2) };
 		auto limitWidth = xx::engine.w - (GameLooper::leftPanelWidth + GameLooper::margin * 3);
 		xx::SimpleLabel().SetPosition(pos).SetAnchor({0,1}).SetText(looper->fnt, info + info2, 32.f, limitWidth).Draw();
+
+		pos.x += sbb.GetSize().x / 2;
+		pos.y -= 128;
+		sbb.SetPosition(pos);
+
+		sbbL.Update();
+		if (sbbL.eventId) {
+			sbbL.Dispatch(&sbb);
+		}
+
+		sbb.Draw1();
+		sbb.Draw2();
 	}
+
 	void ZoomIn() override {
 		if (zoom > 0.1f) {
 			zoom -= 0.1f;
@@ -612,6 +645,7 @@ struct ContentViewer_Webm : ContentViewerBase {
 		}
 		quad.SetScale(zoom);
 	}
+
 	void ZoomOut() override {
 		if (zoom < 10.f) {
 			zoom += 0.1f;

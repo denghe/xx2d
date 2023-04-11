@@ -27,7 +27,7 @@ struct GameLooper : xx::GameLooperBase {
 	std::vector<std::string> files;
 	int fps{ 30 };
 	std::set<int> rates;
-	std::string ratesString{"20,30,50,80,100,150,200"};
+	std::string ratesString{"20,30,50,80,120,150,200,300"};
 	std::string selectedFile;
 	std::string genNamePrefix;
 	double keyboardGCD{ 0.2 }, keyboardGCDNowSecs{};

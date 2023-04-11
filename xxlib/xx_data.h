@@ -933,7 +933,7 @@ namespace xx {
                 d.WriteFixedArray<needReserve>(in.data(), in.size());
             } else if constexpr (std::is_integral_v<typename T::value_type>) {
                 if constexpr (needReserve) {
-                    auto cap = in.size() * (sizeof(T) + 1);
+                    auto cap = in.size() * (sizeof(T) + 2);
                     if (d.cap < cap) {
                         d.Reserve<false>(cap);
                     }
@@ -978,7 +978,7 @@ namespace xx {
             if (in.empty()) return;
             if constexpr (std::is_integral_v<typename T::value_type>) {
                 if constexpr (needReserve) {
-                    auto cap = in.size() * (sizeof(T) + 1);
+                    auto cap = in.size() * (sizeof(T) + 2);
                     if (d.cap < cap) {
                         d.Reserve<false>(cap);
                     }

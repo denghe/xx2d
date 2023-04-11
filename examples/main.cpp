@@ -24,6 +24,8 @@ void GameLooper::Init() {
 
 		io.Fonts->Build();
 		io.FontDefault = imfnt;
+
+		io.IniFilename = nullptr;
 	};
 #endif
 }

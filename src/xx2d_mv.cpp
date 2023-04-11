@@ -9,21 +9,31 @@ namespace xx {
 		Clear();
 		// todo: verify header? version number?
 		if (d.len < 8 || memcmp(d.buf, "XXMV 1.0", 8)) return __LINE__;
+		d.offset += 8;
 		if (int r = d.ReadFixed(codecId)) return __LINE__;
 		if (int r = d.ReadFixed(hasAlpha)) return __LINE__;
 		if (int r = d.ReadFixed(width)) return __LINE__;
 		if (int r = d.ReadFixed(height)) return __LINE__;
-		if (int r = d.ReadFixed(duration)) return __LINE__;
-		uint32_t siz;
-		if (int r = d.ReadFixed(siz)) return r;
-		if (d.offset + siz * sizeof(uint32_t) > d.len) return __LINE__;
-		lens.resize(siz);
-		if (int r = d.ReadBuf(lens.data(), siz * sizeof(uint32_t))) return __LINE__;
-		if (int r = d.ReadFixed(siz)) return __LINE__;
-		if (d.offset + siz > d.len) return __LINE__;
-		data.Resize(siz);
-		if (int r = d.ReadBuf(data.buf, data.len)) return __LINE__;
+		uint32_t du;
+		if (int r = d.ReadFixed(du)) return __LINE__;
+		duration = du;
+		if (int r = d.Read(lens)) return __LINE__;
+		if (int r = d.Read(data)) return __LINE__;
 		return FillBufs();
+	}
+
+	int Mv::SaveToXxmv(std::filesystem::path const& path) {
+		xx::Data d;
+		d.Reserve(28 + lens.size() * 5 + data.len);
+		d.WriteBuf("XXMV 1.0", 8);
+		d.WriteFixed(codecId);
+		d.WriteFixed(hasAlpha);
+		d.WriteFixed(width);
+		d.WriteFixed(height);
+		d.WriteFixed((uint32_t)duration);
+		d.Write(lens);
+		d.Write(data);
+		return xx::WriteAllBytes(path, d);
 	}
 
 	int Mv::FillBufs() {
@@ -38,20 +48,6 @@ namespace xx {
 		return 0;
 	}
 
-	int Mv::SaveToXxmv(std::filesystem::path const& path) {
-		xx::Data d;
-		d.WriteBuf("XXMV 1.0", 8);
-		d.WriteFixed(codecId);
-		d.WriteFixed(hasAlpha);
-		d.WriteFixed(width);
-		d.WriteFixed(height);
-		d.WriteFixed(duration);
-		d.WriteFixed((uint32_t)lens.size());
-		d.WriteBuf(lens.data(), lens.size() * sizeof(uint32_t));
-		d.WriteFixed((uint32_t)data.len);
-		d.WriteBuf(data.buf, data.len);
-		return xx::WriteAllBytes(path, d);
-	}
 
 	int Mv::LoadFromWebm(xx::Data_r d) {
 		Clear();
