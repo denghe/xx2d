@@ -46,9 +46,10 @@ void main() {
 	float v = texture( uTexV, vTexCoord ).r - 0.5f;
 	float a = texture( uTexA, vTexCoord ).r;
 
-    float r = y + 1.402f * v;
-    float g = y - 0.344f * u - 0.714f * v;
-    float b = y + 1.772f * u;
+	y = 1.1643f * (y - 0.0625f);
+	float r = y + 1.5958f * v;
+	float g = y - 0.39173f * u - 0.81290f * v;
+	float b = y + 2.017f * u;
 
     oColor = vec4(r, g, b, a);
 })"sv });
