@@ -3,29 +3,27 @@
 
 namespace spine {
 
+	SpineExtension* getDefaultExtension() {
+		return new DefaultSpineExtension();
+	}
+
 	struct XxSkeleton {
+
 		Skeleton* skeleton{};
 		AnimationState* state{};
 		float timeScale{ 1 };
 		mutable bool usePremultipliedAlpha{};
 
-		inline static const constexpr std::pair<uint32_t, uint32_t> normal{ GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA };
-		inline static const constexpr std::pair<uint32_t, uint32_t> additive{ GL_SRC_ALPHA, GL_ONE };
-		inline static const constexpr std::pair<uint32_t, uint32_t> multiply{ GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA };
-		inline static const constexpr std::pair<uint32_t, uint32_t> screen{ GL_ONE, GL_ONE_MINUS_SRC_COLOR };
+		// normal, additive, multiply, screen
+		inline static const constexpr std::array<std::pair<uint32_t, uint32_t>, 4> nonpmaBlendFuncs{ std::pair<uint32_t, uint32_t>
+		{ GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA }, { GL_SRC_ALPHA, GL_ONE }, { GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA }, { GL_ONE, GL_ONE_MINUS_SRC_COLOR } };
 
-		inline static const constexpr std::pair<uint32_t, uint32_t> normalPma{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA };
-		inline static const constexpr std::pair<uint32_t, uint32_t> additivePma{ GL_ONE, GL_ONE };
-		inline static const constexpr std::pair<uint32_t, uint32_t> multiplyPma{ GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA };
-		inline static const constexpr std::pair<uint32_t, uint32_t> screenPma{ GL_ONE, GL_ONE_MINUS_SRC_COLOR };
+		// pma: normal, additive, multiply, screen
+		inline static const constexpr std::array<std::pair<uint32_t, uint32_t>, 4> pmaBlendFuncs{ std::pair<uint32_t, uint32_t>
+		{ GL_ONE, GL_ONE_MINUS_SRC_ALPHA }, { GL_ONE, GL_ONE }, { GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA }, { GL_ONE, GL_ONE_MINUS_SRC_COLOR } };
 
-
-		std::vector<xx::XYUVRGBA8> vertexArray;	//sf::VertexArray* vertexArray;
 
 		XxSkeleton(SkeletonData* skeletonData, AnimationStateData* stateData = 0) {
-
-			//vertexArray(new VertexArray(Triangles, skeletonData->getBones().size() * 4)),
-			vertexArray.reserve(skeletonData->getBones().size() * 4);
 
 			Bone::setYDown(true);
 
@@ -48,8 +46,6 @@ namespace spine {
 		}
 
 		~XxSkeleton() {
-			//delete vertexArray;
-
 			if (ownsAnimationStateData) delete state->getData();
 			delete state;
 			delete skeleton;
@@ -61,27 +57,22 @@ namespace spine {
 			skeleton->updateWorldTransform();
 		}
 
-		//virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 		void Draw() {
 
 			auto&& shader = xx::engine.sm.GetShader<xx::Shader_Spine>();
-			//shader.Draw()
-
-			vertexArray.clear();
-			//states.texture = NULL;
 
 			// Early out if skeleton is invisible
 			if (skeleton->getColor().a == 0) return;
 
-			xx::XYUVRGBA8 vertex{};
-			xx::Shared<xx::GLTexture> texture;
+			xx::RGBA8 c{};
+			xx::GLTexture* texture;
 
-			for (unsigned i = 0; i < skeleton->getSlots().size(); ++i) {
-				Slot& slot = *skeleton->getDrawOrder()[i];
-				Attachment* attachment = slot.getAttachment();
+			for (size_t i = 0, e = skeleton->getSlots().size(); i < e; ++i) {
+
+				auto&& slot = *skeleton->getDrawOrder()[i];
+				auto&& attachment = slot.getAttachment();
 				if (!attachment) continue;
 
-				// Early out if the slot color is 0 or the bone is not active
 				if (slot.getColor().a == 0 || !slot.getBone().isActive()) {
 					clipper.clipEnd(slot);
 					continue;
@@ -93,11 +84,12 @@ namespace spine {
 				int indicesCount{};
 				Color* attachmentColor{};
 
-				if (attachment->getRTTI().isExactly(RegionAttachment::rtti)) {
-					RegionAttachment* regionAttachment = (RegionAttachment*)attachment;
+				auto&& attachmentRTTI = attachment->getRTTI();
+				if (attachmentRTTI.isExactly(RegionAttachment::rtti)) {
+
+					auto&& regionAttachment = (RegionAttachment*)attachment;
 					attachmentColor = &regionAttachment->getColor();
 
-					// Early out if the slot color is 0
 					if (attachmentColor->a == 0) {
 						clipper.clipEnd(slot);
 						continue;
@@ -108,13 +100,13 @@ namespace spine {
 					uvs = &regionAttachment->getUVs();
 					indices = &quadIndices;
 					indicesCount = 6;
-					texture = (xx::Shared<xx::GLTexture>&)((AtlasRegion*)regionAttachment->getRegion())->page->texture;
+					texture = &*(xx::Shared<xx::GLTexture>&)((AtlasRegion*)regionAttachment->getRegion())->page->texture;
 
-				} else if (attachment->getRTTI().isExactly(MeshAttachment::rtti)) {
-					MeshAttachment* mesh = (MeshAttachment*)attachment;
+				} else if (attachmentRTTI.isExactly(MeshAttachment::rtti)) {
+
+					auto&& mesh = (MeshAttachment*)attachment;
 					attachmentColor = &mesh->getColor();
 
-					// Early out if the slot color is 0
 					if (attachmentColor->a == 0) {
 						clipper.clipEnd(slot);
 						continue;
@@ -125,75 +117,30 @@ namespace spine {
 					uvs = &mesh->getUVs();
 					indices = &mesh->getTriangles();
 					indicesCount = mesh->getTriangles().size();
-					texture = (xx::Shared<xx::GLTexture>&)((AtlasRegion*)mesh->getRegion())->page->texture;
+					texture = &*(xx::Shared<xx::GLTexture>&)((AtlasRegion*)mesh->getRegion())->page->texture;
 
-				} else if (attachment->getRTTI().isExactly(ClippingAttachment::rtti)) {
+				} else if (attachmentRTTI.isExactly(ClippingAttachment::rtti)) {
+
 					ClippingAttachment* clip = (ClippingAttachment*)slot.getAttachment();
 					clipper.clipStart(slot, clip);
 					continue;
+
 				} else
 					continue;
 
-				uint8_t r = static_cast<uint8_t>(skeleton->getColor().r * slot.getColor().r * attachmentColor->r * 255);
-				uint8_t g = static_cast<uint8_t>(skeleton->getColor().g * slot.getColor().g * attachmentColor->g * 255);
-				uint8_t b = static_cast<uint8_t>(skeleton->getColor().b * slot.getColor().b * attachmentColor->b * 255);
-				uint8_t a = static_cast<uint8_t>(skeleton->getColor().a * slot.getColor().a * attachmentColor->a * 255);
-				vertex.r = r;
-				vertex.g = g;
-				vertex.b = b;
-				vertex.a = a;
-
-				Color light;
-				light.r = r / 255.0f;
-				light.g = g / 255.0f;
-				light.b = b / 255.0f;
-				light.a = a / 255.0f;
+				auto&& skc = skeleton->getColor();
+				auto&& slc = slot.getColor();
+				c.r = (uint8_t)(skc.r * slc.r * attachmentColor->r * 255);
+				c.g = (uint8_t)(skc.g * slc.g * attachmentColor->g * 255);
+				c.b = (uint8_t)(skc.b * slc.b * attachmentColor->b * 255);
+				c.a = (uint8_t)(skc.a * slc.a * attachmentColor->a * 255);
 
 				std::pair<uint32_t, uint32_t> blend;
 				if (!usePremultipliedAlpha) {
-					switch (slot.getData().getBlendMode()) {
-					case BlendMode_Normal:
-						blend = normal;
-						break;
-					case BlendMode_Additive:
-						blend = additive;
-						break;
-					case BlendMode_Multiply:
-						blend = multiply;
-						break;
-					case BlendMode_Screen:
-						blend = screen;
-						break;
-					default:
-						blend = normal;
-					}
+					blend = nonpmaBlendFuncs[slot.getData().getBlendMode()];
 				} else {
-					switch (slot.getData().getBlendMode()) {
-					case BlendMode_Normal:
-						blend = normalPma;
-						break;
-					case BlendMode_Additive:
-						blend = additivePma;
-						break;
-					case BlendMode_Multiply:
-						blend = multiplyPma;
-						break;
-					case BlendMode_Screen:
-						blend = screenPma;
-						break;
-					default:
-						blend = normalPma;
-					}
+					blend = pmaBlendFuncs[slot.getData().getBlendMode()];
 				}
-
-				//if (states.texture == 0) states.texture = texture;
-
-				//if (states.blendMode != blend || states.texture != texture) {
-				//	target.draw(*vertexArray, states);
-				//	vertexArray->clear();
-				//	states.blendMode = blend;
-				//	states.texture = texture;
-				//}
 
 				if (xx::engine.blendFuncs != blend) {
 					xx::engine.sm.End();
@@ -208,23 +155,20 @@ namespace spine {
 					indicesCount = clipper.getClippedTriangles().size();
 				}
 
-				//Vector2u size = texture->getSize();
+				auto vp = shader.Draw(*texture, indicesCount);
 				xx::XY size(std::get<1>(texture->vs), std::get<2>(texture->vs));
-
-				for (int ii = 0; ii < indicesCount; ++ii) {
-					int index = (*indices)[ii] << 1;
+				for (size_t ii = 0; ii < indicesCount; ++ii) {
+					auto index = (*indices)[ii] << 1;
+					auto&& vertex = vp[ii];
 					vertex.x = (*vertices)[index];
 					vertex.y = (*vertices)[index + 1];
 					vertex.u = (*uvs)[index] * size.x;
 					vertex.v = (*uvs)[index + 1] * size.y;
-					vertexArray.push_back(vertex);
+					memcpy(&vertex.r, &c, sizeof(c));
 				}
+
 				clipper.clipEnd(slot);
 			}
-
-			//target.draw(*vertexArray, states);
-			auto vp = shader.Draw(*texture, vertexArray.size());
-			memcpy(vp, vertexArray.data(), vertexArray.size() * sizeof(xx::XYUVRGBA8));
 
 			clipper.clipEnd();
 		}
@@ -261,12 +205,7 @@ namespace spine {
 		}
 	};
 
-	SpineExtension* getDefaultExtension() {
-		return new DefaultSpineExtension();
-	}
-
-
-	void callback(AnimationState* state, EventType type, TrackEntry* entry, Event* event) {
+	void XxCallback(AnimationState* state, EventType type, TrackEntry* entry, Event* event) {
 #if 0
 		SP_UNUSED(state);
 		const String& animationName = (entry && entry->getAnimation()) ? entry->getAnimation()->getName() : String("");
@@ -296,7 +235,7 @@ namespace spine {
 #endif
 	}
 
-	std::shared_ptr<SkeletonData> readSkeletonJsonData(const String& filename, Atlas* atlas, float scale) {
+	std::shared_ptr<SkeletonData> XxReadSkeletonJsonData(const String& filename, Atlas* atlas, float scale) {
 		SkeletonJson json(atlas);
 		json.setScale(scale);
 		auto skeletonData = json.readSkeletonDataFile(filename);
@@ -307,7 +246,7 @@ namespace spine {
 		return std::shared_ptr<SkeletonData>(skeletonData);
 	}
 
-	std::shared_ptr<SkeletonData> readSkeletonBinaryData(const char* filename, Atlas* atlas, float scale) {
+	std::shared_ptr<SkeletonData> XxReadSkeletonBinaryData(const char* filename, Atlas* atlas, float scale) {
 		SkeletonBinary binary(atlas);
 		binary.setScale(scale);
 		auto skeletonData = binary.readSkeletonDataFile(filename);
@@ -321,7 +260,7 @@ namespace spine {
 	xx::Coro GoSpineBoy(const char* binaryName, const char* atlasName, float scale) {
 		XxTextureLoader textureLoader;
 		auto atlas = std::make_unique<Atlas>(atlasName, &textureLoader);
-		auto skeletonData = readSkeletonBinaryData(binaryName, atlas.get(), scale);
+		auto skeletonData = XxReadSkeletonBinaryData(binaryName, atlas.get(), scale);
 
 		// Configure mixing.
 		AnimationStateData stateData(skeletonData.get());
@@ -340,7 +279,7 @@ namespace spine {
 
 		Slot* headSlot = skeleton->findSlot("head");
 
-		drawable.state->setListener(callback);
+		drawable.state->setListener(XxCallback);
 		drawable.state->addAnimation(0, "walk", true, 0);
 		drawable.state->addAnimation(0, "jump", false, 3);
 		drawable.state->addAnimation(0, "run", true, 0);
