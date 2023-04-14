@@ -274,7 +274,7 @@ namespace spine {
 		Skeleton* skeleton = drawable.skeleton;
 		skeleton->setToSetupPose();
 
-		skeleton->setPosition(320, 590);
+		skeleton->setPosition(0, 0);
 		skeleton->updateWorldTransform();
 
 		Slot* headSlot = skeleton->findSlot("head");
@@ -284,19 +284,19 @@ namespace spine {
 		drawable.state->addAnimation(0, "jump", false, 3);
 		drawable.state->addAnimation(0, "run", true, 0);
 
-		SkeletonBounds bounds;
+		//SkeletonBounds bounds;
 		while (true) {
 			CoYield;
 
-			bounds.update(*skeleton, true);
-			auto pos = xx::engine.mousePosition;
-			if (bounds.containsPoint(pos.x, pos.y)) {
-				headSlot->getColor().g = 0;
-				headSlot->getColor().b = 0;
-			} else {
-				headSlot->getColor().g = 1;
-				headSlot->getColor().b = 1;
-			}
+			//bounds.update(*skeleton, true);
+			//auto pos = xx::engine.mousePosition;
+			//if (bounds.containsPoint(pos.x, pos.y)) {
+			//	headSlot->getColor().g = 0;
+			//	headSlot->getColor().b = 0;
+			//} else {
+			//	headSlot->getColor().g = 1;
+			//	headSlot->getColor().b = 1;
+			//}
 
 			drawable.Update(xx::engine.delta);
 			drawable.Draw();
