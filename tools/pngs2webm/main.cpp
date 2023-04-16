@@ -527,9 +527,10 @@ struct ContentViewer_Pic : ContentViewerBase {
 		looper = looper_;
 		info = std::move(info_);
 
+		auto secs = xx::NowEpochSeconds();
 		auto&& tex = xx::Make<xx::GLTexture>(xx::LoadGLTexture(buf, fullPath));	// todo: try ?
-
 		// auto fill? calc zoom?
+		xx::CoutN("pic decode secs = ", xx::NowEpochSeconds(secs));
 
 		quad.SetTexture(tex).SetScale(zoom);
 

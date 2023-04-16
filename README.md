@@ -18,6 +18,7 @@ compress file by zstd:
 tools/drag_file_here_zstd.bat
 
 compress pngs to vp9 webm:
+tools/pngs2webm
 ffmpeg.exe -f image2 -framerate 60 -i "%d.png" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 50k -speed 0 xxx_50k_vp9.webm
 
 
@@ -29,7 +30,7 @@ auto uncompress zstd file( detect by header: 28 B5 2F FD )
 
 shader manager with autobatch
 
-texture ( current support pkm2, astc, png format only, detect by header ) cache
+texture ( current support pkm2, astc, png, jpg format only, detect by header ) cache
 
 texture packer ( polygon algorithm support. format: cocos3.x plist ) loader & frame cache
 
@@ -61,6 +62,8 @@ audio ( miniaudio + stb vorbise ) ( .exe + 400kb )
 
 imgui ( .exe + 800kb )
 
+spine ( testing... )
+
 # compile requires
 
 cmake 3.20+
@@ -74,8 +77,6 @@ https://github.com/denghe/xx2d_space_shooter
 # todo
 
 edit box, rich text? runtime auto combine texture?
-
-spine?
 
 webassembly? lua? 
 
