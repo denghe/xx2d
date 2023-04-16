@@ -30,6 +30,7 @@ struct GameLooper : xx::GameLooperBase {
 	std::string ratesString{"20,30,50,80,120,150,200,300"};
 	std::string selectedFile;
 	std::string genNamePrefix;
+	bool hasAlpha{ true };
 	double keyboardGCD{ 0.2 }, keyboardGCDNowSecs{};
 	xx::XY offset{};
 

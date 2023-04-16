@@ -33,6 +33,7 @@ namespace xx {
 		shaders[Shader_TexVerts::index] = xx::Make<Shader_TexVerts>();
 		shaders[Shader_Verts::index] = xx::Make<Shader_Verts>();
 		shaders[Shader_Yuva2Rgba::index] = xx::Make<Shader_Yuva2Rgba>();
+		shaders[Shader_Yuv2Rgb::index] = xx::Make<Shader_Yuv2Rgb>();
 		shaders[Shader_Spine::index] = xx::Make<Shader_Spine>();
 		// ...
 

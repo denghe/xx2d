@@ -30,7 +30,7 @@ namespace xx {
 			, uint32_t const& yaStride, uint32_t const& uvStride)>;
 
 		// decode & handle every frmae's yuva data
-		int ForeachFrame(YuvaHandler const& h) const;
+		int ForeachFrame(YuvaHandler const& h, uint32_t numThreads = 1) const;
 
 	protected:
 		int GetFrameBuf(uint32_t const& idx, uint8_t const*& rgbBuf, uint32_t& rgbBufLen) const;

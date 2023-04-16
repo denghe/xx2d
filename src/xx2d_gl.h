@@ -48,12 +48,25 @@ namespace xx {
 
 		~GLRes() {
 			if (!std::get<0>(vs)) return;
-			if constexpr (T == GLResTypes::Shader) { glDeleteShader(std::get<0>(vs)); }
-			if constexpr (T == GLResTypes::Program) { glDeleteProgram(std::get<0>(vs)); }
-			if constexpr (T == GLResTypes::VertexArrays) { glDeleteVertexArrays(1, &std::get<0>(vs)); }
-			if constexpr (T == GLResTypes::Buffer) { glDeleteBuffers(1, &std::get<0>(vs)); }
-			if constexpr (T == GLResTypes::Texture) { glDeleteTextures(1, &std::get<0>(vs)); }
-			if constexpr (T == GLResTypes::FrameBuffer) { glDeleteFramebuffers(1, &std::get<0>(vs)); }
+			if constexpr (T == GLResTypes::Shader) {
+				glDeleteShader(std::get<0>(vs));
+			}
+			if constexpr (T == GLResTypes::Program) {
+				glDeleteProgram(std::get<0>(vs));
+			}
+			if constexpr (T == GLResTypes::VertexArrays) { 
+				glDeleteVertexArrays(1, &std::get<0>(vs));
+			}
+			if constexpr (T == GLResTypes::Buffer) { 
+				glDeleteBuffers(1, &std::get<0>(vs)); 
+			}
+			if constexpr (T == GLResTypes::Texture) {
+				glDeleteTextures(1, &std::get<0>(vs));
+//				std::cout << "glDeleteTextures " << (GLuint)std::get<0>(vs) << std::endl;
+			}
+			if constexpr (T == GLResTypes::FrameBuffer) {
+				glDeleteFramebuffers(1, &std::get<0>(vs));
+			}
 			std::get<0>(vs) = 0;
 		}
 	};

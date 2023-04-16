@@ -213,12 +213,19 @@ void GameLooper::ImGuiDrawWindow_RightTop() {
 	ImGui::PushItemWidth(380);
 	ImGui::InputText("##rate[, rate ...]：", &ratesString);
 	ImGui::PopItemWidth();
+
 	ImGui::SameLine();
 	ImGui::Text("fps：");
 	ImGui::SameLine();
 	ImGui::PushItemWidth(120);
 	ImGui::InputInt("##fps：", &fps, 15);
 	ImGui::PopItemWidth();
+
+	ImGui::SameLine();
+	ImGui::Text("has alpha：");
+	ImGui::SameLine();
+	ImGui::Checkbox("##has alpha：", &hasAlpha);
+
 	if (Convertable()) {
 		ImGui::SameLine();
 		if (ImGui::Button(xx::ToString("convert to ", genNamePrefix + "__??fps_??k__.webm").c_str())) {
@@ -312,6 +319,7 @@ bool GameLooper::IsPic(std::string_view sv) {
 	if (sv.ends_with(".png"sv)) return true;
 	else if (sv.ends_with(".jpg"sv)) return true;
 	else if (sv.ends_with(".webp"sv)) return true;
+	// todo: more?
 	return false;
 }
 
@@ -391,7 +399,7 @@ void GameLooper::ConvertFiles() {
 		for (auto& r : rates) {
 			auto rs = std::to_string(r);
 
-			std::string args = " -r " + std::to_string(fps) + " -f concat -safe 0 -i " + inputFN + " -c:v libvpx-vp9 -pix_fmt yuva420p -b:v " + rs + "K -speed 0 ";
+			std::string args = " -r " + std::to_string(fps) + " -f concat -safe 0 -i " + inputFN + " -c:v libvpx-vp9 -pix_fmt " + ( hasAlpha ? "yuva420p" : "yuv420p" ) + " -b:v " + rs + "K -speed 0 ";
 			args += genNamePrefix;
 			args += "__" + std::to_string(fps) + "fps_" + rs + "k__.webm";
 
@@ -403,7 +411,7 @@ void GameLooper::ConvertFiles() {
 			auto rs = std::to_string(r);
 
 			// cmd: ffmpeg.exe -f image2 -framerate 1 -i "??????" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v ?????K -speed 0 ??????.webm
-			std::string args = " -f image2 -framerate 1 -i \"" + std::string(fs[0]) + "\" -c:v libvpx-vp9 -pix_fmt yuva420p -b:v " + rs + "K -speed 0 ";
+			std::string args = " -f image2 -framerate 1 -i \"" + std::string(fs[0]) + "\" -c:v libvpx-vp9 -pix_fmt " + (hasAlpha ? "yuva420p" : "yuv420p") + " -b:v " + rs + "K -speed 0 ";
 			args += genNamePrefix;
 			args += "__" + rs + "k__.webm";
 
@@ -586,24 +594,31 @@ struct ContentViewer_Webm : ContentViewerBase {
 			}
 		});
 
+		auto secs = xx::NowEpochSeconds();
 		mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h
 			, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
+				xx::CoutN("mv decode secs = ", xx::NowEpochSeconds(secs));
 
 				auto tex = xx::FrameBuffer().Init().Draw({ w, h }, true, xx::RGBA8{}, [&]() {
-					auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuva2Rgba>();
-					shader.Draw(yData, uData, vData, aData, yaStride, uvStride, w, h, {});
+					if (aData) {
+						auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuva2Rgba>();
+						shader.Draw(yData, uData, vData, aData, yaStride, uvStride, w, h, {});
+					} else {
+						auto&& shader = xx::engine.sm.GetShader<xx::Shader_Yuv2Rgb>();
+						shader.Draw(yData, uData, vData, yaStride, uvStride, w, h, {});
+					}
 					});
 
 				texs.Add(tex);
 
 				return 0;
-			});
+			}, 4);
 
 		quad.SetTexture(texs[cursor]).SetScale(zoom);
 
 		delay = mv.duration / (float)mv.count / 1000.f;
 		
-		xx::Append(info2, ", width = ", mv.width, ", height = ", mv.height, ", count = ", mv.count, ", duration = ", mv.duration, ", fps = ", (uint64_t)mv.count * 1000 / (uint64_t)mv.duration);
+		xx::Append(info2, ", width = ", mv.width, ", height = ", mv.height, ", has alpha = ", mv.hasAlpha, ", count = ", mv.count, ", duration = ", mv.duration, ", fps = ", (uint64_t)mv.count * 1000 / (uint64_t)mv.duration);
 	}
 
 	void Update() override {
@@ -706,7 +721,13 @@ void GameLooper::DrawSelectedFile() {
 		auto v = xx::Make<ContentViewer_Pic>();
 		contentViewer = v;
 		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
+	} else if (buf.starts_with("\xFF\xD8"sv)) {
+		xx::Append(info, ", content type: jpg");
+		auto v = xx::Make<ContentViewer_Pic>();
+		contentViewer = v;
+		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
 	} else {
 		contentViewer.Reset();
 	}
+	// todo: more types support?
 }

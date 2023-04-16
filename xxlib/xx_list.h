@@ -115,7 +115,7 @@ namespace xx {
 		void Clear(bool const& freeBuf = false) noexcept {
 			if (!cap) return;
 			if (len) {
-				for (SizeType i = 0, e = len - 1; i < e; ++i) {
+				for (SizeType i = 0; i < len; ++i) {
 					buf[i].~T();
 				}
 				len = 0;

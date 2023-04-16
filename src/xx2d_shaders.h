@@ -233,11 +233,27 @@ namespace xx {
 		void Draw(uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride, uint32_t const& w, uint32_t const& h, XY const& pos);
 	};
 
+	struct Shader_Yuv2Rgb : Shader {
+
+		static const size_t index = 6;	// index at sm->shaders
+
+		GLint uCxy = -1, uStrideHeight = -1, uTexY = -1, uTexU = -1, uTexV = -1, aPos = -1, aTexCoord = -1;
+		GLVertexArrays va;
+		GLBuffer vb, ib;
+		bool needRestoreBlend{};
+
+		void Init(ShaderManager*) override;
+		void Begin() override;
+		void End() override;
+
+		void Draw(uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint32_t const& yaStride, uint32_t const& uvStride, uint32_t const& w, uint32_t const& h, XY const& pos);
+	};
+
 	/***************************************************************************************************/
 
 	// for draw multi trangles with texture ( for spine )
 	struct Shader_Spine : Shader {
-		static const size_t index = 6;	// index at sm->shaders
+		static const size_t index = 7;	// index at sm->shaders
 
 		GLint uCxy = -1, uTex0 = -1, aPos = -1, aColor = -1, aTexCoord = -1;
 		GLVertexArrays va;
