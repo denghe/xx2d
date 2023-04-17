@@ -25,6 +25,9 @@ namespace xx {
 		// read all data by GetFullPath( fn )
 		std::pair<xx::Data, std::string> LoadFileData(std::string_view const& fn, bool autoDecompress = true);
 
+		// detect file format by content header
+		SupportedFileFormats DetectFileFormat(Data_r const& d);
+
 		/**********************************************************************************/
 		// fonts
 

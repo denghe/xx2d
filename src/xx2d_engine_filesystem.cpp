@@ -88,4 +88,26 @@ namespace xx {
 		return { std::move(d), std::move(p) };
 	}
 
+
+	SupportedFileFormats Engine::DetectFileFormat(Data_r const& d) {
+		std::string_view buf(d);
+		if (buf.starts_with("\x1a\x45\xdf\xa3"sv)) {
+			return SupportedFileFormats::Webm;
+		} else if (buf.starts_with("XXMV 1.0"sv)) {
+			return SupportedFileFormats::Xxmv;
+		} else if (buf.starts_with("PKM 20"sv)) {
+			return SupportedFileFormats::Pkm2;
+		} else if (buf.starts_with("\x13\xab\xa1\x5c"sv)) {
+			return SupportedFileFormats::Astc;
+		} else if (buf.starts_with("\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"sv)) {
+			return SupportedFileFormats::Png;
+		} else if (buf.starts_with("\xFF\xD8"sv)) {
+			return SupportedFileFormats::Jpg;
+		// ... more ?
+		} else if (buf.starts_with("\x28\xB5\x2F\xFD"sv)) {
+			return SupportedFileFormats::Zstd;
+		} else {
+			return SupportedFileFormats::Unknown;
+		}
+	}
 }

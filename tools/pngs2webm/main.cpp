@@ -598,7 +598,7 @@ struct ContentViewer_Webm : ContentViewerBase {
 		auto secs = xx::NowEpochSeconds();
 		mv.ForeachFrame([&](int const& frameIndex, uint32_t const& w, uint32_t const& h
 			, uint8_t const* const& yData, uint8_t const* const& uData, uint8_t const* const& vData, uint8_t const* const& aData, uint32_t const& yaStride, uint32_t const& uvStride)->int {
-				xx::CoutN("mv decode secs = ", xx::NowEpochSeconds(secs));
+				xx::CoutN("mv[", frameIndex,"] decode secs = ", xx::NowEpochSeconds(secs));
 
 				auto tex = xx::FrameBuffer().Init().Draw({ w, h }, true, xx::RGBA8{}, [&]() {
 					if (aData) {
@@ -683,52 +683,50 @@ void GameLooper::DrawSelectedFile() {
 		msg = xx::ToString("read ", fullPath, " error! r = ", r);
 		return;
 	}
-	std::string_view buf(d);
 
-	if (buf.starts_with("\x28\xB5\x2F\xFD"sv)) {	// zstd
+	auto f = xx::engine.DetectFileFormat(d);
+	if (f == xx::SupportedFileFormats::Zstd) {
 		xx::Append(info, "zstd file size = ", d.len);
 		xx::Data d2;
 		ZstdDecompress(d, d2);
 		d = std::move(d2);
-		buf = d;
+		f = xx::engine.DetectFileFormat(d);
 		xx::Append(info, ", decompress size = ", d.len);
 	} else {
 		xx::Append(info, "file size = ", d.len);
 	}
 
-	// check d header & switch file type
-	if (buf.starts_with("\x1a\x45\xdf\xa3"sv)) {
-		xx::Append(info, ", content type: webm");
-		auto v = xx::Make<ContentViewer_Webm>();
-		contentViewer = v;
-		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
-	} else if (buf.starts_with("XXMV 1.0"sv)) {
+	switch (f) {
+	case xx::SupportedFileFormats::Unknown:
+	{
+		contentViewer.Reset();
+		break;
+	}
+	case xx::SupportedFileFormats::Webm:
+	case xx::SupportedFileFormats::Xxmv:
+	{
 		xx::Append(info, ", content type: xxmv");
 		auto v = xx::Make<ContentViewer_Webm>();
 		contentViewer = v;
-		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
-	} else if (buf.starts_with("PKM 20"sv)) {
-		xx::Append(info, ", content type: pkm2");
-		auto v = xx::Make<ContentViewer_Pic>();
-		contentViewer = v;
-		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
-	} else if (buf.starts_with("\x13\xab\xa1\x5c"sv)) {
+		v->Init(this, d, (std::string&)fullPath.u8string(), std::move(info));
+		break;
+	}
+	case xx::SupportedFileFormats::Pkm2:
+	case xx::SupportedFileFormats::Astc:
+	case xx::SupportedFileFormats::Png:
+	case xx::SupportedFileFormats::Jpg:
+	{
 		xx::Append(info, ", content type: astc");
 		auto v = xx::Make<ContentViewer_Pic>();
 		contentViewer = v;
-		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
-	} else if (buf.starts_with("\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"sv)) {
-		xx::Append(info, ", content type: png");
-		auto v = xx::Make<ContentViewer_Pic>();
-		contentViewer = v;
-		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
-	} else if (buf.starts_with("\xFF\xD8"sv)) {
-		xx::Append(info, ", content type: jpg");
-		auto v = xx::Make<ContentViewer_Pic>();
-		contentViewer = v;
-		v->Init(this, buf, (std::string&)fullPath.u8string(), std::move(info));
-	} else {
-		contentViewer.Reset();
+		v->Init(this, d, (std::string&)fullPath.u8string(), std::move(info));
+		break;
 	}
-	// todo: more types support?
+	case xx::SupportedFileFormats::Zstd:
+		msg = xx::ToString("recursive zstd file content?? ", fullPath);
+		return;
+	default:
+		msg = xx::ToString("unhandled file type: ", f);
+		return;
+	}
 }
