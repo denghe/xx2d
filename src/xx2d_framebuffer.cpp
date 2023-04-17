@@ -17,8 +17,8 @@ namespace xx {
 		xx::engine.sm.End();
 		bak.x = xx::engine.w;
 		bak.y = xx::engine.h;
-		xx::engine.w = std::get<1>(t->vs);
-		xx::engine.h = std::get<2>(t->vs);
+		xx::engine.w = t->Width();
+		xx::engine.h = t->Height();
 		BindGLFrameBufferTexture(fb, *t);
 		engine.GLClear(c);
 	}

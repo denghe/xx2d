@@ -62,7 +62,7 @@ void main() {
 		aTexRect = glGetAttribLocation(p, "aTexRect");
 		CheckGLError();
 
-		glGenVertexArrays(1, &va.Ref());
+		glGenVertexArrays(1, va.Get());
 		glBindVertexArray(va);
 
 		glGenBuffers(1, (GLuint*)&ib);

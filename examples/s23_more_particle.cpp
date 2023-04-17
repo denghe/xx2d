@@ -54,8 +54,8 @@ namespace MoreParticleTest {
 
 		texRing = xx::engine.LoadSharedTexture("res/particles/p11.png");
 		texStar = xx::engine.LoadSharedTexture("res/particles/p1.png");
-		xx::GLTexParm(*texRing, GL_LINEAR);
-		xx::GLTexParm(*texStar, GL_LINEAR);
+		texRing->SetGLTexParm(GL_LINEAR);
+		texStar->SetGLTexParm(GL_LINEAR);
 
 		cfg.Emplace();
 		cfg->sprite.SetTexture(texStar);

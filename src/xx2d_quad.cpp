@@ -5,8 +5,8 @@ namespace xx {
 		tex = t;
 		texRectX = 0;
 		texRectY = 0;
-		texRectW = (uint16_t)std::get<1>(t->vs);
-		texRectH = (uint16_t)std::get<2>(t->vs);
+		texRectW = t->Width();
+		texRectH = t->Height();
 		return *this;
 	}
 

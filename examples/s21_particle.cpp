@@ -9,7 +9,7 @@ namespace ParticleTest {
 
         //auto tex = xx::engine.LoadSharedTexture("res/particles/circle.astc");   // premultiply alpha
         auto tex = xx::engine.LoadSharedTexture("res/particles/p11.png");
-        xx::GLTexParm(*tex, GL_LINEAR);
+        tex->SetGLTexParm(GL_LINEAR);
 
         auto cfg = xx::Make<xx::ParticleConfig>();
         cfg->sprite.SetTexture(tex);

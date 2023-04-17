@@ -6,7 +6,7 @@ namespace xx {
 		auto f = xx::Make<Frame>();
 		f->anchor = { 0.5, 0.5 };
 		f->textureRotated = false;
-		f->spriteSize = f->spriteSourceSize = { (float)std::get<1>(t->vs), (float)std::get<2>(t->vs) };
+		f->spriteSize = f->spriteSourceSize = { t->FloatWidth(), t->FloatHeight() };
 		f->spriteOffset = {};
 		f->textureRect = { 0, 0, f->spriteSize.x, f->spriteSize.y };
 		f->tex = std::move(t);

@@ -44,7 +44,7 @@ void main() {
 		aColor = glGetAttribLocation(p, "aColor");
 		CheckGLError();
 
-		glGenVertexArrays(1, &va.Ref());
+		glGenVertexArrays(1, va.Get());
 		glBindVertexArray(va);
 		glGenBuffers(1, (GLuint*)&vb);
 

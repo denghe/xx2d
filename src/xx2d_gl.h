@@ -23,8 +23,13 @@ namespace xx {
 
 		std::tuple<GLuint, VS...> vs;
 
+		GLRes(GLuint i) : vs(std::make_tuple(i)) {}
+
+		template<typename...Args>
+		GLRes(GLuint i, Args&&... args) : vs(std::make_tuple(i, std::forward<Args>(args)...)) {}
+
 		operator GLuint const& () const { return std::get<0>(vs); }
-		GLuint& Ref() { return std::get<0>(vs); }
+		GLuint* Get() { return &std::get<0>(vs); }
 
 		GLRes(GLRes const&) = delete;
 		GLRes& operator=(GLRes const&) = delete;
@@ -36,15 +41,6 @@ namespace xx {
 			std::swap(vs, o.vs);
 			return *this;
 		}
-
-		GLRes(GLuint&& i) {
-			std::get<0>(vs) = i;
-		}
-
-		GLRes(GLuint i) : vs(std::make_tuple(i)) {}
-
-		template<typename...Args>
-		GLRes(GLuint i, Args&&... args) : vs(std::make_tuple(i, std::forward<Args>(args)...)) {}
 
 		~GLRes() {
 			if (!std::get<0>(vs)) return;
@@ -79,11 +75,9 @@ namespace xx {
 
 	using GLBuffer = GLRes<GLResTypes::Buffer>;
 
-	using GLTexture = GLRes<GLResTypes::Texture, GLsizei, GLsizei, std::string>;
-
 	using GLFrameBuffer = GLRes<GLResTypes::FrameBuffer>;
 
-
+	using GLTextureCore = GLRes<GLResTypes::Texture>;
 
 
 	void GLTexParmCore(GLuint const& a1 = GL_NEAREST/*GL_LINEAR*/, GLuint const& a2 = GL_REPEAT/*GL_CLAMP_TO_EDGE*/);
@@ -92,8 +86,30 @@ namespace xx {
 
 	GLuint LoadGLTexture_core(int textureUnit = 0);
 
+
+	struct GLTexture : GLRes<GLResTypes::Texture, GLsizei, GLsizei, std::string> {
+		using BT = GLRes<GLResTypes::Texture, GLsizei, GLsizei, std::string>;
+		using BT::BT;
+
+		void SetGLTexParm(GLuint const& a1 = GL_NEAREST/*GL_LINEAR*/, GLuint const& a2 = GL_REPEAT/*GL_CLAMP_TO_EDGE*/) {
+			GLTexParm(std::get<0>(vs), a1, a2);
+		}
+
+		auto const& Width() const { return std::get<1>(vs); }
+		auto& Width() { return std::get<1>(vs); }
+		auto const& Height() const { return std::get<2>(vs); }
+		auto& Height() { return std::get<2>(vs); }
+		auto& FileName() { return std::get<3>(vs); }
+		auto const& FileName() const { return std::get<3>(vs); }
+
+		float FloatWidth() const { return std::get<1>(vs); }
+		float FloatHeight() const { return std::get<2>(vs); }
+	};
+
 	// fn must be absolute path. GetFullPath recommend
 	GLTexture LoadGLTexture(std::string_view const& buf, std::string_view const& fullPath);
+
+
 
 	GLShader LoadGLShader(GLenum const& type, std::initializer_list<std::string_view>&& codes_);
 

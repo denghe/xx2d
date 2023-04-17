@@ -156,7 +156,7 @@ namespace spine {
 				}
 
 				auto vp = shader.Draw(*texture, indicesCount);
-				xx::XY size(std::get<1>(texture->vs), std::get<2>(texture->vs));
+				xx::XY size(texture->Width(), texture->Height());
 				for (size_t ii = 0; ii < indicesCount; ++ii) {
 					auto index = (*indices)[ii] << 1;
 					auto&& vertex = vp[ii];
@@ -188,13 +188,13 @@ namespace spine {
 			std::string_view fn(path.buffer(), path.length());
 			auto tex = xx::engine.LoadTextureFromCache(fn);
 
-			xx::GLTexParm(*tex
-				, page.magFilter == TextureFilter_Linear ? GL_LINEAR : GL_NEAREST
-				, (page.uWrap == TextureWrap_Repeat && page.vWrap == TextureWrap_Repeat) ? GL_REPEAT : GL_CLAMP_TO_EDGE
+			tex->SetGLTexParm(
+				page.magFilter == TextureFilter_Linear ? GL_LINEAR : GL_NEAREST, 
+				(page.uWrap == TextureWrap_Repeat && page.vWrap == TextureWrap_Repeat) ? GL_REPEAT : GL_CLAMP_TO_EDGE
 			);
 
-			page.width = std::get<1>(tex->vs);
-			page.height = std::get<2>(tex->vs);
+			page.width = tex->Width();
+			page.height = tex->Height();
 			page.texture = tex.pointer;	// move to
 			tex.pointer = nullptr;
 		}

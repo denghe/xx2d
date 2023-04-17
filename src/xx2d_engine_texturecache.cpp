@@ -32,7 +32,7 @@ namespace xx {
 
 
 	void Engine::UnloadTextureFromCache(xx::Shared<GLTexture> const& t) {
-		textureCache.erase(std::get<std::string>(t->vs));
+		textureCache.erase(t->FileName());
 	}
 
 

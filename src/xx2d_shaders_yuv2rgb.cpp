@@ -56,7 +56,7 @@ void main() {
 		aTexCoord = glGetAttribLocation(p, "aTexCoord");
 		CheckGLError();
 
-		glGenVertexArrays(1, &va.Ref());
+		glGenVertexArrays(1, va.Get());
 		glBindVertexArray(va);
 		glGenBuffers(1, (GLuint*)&vb);
 		glGenBuffers(1, (GLuint*)&ib);
@@ -134,16 +134,15 @@ void main() {
 #else
 		auto c = GL_RED;
 #endif
-		auto texY = LoadGLTexture_core(0);
+		GLTextureCore texY{ LoadGLTexture_core(0) };
 		glTexImage2D(GL_TEXTURE_2D, 0, c, yaStride, h, 0, c, GL_UNSIGNED_BYTE, yData);
 		CheckGLError();
-		
 
-		auto texU = LoadGLTexture_core(1);
+		GLTextureCore texU{ LoadGLTexture_core(1) };
 		glTexImage2D(GL_TEXTURE_2D, 0, c, uvStride, h / 2, 0, c, GL_UNSIGNED_BYTE, uData);
 		CheckGLError();
 
-		auto texV = LoadGLTexture_core(2);
+		GLTextureCore texV{ LoadGLTexture_core(2) };
 		glTexImage2D(GL_TEXTURE_2D, 0, c, uvStride, h / 2, 0, c, GL_UNSIGNED_BYTE, vData);
 		CheckGLError();
 
@@ -152,10 +151,6 @@ void main() {
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, {});
 		CheckGLError();
-
-		glDeleteTextures(1, &texY);
-		glDeleteTextures(1, &texU);
-		glDeleteTextures(1, &texV);
 
 		sm->drawVerts += 6;
 		sm->drawCall += 1;
