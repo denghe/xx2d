@@ -96,14 +96,8 @@ namespace xx {
 		}
 
 		auto const& Width() const { return std::get<1>(vs); }
-		auto& Width() { return std::get<1>(vs); }
 		auto const& Height() const { return std::get<2>(vs); }
-		auto& Height() { return std::get<2>(vs); }
-		auto& FileName() { return std::get<3>(vs); }
 		auto const& FileName() const { return std::get<3>(vs); }
-
-		float FloatWidth() const { return std::get<1>(vs); }
-		float FloatHeight() const { return std::get<2>(vs); }
 	};
 
 	// fn must be absolute path. GetFullPath recommend
