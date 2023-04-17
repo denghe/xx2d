@@ -62,7 +62,7 @@ audio ( miniaudio + stb vorbise ) ( .exe + 400kb )
 
 imgui ( .exe + 800kb )
 
-spine ( testing... )
+spine
 
 # compile requires
 

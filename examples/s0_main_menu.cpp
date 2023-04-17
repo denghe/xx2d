@@ -23,6 +23,7 @@
 #include "s21_particle.h"
 #include "s22_action.h"
 #include "s23_more_particle.h"
+#include "s24_spine.h"
 
 namespace MainMenu {
 
@@ -71,7 +72,7 @@ namespace MainMenu {
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -xstep, y }, "22: action", 32);
 		menus.emplace_back().Init(looper, { 0, y }, "23: more particles", 32);
-		menus.emplace_back().Init(looper, { xstep, y }, "24: ", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "24: spine", 32);
 
 		looper->fpsViewer.extraInfo.clear();
 	}
@@ -148,6 +149,8 @@ namespace MainMenu {
 				looper->DelaySwitchTo<ActionTest::Scene>();
 			} else if (txt.starts_with("23:"sv)) {
 				looper->DelaySwitchTo<MoreParticleTest::Scene>();
+			} else if (txt.starts_with("24:"sv)) {
+				looper->DelaySwitchTo<SpineTest::Scene>();
 			} else {
 				throw std::logic_error("unhandled menu");
 			}

@@ -149,7 +149,7 @@ include_directories(
 )
 
 
-
+add_subdirectory(spine-runtimes/spine-cpp)
 
 
 ###########################################################################################################################################
@@ -160,6 +160,7 @@ include_directories(
 
 include_directories(
 	examples
+	spine-runtimes/spine-cpp/spine-cpp/include
 )
 
 set(SRCS)
@@ -173,10 +174,12 @@ file(GLOB SRCS	#GLOB_RECURSE
 add_executable(examples ${SRCS})
 
 target_link_libraries(examples ${name} glfw imgui pugixml libzstd_static)
+
+target_link_libraries(examples spine-cpp)
+
 if(MSVC)	# vs2022+
 	target_link_libraries(examples ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
 endif()
-
 
 if(MSVC)	# vs2022+
 
@@ -222,13 +225,12 @@ file(GLOB SRCS	#GLOB_RECURSE
 add_executable(tests ${SRCS})
 
 target_link_libraries(tests ${name} glfw imgui pugixml libzstd_static)
+
+target_link_libraries(tests spine-cpp)
+
 if(MSVC)	# vs2022+
 	target_link_libraries(tests ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
 endif()
-
-add_subdirectory(spine-runtimes/spine-cpp)
-target_link_libraries(tests spine-cpp)
-
 
 if(MSVC)	# vs2022+
 
