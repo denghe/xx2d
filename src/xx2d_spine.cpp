@@ -197,11 +197,12 @@ namespace spine {
 	}
 
 
-
-	XxPlayer& XxPlayer::Init1(std::shared_ptr<Atlas> atlas) {
-		this->atlas = atlas;
-		return *this;
+	XxPlayer& XxPlayer::Init(XxPlayer const& sharedRes) {
+		this->atlas = sharedRes.atlas;
+		this->skData = sharedRes.skData;
+		return Init3();
 	}
+
 	XxPlayer& XxPlayer::Init1(const String& atlasName) {
 		atlas.reset(new Atlas(atlasName, &xxTextureLoader));
 		return *this;
@@ -220,11 +221,6 @@ namespace spine {
 		parser.setScale(scale);
 		skData.reset(parser.readSkeletonDataFile(filename));	// todo: read  buf + len
 		if (!skData) throw std::logic_error(xx::ToString("Init2_Skel failed. fn = ", filename));
-		return *this;
-	}
-
-	XxPlayer& XxPlayer::Init2(std::shared_ptr<SkeletonData> skData) {
-		this->skData = skData;
 		return *this;
 	}
 

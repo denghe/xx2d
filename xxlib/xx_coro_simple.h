@@ -94,6 +94,7 @@ namespace xx {
 #define CoReturn co_return
 #define CoAwait( coType ) { auto&& c = coType; while(!c) { CoYield; c(); } }
 #define CoSleep( duration ) { auto tp = std::chrono::steady_clock::now() + duration; do { CoYield; } while (std::chrono::steady_clock::now() < tp); }
+#define CoDelay( times ) { for (int _ = 0; _ < times; ++_) CoYield; }
 
 /*
 

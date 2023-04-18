@@ -49,13 +49,10 @@ namespace spine {
 		std::optional<XxSkeleton> xxSkel;
 		std::optional<XxListener> xxListener;
 
-		XxPlayer& Init1(std::shared_ptr<Atlas> atlas);
+		XxPlayer& Init(XxPlayer const& sharedRes);
 		XxPlayer& Init1(const String& atlasName);
-
 		XxPlayer& Init2_Json(const String& filename, float scale);
 		XxPlayer& Init2_Skel(const String& filename, float scale);
-		XxPlayer& Init2(std::shared_ptr<SkeletonData> skData);
-
 		XxPlayer& Init3();
 
 		XxPlayer& SetMix(const String& fromName, const String& toName, float duration);

@@ -1,6 +1,5 @@
 ﻿#include "main.h"
 #include "s24_spine.h"
-#include <xx2d_spine.h>
 
 namespace SpineTest {
 
@@ -10,13 +9,13 @@ namespace SpineTest {
 
 		auto skelFN = xx::engine.GetFullPath("spine-runtimes/spine-sfml/cpp/data/spineboy-pro.skel");
 		auto atlasFN = xx::engine.GetFullPath("spine-runtimes/spine-sfml/cpp/data/spineboy-pma.atlas");
-		spine::XxPlayer spShared;
 		spShared.Init1(atlasFN.data()).Init2_Skel(skelFN.data(), 0.5);
 
-		for (size_t i = 0; i < 1000; i++) {
-			coros.Add([](spine::XxPlayer& spShared)->xx::Coro {
+		for (int i = 0; i < 1000; i++) {
+			coros.Add([](Scene* self, int delay)->xx::Coro {
+				CoDelay(delay);
 				spine::XxPlayer sp;
-				sp.Init1(spShared.atlas).Init2(spShared.skData).Init3()
+				sp.Init(self->spShared)
 					.SetMix("walk", "jump", 0.2f)
 					.SetMix("jump", "run", 0.2f)
 					.SetPosition(xx::engine.rnd.Next<float>(-700, 700), xx::engine.rnd.Next<float>(-400, 100))
@@ -57,7 +56,7 @@ namespace SpineTest {
 					CoYield;
 					sp.Update(xx::engine.delta).Draw();
 				}
-				} (spShared));
+				} (this, i));
 		}
 
 	}
