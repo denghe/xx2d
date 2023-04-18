@@ -31,19 +31,27 @@ namespace xx {
 			Clear(true);
 		}
 
+
 		void Reserve(SizeType const& cap_) noexcept {
+			if (auto newBuf = ReserveBegin(cap_)) {
+				ReserveEnd(newBuf);
+			}
+		}
+
+		T* ReserveBegin(SizeType const& cap_) noexcept {
 			assert(cap_ > 0);
-			if (cap_ <= cap) return;
+			if (cap_ <= cap) return {};
 			if (!cap) {
 				buf = (T*)::malloc(cap_ * sizeof(T));
 				cap = cap_;
-				return;
+				return {};
 			}
 			do {
 				cap *= 2;
 			} while (cap < cap_);
-			auto newBuf = (T*)::malloc(cap * sizeof(T));
-
+			return (T*)::malloc(cap * sizeof(T));
+		}
+		void ReserveEnd(T* newBuf) noexcept {
 			if constexpr (IsPod_v<T>) {
 				::memcpy((void*)newBuf, (void*)buf, len * sizeof(T));
 			}
@@ -56,6 +64,7 @@ namespace xx {
 			::free(buf);
 			buf = newBuf;
 		}
+
 
 		void Resize(SizeType const& len_) noexcept {
 			if (len_ == len) return len_;
@@ -151,28 +160,39 @@ namespace xx {
 			}
 		}
 
-		// 用 T 的一到多个构造函数的参数来追加构造一个 item
 		template<typename...Args>
 		T& Emplace(Args&&...args) noexcept {
-			Reserve(len + 1);
-			return *new (&buf[len++]) T(std::forward<Args>(args)...);
+			if (auto newBuf = ReserveBegin(len + 1)) {
+				*new (&newBuf[len]) T(std::forward<Args>(args)...);
+				ReserveEnd(newBuf);
+				return newBuf[len++];
+			} else {
+				return *new (&buf[len++]) T(std::forward<Args>(args)...);
+			}
 		}
 
-		// 与 Emplace 不同的是, 这个仅支持1个参数的构造函数, 可一次追加多个
 		template<typename ...TS>
 		void Add(TS&&...vs) noexcept {
-			std::initializer_list<int> n{ (Emplace(std::forward<TS>(vs)), 0)... };
-			(void)(n);
+			(Emplace(std::forward<TS>(vs)), ...);
 		}
 
 		void AddRange(T const* const& items, SizeType const& count) noexcept {
-			Reserve(len + count);
-			if constexpr (IsPod_v<T>) {
-				::memcpy(buf + len, items, count * sizeof(T));
-			}
-			else {
-				for (SizeType i = 0; i < count; ++i) {
-					new (&buf[len + i]) T((T&&)items[i]);
+			if (auto newBuf = ReserveBegin(len + count)) {
+				if constexpr (IsPod_v<T>) {
+					::memcpy(newBuf + len, items, count * sizeof(T));
+				} else {
+					for (SizeType i = 0; i < count; ++i) {
+						new (&newBuf[len + i]) T((T&&)items[i]);
+					}
+				}
+				ReserveEnd(newBuf);
+			} else {
+				if constexpr (IsPod_v<T>) {
+					::memcpy(buf + len, items, count * sizeof(T));
+				} else {
+					for (SizeType i = 0; i < count; ++i) {
+						new (&buf[len + i]) T((T&&)items[i]);
+					}
 				}
 			}
 			len += count;
@@ -183,7 +203,6 @@ namespace xx {
 			return AddRange(list.buf, list.len);
 		}
 
-		// 如果找到就返回索引. 找不到将返回 SizeType(-1)
 		SizeType Find(T const& v) const noexcept {
 			for (SizeType i = 0; i < len; ++i) {
 				if (v == buf[i]) return i;
@@ -191,7 +210,6 @@ namespace xx {
 			return SizeType(-1);
 		}
 
-		// 如果存在符合条件的就返回 true
 		bool Exists(std::function<bool(T const& v)>&& cond) const noexcept {
 			if (!cond) return false;
 			for (SizeType i = 0; i < len; ++i) {
@@ -200,7 +218,7 @@ namespace xx {
 			return false;
 		}
 
-		// 简单支持 for( auto&& c : list ) 语法.
+		// simple support "for( auto&& c : list )" syntax
 		struct Iter {
 			T* ptr;
 			bool operator!=(Iter const& other) noexcept { return ptr != other.ptr; }
@@ -213,7 +231,7 @@ namespace xx {
 		Iter end() const noexcept { return Iter{ buf + len }; }
 	};
 
-	// 标识内存可移动
+	// mem moveable tag
 	template<typename T, typename SizeType>
 	struct IsPod<List<T, SizeType>, void> : std::true_type {};
 }

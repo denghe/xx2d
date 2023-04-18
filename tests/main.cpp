@@ -16,6 +16,23 @@ int GameLooper::Update() {
 }
 
 int main() {
-	auto g = std::make_unique<GameLooper>();
-	return g->Run("xx2d's examples");
+	xx::List<int> ii;
+	ii.Add(1);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+	ii.Add(ii[0]);
+
+
+	return 0;
+
+	//auto g = std::make_unique<GameLooper>();
+	//return g->Run("xx2d's examples");
 }

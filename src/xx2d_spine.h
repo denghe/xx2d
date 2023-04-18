@@ -40,7 +40,7 @@ namespace spine {
 		void callback(AnimationState* state, EventType type, TrackEntry* entry, Event* e) override;
 	};
 
-	// todo: more enhance
+	// todo: more enhance like rotate ??
 	struct XxPlayer {
 		std::shared_ptr<Atlas> atlas;	// can shrae?
 		std::shared_ptr<SkeletonData> skData;	// can share?

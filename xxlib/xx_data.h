@@ -6,6 +6,8 @@
 namespace xx {
 
     // 基础二进制数据跨度/引用容器( buf + len ) 类似 C++20 的 std::span
+    // 注意: 因 追加 & 扩容 导致的数据失效问题, 追加自身存储的数据时要小心，需要先 reserve
+
     struct Span {
         uint8_t* buf;
         size_t len;
