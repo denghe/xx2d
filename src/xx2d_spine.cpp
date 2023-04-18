@@ -3,8 +3,29 @@
 
 namespace spine {
 
+	struct XxSpineExtension : DefaultSpineExtension {
+	protected:
+		char* _readFile(const String& pathStr, int* length) override {
+			std::filesystem::path path(std::u8string_view((char8_t*)pathStr.buffer(), pathStr.length()));
+			std::ifstream f(path, std::ifstream::binary);
+			if (!f) return nullptr;
+			auto sgf = xx::MakeSimpleScopeGuard([&] { f.close(); });
+			f.seekg(0, f.end);
+			auto&& siz = f.tellg();
+			if ((uint64_t)siz > std::numeric_limits<int>::max()) return nullptr;
+			f.seekg(0, f.beg);
+			auto d = this->alloc<char>(siz, __FILE__, __LINE__);
+			auto sgd = xx::MakeScopeGuard([&] { f.close(); });
+			f.read(d, siz);
+			if (!f) return nullptr;
+			sgd.Cancel();
+			*length = siz;
+			return d;
+		}
+	};
+
 	SpineExtension* getDefaultExtension() {
-		return new DefaultSpineExtension();
+		return new XxSpineExtension();
 	}
 
 	// normal, additive, multiply, screen
@@ -212,7 +233,7 @@ namespace spine {
 		SkeletonJson parser(atlas.get());
 		parser.setScale(scale);
 		skData.reset(parser.readSkeletonDataFile(filename));	// todo: read  buf + len
-		if (!skData) throw std::logic_error(xx::ToString("Init2_Json failed. fn = ", filename));
+		if (!skData) throw std::logic_error(xx::ToString("Init2_Json failed. fn = ", filename.buffer()));
 		return *this;
 	}
 
@@ -220,7 +241,7 @@ namespace spine {
 		SkeletonBinary parser(atlas.get());
 		parser.setScale(scale);
 		skData.reset(parser.readSkeletonDataFile(filename));	// todo: read  buf + len
-		if (!skData) throw std::logic_error(xx::ToString("Init2_Skel failed. fn = ", filename));
+		if (!skData) throw std::logic_error(xx::ToString("Init2_Skel failed. fn = ", filename.buffer()));
 		return *this;
 	}
 

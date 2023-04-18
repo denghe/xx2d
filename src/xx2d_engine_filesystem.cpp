@@ -50,13 +50,21 @@ namespace xx {
 			tmpPath /= (std::u8string_view&)fn;
 			if (std::filesystem::exists(tmpPath)) {
 				if (fnIsFileName) {
-					if (std::filesystem::is_regular_file(tmpPath))
-						return (std::string&&)tmpPath.u8string();
+					if (std::filesystem::is_regular_file(tmpPath)) goto LabReturn;
 				} else {
-					if (std::filesystem::is_directory(tmpPath))
-						return (std::string&&)tmpPath.u8string();
+					if (std::filesystem::is_directory(tmpPath)) goto LabReturn;
 				}
 			}
+			continue;
+		LabReturn:
+#ifdef __clang__
+		{
+			auto tmp = tmpPath.u8string();
+			return std::move((std::string&)tmp);
+		}
+#else
+			return (std::string&&)tmpPath.u8string();
+#endif
 		}
 		// not found
 		return {};
