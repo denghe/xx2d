@@ -62,8 +62,9 @@ namespace SpineTest {
 	}
 
 	int Scene::Update() {
+		xx::engine.PushBlendFunc();
 		coros();
-
+		xx::engine.PopBlendFunc();
 		return 0;
 	}
 }

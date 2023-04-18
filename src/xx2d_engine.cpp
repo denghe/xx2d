@@ -60,6 +60,14 @@ namespace xx {
 		}
 	}
 
+	void Engine::PushBlendFunc() {
+		blendStack.push_back(blendFuncs);
+	}
+	void Engine::PopBlendFunc() {
+		GLBlendFunc(blendStack.back());
+		blendStack.pop_back();
+	}
+
 	void Engine::UpdateEnd() {
 		sm.End();
 
