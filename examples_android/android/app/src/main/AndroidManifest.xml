@@ -2,17 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:label="ImGuiExample"
+        android:label="xx2dExample"
         android:extractNativeLibs="true"
         android:hasCode="true">
 
         <activity
-            android:name="imgui.example.android.MainActivity"
+            android:name="xx2d.example.android.MainActivity"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true">
             <meta-data android:name="android.app.lib_name"
-                android:value="ImGuiExample" />
+                android:value="xx2dExample" />
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

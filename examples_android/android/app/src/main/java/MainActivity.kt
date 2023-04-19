@@ -1,4 +1,4 @@
-package imgui.example.android
+package xx2d.example.android
 
 import android.app.NativeActivity
 import android.os.Bundle

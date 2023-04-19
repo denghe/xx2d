@@ -9,4 +9,4 @@
 
 # Add any project specific keep options here:
 
--keep public class imgui.example.android.** { *; }
+-keep public class xx2d.example.android.** { *; }
