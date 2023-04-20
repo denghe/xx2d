@@ -4,6 +4,7 @@
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <string>
+#include <xx_coro_simple.h>
 
 // Data
 static EGLDisplay           g_EglDisplay = EGL_NO_DISPLAY;
