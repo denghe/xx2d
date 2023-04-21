@@ -17,7 +17,12 @@
 	#include <emscripten/html5.h>
 	#include <GLES3/gl3.h>
 #else
+#  ifdef __ANDROID__
+	#include <EGL/egl.h>
+	#include <GLES3/gl3.h>
+#  else
 	#include <glad.h>
+#  endif
 #endif
 #include "xx2d_gl.h"
 

@@ -6,11 +6,13 @@ namespace xx {
 		// set gl global env for all shaders
 
 #ifndef __EMSCRIPTEN__
+#ifndef __ANDROID__
 		glEnable(GL_PRIMITIVE_RESTART);
 		glPrimitiveRestartIndex(65535);
 		glPointSize(5);
 
 		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+#endif
 #endif
 
 		glDisable(GL_CULL_FACE);

@@ -6,7 +6,11 @@ namespace spine {
 	struct XxSpineExtension : DefaultSpineExtension {
 	protected:
 		char* _readFile(const String& pathStr, int* length) override {
+#ifndef __ANDROID__
 			std::filesystem::path path(std::u8string_view((char8_t*)pathStr.buffer(), pathStr.length()));
+#else
+			std::filesystem::path path(std::string_view((char*)pathStr.buffer(), pathStr.length()));
+#endif
 			std::ifstream f(path, std::ifstream::binary);
 			if (!f) return nullptr;
 			auto sgf = xx::MakeSimpleScopeGuard([&] { f.close(); });

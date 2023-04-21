@@ -1,4 +1,7 @@
 ﻿#include"xx2d.h"
+
+#ifndef __ANDROID__
+
 #include <GLFW/glfw3.h>
 
 namespace xx {
@@ -127,3 +130,52 @@ namespace xx {
 #endif
 	}
 }
+
+
+#else
+
+namespace xx {
+
+	int GameLooperBase::Run(std::string const& wndTitle) {
+		xx::engine.Init();
+
+		// todo
+		//xx::engine.SetWH(width, height);
+
+		// ***************************************************************************************
+		//  user code call here
+		// ***************************************************************************************
+
+		Init();										// looper init1
+
+#ifdef __ANDROID__
+        xx::engine.GLInit(nullptr);
+#else
+		xx::engine.GLInit(wnd);
+#endif
+
+		AfterGLInit();								// looper init2
+
+//		int r{};
+//		while (!glfwWindowShouldClose(wnd)) {
+//			glfwPollEvents();
+//			xx::engine.UpdateBegin();
+//
+//			r = this->Update();						// looper update
+//
+//			xx::engine.UpdateEnd();
+//			glfwSwapBuffers(wnd);
+//
+//			if (r) break;
+//		}
+
+		this->Deinit();								// looper deinit
+
+		xx::engine.Destroy();
+
+		return 0;//r;
+
+	}
+}
+
+#endif

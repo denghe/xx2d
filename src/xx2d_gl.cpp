@@ -1,10 +1,12 @@
 ﻿#include "xx2d.h"
 
 #ifndef __EMSCRIPTEN__
+#ifndef __ANDROID__
 #define GLAD_MALLOC(sz)       malloc(sz)
 #define GLAD_FREE(ptr)        free(ptr)
 #define GLAD_GL_IMPLEMENTATION
 #include <glad.h>
+#endif
 #endif
 
 //#define STBI_NO_JPEG
@@ -78,7 +80,8 @@ namespace xx {
 		// astc
 		
 #ifndef __EMSCRIPTEN__
-		
+#ifndef __ANDROID__
+
 		else if (buf.starts_with("\x13\xab\xa1\x5c"sv) && buf.size() >= 16) {
 			struct Header {
 				uint8_t magic[4], block_x, block_y, block_z, dim_x[3], dim_y[3], dim_z[3];
@@ -164,6 +167,7 @@ namespace xx {
 			throw std::logic_error(xx::ToString("bad astc file header. fn = ", fullPath));
 		}
 
+#endif
 #endif
 		/***********************************************************************************************************************************/
 		// png
