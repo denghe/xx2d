@@ -11,7 +11,7 @@ static EGLSurface           g_EglSurface = EGL_NO_SURFACE;
 static EGLContext           g_EglContext = EGL_NO_CONTEXT;
 static struct android_app*  g_App = nullptr;
 static bool                 g_Initialized = false;
-static char                 g_LogTag[] = "ImGuiExample";
+static char                 g_LogTag[] = "xx2dExample";
 static std::string          g_IniFilename;
 
 // Forward declarations of helper functions
@@ -132,7 +132,7 @@ void MainLoopStep()
 {
     if (g_EglDisplay == EGL_NO_DISPLAY) return;
 
-     // Poll Unicode characters via JNI
+    // Poll Unicode characters via JNI
     // FIXME: do not call this every frame because of JNI overhead
     PollUnicodeChars();
 

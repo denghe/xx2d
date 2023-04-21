@@ -46,8 +46,13 @@ namespace xx {
 
 		// search file. order by search paths desc
 		for (ptrdiff_t i = searchPaths.size() - 1; i >= 0; --i) {
+#ifdef __ANDROID__
+			tmpPath = searchPaths[i];
+			tmpPath /= fn;
+#else
 			tmpPath = (std::u8string&)searchPaths[i];
 			tmpPath /= (std::u8string_view&)fn;
+#endif
 			if (std::filesystem::exists(tmpPath)) {
 				if (fnIsFileName) {
 					if (std::filesystem::is_regular_file(tmpPath)) goto LabReturn;
@@ -73,7 +78,11 @@ namespace xx {
 
 	xx::Data Engine::LoadFileDataWithFullPath(std::string_view const& fp, bool autoDecompress) {
 		xx::Data d;
-		if (int r = xx::ReadAllBytes((std::u8string_view&)fp, d)) 
+#ifndef __ANDROID__
+		if (int r = xx::ReadAllBytes((std::u8string_view&)fp, d))
+#else
+		if (int r = xx::ReadAllBytes(fp, d))
+#endif
 			throw std::logic_error(xx::ToString("file read error. r = ", r, ", fn = ", fp));
 		if (d.len == 0)
 			throw std::logic_error(xx::ToString("file content is empty. fn = ", fp));
