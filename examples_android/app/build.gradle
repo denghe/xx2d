@@ -7,8 +7,8 @@ android {
     ndkVersion "25.2.9519653"
 
     defaultConfig {
-        applicationId "imgui.example.android"
-        namespace "imgui.example.android"
+        applicationId "xx2d.example.android"
+        namespace "xx2d.example.android"
         minSdkVersion 24
         targetSdkVersion 33
         versionCode 1
@@ -36,7 +36,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path "../../CMakeLists.txt"
+            path "../CMakeLists.txt"
             version '3.22.1'
         }
     }

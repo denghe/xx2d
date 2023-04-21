@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(ImGuiExample)
+project(xx2dExample)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -31,4 +31,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
   EGL
   GLESv3
   log
+#  android_native_app_glue
 )
