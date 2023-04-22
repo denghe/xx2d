@@ -14,6 +14,7 @@ file(GLOB SRCS	#GLOB_RECURSE
 	${CMAKE_CURRENT_SOURCE_DIR}/../src/*.h
 	${CMAKE_CURRENT_SOURCE_DIR}/../src/*.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/../xx2d/*.h
+	${CMAKE_CURRENT_SOURCE_DIR}/../spine-runtimes/spine-cpp/spine-cpp/src/spine/*.cpp
 	#...
 )
 add_library(${CMAKE_PROJECT_NAME} SHARED ${SRCS})
@@ -34,8 +35,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../spine-runtimes/spine-cpp/spine-cpp/include
 	#...
 )
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../spine-runtimes/spine-cpp spine-cpp)
 
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../pugixml pugixml)
@@ -58,4 +57,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
 	GLESv3
 	log
 #	android_native_app_glue
+	pugixml
+	libzstd_static
 )

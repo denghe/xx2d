@@ -1,4 +1,5 @@
 ﻿#include "xx2d.h"
+#ifndef __ANDROID__		// todo
 #include <vpx_decoder.h>
 #include <vp8dx.h>
 #include <ebml_parser.h>
@@ -266,3 +267,4 @@ namespace xx {
 
 }
 
+#endif

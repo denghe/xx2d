@@ -175,7 +175,7 @@ namespace spine {
 			}
 
 			auto vp = shader.Draw(*texture, indicesCount);
-			xx::XY size(texture->Width(), texture->Height());
+			xx::XY size{(float)texture->Width(), (float)texture->Height()};
 			for (size_t ii = 0; ii < indicesCount; ++ii) {
 				auto index = (*indices)[ii] << 1;
 				auto&& vertex = vp[ii];
