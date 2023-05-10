@@ -20,10 +20,10 @@ namespace xx {
 		std::string GetFullPath(std::string_view fn, bool fnIsFileName = true);
 
 		// read all data by full path
-		xx::Data LoadFileDataWithFullPath(std::string_view const& fp, bool autoDecompress = true);
+		Data LoadFileDataWithFullPath(std::string_view const& fp, bool autoDecompress = true);
 
 		// read all data by GetFullPath( fn )
-		std::pair<xx::Data, std::string> LoadFileData(std::string_view const& fn, bool autoDecompress = true);
+		std::pair<Data, std::string> LoadFileData(std::string_view const& fn, bool autoDecompress = true);
 
 		// detect file format by content header
 		SupportedFileFormats DetectFileFormat(Data_r const& d);
@@ -40,20 +40,20 @@ namespace xx {
 		// texture & cache
 
 		// key: full path
-		std::unordered_map<std::string, xx::Shared<GLTexture>, xx::StringHasher<>, std::equal_to<void>> textureCache;
+		std::unordered_map<std::string, Shared<GLTexture>, StringHasher<>, std::equal_to<void>> textureCache;
 
 		// load texture from file
 		GLTexture LoadTexture(std::string_view const& fn);
-		xx::Shared<GLTexture> LoadSharedTexture(std::string_view const& fn);
+		Shared<GLTexture> LoadSharedTexture(std::string_view const& fn);
 
 		// load + insert or get texture from texture cache
-		xx::Shared<GLTexture> LoadTextureFromCache(std::string_view const& fn);
+		Shared<GLTexture> LoadTextureFromCache(std::string_view const& fn);
 
 		// unload texture from texture cache by full path
 		void UnloadTextureFromCache(std::string_view const& fn);
 
 		// unload texture from texture cache by texture
-		void UnloadTextureFromCache(xx::Shared<GLTexture> const& t);
+		void UnloadTextureFromCache(Shared<GLTexture> const& t);
 
 		// delete from textureCache where sharedCount == 1. return affected rows
 		size_t RemoveUnusedFromTextureCache();
@@ -63,7 +63,7 @@ namespace xx {
 		// TP & frame cache( texture does not insert into textureCache )
 
 		// key: frame key in plist( texture packer export .plist )
-		std::unordered_map<std::string, xx::Shared<Frame>, xx::StringHasher<>, std::equal_to<void>> frameCache;
+		std::unordered_map<std::string, Shared<Frame>, StringHasher<>, std::equal_to<void>> frameCache;
 
 		// load texture packer's plist content from file & return
 		TP LoadTPData(std::string_view const& fn);
