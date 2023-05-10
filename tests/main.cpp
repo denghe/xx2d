@@ -14,12 +14,20 @@ namespace xx::Lua::SharedGLTexture {
 	inline void AppendTo(std::string& s, xx::Shared<xx::GLTexture> const& o, size_t const& ident1 = 0, size_t const& ident2 = 0) {
 		Append(s, CharRepeater{ ' ', ident1 }, "xx::Shared<xx::GLTexture> {");
 		if (o) {
-			AppendFormat(s, R"(
-{0}id   = {1}
-{0}size = {2}, {3}
-{0}fn   = {4})", CharRepeater{ ' ', ident2 + 4 }, *o->Get(), o->Width(), o->Height(), o->FileName());
+			CharRepeater cr{ ' ', ident2 + 4 };
+
+			Append(s, R"(
+)", cr, "id = ", *o->Get());
+
+			Append(s, R"(
+)", cr, "size = {", o->Width(), ", ", o->Height(), "}");
+
+			Append(s, R"(
+)", cr, "fn = ", o->FileName());
+
 			Append(s, R"(
 )", CharRepeater{ ' ', ident2 }, "}");
+
 		} else {
 			Append(s, "}");
 		}
@@ -70,7 +78,7 @@ namespace xx::Lua::SharedGLTexture {
 		{"Height", Height},
 		{"Size", Size},
 		{"FileName", FileName},
-		// ...
+		// ... SetGLTexParm ?
 		{nullptr, nullptr}
 	};
 }
@@ -110,6 +118,124 @@ namespace xx::Lua {
 }
 
 
+/*******************************************************************************************************************************/
+// xx::Shared<xx::Frame>
+/*******************************************************************************************************************************/
+
+namespace xx::Lua::SharedFrame {
+
+	inline void AppendTo(std::string& s, xx::Shared<xx::Frame> const& o, size_t const& ident1 = 0, size_t const& ident2 = 0) {
+		Append(s, CharRepeater{ ' ', ident1 }, "xx::Shared<xx::Frame> {");
+		if (o) {
+			CharRepeater cr{ ' ', ident2 + 4 };
+
+			Append(s, R"(
+)", cr, "tex = ");
+			xx::Lua::SharedGLTexture::AppendTo(s, o->tex, ident2 + 4);
+
+			Append(s, R"(
+)", cr, "key = ", o->key);
+
+			Append(s, R"(
+)", cr, "anchor = ");
+			if (o->anchor.has_value()) {
+				Append(s, "{", o->anchor->x, ", ", o->anchor->y, "}");
+			} else {
+				Append(s, "{}");
+			}
+
+			Append(s, R"(
+)", cr, "spriteOffset = {", o->spriteOffset.x, ", ", o->spriteOffset.y, "}");
+
+			Append(s, R"(
+)", cr, "spriteSize = {", o->spriteSize.x, ", ", o->spriteSize.y, "}");
+
+			Append(s, R"(
+)", cr, "spriteSourceSize = {", o->spriteSourceSize.x, ", ", o->spriteSourceSize.y, "}");
+
+			Append(s, R"(
+)", cr, "textureRect = {", o->textureRect.x, ", ", o->textureRect.y, ", ", o->textureRect.wh.x, ", ", o->textureRect.wh.y, "}");
+
+			Append(s, R"(
+)", cr, "ud = ", o->ud);
+
+			Append(s, R"(
+)", cr, "textureRotated = ", o->textureRotated);
+
+			Append(s, R"(
+)", cr, "triangles = ", o->triangles);
+
+			Append(s, R"(
+)", cr, "vertices = ", o->vertices);
+
+			Append(s, R"(
+)", cr, "verticesUV = ", o->verticesUV);
+
+			Append(s, R"(
+)", CharRepeater{ ' ', ident2 }, "}");
+
+		} else {
+			Append(s, "}");
+		}
+	}
+
+	inline int __tostring(lua_State* L) {
+		auto& o = *To<xx::Shared<xx::Frame>*>(L);
+		auto& s = tmpStr;
+		s.clear();
+		AppendTo(s, o);
+		return Push(L, s);
+	}
+
+	inline int __eq(lua_State* L) {
+		if (lua_type(L, 2) != LUA_TUSERDATA) return Push(L, false);
+		// todo: check mt equals?
+		return Push(L, *(void**)lua_touserdata(L, 1) == *(void**)lua_touserdata(L, 2));
+	}
+
+	inline luaL_Reg funcs[] = {
+		{"__tostring", __tostring},
+		{"__eq", __eq},
+		// ...
+		{nullptr, nullptr}
+	};
+}
+
+
+namespace xx::Lua {
+
+	// meta
+	template<typename T>
+	struct MetaFuncs<T, std::enable_if_t<std::is_same_v<xx::Shared<xx::Frame>, std::decay_t<T>>>> {
+		using U = xx::Shared<xx::Frame>;
+		inline static std::string name = TypeName<U>();
+		static void Fill(lua_State* const& L) {
+			SetType<U>(L);
+			luaL_setfuncs(L, ::xx::Lua::SharedFrame::funcs, 0);
+		}
+	};
+
+	// push instance( move or copy )
+	template<typename T>
+	struct PushToFuncs<T, std::enable_if_t<std::is_same_v<xx::Shared<xx::Frame>, std::decay_t<T>>>> {
+		static constexpr int checkStackSize = 1;
+		static int Push_(lua_State* const& L, T&& in) {
+			return PushUserdata<xx::Shared<xx::Frame>>(L, std::forward<T>(in));
+		}
+	};
+
+	// to pointer( for visit )
+	template<typename T>
+	struct PushToFuncs<T, std::enable_if_t<std::is_pointer_v<std::decay_t<T>>&& std::is_same_v<xx::Shared<xx::Frame>, std::decay_t<std::remove_pointer_t<std::decay_t<T>>>>>> {
+		static void To_(lua_State* const& L, int const& idx, T& out) {
+			AssertType<xx::Shared<xx::Frame>>(L, idx);
+			out = (T)lua_touserdata(L, idx);
+		}
+	};
+
+}
+
+
 
 
 /*******************************************************************************************************************************/
@@ -126,14 +252,41 @@ namespace xx::Lua::Quad {
 		auto& o = *To<xx::Quad*>(L);
 		auto& s = tmpStr;
 		s.clear();
+
 		Append(s, R"(xx::Quad {
     tex = )");
 		xx::Lua::SharedGLTexture::AppendTo(s, o.tex, 0, 4);
+
 		Append(s, R"(
-    pos = )", o.pos.x, ", ", o.pos.y);
+    pos = {)", o.pos.x, ", ", o.pos.y, "}");
+
+		Append(s, R"(
+    anchor = {)", o.anchor.x, ", ", o.anchor.y, "}");
+
+		Append(s, R"(
+    scale = {)", o.scale.x, ", ", o.scale.y, "}");
+
+		Append(s, R"(
+    radians = )", o.radians);
+
+		Append(s, R"(
+    color = {)", o.color.r, ", ", o.color.g, ", ", o.color.b, ", ", o.color.a, "}");
+
+		Append(s, R"(
+    texRect = {)", o.texRectX, ", ", o.texRectY, ", ", o.texRectW, ", ", o.texRectH, "}");
+
 		Append(s, R"(
 })");
+
 		return Push(L, s);
+	}
+
+	inline int SetFrame(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		auto& f = *To<xx::Shared<xx::Frame>*>(L, 2);
+		o.SetFrame(f);
+		lua_settop(L, 1);
+		return 1;
 	}
 
 	inline int SetTexture(lua_State* L) {
@@ -171,10 +324,15 @@ namespace xx::Lua::Quad {
 
 	inline luaL_Reg funcs[] = {
 		{"__tostring", __tostring},
+
+		{"SetFrame", SetFrame},
+
 		{"SetTexture", SetTexture},
 		{"GetTexture", GetTexture},
+
 		{"SetPosition", SetPosition},
 		{"GetPosition", GetPosition},
+
 		// ...
 		{"Draw", Draw},
 		{nullptr, nullptr}
