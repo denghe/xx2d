@@ -17,6 +17,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+
 include_directories(
 	glad
 	stb
@@ -109,10 +110,10 @@ endif()
 
 
 
+
 include_directories(
 	imgui/misc/cpp
 )
-
 set(SRCS)
 file(GLOB SRCS	#GLOB_RECURSE
 	imgui/misc/cpp/*.h
@@ -121,6 +122,20 @@ file(GLOB SRCS	#GLOB_RECURSE
 add_library(imguicpp ${SRCS})
 
 target_link_libraries(${name} imguicpp)
+
+
+
+add_definitions(-DMAKE_LIB)	# for lua
+include_directories(
+	lua
+)
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
+	lua/onelua.c
+)
+add_library(lua ${SRCS})
+target_link_libraries(${name} lua)
+
 
 
 

@@ -169,6 +169,31 @@ inline void Sleep(int const& ms) {
 }
 #endif
 
+#ifdef XX_DISABLE_ASSERT_IN_RELEASE
+#define xx_assert assert
+#else
+#ifdef NDEBUG
+#undef NDEBUG
+#define HAS_NDEBUG
+#endif
+#include <assert.h>
+#ifdef HAS_NDEBUG
+#define NDEBUG
+#endif
+#ifdef _MSC_VER
+#define xx_assert(expression) (void)(                                                        \
+            (!!(expression)) ||                                                              \
+            (_wassert(_CRT_WIDE(#expression), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0) \
+        )
+#else
+#define xx_assert(expression) (void)(                                                        \
+            (!!(expression)) ||                                                              \
+            (__assert_fail(#expression, __FILE__, __LINE__, __ASSERT_FUNCTION), 0)           \
+        )
+#endif
+#endif
+
+
 #define XX_SIMPLE_STRUCT_DEFAULT_CODES(T)\
 T() = default;\
 T(T const&) = default;\

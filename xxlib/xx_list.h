@@ -93,11 +93,11 @@ namespace xx {
 			return buf[idx];
 		}
 		T const& At(SizeType const& idx) const noexcept {
-			assert(idx < len);
+			xx_assert(idx < len);
 			return buf[idx];
 		}
 		T& At(SizeType const& idx) noexcept {
-			assert(idx < len);
+			xx_assert(idx < len);
 			return buf[idx];
 		}
 
