@@ -11,18 +11,65 @@ namespace xx::Lua {
 
 namespace xx::Lua::SharedGLTexture {
 
+	inline void AppendTo(std::string& s, xx::Shared<xx::GLTexture> const& o, size_t const& ident1 = 0, size_t const& ident2 = 0) {
+		Append(s, CharRepeater{ ' ', ident1 }, "xx::Shared<xx::GLTexture> {");
+		if (o) {
+			AppendFormat(s, R"(
+{0}id   = {1}
+{0}size = {2}, {3}
+{0}fn   = {4})", CharRepeater{ ' ', ident2 + 4 }, *o->Get(), o->Width(), o->Height(), o->FileName());
+			Append(s, R"(
+)", CharRepeater{ ' ', ident2 }, "}");
+		} else {
+			Append(s, "}");
+		}
+	}
+
 	inline int __tostring(lua_State* L) {
-		auto q = To<xx::Shared<xx::GLTexture>*>(L);
+		auto& o = *To<xx::Shared<xx::GLTexture>*>(L);
 		auto& s = tmpStr;
 		s.clear();
-		Append(s, "xx::Shared<xx::GLTexture>{ texid = ... xy = ... wh = ... fn = ... }");
+		AppendTo(s, o);
 		return Push(L, s);
 	}
 
-	// Get...Set...
+	inline int __eq(lua_State* L) {
+		if (lua_type(L, 2) != LUA_TUSERDATA) return Push(L, false);
+		// todo: check mt equals?
+		return Push(L, *(void**)lua_touserdata(L, 1) == *(void**)lua_touserdata(L, 2));
+	}
+
+	inline int Width(lua_State* L) {
+		auto& o = *To<xx::Shared<xx::GLTexture>*>(L);
+		if (!o) return 0;
+		return Push(L, o->Width());
+	}
+
+	inline int Height(lua_State* L) {
+		auto& o = *To<xx::Shared<xx::GLTexture>*>(L);
+		if (!o) return 0;
+		return Push(L, o->Height());
+	}
+
+	inline int Size(lua_State* L) {
+		auto& o = *To<xx::Shared<xx::GLTexture>*>(L);
+		if (!o) return 0;
+		return Push(L, o->Width(), o->Height());
+	}
+
+	inline int FileName(lua_State* L) {
+		auto& o = *To<xx::Shared<xx::GLTexture>*>(L);
+		if (!o) return 0;
+		return Push(L, o->FileName());
+	}
 
 	inline luaL_Reg funcs[] = {
 		{"__tostring", __tostring},
+		{"__eq", __eq},
+		{"Width", Width},
+		{"Height", Height},
+		{"Size", Size},
+		{"FileName", FileName},
 		// ...
 		{nullptr, nullptr}
 	};
@@ -76,18 +123,60 @@ namespace xx::Lua::Quad {
 	}
 
 	inline int __tostring(lua_State* L) {
-		auto q = To<xx::Quad*>(L);
+		auto& o = *To<xx::Quad*>(L);
 		auto& s = tmpStr;
 		s.clear();
-		Append(s, "xx::Quad{ tex = ..., xy = ... ... }");
+		Append(s, R"(xx::Quad {
+    tex = )");
+		xx::Lua::SharedGLTexture::AppendTo(s, o.tex, 0, 4);
+		Append(s, R"(
+    pos = )", o.pos.x, ", ", o.pos.y);
+		Append(s, R"(
+})");
 		return Push(L, s);
 	}
 
-	// Get...Set...
+	inline int SetTexture(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		auto& t = *To<xx::Shared<xx::GLTexture>*>(L, 2);
+		o.SetTexture(t);
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int GetTexture(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		return Push(L, o.tex);
+	}
+
+	inline int SetPosition(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.SetPosition({ To<float>(L, 2), To<float>(L, 3) });
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int GetPosition(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		return Push(L, o.pos.x, o.pos.y);
+	}
+
+	// ...
+
+	inline int Draw(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.Draw();
+		return 0;
+	}
 
 	inline luaL_Reg funcs[] = {
 		{"__tostring", __tostring},
+		{"SetTexture", SetTexture},
+		{"GetTexture", GetTexture},
+		{"SetPosition", SetPosition},
+		{"GetPosition", GetPosition},
 		// ...
+		{"Draw", Draw},
 		{nullptr, nullptr}
 	};
 }
@@ -131,13 +220,13 @@ namespace xx::Lua::Engine {
 		// ...
 
 		SetGlobalCClosure(L, "xxSearchPathAdd", [](auto L)->int {
-			auto dir = To<char const*>(L);
+			auto dir = To<std::string_view>(L);
 			xx::engine.SearchPathAdd(dir);
 			return 0;
 			});
 
 		SetGlobalCClosure(L, "xxLoadSharedTexture", [](auto L)->int {
-			auto fn = To<char const*>(L);
+			auto fn = To<std::string_view>(L);
 			return Push(L, xx::engine.LoadSharedTexture(fn));
 			});
 
@@ -165,26 +254,20 @@ local t = xxLoadSharedTexture("res/sword.png")
 print(t)
 
 local q = xxQuad()
+q:SetTexture( t ):SetPosition( 50, 50 )
 print(q)
 
-function LuaUpdate(a)
-	print( a )
+print(t == q:GetTexture())
+
+function Update()
+	q:Draw()
 end
 
 	)-#-");
-
-	coros.Add([](GameLooper* self)->xx::Coro {
-		CoYield;
-		for (size_t i = 0; i < 5; i++) {
-			xL::CallGlobalFunc(self->L, "LuaUpdate", i);
-			CoYield;
-		}
-	}(this));
 }
 
 int GameLooper::Update() {
-	coros();
-
+	xL::CallGlobalFunc(L, "Update");
 	fpsViewer.Update();
 	return 0;
 }
