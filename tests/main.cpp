@@ -437,22 +437,9 @@ void GameLooper::Init() {
 
 	xx::Lua::Engine::Register(L);
 
-	xL::DoString(L, R"-#-(
+	auto [data, fullpath] = xx::engine.LoadFileData("res/test1.lua");
 
-local t = xxLoadSharedTexture("res/sword.png")
-print(t)
-
-local q = xxQuad()
-q:SetTexture( t ):SetPosition( 50, 50 )
-print(q)
-
-print(t == q:GetTexture())
-
-function Update()
-	q:Draw()
-end
-
-	)-#-");
+	xL::DoBuffer(L, data, fullpath);
 }
 
 int GameLooper::Update() {

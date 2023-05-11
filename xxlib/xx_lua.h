@@ -361,6 +361,14 @@ namespace xx::Lua {
 		Call(L, std::forward<Args>(args)...);
 	}
 
+	template<typename...Args>
+	void DoBuffer(lua_State* const& L, std::string_view code, std::string const& name, Args &&...args) {
+		if (LUA_OK != luaL_loadbufferx(L, code.data(), code.size(), name.c_str(), nullptr)) {
+			lua_error(L);
+		}
+		Call(L, std::forward<Args>(args)...);
+	}
+
 	// Lua State 简单封装, 可直接当指针用, 离开范围自动 close
 	struct State {
 		lua_State* L = nullptr;
