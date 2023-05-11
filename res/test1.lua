@@ -1,4 +1,6 @@
--- 测试结果， 一万个 quad, 这样写就有一千多 fps, 协程写法只有 2 fps. 
+--[[
+
+-- 测试结果， 一万个 quad, 这样写就有 13xx fps, 协程写法有 3xx fps. 
 -- 测试结果， 10 万个 quad, 33 fps, c++ 协程写法 122 fps
 
 gTimePool = 0
@@ -55,92 +57,51 @@ Draw = function()
 	end
 end
 
+]]
 
 
---[[
 
--- 为了便于使用
-yield = coroutine.yield																			
 
-__G__TRACKBACK__ = function(msg)
-    local msg = debug.traceback(msg, 3)
-    print(msg)
-    return msg
-end
 
--- 全局协程池( 经测试发现，lua 协程 resume 开销非常巨大， 一万个就会降到 2 fps. 所以在需要性能的逻辑里就不要上协程了 )
-local gCoros = {}																				
 
--- 压入一个协程函数. 有参数就跟在后面. 有延迟执行的效果. 报错时带 name 显示
--- 参数传入  func + args...  或  name + func + args...   或  ctx{ name, ... } + func + args...
-go = function(...)
-	local args = {...}
-	local t1 = type(args[1])
-	local t2 = type(args[2])
-	assert( #args > 0 and ( t1 == 'function' or t2 == 'function') )
+gCoros = {}
+yield = coroutine.yield
+co_create = coroutine.create
+co_resume = coroutine.resume
+co_status = coroutine.status
 
-	local ctx
-	local func
-	if t1 ~= 'function' then
-		if t1 == 'string' then
-			ctx = { name = args[1] }
-		else
-			ctx = args[1]
-		end
-		func = args[2]
-		table.remove(args, 1)
-	else
-		ctx = { name = "" }
-		func = args[1]
-	end
-	table.remove(args, 1)
-
-	ctx[1] = coroutine.create(function() xpcall(func, __G__TRACKBACK__, ctx) end)
-	table.insert(gCoros, ctx)
-
-	return ctx
-end
-
---- 通过名称获取协程上下文
----@param name  string
----@return table
-goContext = function(name)
-	for k, v in pairs(gCoros) do
-		if v.name == name then
-			return v
-		end
-	end
-end
-
--- 睡指定秒( 保底睡3帧 )( coro )
-SleepSecs = function(secs)
-	local timeout = NowEpochMS() + secs * 1000
-	yield()
-	yield()
-	yield()
-	while timeout > NowEpochMS() do 
-		yield()
-	end
-end
-
--- 固定帧率被 Update 调用, 执行所有 coros
-GlobalUpdate = function()
-	local cr = coroutine.resume
-
-	if gCoro then
-		if not cr(gCoro) then
-			gCoro = nil
-		end
-	end
-
+function gCorosRun()
 	local t = gCoros
 	local n = #t
 	if n == 0 then return end
 	for i = n, 1, -1 do
-		if not cr(t[i][1]) then
+		local c = t[i].coroutine
+		local ok, err = co_resume(c)
+		if not ok then
+			print("resume coroutine_name = " .. t[i].coroutine_name)
+			print(debug.traceback(c))
+			error(err)
+		end
+		if co_status(c) == "dead" then
 			table.remove(t, i)
 		end
 	end
+end
+
+go = function(name, func, ...)
+	local c = co_create(func)
+	local ctx = { coroutine = c, coroutine_name = name }
+	local ok, err = co_resume(c, ctx, ...)
+	if not ok then
+		print("create coroutine_name = " .. name)
+		print(debug.traceback(c))
+		error(err)
+	end
+	if co_status(c) == "dead" then
+		return
+	end
+	table.insert(gCoros, ctx)
+	return ctx
 end
 
 gTimePool = 0
@@ -152,23 +113,19 @@ function Update(delta)
 	tp = tp + delta
 	while tp >= 0.0166666666666667 do
 		tp = tp - 0.0166666666666667
-		GlobalUpdate()
+		gCorosRun()
 	end
 	gTimePool = tp
 
-	if Draw then
-		Draw()
-	end
+	Draw()
 end
-
 
 local gQuads = {}
 local tex = xxLoadSharedTexture("res/tree.pkm")
 
 for j = 1, 10000 do
 	
-	go("coro "..j, function(c)
-		--print( c.name .. " begin" )
+	go("coro "..j, function(ctx)
 		local q = xxQuad():SetTexture( tex ):SetPosition( xxRndNext( -500, 500 ), xxRndNext( -300, 300 ) )
 		gQuads[q] = 1
 		for i = 1, xxRndNext( 1000, 2000 ) do
@@ -176,7 +133,6 @@ for j = 1, 10000 do
 			yield()
 		end
 		gQuads[q] = nil
-		--print( c.name .. " end" )
 	end)
 
 end
@@ -187,7 +143,7 @@ Draw = function()
 	end
 end
 
-]]
+
 
 
 

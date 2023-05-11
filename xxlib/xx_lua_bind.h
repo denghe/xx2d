@@ -613,6 +613,10 @@ namespace xx::Lua {
         SetGlobal(L, "NULL", (void*)0);
         SetGlobal(L, "nullptr", (void*)0);
 
+        SetGlobalCClosure(L, "NowEpochSeconds", [](auto L)->int {
+            return Push(L, NowSteadyEpochSeconds());
+        });
+
         SetGlobalCClosure(L, "NowEpochMS", [](auto L)->int {
             return Push(L, NowSteadyEpochMilliseconds());
         });
