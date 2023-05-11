@@ -24,7 +24,7 @@ namespace xx::Lua {
 
 	template<typename T>
 	struct PushToFuncs<T, std::enable_if_t<std::is_same_v<xx::RGBA8, std::decay_t<T>>>> {
-		static constexpr int checkStackSize = 2;
+		static constexpr int checkStackSize = 4;
 		static int Push_(lua_State* const& L, T&& in) {
 			return Push(L, in.r, in.g, in.b, in.a);
 		}
