@@ -8,7 +8,13 @@ struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fontBase, font3500;
 	xx::FpsViewer fpsViewer;
 	xL::State L;
+
+	xx::Shared<xx::GLTexture> tex;
+	xx::ListDoubleLink<xx::Quad> quads;
+	xx::Coros coros;
 	double timePool{};
+	xx::Coro QuadLogic();
+
 	void Init() override;
 	int Update() override;
 };

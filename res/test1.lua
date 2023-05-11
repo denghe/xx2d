@@ -1,4 +1,5 @@
--- 测试结果， 这样写就有一千多 fps, 协程写法只有 2 fps
+-- 测试结果， 一万个 quad, 这样写就有一千多 fps, 协程写法只有 2 fps. 
+-- 测试结果， 10 万个 quad, 33 fps, c++ 协程写法 122 fps
 
 gTimePool = 0
 gDelta = 0.0166666666666667
@@ -22,12 +23,12 @@ end
 local gQuads = {}
 local tex = xxLoadSharedTexture("res/tree.pkm")
 
-for j = 1, 10000 do
+for j = 1, 100000 do
 	
 	local ctx = {}
 	ctx[1] = xxQuad():SetTexture( tex ):SetPosition( xxRndNext( -500, 500 ), xxRndNext( -300, 300 ) )
 	ctx[2] = 0
-	ctx[3] = xxRndNext( 100, 300 )
+	ctx[3] = xxRndNext( 1000, 2000 )
 	gQuads[j] = ctx
 
 end

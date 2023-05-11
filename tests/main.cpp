@@ -618,28 +618,51 @@ namespace xx::Lua::Engine {
 // GameLooper
 /*******************************************************************************************************************************/
 
+xx::Coro GameLooper::QuadLogic() {
+	auto& rnd = xx::engine.rnd;
+	auto& q = quads.Emplace();
+	q.SetTexture(tex).SetPosition({ (float)rnd.Next(-500, 500), (float)rnd.Next(-300, 300) });
+	auto iter = quads.Tail();
+	for (int i = 0, e = rnd.Next(1000, 2000); i < e; ++i) {
+		q.AddRotate(1.f / 60);
+		CoYield;
+	}
+	quads.Remove(iter);
+}
+
+#define RUN_LUA_CODE
+
 void GameLooper::Init() {
 	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 	font3500 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
 	fpsViewer.Init(fontBase);
 
+#ifdef RUN_LUA_CODE
 	xx::Lua::RegisterBaseEnv(L);
 	xx::Lua::Engine::Register(L);
-
 	auto [data, fullpath] = xx::engine.LoadFileData("res/test1.lua");
-
 	xL::DoBuffer(L, data, fullpath);
+#else
+	tex = xx::engine.LoadSharedTexture("res/tree.pkm");
+	auto n = 100000;
+	quads.Reserve(n);
+	for (int j = 0; j < n; ++j) {
+		coros.Add(QuadLogic());
+	}
+#endif
 }
 
 int GameLooper::Update() {
-	//xL::CallGlobalFunc(L, "GlobalUpdate", xx::engine.delta);
-
-	//timePool += xx::engine.delta;
-	//while (timePool >= 1.f / 60) {
-	//	timePool -= 1.f / 60;
-	//	xL::CallGlobalFunc(L, "FixedUpdate", 1.f / 60);
-	//}
+#ifdef RUN_LUA_CODE
 	xL::CallGlobalFunc(L, "Update", xx::engine.delta);
+#else
+	timePool += xx::engine.delta;
+	while (timePool >= 1.f / 60) {
+		timePool -= 1.f / 60;
+		coros();
+	}
+	quads.Foreach([&](auto& o) { o.Draw(); });
+#endif
 
 	fpsViewer.Update();
 	return 0;
