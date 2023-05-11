@@ -84,7 +84,7 @@ namespace xx {
 		return *this;
 
 	}
-	Quad& Quad::SetColorA(float const& a) {
+	Quad& Quad::SetColorAf(float const& a) {
 		color.a = 255 * a;
 		return *this;
 	}

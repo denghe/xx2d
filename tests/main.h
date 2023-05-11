@@ -8,6 +8,7 @@ struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fontBase, font3500;
 	xx::FpsViewer fpsViewer;
 	xL::State L;
+	double timePool{};
 	void Init() override;
 	int Update() override;
 };

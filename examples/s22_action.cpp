@@ -81,7 +81,7 @@ namespace ActionTest {
 		body.SetTexture(scene->tex);
 	}
 	void Foo::Draw() {
-		body.SetPosition(pos).SetRotate(radians).SetColorA(alpha).SetScale(scale).Draw();
+		body.SetPosition(pos).SetRotate(radians).SetColorAf(alpha).SetScale(scale).Draw();
 	}
 
 	void Scene::Init(GameLooper* looper) {

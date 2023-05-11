@@ -12,7 +12,7 @@ local t = xxLoadSharedTexture("res/sword.png")
 print(t)
 
 local q = xxQuad()
-q:SetTexture( t ):SetPosition( 50, 50 )
+q:SetTexture( t ):SetScale( 0.5 )
 print(q)
 print(t == q:GetTexture())
 
@@ -21,6 +21,11 @@ t.abc = 123
 local t2 = GetUserValue(q)
 print(t2.abc)
 
-function Update()
+
+function FixedUpdate(delta)
+	q:AddRotate(delta)
+end
+
+function Update(delta)
 	q:Draw()
 end

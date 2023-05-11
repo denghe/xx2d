@@ -312,14 +312,6 @@ namespace xx::Lua::Quad {
 		return Push(L, s);
 	}
 
-	inline int SetFrame(lua_State* L) {
-		auto& o = *To<xx::Quad*>(L);
-		auto& f = *To<xx::Shared<xx::Frame>*>(L, 2);
-		o.SetFrame(f);
-		lua_settop(L, 1);
-		return 1;
-	}
-
 	inline int SetTexture(lua_State* L) {
 		auto& o = *To<xx::Quad*>(L);
 		auto& t = *To<xx::Shared<xx::GLTexture>*>(L, 2);
@@ -328,24 +320,113 @@ namespace xx::Lua::Quad {
 		return 1;
 	}
 
-	inline int GetTexture(lua_State* L) {
+	inline int SetFrame(lua_State* L) {
 		auto& o = *To<xx::Quad*>(L);
-		return Push(L, o.tex);
-	}
-
-	inline int SetPosition(lua_State* L) {
-		auto& o = *To<xx::Quad*>(L);
-		o.SetPosition(To<xx::XY>(L, 2));	// 2 ~ 3
+		auto& f = *To<xx::Shared<xx::Frame>*>(L, 2);
+		o.SetFrame(f);
 		lua_settop(L, 1);
 		return 1;
 	}
 
-	inline int GetPosition(lua_State* L) {
+	inline int Size(lua_State* L) {
 		auto& o = *To<xx::Quad*>(L);
-		return Push(L, o.pos);	// 2
+		return Push(L, o.Size());
 	}
 
-	// ...
+	inline int SetAnchor(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.SetAnchor(To<xx::XY>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int SetRotate(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.SetRotate(To<float>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int AddRotate(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.AddRotate(To<float>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int SetScale(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		if (lua_gettop(L) == 2) {
+			o.SetScale(To<float>(L, 2));
+		} else {
+			o.SetScale(To<xx::XY>(L, 2));
+		}
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int SetPosition(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.SetPosition(To<xx::XY>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int SetPositionX(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.SetPositionX(To<float>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int SetPositionY(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.SetPositionY(To<float>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int AddPosition(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.AddPosition(To<xx::XY>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int AddPositionX(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.AddPositionX(To<float>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int AddPositionY(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.AddPositionY(To<float>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int SetColor(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.SetColor(To<RGBA8>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int SetColorA(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.SetColorA(To<uint8_t>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
+
+	inline int SetColorAf(lua_State* L) {
+		auto& o = *To<xx::Quad*>(L);
+		o.SetColorAf(To<float>(L, 2));
+		lua_settop(L, 1);
+		return 1;
+	}
 
 	inline int Draw(lua_State* L) {
 		auto& o = *To<xx::Quad*>(L);
@@ -353,19 +434,49 @@ namespace xx::Lua::Quad {
 		return 0;
 	}
 
+
+	// get QuadInstanceData
+	inline int GetTexture(lua_State* L) { return Push(L, To<xx::Quad*>(L)->tex); }
+	inline int GetPosition(lua_State* L) { return Push(L, To<xx::Quad*>(L)->pos); }
+	inline int GetAnchor(lua_State* L) { return Push(L, To<xx::Quad*>(L)->anchor); }
+	inline int GetScale(lua_State* L) { return Push(L, To<xx::Quad*>(L)->scale); }
+	inline int GetRadians(lua_State* L) { return Push(L, To<xx::Quad*>(L)->radians); }
+	inline int GetColor(lua_State* L) { return Push(L, To<xx::Quad*>(L)->color); }
+	inline int GetTexRect(lua_State* L) { 
+		auto& o = *To<xx::Quad*>(L);
+		return Push(L, o.texRectX, o.texRectY, o.texRectW, o.texRectH);
+	}
+
+
 	inline luaL_Reg funcs[] = {
 		{"__tostring", __tostring},
 
-		{"SetFrame", SetFrame},
-
 		{"SetTexture", SetTexture},
-		{"GetTexture", GetTexture},
-
+		{"SetFrame", SetFrame},
+		{"Size", Size},
+		{"SetAnchor", SetAnchor},
+		{"SetRotate", SetRotate},
+		{"AddRotate", AddRotate},
+		{"SetScale", SetScale},
 		{"SetPosition", SetPosition},
-		{"GetPosition", GetPosition},
-
-		// ...
+		{"SetPositionX", SetPositionX},
+		{"SetPositionY", SetPositionY},
+		{"AddPosition", AddPosition},
+		{"AddPositionX", AddPositionX},
+		{"AddPositionY", AddPositionY},
+		{"SetColor", SetColor},
+		{"SetColorA", SetColorA},
+		{"SetColorAf", SetColorAf},
 		{"Draw", Draw},
+
+		{"GetTexture", GetTexture},
+		{"GetPosition", GetPosition},
+		{"GetAnchor", GetAnchor},
+		{"GetScale", GetScale},
+		{"GetRadians", GetRadians},
+		{"GetColor", GetColor},
+		{"GetTexRect", GetTexRect},
+
 		{nullptr, nullptr}
 	};
 }
@@ -443,7 +554,12 @@ void GameLooper::Init() {
 }
 
 int GameLooper::Update() {
-	xL::CallGlobalFunc(L, "Update");
+	timePool += xx::engine.delta;
+	while (timePool >= 1.f / 60) {
+		timePool -= 1.f / 60;
+		xL::CallGlobalFunc(L, "FixedUpdate", 1.f / 60);
+	}
+	xL::CallGlobalFunc(L, "Update", xx::engine.delta);
 	fpsViewer.Update();
 	return 0;
 }
