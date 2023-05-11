@@ -6,6 +6,37 @@ namespace xx::Lua {
 
 
 /*******************************************************************************************************************************/
+// type mappings
+/*******************************************************************************************************************************/
+
+namespace xx::Lua {
+
+	template<typename T>
+	struct PushToFuncs<T, std::enable_if_t<std::is_same_v<xx::XY, std::decay_t<T>>>> {
+		static constexpr int checkStackSize = 2;
+		static int Push_(lua_State* const& L, T&& in) {
+			return Push(L, in.x, in.y);
+		}
+		static void To_(lua_State* const& L, int const& idx, T& out) {
+			To(L, idx, out.x, out.y);
+		}
+	};
+
+	template<typename T>
+	struct PushToFuncs<T, std::enable_if_t<std::is_same_v<xx::RGBA8, std::decay_t<T>>>> {
+		static constexpr int checkStackSize = 2;
+		static int Push_(lua_State* const& L, T&& in) {
+			return Push(L, in.r, in.g, in.b, in.a);
+		}
+		static void To_(lua_State* const& L, int const& idx, T& out) {
+			To(L, idx, out.r, out.g, out.b, out.a);
+		}
+	};
+
+}
+
+
+/*******************************************************************************************************************************/
 // xx::Shared<xx::GLTexture>
 /*******************************************************************************************************************************/
 
@@ -44,7 +75,7 @@ namespace xx::Lua::SharedGLTexture {
 	inline int __eq(lua_State* L) {
 		if (lua_type(L, 2) != LUA_TUSERDATA) return Push(L, false);
 		// todo: check mt equals?
-		return Push(L, *(void**)lua_touserdata(L, 1) == *(void**)lua_touserdata(L, 2));
+		return Push(L, memcmp(lua_touserdata(L, 1), lua_touserdata(L, 2), sizeof(xx::Shared<xx::GLTexture>)) == 0);
 	}
 
 	inline int Width(lua_State* L) {
@@ -190,7 +221,7 @@ namespace xx::Lua::SharedFrame {
 	inline int __eq(lua_State* L) {
 		if (lua_type(L, 2) != LUA_TUSERDATA) return Push(L, false);
 		// todo: check mt equals?
-		return Push(L, *(void**)lua_touserdata(L, 1) == *(void**)lua_touserdata(L, 2));
+		return Push(L, memcmp(lua_touserdata(L, 1), lua_touserdata(L, 2), sizeof(xx::Shared<xx::Frame>)) == 0);
 	}
 
 	inline luaL_Reg funcs[] = {
@@ -304,14 +335,14 @@ namespace xx::Lua::Quad {
 
 	inline int SetPosition(lua_State* L) {
 		auto& o = *To<xx::Quad*>(L);
-		o.SetPosition({ To<float>(L, 2), To<float>(L, 3) });
+		o.SetPosition(To<xx::XY>(L, 2));	// 2 ~ 3
 		lua_settop(L, 1);
 		return 1;
 	}
 
 	inline int GetPosition(lua_State* L) {
 		auto& o = *To<xx::Quad*>(L);
-		return Push(L, o.pos.x, o.pos.y);
+		return Push(L, o.pos);	// 2
 	}
 
 	// ...

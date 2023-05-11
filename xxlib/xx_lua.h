@@ -98,7 +98,7 @@ namespace xx::Lua {
 		(PushToFuncs<Args>::To_(L, idx++, args), ...);
 	}
 
-	// 从栈读数据 返回
+	// 从栈读数据 返回( copy )
 	template<typename T>
 	T To(lua_State* const& L, int const& idx = 1) {
 		T v;
