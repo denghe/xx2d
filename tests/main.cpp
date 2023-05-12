@@ -640,7 +640,7 @@ void GameLooper::Init() {
 #ifdef RUN_LUA_CODE
 	xx::Lua::RegisterBaseEnv(L);
 	xx::Lua::Engine::Register(L);
-	auto [data, fullpath] = xx::engine.LoadFileData("res/test1.lua");
+	auto [data, fullpath] = xx::engine.LoadFileData("res/test3.lua");
 	xL::DoBuffer(L, data, fullpath);
 #else
 	tex = xx::engine.LoadSharedTexture("res/tree.pkm");
@@ -656,11 +656,11 @@ int GameLooper::Update() {
 #ifdef RUN_LUA_CODE
 	xL::CallGlobalFunc(L, "Update", xx::engine.delta);
 #else
-	timePool += xx::engine.delta;
-	while (timePool >= 1.f / 60) {
-		timePool -= 1.f / 60;
+	//timePool += xx::engine.delta;
+	//while (timePool >= 1.f / 60) {
+	//	timePool -= 1.f / 60;
 		coros();
-	}
+	//}
 	quads.Foreach([&](auto& o) { o.Draw(); });
 #endif
 
@@ -669,6 +669,22 @@ int GameLooper::Update() {
 }
 
 int main() {
+	//xx::Coros cs;
+	//for (size_t i = 0; i < 1000000; i++) {
+	//	cs.Add([]()->xx::Coro {
+	//		while (true) {
+	//			CoYield;
+	//		}
+	//	}());
+	//}
+	//auto secs = xx::NowEpochSeconds();
+	//for (size_t i = 0; i < 100; i++) {
+	//	cs();
+	//}
+	//xx::CoutN(xx::NowEpochSeconds(secs));
+
+	//return 0;
+
 	auto g = std::make_unique<GameLooper>();
 	return g->Run("tests");
 }

@@ -1,20 +1,23 @@
---[[
 
--- 测试结果， 一万个 quad, 这样写就有 13xx fps, 协程写法有 3xx fps. 
--- 测试结果， 10 万个 quad, 33 fps, c++ 协程写法 122 fps
+-- 测试结果， 10 万个 quad, 函数版 46 fps
+
+
 
 gTimePool = 0
 gDelta = 0.0166666666666667
 
 -- 被 cpp 每帧调用
 function Update(delta)
-	local tp = gTimePool
-	tp = tp + delta
-	while tp >= 0.0166666666666667 do
-		tp = tp - 0.0166666666666667
-		Logic()
-	end
-	gTimePool = tp
+--	local tp = gTimePool
+--	tp = tp + delta
+--	while tp >= 0.0166666666666667 do
+--		tp = tp - 0.0166666666666667
+--		Logic()
+--	end
+--	gTimePool = tp
+
+	gDelta = delta
+	Logic()
 
 	if Draw then
 		Draw()
@@ -57,12 +60,12 @@ Draw = function()
 	end
 end
 
-]]
 
 
 
 
 
+--[[
 
 gCoros = {}
 yield = coroutine.yield
@@ -109,21 +112,24 @@ gDelta = 0.0166666666666667
 
 -- 被 cpp 每帧调用
 function Update(delta)
-	local tp = gTimePool
-	tp = tp + delta
-	while tp >= 0.0166666666666667 do
-		tp = tp - 0.0166666666666667
-		gCorosRun()
-	end
-	gTimePool = tp
 
+--	local tp = gTimePool
+--	tp = tp + delta
+--	while tp >= 0.0166666666666667 do
+--		tp = tp - 0.0166666666666667
+--		gCorosRun()
+--	end
+--	gTimePool = tp
+
+	gDelta = delta
+	gCorosRun()
 	Draw()
 end
 
 local gQuads = {}
 local tex = xxLoadSharedTexture("res/tree.pkm")
 
-for j = 1, 10000 do
+for j = 1, 100000 do
 	
 	go("coro "..j, function(ctx)
 		local q = xxQuad():SetTexture( tex ):SetPosition( xxRndNext( -500, 500 ), xxRndNext( -300, 300 ) )
@@ -144,7 +150,7 @@ Draw = function()
 end
 
 
-
+]]
 
 
 
