@@ -685,6 +685,31 @@ int main() {
 
 	//return 0;
 
+
+
+
+	//lua_getglobal(_ls, LUA_LOADLIBNAME);
+	//if (!lua_istable(_ls, -1))
+	//	return;
+
+	//lua_getfield(_ls, -1, "searchers");
+	//if (!lua_istable(_ls, -1))
+	//	return;
+
+	//lua_pushvalue(_ls, -2);
+	//lua_pushcclosure(_ls, mysearcher, 1);
+	//lua_rawseti(_ls, -2, 5);
+	//lua_setfield(_ls, -2, "searchers");
+
+
+
+
+	// todo: 用 lua 弱表 cache sptr ud. key 为 sptr.value  value 为 ud
+	// 每次 push 时去查表 看是否存在。 如果是 空值 就直接压入 nil
+
+
+
+
 	auto g = std::make_unique<GameLooper>();
 	return g->Run("tests");
 }
