@@ -2,6 +2,109 @@
 
 namespace xx::Lua {
 	std::string tmpStr;
+	int luaWeakTableRefId{};
+
+	inline void MakeUserdataWeakTable(lua_State* L) {
+		// create weak table for userdata cache
+		xx::Lua::AssertTop(L, 0);
+		lua_createtable(L, 0, 1000);											// ... t
+		lua_createtable(L, 0, 1);												// ... t, mt
+		xx::Lua::SetField(L, "__mode", "v");									// ... t, mt { __mode = v }
+		lua_setmetatable(L, -2);												// ... t
+		luaWeakTableRefId = luaL_ref(L, LUA_REGISTRYINDEX);						// ...
+		xx::Lua::AssertTop(L, 0);
+	}
+
+	// wt push to stack
+	inline void GetUserdataWeakTable(lua_State* L) {
+		assert(luaWeakTableRefId);
+		CheckStack(L, 4);
+		lua_rawgeti(L, LUA_REGISTRYINDEX, luaWeakTableRefId);					// ..., wt
+	}
+
+	// store. value at top stack
+	inline void StoreUserdataToWeakTable(lua_State* L, void* key) {
+		GetUserdataWeakTable(L);												// ..., v, wt
+		lua_pushvalue(L, -2);													// ..., v, wt, v
+		lua_rawsetp(L, -2, key);												// ..., v, wt
+		lua_pop(L, 1);															// ..., v
+	}
+
+	// found: push to stack & return true
+	inline bool TryGetUserdataFromWeakTable(lua_State* L, void* key) {
+		GetUserdataWeakTable(L);												// ..., wt
+		auto typeId = lua_rawgetp(L, -1, key);									// ..., wt, v?
+		if (typeId == LUA_TNIL) {
+			lua_pop(L, 2);														// ...
+			return false;
+		}
+		lua_replace(L, -2);														// ..., v
+		return true;
+	}
+
+	inline void RemoveUserdataFromWeakTable(lua_State* L, void* key) {
+		GetUserdataWeakTable(L);												// ..., wt
+		lua_pushnil(L);															// ..., wt, nil
+		lua_rawsetp(L, -2, key);												// ..., wt
+		lua_pop(L, 1);															// ...
+	}
+
+	// match for Shared<T> luaL_setfuncs
+	template<typename T, typename ENABLED = void>
+	struct SharedTFuncs {
+		inline static luaL_Reg funcs[] = {
+			// ...
+			{nullptr, nullptr}
+		};
+	};
+
+	// meta
+	template<typename T>
+	struct MetaFuncs<T, std::enable_if_t<xx::IsShared_v<T>>> {
+		using U = std::decay_t<T>;
+		inline static std::string name = TypeName<U>();
+		static void Fill(lua_State* const& L) {
+			SetType<U>(L);
+			luaL_setfuncs(L, SharedTFuncs<U>::funcs, 0);
+			xx::Lua::SetFieldCClosure(L, "__gc", [](lua_State* L)->int {
+				auto& p = *To<U*>(L);
+				RemoveUserdataFromWeakTable(L, p.pointer);
+				p.~U();
+				return 0;
+			});
+		}
+	};
+
+	// push instance( move or copy )
+	template<typename T>
+	struct PushToFuncs<T, std::enable_if_t<xx::IsShared_v<T>>> {
+		using U = std::decay_t<T>;
+		static constexpr int checkStackSize = 1;
+		static int Push_(lua_State* const& L, T&& in) {
+			if (!in) {
+				lua_pushnil(L);
+			} else if (!TryGetUserdataFromWeakTable(L, in.pointer)) {
+				auto bak = in.pointer;
+				PushUserdata<U, true>(L, std::forward<T>(in));
+				StoreUserdataToWeakTable(L, bak);
+			}
+			return 1;
+		}
+	};
+
+	// to pointer( for visit )
+	template<typename T>
+	struct PushToFuncs<T, std::enable_if_t<std::is_pointer_v<std::decay_t<T>> && xx::IsShared_v<std::decay_t<std::remove_pointer_t<std::decay_t<T>>>>>> {
+		using U = std::decay_t<std::remove_pointer_t<std::decay_t<T>>>;
+		static void To_(lua_State* const& L, int const& idx, T& out) {
+			if (lua_isnil(L, idx)) {
+				out = nullptr;
+			} else {
+				AssertType<U>(L, idx);
+				out = (T)lua_touserdata(L, idx);
+			}
+		}
+	};
 }
 
 
@@ -72,12 +175,6 @@ namespace xx::Lua::SharedGLTexture {
 		return Push(L, s);
 	}
 
-	inline int __eq(lua_State* L) {
-		if (lua_type(L, 2) != LUA_TUSERDATA) return Push(L, false);
-		// todo: check mt equals?
-		return Push(L, memcmp(lua_touserdata(L, 1), lua_touserdata(L, 2), sizeof(xx::Shared<xx::GLTexture>)) == 0);
-	}
-
 	inline int Width(lua_State* L) {
 		auto& o = *To<xx::Shared<xx::GLTexture>*>(L);
 		if (!o) return 0;
@@ -101,49 +198,22 @@ namespace xx::Lua::SharedGLTexture {
 		if (!o) return 0;
 		return Push(L, o->FileName());
 	}
-
-	inline luaL_Reg funcs[] = {
-		{"__tostring", __tostring},
-		{"__eq", __eq},
-		{"Width", Width},
-		{"Height", Height},
-		{"Size", Size},
-		{"FileName", FileName},
-		// ... SetGLTexParm ?
-		{nullptr, nullptr}
-	};
 }
-
 
 namespace xx::Lua {
 
-	// meta
 	template<typename T>
-	struct MetaFuncs<T, std::enable_if_t<std::is_same_v<xx::Shared<xx::GLTexture>, std::decay_t<T>>>> {
-		using U = xx::Shared<xx::GLTexture>;
-		inline static std::string name = TypeName<U>();
-		static void Fill(lua_State* const& L) {
-			SetType<U>(L);
-			luaL_setfuncs(L, ::xx::Lua::SharedGLTexture::funcs, 0);
-		}
-	};
-
-	// push instance( move or copy )
-	template<typename T>
-	struct PushToFuncs<T, std::enable_if_t<std::is_same_v<xx::Shared<xx::GLTexture>, std::decay_t<T>>>> {
-		static constexpr int checkStackSize = 1;
-		static int Push_(lua_State* const& L, T&& in) {
-			return PushUserdata<xx::Shared<xx::GLTexture>>(L, std::forward<T>(in));
-		}
-	};
-
-	// to pointer( for visit )
-	template<typename T>
-	struct PushToFuncs<T, std::enable_if_t<std::is_pointer_v<std::decay_t<T>>&& std::is_same_v<xx::Shared<xx::GLTexture>, std::decay_t<std::remove_pointer_t<std::decay_t<T>>>>>> {
-		static void To_(lua_State* const& L, int const& idx, T& out) {
-			AssertType<xx::Shared<xx::GLTexture>>(L, idx);
-			out = (T)lua_touserdata(L, idx);
-		}
+	struct SharedTFuncs<T, std::enable_if_t<std::is_same_v<std::decay_t<T>, xx::Shared<xx::GLTexture>>>> {
+		inline static luaL_Reg funcs[] = {
+			{"__tostring", xx::Lua::SharedGLTexture::__tostring},
+			//{"__eq", xx::Lua::SharedGLTexture::__eq},
+			{"Width", xx::Lua::SharedGLTexture::Width},
+			{"Height", xx::Lua::SharedGLTexture::Height},
+			{"Size", xx::Lua::SharedGLTexture::Size},
+			{"FileName", xx::Lua::SharedGLTexture::FileName},
+			// ... SetGLTexParm ?
+			{nullptr, nullptr}
+		};
 	};
 
 }
@@ -218,50 +288,19 @@ namespace xx::Lua::SharedFrame {
 		return Push(L, s);
 	}
 
-	inline int __eq(lua_State* L) {
-		if (lua_type(L, 2) != LUA_TUSERDATA) return Push(L, false);
-		// todo: check mt equals?
-		return Push(L, memcmp(lua_touserdata(L, 1), lua_touserdata(L, 2), sizeof(xx::Shared<xx::Frame>)) == 0);
-	}
-
-	inline luaL_Reg funcs[] = {
-		{"__tostring", __tostring},
-		{"__eq", __eq},
-		// ...
-		{nullptr, nullptr}
-	};
 }
 
 
 namespace xx::Lua {
 
-	// meta
 	template<typename T>
-	struct MetaFuncs<T, std::enable_if_t<std::is_same_v<xx::Shared<xx::Frame>, std::decay_t<T>>>> {
-		using U = xx::Shared<xx::Frame>;
-		inline static std::string name = TypeName<U>();
-		static void Fill(lua_State* const& L) {
-			SetType<U>(L);
-			luaL_setfuncs(L, ::xx::Lua::SharedFrame::funcs, 0);
-		}
-	};
-
-	// push instance( move or copy )
-	template<typename T>
-	struct PushToFuncs<T, std::enable_if_t<std::is_same_v<xx::Shared<xx::Frame>, std::decay_t<T>>>> {
-		static constexpr int checkStackSize = 1;
-		static int Push_(lua_State* const& L, T&& in) {
-			return PushUserdata<xx::Shared<xx::Frame>>(L, std::forward<T>(in));
-		}
-	};
-
-	// to pointer( for visit )
-	template<typename T>
-	struct PushToFuncs<T, std::enable_if_t<std::is_pointer_v<std::decay_t<T>>&& std::is_same_v<xx::Shared<xx::Frame>, std::decay_t<std::remove_pointer_t<std::decay_t<T>>>>>> {
-		static void To_(lua_State* const& L, int const& idx, T& out) {
-			AssertType<xx::Shared<xx::Frame>>(L, idx);
-			out = (T)lua_touserdata(L, idx);
-		}
+	struct SharedTFuncs<T, std::enable_if_t<std::is_same_v<std::decay_t<T>, xx::Shared<xx::Frame>>>> {
+		inline static luaL_Reg funcs[] = {
+			{"__tostring", xx::Lua::SharedFrame::__tostring},
+			//{"__eq", xx::Lua::SharedFrame::__eq},
+			// ... SetGLTexParm ?
+			{nullptr, nullptr}
+		};
 	};
 
 }
@@ -518,6 +557,7 @@ namespace xx::Lua::Engine {
 	inline void Register(lua_State* const& L) {
 		xx::Lua::Data::Register(L);
 		xx::Lua::Quad::Register(L);
+		xx::Lua::MakeUserdataWeakTable(L);
 		// ...
 
 		SetGlobalCClosure(L, "xxSearchPathAdd", [](auto L)->int {
@@ -638,10 +678,13 @@ void GameLooper::Init() {
 	fpsViewer.Init(fontBase);
 
 #ifdef RUN_LUA_CODE
+	MakeUserdataWeakTable(L);
 	xx::Lua::RegisterBaseEnv(L);
 	xx::Lua::Engine::Register(L);
+	xx::Lua::AssertTop(L, 0);
+
 	auto [data, fullpath] = xx::engine.LoadFileData("res/test3.lua");
-	xL::DoBuffer(L, data, fullpath);
+	xx::Lua::DoBuffer(L, data, fullpath);
 #else
 	tex = xx::engine.LoadSharedTexture("res/tree.pkm");
 	auto n = 100000;
@@ -654,7 +697,7 @@ void GameLooper::Init() {
 
 int GameLooper::Update() {
 #ifdef RUN_LUA_CODE
-	xL::CallGlobalFunc(L, "Update", xx::engine.delta);
+	//xx::Lua::CallGlobalFunc(L, "Update", xx::engine.delta);
 #else
 	//timePool += xx::engine.delta;
 	//while (timePool >= 1.f / 60) {
@@ -669,47 +712,49 @@ int GameLooper::Update() {
 }
 
 int main() {
-	//xx::Coros cs;
-	//for (size_t i = 0; i < 1000000; i++) {
-	//	cs.Add([]()->xx::Coro {
-	//		while (true) {
-	//			CoYield;
-	//		}
-	//	}());
-	//}
-	//auto secs = xx::NowEpochSeconds();
-	//for (size_t i = 0; i < 100; i++) {
-	//	cs();
-	//}
-	//xx::CoutN(xx::NowEpochSeconds(secs));
-
-	//return 0;
-
-
-
-
-	//lua_getglobal(_ls, LUA_LOADLIBNAME);
-	//if (!lua_istable(_ls, -1))
-	//	return;
-
-	//lua_getfield(_ls, -1, "searchers");
-	//if (!lua_istable(_ls, -1))
-	//	return;
-
-	//lua_pushvalue(_ls, -2);
-	//lua_pushcclosure(_ls, mysearcher, 1);
-	//lua_rawseti(_ls, -2, 5);
-	//lua_setfield(_ls, -2, "searchers");
-
-
-
-
-	// todo: 用 lua 弱表 cache sptr ud. key 为 sptr.value  value 为 ud
-	// 每次 push 时去查表 看是否存在。 如果是 空值 就直接压入 nil
-
-
-
-
 	auto g = std::make_unique<GameLooper>();
 	return g->Run("tests");
 }
+
+
+//xx::Coros cs;
+//for (size_t i = 0; i < 1000000; i++) {
+//	cs.Add([]()->xx::Coro {
+//		while (true) {
+//			CoYield;
+//		}
+//	}());
+//}
+//auto secs = xx::NowEpochSeconds();
+//for (size_t i = 0; i < 100; i++) {
+//	cs();
+//}
+//xx::CoutN(xx::NowEpochSeconds(secs));
+
+//return 0;
+
+
+
+// todo: package searcher
+
+
+//lua_getglobal(_ls, LUA_LOADLIBNAME);
+//if (!lua_istable(_ls, -1))
+//	return;
+
+//lua_getfield(_ls, -1, "searchers");
+//if (!lua_istable(_ls, -1))
+//	return;
+
+//lua_pushvalue(_ls, -2);
+//lua_pushcclosure(_ls, mysearcher, 1);
+//lua_rawseti(_ls, -2, 5);
+//lua_setfield(_ls, -2, "searchers");
+
+
+
+
+// todo: use lua weak table cache sptr ud. key = sptr.value, value = ud
+// push: find lua weak table。nullptr push nil/ return 0
+
+

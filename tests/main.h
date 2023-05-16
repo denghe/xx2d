@@ -2,12 +2,11 @@
 #include "xx2d.h"
 #include "xx2d_fps_viewer.h"
 #include <xx_lua_data.h>
-namespace xL = xx::Lua;
 
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fontBase, font3500;
 	xx::FpsViewer fpsViewer;
-	xL::State L;
+	xx::Lua::State L;
 
 	xx::Shared<xx::GLTexture> tex;
 	xx::ListDoubleLink<xx::Quad> quads;
