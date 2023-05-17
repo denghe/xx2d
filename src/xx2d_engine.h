@@ -11,6 +11,9 @@ namespace xx {
 		std::vector<std::string> searchPaths;
 		std::filesystem::path tmpPath;
 
+		// convert dir to search path format
+		static std::string ToSearchPath(std::string_view dir);
+
 		// add relative base dir to searchPaths
 		void SearchPathAdd(std::string_view dir, bool insertToFront = false);
 

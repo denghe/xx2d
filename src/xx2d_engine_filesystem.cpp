@@ -2,7 +2,7 @@
 
 namespace xx {
 
-	std::string ToSearchPath(std::string_view dir) {
+	std::string Engine::ToSearchPath(std::string_view dir) {
 		std::string s;
 
 		dir = xx::Trim(dir);
@@ -48,11 +48,9 @@ namespace xx {
 		}
 	}
 
-
 	void Engine::SearchPathReset() {
 		searchPaths.clear();
-		SearchPathAdd(std::filesystem::absolute("./").string());
-		rootPath = searchPaths[0];
+		searchPaths.push_back(rootPath);
 	}
 
 

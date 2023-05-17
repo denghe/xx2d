@@ -8,6 +8,7 @@ namespace xx {
 	void Engine::Init() {
 		nowSecs = xx::NowSteadyEpochSeconds();
 		delta = 0;
+		rootPath = ToSearchPath(std::filesystem::absolute("./").string());
 		SearchPathReset();
 	}
 
