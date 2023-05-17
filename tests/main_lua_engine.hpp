@@ -10,9 +10,26 @@ namespace xx::Lua::Engine {
 		xx::Lua::MakeUserdataWeakTable(L);
 		// ...
 
+		// set lua package.path by xx::engine.searchPaths
+		SetGlobalCClosure(L, "xxSearchPathSync", [](auto L)->int {
+			xx_assert(xx::engine.searchPaths.size());
+			tmpStr.clear();
+			for (size_t i = 0, e = xx::engine.searchPaths.size(); i < e; ++i) {
+				tmpStr.append(xx::engine.searchPaths[i]);
+				tmpStr.append("?.lua;");
+			}
+			tmpStr.pop_back();	// remove last ';'
+			xx::Lua::CheckStack(L, 3);
+			lua_getglobal(L, "package");											// ..., t
+			SetField(L, "path", tmpStr);
+			lua_pop(L, 1);															// ...
+			return 0;
+			});
+
 		SetGlobalCClosure(L, "xxSearchPathAdd", [](auto L)->int {
 			auto dir = To<std::string_view>(L);
-			xx::engine.SearchPathAdd(dir);
+			auto insertToFront = lua_gettop(L) > 1 ? To<bool>(L, 2) : false;
+			xx::engine.SearchPathAdd(dir, insertToFront);
 			return 0;
 			});
 

@@ -2,14 +2,14 @@
 
 namespace xx {
 
-	void Engine::SearchPathAdd(std::string_view dir) {
-		// prepare
+	std::string ToSearchPath(std::string_view dir) {
+		std::string s;
+
 		dir = xx::Trim(dir);
 		if (dir.empty())
 			throw std::logic_error("dir is empty");
 
 		// replace all \ to /, .\ or ./ to empty
-		auto& s = searchPaths.emplace_back();
 		for (size_t i = 0, siz = dir.size(); i < siz; i++) {
 			if (dir[i] == '.' && (dir[i + 1] == '\\' || dir[i + 1] == '/')) {
 				++i;
@@ -27,12 +27,32 @@ namespace xx {
 		if (s.back() != '/') {
 			s.push_back('/');
 		}
+
+		return s;
+	}
+
+	bool IsAbsolute(std::string_view const& s) {
+		return s[0] == '/' || (s.size() > 1 && s[1] == ':');
+	}
+
+	void Engine::SearchPathAdd(std::string_view dir, bool insertToFront) {
+		auto s = ToSearchPath(dir);
+		if (!IsAbsolute(s)) {
+			s.insert(0, rootPath);
+		}
+
+		if (insertToFront) {
+			searchPaths.insert(searchPaths.begin(), std::move(s));
+		} else {
+			searchPaths.push_back(std::move(s));
+		}
 	}
 
 
 	void Engine::SearchPathReset() {
 		searchPaths.clear();
 		SearchPathAdd(std::filesystem::absolute("./").string());
+		rootPath = searchPaths[0];
 	}
 
 
@@ -41,11 +61,11 @@ namespace xx {
 		fn = xx::Trim(fn);
 
 		// is absolute path?
-		if (fn[0] == '/' || (fn.size() > 1 && fn[1] == ':'))
+		if (IsAbsolute(fn))
 			return std::string(fn);
 
-		// search file. order by search paths desc
-		for (ptrdiff_t i = searchPaths.size() - 1; i >= 0; --i) {
+		// foreach search path find
+		for (size_t i = 0, e = searchPaths.size(); i < e; ++i) {
 #ifdef __ANDROID__
 			tmpPath = searchPaths[i];
 			tmpPath /= fn;

@@ -7,11 +7,12 @@ namespace xx {
 		/**********************************************************************************/
 		// file system
 
+		std::string rootPath;
 		std::vector<std::string> searchPaths;
 		std::filesystem::path tmpPath;
 
 		// add relative base dir to searchPaths
-		void SearchPathAdd(std::string_view dir);
+		void SearchPathAdd(std::string_view dir, bool insertToFront = false);
 
 		// search paths revert to default
 		void SearchPathReset();

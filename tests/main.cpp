@@ -107,10 +107,3 @@ int main() {
 //lua_rawseti(_ls, -2, 5);
 //lua_setfield(_ls, -2, "searchers");
 
-
-
-
-// todo: use lua weak table cache sptr ud. key = sptr.value, value = ud
-// push: find lua weak table。nullptr push nil/ return 0
-
-

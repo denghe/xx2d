@@ -1,24 +1,30 @@
 
 
 -- test package searchers
---[[
-function Update(delta) end
+----[[
+--print( package )
+--print( package.searchpath )
 
-print( package )
+xxSearchPathAdd("res", true)
+xxSearchPathSync()
+print( package.path )
+
+require "test3_1"
+require "scripts.test3_2"
 
 --for k, v in pairs(package) do
 --	print (k, v)
 --end
 
-for k, v in pairs(package.searchers) do
-	print (k, v)
-end
+--for k, v in pairs(package.searchers) do
+--	print (k, v)
+--end
 
-]]
+--]]
 
 
 -- test unique userdata
-----[[
+--[[
 local tex = xxLoadSharedTexture("res/tree.pkm")
 print(tex)
 local q = xxQuad():SetTexture( tex )
