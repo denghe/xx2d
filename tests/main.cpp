@@ -1,8 +1,9 @@
 ﻿#include "main.h"
 
+using LuaState = decltype(GameLooper::L);
+
 namespace xx::Lua {
 	std::string tmpStr;
-	int luaWeakTableRefId{};
 
 	inline void MakeUserdataWeakTable(lua_State* L) {
 		// create weak table for userdata cache
@@ -11,15 +12,15 @@ namespace xx::Lua {
 		lua_createtable(L, 0, 1);												// ... t, mt
 		xx::Lua::SetField(L, "__mode", "v");									// ... t, mt { __mode = v }
 		lua_setmetatable(L, -2);												// ... t
-		luaWeakTableRefId = luaL_ref(L, LUA_REGISTRYINDEX);						// ...
+		LuaState::Extra(L) = luaL_ref(L, LUA_REGISTRYINDEX);					// ...
 		xx::Lua::AssertTop(L, 0);
 	}
 
 	// wt push to stack
 	inline void GetUserdataWeakTable(lua_State* L) {
-		assert(luaWeakTableRefId);
+		assert(LuaState::Extra(L));
 		CheckStack(L, 4);
-		lua_rawgeti(L, LUA_REGISTRYINDEX, luaWeakTableRefId);					// ..., wt
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaState::Extra(L));					// ..., wt
 	}
 
 	// store. value at top stack

@@ -392,18 +392,25 @@ namespace xx::Lua {
 		}
 
 		explicit State(lua_State* L) : L(L) {}
-
 		State(State const&) = delete;
-
 		State& operator=(State const&) = delete;
-
-		State(State&& o) noexcept : L(o.L) {
-			o.L = nullptr;
-		}
-
+		State(State&& o) noexcept : L(o.L) { o.L = nullptr; }
 		State& operator=(State&& o) noexcept {
 			std::swap(L, o.L);
 			return *this;
+		}
+	};
+
+	// 带扩展数据的 lua_State 的简单封装
+	template<typename T>
+	struct StateWithExtra : State {
+		using State::State;
+		T extra{};
+		explicit StateWithExtra(bool const& openLibs = true) : State(openLibs) {
+			memcpy(lua_getextraspace(L), &extra, sizeof(void*));
+		}
+		static T& Extra(lua_State* L) {
+			return *(T*)lua_getextraspace(L);
 		}
 	};
 

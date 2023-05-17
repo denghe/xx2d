@@ -6,7 +6,7 @@
 struct GameLooper : xx::GameLooperBase {
 	xx::BMFont fontBase, font3500;
 	xx::FpsViewer fpsViewer;
-	xx::Lua::State L;
+	xx::Lua::StateWithExtra<int> L;
 
 	xx::Shared<xx::GLTexture> tex;
 	xx::ListDoubleLink<xx::Quad> quads;

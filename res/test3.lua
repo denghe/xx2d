@@ -1,7 +1,6 @@
--- test unique userdata
 
 
-
+-- test package searchers
 --[[
 function Update(delta) end
 
@@ -18,10 +17,16 @@ end
 ]]
 
 
+-- test unique userdata
+----[[
 local tex = xxLoadSharedTexture("res/tree.pkm")
 print(tex)
 local q = xxQuad():SetTexture( tex )
 print(q)
-local tex2 = q:GetTexture()
-print(tex2)
-print(tex == tex2)
+local co = coroutine.create(function()
+	local tex2 = q:GetTexture()
+	print(tex2)
+	print(tex == tex2)
+end)
+coroutine.resume(co)
+--]]
