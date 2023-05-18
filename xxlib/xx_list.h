@@ -163,12 +163,18 @@ namespace xx {
 		template<typename...Args>
 		T& Emplace(Args&&...args) noexcept {
 			if (auto newBuf = ReserveBegin(len + 1)) {
-				*new (&newBuf[len]) T(std::forward<Args>(args)...);
+				new (&newBuf[len]) T(std::forward<Args>(args)...);
 				ReserveEnd(newBuf);
 				return newBuf[len++];
 			} else {
 				return *new (&buf[len++]) T(std::forward<Args>(args)...);
 			}
+		}
+
+		// only for T == Shared<?>
+		template<typename U = T, typename...Args>
+		U& EmplaceShared(Args&&...args) noexcept {
+			return Emplace().Emplace<typename U::ElementType>(std::forward<Args>(args)...);
 		}
 
 		template<typename ...TS>
