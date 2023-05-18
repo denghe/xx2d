@@ -443,7 +443,7 @@ namespace xx {
                 ((U*)o)->~U();
             };
         }
-        pointer = new(h + 1) U(std::forward<Args>(args)...);
+        pointer = (T*)new(h + 1) U(std::forward<Args>(args)...);
         return (Shared<U>&)*this;
     }
 
