@@ -18,6 +18,7 @@ namespace xx {
 		uint8_t paddingLeft{}, paddingTop{}, paddingRight{}, paddingBottom{};
 		int16_t fontSize{};
 		uint16_t lineHeight{};
+		std::string fullPath;	// for display
 
 		// load binary .fnt & texture from .fnt file
 		void Load(std::string_view const& fn);

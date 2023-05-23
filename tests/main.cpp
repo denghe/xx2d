@@ -8,6 +8,7 @@ using MyLuaState = decltype(GameLooper::L);
 #include "main_lua_shared_gltexture.hpp"
 #include "main_lua_shared_frame.hpp"
 #include "main_lua_quad.hpp"
+#include "main_lua_bmfont.hpp"
 #include "main_lua_engine.hpp"
 
 /*******************************************************************************************************************************/

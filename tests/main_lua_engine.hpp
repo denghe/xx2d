@@ -10,6 +10,9 @@ namespace xx::Lua::Engine {
 		xx::Lua::MakeUserdataWeakTable(L);
 		// ...
 
+		/**********************************************************************************/
+		// file system
+
 		// set lua package.path by xx::engine.searchPaths
 		SetGlobalCClosure(L, "xxSearchPathSync", [](auto L)->int {
 			xx_assert(xx::engine.searchPaths.size());
@@ -76,15 +79,17 @@ namespace xx::Lua::Engine {
 			return Push(L, xx::engine.DetectFileFormat(*d));
 			});
 
-		// ...
-		//BMFont LoadBMFont(std::string_view const& fn);
+		/**********************************************************************************/
+		// fonts
 
-		// ...
 
-		SetGlobalCClosure(L, "xxLoadSharedTexture", [](auto L)->int {
+		SetGlobalCClosure(L, "LoadBMFont", [](auto L)->int {
 			auto fn = To<std::string_view>(L);
-			return Push(L, xx::engine.LoadSharedTexture(fn));
+			return Push(L, xx::engine.LoadBMFont(fn));
 			});
+
+		/**********************************************************************************/
+		// texture & cache
 
 		// ...
 
