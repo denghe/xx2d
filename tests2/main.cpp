@@ -187,7 +187,7 @@ HRESULT UpdateInputState(/*HWND hDlg*/) noexcept {
         btnPressedStates = bs;
         auto d = secs - lastSeconds;
         lastSeconds = secs;
-        if (d > 0 && d < minInterval) {
+        if (d > 0.0001 && d < minInterval) {
             minInterval = d;
             std::cout << minInterval << std::endl;
         }
@@ -198,6 +198,8 @@ HRESULT UpdateInputState(/*HWND hDlg*/) noexcept {
 
 
 int main() {
+
+    std::cout << "Please press all joystick's buttons simultaneously more than one times. The program will output the shortest interval time ( seconds ). \r\nsource code: https://github.com/denghe/xx2d/blob/master/tests2/main.cpp" << std::endl;
 
 	if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)))
 		return -1;
