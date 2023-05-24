@@ -12,6 +12,17 @@ print( package.path )
 require "test3_1"
 require "scripts.test3_2"
 
+local fnt = xxLoadBMFont("res/font/3500+.fnt")
+--local fnt = xxBMFont()
+--fnt:Load("res/font/3500+.fnt")
+print(fnt)
+local fpsViewer = xxFpsViewer()
+print(fpsViewer)
+
+function Update()
+	fpsViewer:Draw(fnt)
+end
+
 --for k, v in pairs(package) do
 --	print (k, v)
 --end

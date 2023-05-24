@@ -219,7 +219,6 @@ int main() {
 
 void GameLooper::Init() {
 	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
-	fpsViewer.Init(fontBase);
 
 	monsters.EmplaceShared(*this);
 }
@@ -234,7 +233,7 @@ int GameLooper::Update() {
 		}
 	}
 
-	fpsViewer.Update();
+	fpsViewer.Draw(fontBase);
 	return 0;
 }
 

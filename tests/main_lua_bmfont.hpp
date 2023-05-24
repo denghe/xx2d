@@ -4,6 +4,10 @@
 
 namespace xx::Lua::BMFont {
 
+	inline void Register(lua_State* const& L, char const* const& keyName = "xxBMFont") {
+		SetGlobalCClosure(L, keyName, [](auto L)->int { return PushUserdata<xx::BMFont>(L); });
+	}
+
 	inline int __tostring(lua_State* L) {
 		auto& o = *To<xx::BMFont*>(L);
 		auto& s = tmpStr;
@@ -39,6 +43,7 @@ namespace xx::Lua::BMFont {
 		{"__tostring", __tostring},
 
 		{"Load", Load},
+
 		{"GetFullPath", GetFullPath},
 		{"GetFontSize", GetFontSize},
 		{"GetLineHeight", GetLineHeight},
@@ -60,7 +65,14 @@ namespace xx::Lua {
 			luaL_setfuncs(L, ::xx::Lua::BMFont::funcs, 0);
 		}
 	};
-
+	// push T | T&&
+	template<typename T>
+	struct PushToFuncs<T, std::enable_if_t<std::is_same_v<xx::BMFont, std::decay_t<T>>>> {
+		static constexpr int checkStackSize = 1;
+		static int Push_(lua_State* const& L, T&& in) {
+			return PushUserdata<xx::BMFont>(L, std::forward<T>(in));
+		}
+	};
 	// to T*
 	template<typename T>
 	struct PushToFuncs<T, std::enable_if_t<std::is_pointer_v<std::decay_t<T>> && std::is_same_v<xx::BMFont, std::decay_t<std::remove_pointer_t<std::decay_t<T>>>>>> {

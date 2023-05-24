@@ -59,7 +59,6 @@ void GameLooper::Init() {
 	xx::engine.imguiUpdate = [this] { ImGuiUpdate(); };
 
 	fnt = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
-	fpsViewer.Init(fnt, leftPanelWidth + margin * 2);
 
 	if (!FindFFMpegExe()) {
 		msg = "can't find ffmpeg.exe! please set system environt PATH & restart tool!";
@@ -84,7 +83,7 @@ int GameLooper::Update() {
 		contentViewer->Update();
 	}
 
-	fpsViewer.Update();
+	fpsViewer.Draw(fnt, leftPanelWidth + margin * 2);
 	return 0;
 }
 

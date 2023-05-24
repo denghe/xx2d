@@ -9,6 +9,7 @@ using MyLuaState = decltype(GameLooper::L);
 #include "main_lua_shared_frame.hpp"
 #include "main_lua_quad.hpp"
 #include "main_lua_bmfont.hpp"
+#include "main_lua_fpsviewer.hpp"
 #include "main_lua_engine.hpp"
 
 /*******************************************************************************************************************************/
@@ -30,12 +31,11 @@ xx::Coro GameLooper::QuadLogic() {
 #define RUN_LUA_CODE
 
 void GameLooper::Init() {
-	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
-	font3500 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
-	fpsViewer.Init(fontBase);
+	//fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
+	//font3500 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
 
 #ifdef RUN_LUA_CODE
-	MakeUserdataWeakTable(L);
+	xx::Lua::MakeUserdataWeakTable(L);
 	xx::Lua::RegisterBaseEnv(L);
 	xx::Lua::Engine::Register(L);
 	xx::Lua::AssertTop(L, 0);
@@ -54,7 +54,7 @@ void GameLooper::Init() {
 
 int GameLooper::Update() {
 #ifdef RUN_LUA_CODE
-	//xx::Lua::CallGlobalFunc(L, "Update", xx::engine.delta);
+	xx::Lua::CallGlobalFunc(L, "Update", xx::engine.delta);
 #else
 	//timePool += xx::engine.delta;
 	//while (timePool >= 1.f / 60) {
@@ -64,14 +64,19 @@ int GameLooper::Update() {
 	quads.Foreach([&](auto& o) { o.Draw(); });
 #endif
 
-	fpsViewer.Update();
+	//fpsViewer.Draw(fontBase);
 	return 0;
 }
+
+
+
 
 int main() {
 	auto g = std::make_unique<GameLooper>();
 	return g->Run("tests");
 }
+
+
 
 
 //xx::Coros cs;

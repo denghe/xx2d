@@ -40,7 +40,6 @@ void GameLooper::AfterGLInit() {
 	fb.Init();
 
 	fnt = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
-	fpsViewer.Init(fnt, leftPanelWidth + margin * 2);
 
 	lsPoint.FillCirclePoints({}, pointRadius, {}, 16);
 
@@ -141,7 +140,7 @@ int GameLooper::Update() {
 	if (!msg.has_value() && !exporting) {
 		if (int r = UpdateLogic()) return r;
 	}
-	fpsViewer.Update();
+	fpsViewer.Draw(fnt, leftPanelWidth + margin * 2);
 	return 0;
 }
 

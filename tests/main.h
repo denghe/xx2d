@@ -4,8 +4,8 @@
 #include <xx_lua_data.h>
 
 struct GameLooper : xx::GameLooperBase {
-	xx::BMFont fontBase, font3500;
-	xx::FpsViewer fpsViewer;
+	//xx::BMFont fontBase, font3500;
+	//xx::FpsViewer fpsViewer;
 	xx::Lua::StateWithExtra<int> L;
 
 	xx::Shared<xx::GLTexture> tex;

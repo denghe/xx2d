@@ -7,7 +7,8 @@ namespace xx::Lua::Engine {
 	inline void Register(lua_State* const& L) {
 		xx::Lua::Data::Register(L);
 		xx::Lua::Quad::Register(L);
-		xx::Lua::MakeUserdataWeakTable(L);
+		xx::Lua::BMFont::Register(L);
+		xx::Lua::FpsViewer::Register(L);
 		// ...
 
 		/**********************************************************************************/
@@ -63,7 +64,7 @@ namespace xx::Lua::Engine {
 			return 0;
 			});
 
-		SetGlobalCClosure(L, "LoadFileData", [](auto L)->int {
+		SetGlobalCClosure(L, "xxLoadFileData", [](auto L)->int {
 			auto fn = To<std::string_view>(L);
 			if (lua_gettop(L) > 1) {
 				auto autoDecompress = To<bool>(L, 2);
@@ -74,7 +75,7 @@ namespace xx::Lua::Engine {
 			return 0;
 			});
 
-		SetGlobalCClosure(L, "DetectFileFormat", [](auto L)->int {
+		SetGlobalCClosure(L, "xxDetectFileFormat", [](auto L)->int {
 			auto d = To<xx::Data*>(L);
 			return Push(L, xx::engine.DetectFileFormat(*d));
 			});
@@ -83,7 +84,7 @@ namespace xx::Lua::Engine {
 		// fonts
 
 
-		SetGlobalCClosure(L, "LoadBMFont", [](auto L)->int {
+		SetGlobalCClosure(L, "xxLoadBMFont", [](auto L)->int {
 			auto fn = To<std::string_view>(L);
 			return Push(L, xx::engine.LoadBMFont(fn));
 			});
