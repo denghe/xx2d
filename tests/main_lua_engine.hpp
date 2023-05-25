@@ -9,6 +9,7 @@ namespace xx::Lua::Engine {
 		xx::Lua::Quad::Register(L);
 		xx::Lua::BMFont::Register(L);
 		xx::Lua::FpsViewer::Register(L);
+		xx::Lua::SimpleLabel::Register(L);
 		// ...
 
 		/**********************************************************************************/

@@ -8,12 +8,12 @@ struct GameLooper : xx::GameLooperBase {
 	//xx::FpsViewer fpsViewer;
 	xx::Lua::StateWithExtra<int> L;
 
-	xx::Shared<xx::GLTexture> tex;
-	xx::ListDoubleLink<xx::Quad> quads;
-	xx::Coros coros;
-	double timePool{};
-	xx::Coro QuadLogic();
+	//xx::Shared<xx::GLTexture> tex;
+	//xx::ListDoubleLink<xx::Quad> quads;
+	//xx::Coros coros;
+	//double timePool{};
+	//xx::Coro QuadLogic();
 
-	void Init() override;
+	void AfterGLInit() override;
 	int Update() override;
 };

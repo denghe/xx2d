@@ -20,6 +20,7 @@ namespace xx {
 		Quad& SetPosition(XY const& p);
 		Quad& SetPositionX(float const& x);
 		Quad& SetPositionY(float const& y);
+
 		Quad& AddPosition(XY const& p);
 		Quad& AddPositionX(float const& x);
 		Quad& AddPositionY(float const& y);

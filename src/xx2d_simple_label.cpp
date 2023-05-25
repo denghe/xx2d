@@ -81,6 +81,19 @@ namespace xx {
 		return *this;
 	}
 
+	SimpleLabel& SimpleLabel::AddPosition(XY const& p) {
+		pos += p;
+		return *this;
+	}
+	SimpleLabel& SimpleLabel::AddPositionX(float const& x) {
+		pos.x += x;
+		return *this;
+	}
+	SimpleLabel& SimpleLabel::AddPositionY(float const& y) {
+		pos.y += y;
+		return *this;
+	}
+
 	SimpleLabel& SimpleLabel::SetColor(RGBA8 const& c) {
 		color = c;
 		for (auto& ch : chars) {
@@ -89,6 +102,14 @@ namespace xx {
 		return *this;
 	}
 	SimpleLabel& SimpleLabel::SetColorA(uint8_t const& a) {
+		color.a = a;
+		for (auto& c : chars) {
+			c.color.a = a;
+		}
+		return *this;
+	}
+	SimpleLabel& SimpleLabel::SetColorAf(float const& a_) {
+		uint8_t a = a_ * 255;
 		color.a = a;
 		for (auto& c : chars) {
 			c.color.a = a;
@@ -104,6 +125,11 @@ namespace xx {
 	SimpleLabel& SimpleLabel::SetColorA(uint8_t const& a, size_t const& i) {
 		assert(chars.size());
 		chars[i].color.a = a;
+		return *this;
+	}
+	SimpleLabel& SimpleLabel::SetColorAf(float const& a, size_t const& i) {
+		assert(chars.size());
+		chars[i].color.a = a * 255;
 		return *this;
 	}
 
