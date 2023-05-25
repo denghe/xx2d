@@ -187,7 +187,7 @@ HRESULT UpdateInputState(/*HWND hDlg*/) noexcept {
         btnPressedStates = bs;
         auto d = secs - lastSeconds;
         lastSeconds = secs;
-        if (d > 0.0001 && d < minInterval) {
+        if (d > 0.001 && d < minInterval) {
             minInterval = d;
             std::cout << minInterval << std::endl;
         }
