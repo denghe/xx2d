@@ -93,6 +93,13 @@ namespace xx::Lua::Engine {
 		/**********************************************************************************/
 		// texture & cache
 
+
+		SetGlobalCClosure(L, "xxLoadSharedTexture", [](auto L)->int {
+			auto fn = To<std::string_view>(L);
+			return Push(L, xx::engine.LoadSharedTexture(fn));
+			});
+		
+
 		// ...
 
 		SetGlobalCClosure(L, "xxRndNextFloat", [](auto L)->int {
@@ -122,6 +129,11 @@ namespace xx::Lua::Engine {
 			});
 
 		// ...
+
+		SetGlobalCClosure(L, "xxDelta", [](auto L)->int {
+			return Push(L, xx::engine.delta);
+		});
+
 	}
 
 }
