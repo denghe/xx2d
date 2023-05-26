@@ -7,11 +7,28 @@ xxSearchPathAdd("res", true)
 xxSearchPathSync()
 print(package.path)
 
--- frame delay const declare
-local frameDelaySeconds = 1 / 60
+
+-- consts
+M_PI = 3.14159265358979323846
+frameDelaySeconds = 1 / 60
+
+
+-- utils
+
+-- for(kv : t) if (f(kv)) del(t)
+function Foreach(t, f)
+	local n = #t
+	if n == 0 then return end
+	for i = n, 1, -1 do
+		if (f(t[i])) then
+			table.remove(t, i)
+		end
+	end
+end
+
 
 -- Scene metatable
-local Scene = {}
+Scene = {}
 Scene.__index = Scene
 Scene.Make = function()
 	local t = {}
@@ -19,14 +36,14 @@ Scene.Make = function()
 	return t
 end
 
-Scene.Init = function()
+Scene.Init = function(self)
 	self.tex = xxLoadSharedTexture("res/mouse.pkm")
 	self.ms = {}
 	self.timePool = 0
 	self.radians = 0
 end
 
-Scene.Update = function()
+Scene.Update = function(self)
 	local fds = frameDelaySeconds
 	local tp = self.timePool + xxDelta()
 	local ms = self.ms
@@ -34,21 +51,31 @@ Scene.Update = function()
 		tp = tp - fds
 
 		local r = self.radians
-		for i = 1, 100 do
+		for i = 1, 50 do
 			r = r + 0.005
+
 			local m = Mouse.Make()
-			m.Init(self, 0, 0, r, 1)
+			m:Init(self, 0, 0, r)
 			table.insert(ms, m)
+
 		end
 		self.radians = r
 
+		Foreach(ms, function(m)
+			return m:Update()
+		end)
+
 	end
 	self.timePool = tp
+
+	Foreach(ms, function(m)
+		m:Draw()
+	end)
 end
 
 
 -- Mouse metatable
-local Mouse = {}
+Mouse = {}
 Mouse.__index = Mouse
 Mouse.Make = function()
 	local t = {}
@@ -56,34 +83,61 @@ Mouse.Make = function()
 	return t
 end
 
-Mouse.Init = function(............)
+Mouse.Init = function(self, owner, posX, posY, radians, scale, colorR, colorG, colorB, colorA)
+	scale = scale or 1
+	colorR = colorR or 255
+	colorG = colorG or 255
+	colorB = colorB or 255
+	colorA = colorA or 255
+	local body = xxQuad()
+		:SetTexture(owner.tex)
+		:SetPosition(posX, posY)
+		:SetScale(scale)
+		:SetRotate(-radians + M_PI / 2)
+		:SetColor(colorR, colorG, colorB, colorA)
+	local r = body:GetRotate()
+	self.body = body
+	self.baseIncX = math.sin(r) * 2
+	self.baseIncY = math.cos(r) * 2
 end
 
-Mouse.Update = function()
+Mouse.Update = function(self)
+	local body = self.body
+	body:AddPosition(self.baseIncX, self.baseIncY)
+	local posX, posY = body:GetPosition()
+	if (posX * posX > (1800 / 2) * (1800 / 2)
+		or posY * posY > (1000 / 2) * (1000 / 2)) then
+		return true
+	end
+end
+
+Mouse.Draw = function(self)
+	local body = self.body
+	local r,g,b,a = body:GetColor()	-- bak
+	body:AddPosition(3, 3):SetColor(255,127,127,127):Draw()	-- shadow
+	body:AddPosition(-3, -3):SetColor(r,g,b,a):Draw()
 end
 
 
+
+-- logic
 local fnt = xxLoadBMFont("res/font/3500+.fnt")
-print(fnt)
-
 local fpsViewer = xxFpsViewer()
-print(fpsViewer)
-
-local lbl = xxSimpleLabel()
-print(lbl)
-lbl:SetText(fnt, "hello")
-
-
-
-local Mouse = {}
-Mouse.Init = function()
-	
-end
+local scene = Scene.Make()
+scene:Init()
 
 function Update()
-	lbl:Draw()
+	scene:Update()
 	fpsViewer:Draw(fnt)
 end
 
 
 print("test3.lua end")
+
+--[[
+local lbl = xxSimpleLabel()
+print(lbl)
+lbl:SetText(fnt, "hello")
+
+lbl:Draw()
+]]

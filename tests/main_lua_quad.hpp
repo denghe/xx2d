@@ -202,6 +202,7 @@ namespace xx::Lua::Quad {
 		{"GetPosition", GetPosition},
 		{"GetAnchor", GetAnchor},
 		{"GetScale", GetScale},
+		{"GetRotate", GetRadians},
 		{"GetRadians", GetRadians},
 		{"GetColor", GetColor},
 		{"GetTexRect", GetTexRect},

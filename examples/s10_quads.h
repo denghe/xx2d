@@ -7,7 +7,7 @@ namespace Quads {
 	struct Mouse {
 		xx::Quad body;
 		xx::XY baseInc{};
-		void Init(Scene* owner, xx::XY const& pos, float const& radians, float const& scale, xx::RGBA8 const& color = { 255,255,255,255 });
+		void Init(Scene* owner, xx::XY const& pos, float const& radians, float const& scale = 1, xx::RGBA8 const& color = { 255,255,255,255 });
 		int Update();
 		void Draw();
 	};
