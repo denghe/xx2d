@@ -141,3 +141,140 @@ lbl:SetText(fnt, "hello")
 
 lbl:Draw()
 ]]
+
+
+
+--[[
+
+cocos test code backup:
+
+
+AppDelegate.cpp:
+
+        glView = GLViewImpl::createWithRect(
+            "HelloCpp", ax::Rect(0, 0, 1800, 1000));
+    // Set the design resolution
+    glView->setDesignResolutionSize(1800, 1000, ResolutionPolicy::NO_BORDER);
+
+
+HelloWorldScene.h:
+
+#ifndef __HELLOWORLD_SCENE_H__
+#define __HELLOWORLD_SCENE_H__
+
+#include "axmol.h"
+#include "xx_helpers.h"
+#include "xx_listlink.h"
+
+class HelloWorld;
+struct Mouse {
+    std::shared_ptr<ax::Sprite> body, shadow;
+	ax::Vec2 baseInc{};
+    void Init(HelloWorld* owner,
+              ax::Vec2 const& pos,
+              float radians,
+              float const& scale     = 1,
+              ax::Color4B const& color = {255, 255, 255, 255});
+	int Update();
+};
+
+class HelloWorld : public ax::Scene
+{
+public:
+    virtual bool init() override;
+
+    // a selector callback
+    void menuCloseCallback(Ref* sender);
+
+    virtual void update(float delta) override;
+
+    ax::Node* container;
+    ax::Texture2D* tex;
+    xx::ListLink<Mouse> ms;
+    float timePool{}, radians{};
+};
+
+#endif  // __HELLOWORLD_SCENE_H__
+
+
+
+HelloWorldScene.cpp:
+
+#include "HelloWorldScene.h"
+
+bool HelloWorld::init() {
+    if (!Scene::init()) return false;
+
+    container = ax::Node::create();
+    container->setPosition({1800 / 2, 1000 / 2});
+    this->addChild(container);
+
+    tex = ax::Director::getInstance()->getTextureCache()->addImage("mouse.pkm");
+    scheduleUpdate();
+    return true;
+}
+
+void HelloWorld::update(float delta) {
+    timePool += delta;
+    while (timePool >= 1.f / 60) {
+        timePool -= 1.f / 60;
+
+        for (size_t i = 0; i < 50; i++) {
+            radians += 0.005f;
+            ms.Emplace().Init(this, {}, radians);
+        }
+
+        ms.Foreach([](auto& m) -> bool { return m.Update(); });
+    }
+}
+
+void SpriteRmoveFunc(ax::Sprite* s) {
+    s->removeFromParentAndCleanup(true);
+}
+
+void Mouse::Init(HelloWorld* owner,
+                 ax::Vec2 const& pos,
+                 float radians,
+                 float const& scale,
+                 ax::Color4B const& color)
+{
+    auto angle = (radians - M_PI / 2) * 180.f / M_PI;
+
+    auto s = ax::Sprite::createWithTexture(owner->tex);
+    s->setPosition(pos + ax::Vec2{3, 3});
+    s->setScale(scale);
+    s->setRotation(angle);
+    s->setColor({255, 127, 127});
+    s->setOpacity(127);
+    s->setGlobalZOrder(-radians);
+    owner->container->addChild(s);
+    shadow = std::shared_ptr<ax::Sprite>(s, SpriteRmoveFunc);
+
+    s = ax::Sprite::createWithTexture(owner->tex);
+    s->setPosition(pos);
+    s->setScale(scale);
+    s->setRotation(angle);
+    s->setColor({color.r, color.g, color.b});
+    s->setOpacity(color.a);
+    s->setGlobalZOrder(-radians - 0.001f);
+    owner->container->addChild(s);
+    body = std::shared_ptr<ax::Sprite>(s, SpriteRmoveFunc);
+
+    radians += M_PI / 2;
+    baseInc = {std::sin(radians), std::cos(radians)};
+    baseInc *= 2;
+}
+
+int Mouse::Update()
+{
+    auto pos = body->getPosition() + baseInc;
+    body->setPosition(pos);
+    if (pos.x * pos.x > (1800 / 2) * (1800 / 2) || pos.y * pos.y > (1000 / 2) * (1000 / 2))
+        return 1;
+    shadow->setPosition(pos + ax::Vec2{3, 3});
+
+    return 0;
+}
+
+
+]]

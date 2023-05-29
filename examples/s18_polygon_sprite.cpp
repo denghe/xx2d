@@ -42,9 +42,9 @@ namespace PolygonSpriteTest {
 		while (timePool >= 1.f / 60) {
 			timePool -= 1.f / 60;
 
-			for (size_t i = 0; i < 100; i++) {
+			for (size_t i = 0; i < 50; i++) {
 				radians += 0.005;
-				ts.Emplace().Init(this, {}, radians, 0.1);
+				ts.Emplace().Init(this, {}, radians, 0.05);
 			}
 
 			ts.Foreach([](auto& m) {

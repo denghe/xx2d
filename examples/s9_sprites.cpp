@@ -41,7 +41,7 @@ namespace Sprites {
 		while (timePool >= 1.f / 60) {
 			timePool -= 1.f / 60;
 
-			for (size_t i = 0; i < 100; i++) {
+			for (size_t i = 0; i < 50; i++) {
 				radians += 0.005;
 				ms.Emplace().Init(this, {}, radians, 1);
 			}
