@@ -1,4 +1,7 @@
 ﻿#pragma once
+#ifndef XX2D_TESTS_MAIN_H_
+#define XX2D_TESTS_MAIN_H_
+
 #include "xx2d.h"
 #include "xx2d_fps_viewer.h"
 #include <xx_lua_data.h>
@@ -17,3 +20,5 @@ struct GameLooper : xx::GameLooperBase {
 	void AfterGLInit() override;
 	int Update() override;
 };
+
+#endif

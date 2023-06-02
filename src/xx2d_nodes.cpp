@@ -1,5 +1,4 @@
 ﻿#include "xx2d.h"
-#include "xx2d_nodes.h"
 
 namespace xx {
 

@@ -102,15 +102,15 @@ if(MSVC)	# vs2022+
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 else()
-#	set_property(TARGET ${name} PROPERTY INTERPROCEDURAL_OPTIMIZATION
-#		$<$<CONFIG:Release>:True>
-#		$<$<CONFIG:RelWithDebInfo>:True>
-#		$<$<CONFIG:MinRelSize>:True>
-#		$<$<CONFIG:Debug>:False>)
+	set_property(TARGET ${name} PROPERTY INTERPROCEDURAL_OPTIMIZATION
+		$<$<CONFIG:Release>:True>
+		$<$<CONFIG:RelWithDebInfo>:True>
+		$<$<CONFIG:MinRelSize>:True>
+		$<$<CONFIG:Debug>:False>)
 
-#	target_precompile_headers(${name}
-#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/src/xx2d.h>
-#	)
+	target_precompile_headers(${name}
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/src/xx2d.h>
+	)
 endif()
 
 
@@ -222,9 +222,15 @@ if(MSVC)	# vs2022+
 	set_target_properties(examples PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 else()
-#	target_precompile_headers(examples
-#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/examples/main.h>
-#	)
+	set_property(TARGET examples PROPERTY INTERPROCEDURAL_OPTIMIZATION
+			$<$<CONFIG:Release>:True>
+			$<$<CONFIG:RelWithDebInfo>:True>
+			$<$<CONFIG:MinRelSize>:True>
+			$<$<CONFIG:Debug>:False>)
+
+	target_precompile_headers(examples
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/examples/main.h>
+	)
 endif()
 
 
@@ -276,9 +282,15 @@ if(MSVC)	# vs2022+
 
 	set_target_properties(tests PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 else()
-#	target_precompile_headers(tests
-#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tests/main.h>
-#	)
+	set_property(TARGET tests PROPERTY INTERPROCEDURAL_OPTIMIZATION
+		$<$<CONFIG:Release>:True>
+		$<$<CONFIG:RelWithDebInfo>:True>
+		$<$<CONFIG:MinRelSize>:True>
+		$<$<CONFIG:Debug>:False>)
+
+	target_precompile_headers(tests
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tests/main.h>
+	)
 endif()
 
 
@@ -331,9 +343,15 @@ if(MSVC)	# vs2022+
 
 	set_target_properties(tests2 PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 else()
-#	target_precompile_headers(tests2
-#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tests2/main.h>
-#	)
+	set_property(TARGET tests2 PROPERTY INTERPROCEDURAL_OPTIMIZATION
+			$<$<CONFIG:Release>:True>
+			$<$<CONFIG:RelWithDebInfo>:True>
+			$<$<CONFIG:MinRelSize>:True>
+			$<$<CONFIG:Debug>:False>)
+
+	target_precompile_headers(tests2
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tests2/main.h>
+	)
 endif()
 
 
@@ -375,9 +393,15 @@ if(MSVC)	# vs2022+
 
 	set_target_properties(tools_movepath_editor PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 else()
-#	target_precompile_headers(tools_movepath_editor
-#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/movepath_editor/main.h>
-#	)
+	set_property(TARGET tools_movepath_editor PROPERTY INTERPROCEDURAL_OPTIMIZATION
+			$<$<CONFIG:Release>:True>
+			$<$<CONFIG:RelWithDebInfo>:True>
+			$<$<CONFIG:MinRelSize>:True>
+			$<$<CONFIG:Debug>:False>)
+
+	target_precompile_headers(tools_movepath_editor
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/movepath_editor/main.h>
+	)
 endif()
 
 
@@ -421,7 +445,13 @@ if(MSVC)	# vs2022+
 
 	set_target_properties(tools_pngs2webm PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 else()
-#	target_precompile_headers(tools_pngs2webm
-#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/pngs2webm/main.h>
-#	)
+	set_property(TARGET tools_pngs2webm PROPERTY INTERPROCEDURAL_OPTIMIZATION
+			$<$<CONFIG:Release>:True>
+			$<$<CONFIG:RelWithDebInfo>:True>
+			$<$<CONFIG:MinRelSize>:True>
+			$<$<CONFIG:Debug>:False>)
+
+	target_precompile_headers(tools_pngs2webm
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/pngs2webm/main.h>
+	)
 endif()

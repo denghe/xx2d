@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿#ifndef XX2D_SRC_XX2D_H_
+#define XX2D_SRC_XX2D_H_
 #pragma execution_character_set( "utf-8" )
 
 #include <xx_helpers.h>
@@ -59,3 +60,4 @@
 #include "xx2d_imgui.h"
 #endif
 // ...
+#endif
