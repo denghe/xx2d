@@ -111,6 +111,8 @@ else()
 	target_precompile_headers(${name}
 		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/src/xx2d.h>
 	)
+
+	target_compile_options(${name} PRIVATE -Wno-invalid-offsetof)
 endif()
 
 
@@ -172,7 +174,11 @@ include_directories(
 
 
 add_subdirectory(spine-runtimes/spine-cpp)
-
+target_compile_options(spine-cpp PRIVATE
+		-Wno-parentheses
+		-Wno-implicit-fallthrough
+		-Wno-type-limits
+		)
 
 ###########################################################################################################################################
 ###########################################################################################################################################
