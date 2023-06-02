@@ -102,10 +102,15 @@ if(MSVC)	# vs2022+
 	set_target_properties(${name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
 else()
-	#target_precompile_headers(${name}
-	#	PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/src/xx2d.h>
-	#)
-	#set_property(TARGET ${name} PROPERTY INTERPROCEDURAL_OPTIMIZATION True)	# todo: only for release?
+#	set_property(TARGET ${name} PROPERTY INTERPROCEDURAL_OPTIMIZATION
+#		$<$<CONFIG:Release>:True>
+#		$<$<CONFIG:RelWithDebInfo>:True>
+#		$<$<CONFIG:MinRelSize>:True>
+#		$<$<CONFIG:Debug>:False>)
+
+#	target_precompile_headers(${name}
+#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/src/xx2d.h>
+#	)
 endif()
 
 
@@ -216,6 +221,10 @@ if(MSVC)	# vs2022+
 
 	set_target_properties(examples PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
+else()
+#	target_precompile_headers(examples
+#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/examples/main.h>
+#	)
 endif()
 
 
@@ -266,7 +275,10 @@ if(MSVC)	# vs2022+
 	target_compile_options(tests PRIVATE $<$<PLATFORM_ID:Windows>:/Yumain.h>)
 
 	set_target_properties(tests PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-
+else()
+#	target_precompile_headers(tests
+#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tests/main.h>
+#	)
 endif()
 
 
@@ -318,7 +330,10 @@ if(MSVC)	# vs2022+
 	target_compile_options(tests2 PRIVATE $<$<PLATFORM_ID:Windows>:/Yumain.h>)
 
 	set_target_properties(tests2 PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-
+else()
+#	target_precompile_headers(tests2
+#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tests2/main.h>
+#	)
 endif()
 
 
@@ -350,12 +365,6 @@ target_link_libraries(tools_movepath_editor ${name} glfw imgui imguicpp pugixml 
 
 if(MSVC)	# vs2022+
 
-	target_link_options(tools_movepath_editor
-		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
-		PRIVATE $<$<CONFIG:Release>:/LTCG>
-		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
-	)
-
 	target_compile_options(tools_movepath_editor
 		PRIVATE $<$<PLATFORM_ID:Windows>:/std:c17>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
@@ -365,7 +374,10 @@ if(MSVC)	# vs2022+
 	target_compile_options(tools_movepath_editor PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>)
 
 	set_target_properties(tools_movepath_editor PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-
+else()
+#	target_precompile_headers(tools_movepath_editor
+#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/movepath_editor/main.h>
+#	)
 endif()
 
 
@@ -399,12 +411,6 @@ endif()
 
 if(MSVC)	# vs2022+
 
-	target_link_options(tools_pngs2webm
-		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
-		PRIVATE $<$<CONFIG:Release>:/LTCG>
-		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
-	)
-
 	target_compile_options(tools_pngs2webm
 		PRIVATE $<$<PLATFORM_ID:Windows>:/std:c17>
 		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
@@ -414,5 +420,8 @@ if(MSVC)	# vs2022+
 	target_compile_options(tools_pngs2webm PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>)
 
 	set_target_properties(tools_pngs2webm PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-
+else()
+#	target_precompile_headers(tools_pngs2webm
+#		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/pngs2webm/main.h>
+#	)
 endif()

@@ -174,7 +174,7 @@ namespace xx {
 		// only for T == Shared<?>
 		template<typename U = T, typename...Args>
 		U& EmplaceShared(Args&&...args) noexcept {
-			return Emplace().Emplace<typename U::ElementType>(std::forward<Args>(args)...);
+			return Emplace().template Emplace<typename U::ElementType>(std::forward<Args>(args)...);
 		}
 
 		template<typename ...TS>

@@ -80,7 +80,7 @@ namespace xx {
 			}
 			continue;
 		LabReturn:
-#ifdef __clang__
+#if defined(__clang__) or defined(__GNUC__)
 		{
 			auto tmp = tmpPath.u8string();
 			return std::move((std::string&)tmp);
@@ -117,7 +117,7 @@ namespace xx {
 
 	std::pair<xx::Data, std::string> Engine::LoadFileData(std::string_view const& fn, bool autoDecompress) {
 		auto p = GetFullPath(fn);
-		if (p.empty()) 
+		if (p.empty())
 			throw std::logic_error("fn can't find: " + std::string(fn));
 		auto d = LoadFileDataWithFullPath(p, autoDecompress);
 		return { std::move(d), std::move(p) };

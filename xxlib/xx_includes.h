@@ -170,8 +170,10 @@ inline void Sleep(int const& ms) {
 #endif
 
 #ifdef XX_DISABLE_ASSERT_IN_RELEASE
+#include <assert.h>
 #define xx_assert assert
 #else
+
 #ifdef NDEBUG
 #undef NDEBUG
 #define HAS_NDEBUG
@@ -185,6 +187,18 @@ inline void Sleep(int const& ms) {
             (!!(expression)) ||                                                              \
             (_wassert(_CRT_WIDE(#expression), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0) \
         )
+#elif defined(__GNUC__) and defined(__MINGW32__)
+#if defined(_UNICODE) || defined(UNICODE)
+#define xx_assert(_Expression) \
+ (void) \
+ ((!!(_Expression)) || \
+  (_wassert(_CRT_WIDE(#_Expression),_CRT_WIDE(__FILE__),__LINE__),0))
+#else /* not unicode */
+#define xx_assert(_Expression) \
+ (void) \
+ ((!!(_Expression)) || \
+  (_assert(#_Expression,__FILE__,__LINE__),0))
+#endif /* _UNICODE||UNICODE */
 #else
 #define xx_assert(expression) (void)(                                                        \
             (!!(expression)) ||                                                              \
@@ -192,7 +206,6 @@ inline void Sleep(int const& ms) {
         )
 #endif
 #endif
-
 
 #define XX_SIMPLE_STRUCT_DEFAULT_CODES(T)\
 T() = default;\

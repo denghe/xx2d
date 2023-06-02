@@ -6,6 +6,7 @@ example:
 using MyLuaState = decltype(GameLooper::L);
 #define RefWeakTableRefId(L) MyLuaState::Extra(L)
 */
+#include "xx_includes.h"    // xx_assert
 
 namespace xx::Lua {
 
