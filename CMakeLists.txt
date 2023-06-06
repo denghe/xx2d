@@ -176,11 +176,14 @@ include_directories(
 
 
 add_subdirectory(spine-runtimes/spine-cpp)
-target_compile_options(spine-cpp PRIVATE
+if(MSVC)
+else()
+	target_compile_options(spine-cpp PRIVATE
 		-Wno-parentheses
 		-Wno-implicit-fallthrough
 		-Wno-type-limits
 		)
+endif()
 
 ###########################################################################################################################################
 ###########################################################################################################################################
