@@ -1,5 +1,5 @@
 ﻿#include "xx2d.h"
-#ifndef __ANDROID__		// todo
+#if defined(_MSC_VER)		// todo
 #include <vpx_decoder.h>
 #include <vp8dx.h>
 #include <ebml_parser.h>

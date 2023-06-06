@@ -254,7 +254,7 @@ void GameLooper::ReloadFiles() {
 	if (!std::filesystem::exists(res) || !std::filesystem::is_directory(res)) {
 		FillDefaultResPath();
 	} else {
-		resPath = (std::string&)std::filesystem::absolute(res).u8string();
+		resPath = xx::U8AsString(std::filesystem::absolute(res).u8string());
 		if (resPath.back() != '\\' && resPath.back() != '/') {
 			resPath += '\\';
 		}
@@ -268,7 +268,7 @@ void GameLooper::ReloadFiles() {
 		auto oStr = std::filesystem::absolute(o).u8string();
 		auto subStr = std::u8string_view(oStr).substr(res.size());
 		if (subStr.starts_with(prefix)) {
-			files.push_back((std::string&)oStr.substr(res.size()));
+			files.push_back(xx::U8AsString(oStr.substr(res.size())));
 		}
 	}
 
@@ -707,7 +707,7 @@ void GameLooper::DrawSelectedFile() {
 		xx::Append(info, ", content type: xxmv");
 		auto v = xx::Make<ContentViewer_Webm>();
 		contentViewer = v;
-		v->Init(this, d, (std::string&)fullPath.u8string(), std::move(info));
+		v->Init(this, d, xx::U8AsString(fullPath.u8string()), std::move(info));
 		break;
 	}
 	case xx::SupportedFileFormats::Pkm2:
@@ -718,7 +718,7 @@ void GameLooper::DrawSelectedFile() {
 		xx::Append(info, ", content type: astc");
 		auto v = xx::Make<ContentViewer_Pic>();
 		contentViewer = v;
-		v->Init(this, d, (std::string&)fullPath.u8string(), std::move(info));
+		v->Init(this, d, xx::U8AsString(fullPath.u8string()), std::move(info));
 		break;
 	}
 	case xx::SupportedFileFormats::Zstd:

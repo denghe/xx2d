@@ -80,14 +80,7 @@ namespace xx {
 			}
 			continue;
 		LabReturn:
-#if defined(__clang__) or defined(__GNUC__)
-		{
-			auto tmp = tmpPath.u8string();
-			return std::move((std::string&)tmp);
-		}
-#else
-			return (std::string&&)tmpPath.u8string();
-#endif
+			return xx::U8AsString(tmpPath.u8string());
 		}
 		// not found
 		return {};

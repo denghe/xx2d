@@ -66,8 +66,8 @@ namespace MainMenu {
 
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -xstep, y }, "19: space shooter", 32);
-		menus.emplace_back().Init(looper, { 0, y }, "20: particle", 32);
-		menus.emplace_back().Init(looper, { xstep, y }, "21: xxmv (vp9 webm)", 32);
+		menus.emplace_back().Init(looper, { 0, y }, "21: xxmv (vp9 webm)", 32);
+		menus.emplace_back().Init(looper, { xstep, y }, "20: particle", 32);
 
 		y -= yinc;
 		menus.emplace_back().Init(looper, { -xstep, y }, "22: action", 32);
@@ -142,9 +142,11 @@ namespace MainMenu {
 			} else if (txt.starts_with("19:"sv)) {
 				looper->DelaySwitchTo<SpaceShooter::Scene>();
 			} else if (txt.starts_with("20:"sv)) {
-				looper->DelaySwitchTo<ParticleTest::Scene>();
+#if defined(_MSC_VER)		// todo
+                looper->DelaySwitchTo<XxmvTest::Scene>();
+#endif
 			} else if (txt.starts_with("21:"sv)) {
-				looper->DelaySwitchTo<XxmvTest::Scene>();
+                looper->DelaySwitchTo<ParticleTest::Scene>();
 			} else if (txt.starts_with("22:"sv)) {
 				looper->DelaySwitchTo<ActionTest::Scene>();
 			} else if (txt.starts_with("23:"sv)) {

@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "main.h"
-
+#if defined(_MSC_VER)		// todo
 namespace XxmvTest {
 
 	struct Scene : SceneBase {
@@ -14,3 +14,4 @@ namespace XxmvTest {
 		float timePool{};
 	};
 }
+#endif

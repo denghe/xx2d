@@ -217,6 +217,16 @@ namespace xx {
         return s;
     }
 
+    template<typename T>
+    std::string const& U8AsString(T const& u8s) {
+        return (std::string const&)u8s;
+    }
+
+    template<typename T>
+    std::string U8AsString(T&& u8s) {
+        return (std::string&&)u8s;
+    }
+
 
     /************************************************************************************/
     // StringFuncs 继续适配各种常见数据类型

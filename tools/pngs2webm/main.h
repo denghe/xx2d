@@ -1,9 +1,7 @@
-﻿#pragma once
+﻿#ifndef XX2D_TOOLS_PNGS2WEBM_MAIN_H_
+#define XX2D_TOOLS_PNGS2WEBM_MAIN_H_
 #include "pch.h"
-#include "xx2d_fps_viewer.h"
 #include "imgui.h"
-
-
 
 struct GameLooper;
 struct ContentViewerBase {
@@ -71,3 +69,4 @@ struct GameLooper : xx::GameLooperBase {
 	void ZoomOut();
 	void ZoomIn();
 };
+#endif

@@ -1,6 +1,6 @@
 ﻿#include "main.h"
 #include "s20_xxmv.h"
-
+#if defined(_MSC_VER)		// todo
 namespace XxmvTest {
 
 	void Scene::Init(GameLooper* looper) {
@@ -56,3 +56,4 @@ namespace XxmvTest {
 		return 0;
 	}
 }
+#endif

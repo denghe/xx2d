@@ -1,6 +1,6 @@
-﻿#pragma once
+﻿#ifndef XX2D_TOOLS_MOVEPATH_MAIN_H_
+#define XX2D_TOOLS_MOVEPATH_MAIN_H_
 #include "pch.h"
-#include "xx2d_fps_viewer.h"
 #include "imgui.h"
 
 // data store file json structs
@@ -104,3 +104,4 @@ struct GameLooper : xx::GameLooperBase {
 	int SetKeyboardGCD();
 	void ClearEditState();
 };
+#endif

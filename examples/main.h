@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿#ifndef XX2D_EXAMPLES_MAIN_H_
+#define XX2D_EXAMPLES_MAIN_H_
 #include "xx2d.h"
 #include "xx2d_fps_viewer.h"
 
@@ -27,3 +28,4 @@ struct GameLooper : xx::GameLooperBase {
 	void Init() override;
 	int Update() override;
 };
+#endif
