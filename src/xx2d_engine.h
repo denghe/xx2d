@@ -64,7 +64,7 @@ namespace xx {
 
 
 		/**********************************************************************************/
-		// TP & frame cache( texture does not insert into textureCache )
+		// TP( texture packer ) & frame cache( texture does not insert into textureCache )
 
 		// key: frame key in plist( texture packer export .plist )
 		std::unordered_map<std::string, Shared<Frame>, StringHasher<>, std::equal_to<void>> frameCache;

@@ -99,6 +99,22 @@ namespace xx::Lua::Engine {
 			return Push(L, xx::engine.LoadSharedTexture(fn));
 			});
 		
+		SetGlobalCClosure(L, "xxLoadTextureFromCache", [](auto L)->int {
+			auto fn = To<std::string_view>(L);
+			return Push(L, xx::engine.LoadTextureFromCache(fn));
+			});
+		
+		SetGlobalCClosure(L, "xxUnloadTextureFromCache", [](auto L)->int {
+			auto fn = To<std::string_view>(L);
+			xx::engine.UnloadTextureFromCache(fn);
+			return 0;
+			});
+		
+		SetGlobalCClosure(L, "xxRemoveUnusedFromTextureCache", [](auto L)->int {
+			auto fn = To<std::string_view>(L);
+			return Push(L, xx::engine.RemoveUnusedFromTextureCache(fn));
+			});
+
 
 		// ...
 
