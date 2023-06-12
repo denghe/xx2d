@@ -32,7 +32,7 @@ namespace xx {
         Coro(Coro const& o) = delete;
         Coro& operator=(Coro const&) = delete;
         Coro(Coro&& o) noexcept : h(o.h) { o.h = nullptr; };
-        Coro& operator=(Coro&&) = delete;
+        Coro& operator=(Coro&& o) noexcept { std::swap(h, o.h); return *this; };
 
         void operator()() { h.resume(); }
         operator bool() { return h.done(); }

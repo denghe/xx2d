@@ -111,8 +111,7 @@ namespace xx::Lua::Engine {
 			});
 		
 		SetGlobalCClosure(L, "xxRemoveUnusedFromTextureCache", [](auto L)->int {
-			auto fn = To<std::string_view>(L);
-			return Push(L, xx::engine.RemoveUnusedFromTextureCache(fn));
+			return Push(L, xx::engine.RemoveUnusedFromTextureCache());
 			});
 
 

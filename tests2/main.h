@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "xx2d.h"
-#include "xx2d_fps_viewer.h"
 
 struct Monster;
 struct GameLooper : xx::GameLooperBase {
