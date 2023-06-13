@@ -4,56 +4,100 @@
 
 #include "main.h"
 
-struct Coro {
-    struct promise_type;
-    using H = std::coroutine_handle<promise_type>;
-    struct promise_type {
-        auto get_return_object() { return Coro(H::from_promise(*this)); }
-        std::suspend_never initial_suspend() { return {}; }
-        std::suspend_always final_suspend() noexcept(true) { return {}; }
-        std::suspend_always yield_value(int v) { return {}; }
-        void return_void() {}
-        void unhandled_exception() { std::rethrow_exception(std::current_exception()); }
-    };
-    H h;
-    Coro(H h = nullptr) : h(h) {}
-    ~Coro() { if (h) h.destroy(); }
-    Coro(Coro const& o) = delete;
-    Coro& operator=(Coro const&) = delete;
-    Coro(Coro&& o) noexcept : h(o.h) { o.h = nullptr; };
-    Coro& operator=(Coro&& o) noexcept { std::swap(h, o.h); return *this; };
-    bool operator()() { assert(h); h.resume(); return h.done(); }
-};
-#define Await( c_ ) { Coro c(c_); while(!c()) co_yield 0; }
+/************************************************************************************************************************/
+// simulate network
+/************************************************************************************************************************/
 
+// tips:
+// coro must be a struct's member or "static function"
+// owner can't move if captured "this"
 
-Coro Bar(bool& r, int n) {
-    for (size_t i = 0; i < n; i++) {
-        std::cout << "Bar update " << i << std::endl;
-        co_yield 0;
+template<typename Derived>
+struct PeerBase {
+
+    template<typename T>
+    void Receive(T&& data) {
+        recvs.push(std::forward<T>(data));
+        HandleReceive();
     }
-    r = true;
-}
 
-struct Foo {
-    Coro update = [](Foo* self)->Coro {
-        bool success{};
-        Await(Bar(success, 3));
-        if (success) {
-            std::cout << "Bar update success!" << std::endl;
+protected:
+    std::queue<std::string> recvs;
+
+    xx::Coro HandleReceive = HandleReceive_();
+    xx::Coro HandleReceive_() {
+        co_yield 0;
+        while (!recvs.empty()) {
+            ((Derived*)this)->ReceivePackage(std::move(recvs.front()));
+            recvs.pop();
+            co_yield 0;
         }
-    }(this);
+    }
+};
+
+struct Peer : PeerBase<Peer> {
+
+    template<typename T>
+    void ReceivePackage(T&& pkg) {
+        coros.Add(ReceivePackage_(std::forward<T>(pkg)));
+    }
+
+    bool Update() {
+        return coros();
+    }
+
+protected:
+    xx::Coros coros;
+
+    template<typename T>
+    xx::Coro ReceivePackage_(T pkg) {
+        std::cout << "begin handle pkg = " << pkg << std::endl;
+        co_yield 0;
+        std::cout << "end handle pkg = " << pkg << std::endl;
+    }
 };
 
 int main() {
-    Foo f;
-    while (true) {
-        if (f.update()) break;
+    Peer p;
+    for (size_t i = 0; i < 9; i++) {        // epoll wait ?
+        p.Receive(std::to_string(i));
     }
-
+    while (p.Update()) {}   // call logic code ?
 	return 0;
 }
 
+
+/************************************************************************************************************************/
+// basic test
+/************************************************************************************************************************/
+
+//Coro Bar(bool& r, int n) {
+//    for (size_t i = 0; i < n; i++) {
+//        std::cout << "Bar update " << i << std::endl;
+//        co_yield 0;
+//    }
+//    r = true;
+//}
+//
+//struct Foo {
+//    Coro update = [](Foo* self)->Coro {
+//        bool success{};
+//        Await(Bar(success, 3));
+//        if (success) {
+//            std::cout << "Bar update success!" << std::endl;
+//        }
+//    }(this);
+//};
+//
+//int main() {
+//    Foo f;
+//    while (true) {
+//        if (f.update()) break;
+//    }
+//
+//	return 0;
+//}
+//
 
 
 

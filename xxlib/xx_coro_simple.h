@@ -15,19 +15,17 @@ namespace xx {
 
     struct Coro {
         struct promise_type;
-        using handle_type = coroutine_handle<promise_type>;
+        using H = coroutine_handle<promise_type>;
         struct promise_type {
-            auto get_return_object() { return Coro(handle_type::from_promise(*this)); }
+            Coro get_return_object() { return { H::from_promise(*this) }; }
             suspend_never initial_suspend() { return {}; }
             suspend_always final_suspend() noexcept(true) { return {}; }
             suspend_always yield_value(int v) { return {}; }
             void return_void() {}
-            void unhandled_exception() {
-                std::rethrow_exception(std::current_exception());
-            }
+            void unhandled_exception() { std::rethrow_exception(std::current_exception()); }
         };
 
-        Coro(handle_type h) : h(h) {}
+        Coro(H h) : h(h) {}
         ~Coro() { if (h) h.destroy(); }
         Coro(Coro const& o) = delete;
         Coro& operator=(Coro const&) = delete;
@@ -38,9 +36,18 @@ namespace xx {
         operator bool() { return h.done(); }
         bool Resume() { h.resume(); return h.done(); }
 
-    private:
-        handle_type h;
+    protected:
+        H h;
     };
+
+
+#define CoType xx::Coro
+#define CoYield co_yield 0
+#define CoReturn co_return
+#define CoAwait( coType ) { auto&& c = coType; while(!c) { CoYield; c(); } }
+#define CoSleep( duration ) { auto tp = std::chrono::steady_clock::now() + duration; do { CoYield; } while (std::chrono::steady_clock::now() < tp); }
+#define CoDelay( times ) { for (int _ = 0; _ < times; ++_) CoYield; }
+
 
     template<>
     struct IsPod<Coro> : std::true_type {};
@@ -88,13 +95,6 @@ namespace xx {
         }
     };
 }
-
-#define CoType xx::Coro
-#define CoYield co_yield 0
-#define CoReturn co_return
-#define CoAwait( coType ) { auto&& c = coType; while(!c) { CoYield; c(); } }
-#define CoSleep( duration ) { auto tp = std::chrono::steady_clock::now() + duration; do { CoYield; } while (std::chrono::steady_clock::now() < tp); }
-#define CoDelay( times ) { for (int _ = 0; _ < times; ++_) CoYield; }
 
 /*
 
