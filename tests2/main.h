@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef XX2D_TESTS2_MAIN_H_
+#define XX2D_TESTS2_MAIN_H_
 #include "xx2d.h"
 
 struct Monster;
@@ -28,3 +30,4 @@ struct Monster {
 		}
 	}
 };
+#endif
