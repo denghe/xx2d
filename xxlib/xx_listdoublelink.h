@@ -6,29 +6,32 @@ namespace xx {
 	// double link + version's xx::ListLink but performance slowly 1/2
 	// Example at the bottom of the code
 
-	template<typename T, typename SizeType = ptrdiff_t, typename VersionType = size_t>
+    template<typename IndexType = ptrdiff_t, typename VersionType = size_t>
+    struct ListDoubleLinkIndexAndVersion {
+        IndexType index{ -1 };
+        VersionType version{ 0 };
+    };
+
+    template<typename T, typename IndexType = ptrdiff_t, typename VersionType = size_t>
 	struct ListDoubleLink {
 
 		struct Node {
-			SizeType next, prev;
+			IndexType next, prev;
 			VersionType version;
 			T value;
 		};
 
-		struct IndexAndVersion {
-			SizeType index{ -1 };
-			VersionType version{ 0 };
-		};
+		using IndexAndVersion =  ListDoubleLinkIndexAndVersion<IndexType, VersionType>;
 
 		Node* buf{};
-		SizeType cap{}, len{};
-		SizeType head{ -1 }, tail{ -1 }, freeHead{ -1 }, freeCount{};
+		IndexType cap{}, len{};
+		IndexType head{ -1 }, tail{ -1 }, freeHead{ -1 }, freeCount{};
 		VersionType version{};
 
 		ListDoubleLink() = default;
 		ListDoubleLink(ListDoubleLink const&) = delete;
 		ListDoubleLink& operator=(ListDoubleLink const&) = delete;
-		ListDoubleLink(ListDoubleLink&& o) {
+		ListDoubleLink(ListDoubleLink&& o) noexcept {
 			buf = o.buf;
 			cap = o.cap;
 			len = o.len;
@@ -44,7 +47,7 @@ namespace xx {
 			o.freeHead = -1;
 			o.freeCount = {};
 		}
-		ListDoubleLink& operator=(ListDoubleLink&& o) {
+		ListDoubleLink& operator=(ListDoubleLink&& o) noexcept {
 			std::swap(buf, o.buf);
 			std::swap(cap, o.cap);
 			std::swap(len, o.len);
@@ -58,7 +61,7 @@ namespace xx {
 			Clear<true>();
 		}
 
-		void Reserve(SizeType const& newCap) noexcept {
+		void Reserve(IndexType const& newCap) noexcept {
 			assert(newCap > 0);
 			if (newCap <= cap) return;
 			cap = newCap;
@@ -66,7 +69,7 @@ namespace xx {
 				buf = (Node*)realloc(buf, sizeof(Node) * newCap);
 			} else {
 				auto newBuf = (Node*)::malloc(newCap * sizeof(Node));
-				for (SizeType i = 0; i < len; ++i) {
+				for (IndexType i = 0; i < len; ++i) {
 					newBuf[i].prev = buf[i].prev;
 					newBuf[i].next = buf[i].next;
 					newBuf[i].version = buf[i].version;
@@ -93,7 +96,7 @@ namespace xx {
 		template<bool add_to_tail = true>
 		[[nodiscard]] T& AddCore() {
 
-			SizeType idx;
+			IndexType idx;
 			if (freeCount > 0) {
 				idx = freeHead;
 				freeHead = buf[idx].next;
@@ -145,18 +148,17 @@ namespace xx {
 			return *new (&AddCore<add_to_tail>()) U(std::forward<Args>(args)...);
 		}
 
-		bool Exists(SizeType const& idx) const {
+		bool Exists(IndexType const& idx) const {
 			assert(idx >= 0);
 			if (idx >= len) return false;
 			return buf[idx].version >= 0;
 		}
 		bool Exists(IndexAndVersion const& iv) const {
-			assert(iv.index >= 0);
-			if (iv.index >= len) return false;
+			if (iv.index < 0 || iv.index >= len) return false;
 			return buf[iv.index].version == iv.version;
 		}
 
-		void Remove(SizeType const& idx) {
+		void Remove(IndexType const& idx) {
 			assert(Exists(idx));
 
 			auto& node = buf[idx];
@@ -188,26 +190,31 @@ namespace xx {
 			return true;
 		}
 
-		IndexAndVersion ToIndexAndVersion(SizeType const& idx) const {
+		IndexAndVersion ToIndexAndVersion(IndexType const& idx) const {
 			return { idx, buf[idx].version };
 		}
 
-		SizeType Next(SizeType const& idx) const {
+		IndexType Next(IndexAndVersion const& iv) const {
+			assert(Exists(iv));
+			return buf[iv.index].next;
+		}
+
+		IndexType Next(IndexType const& idx) const {
 			assert(Exists(idx));
 			return buf[idx].next;
 		}
 
-		SizeType Prev(SizeType const& idx) const {
+		IndexType Prev(IndexType const& idx) const {
 			assert(Exists(idx));
 			return buf[idx].prev;
 		}
 
-		T const& At(SizeType const& idx) const {
+		T const& At(IndexType const& idx) const {
 			assert(Exists(idx));
 			return buf[idx].value;
 		}
 
-		T& At(SizeType const& idx) {
+		T& At(IndexType const& idx) {
 			assert(Exists(idx));
 			return buf[idx].value;
 		}
@@ -228,7 +235,7 @@ namespace xx {
 		void Clear() {
 
 			if (!cap) return;
-			if constexpr (IsPod_v<T>) {
+			if constexpr (!IsPod_v<T>) {
 				while (head >= 0) {
 					buf[head].value.~T();
 					head = buf[head].next;
@@ -249,12 +256,12 @@ namespace xx {
 			}
 		}
 
-		T const& operator[](SizeType const& idx) const noexcept {
+		T const& operator[](IndexType const& idx) const noexcept {
 			assert(Exists(idx));
 			return buf[idx].value;
 		}
 
-		T& operator[](SizeType const& idx) noexcept {
+		T& operator[](IndexType const& idx) noexcept {
 			assert(Exists(idx));
 			return buf[idx].value;
 		}
@@ -269,28 +276,31 @@ namespace xx {
 			return buf[iv.index].value;
 		}
 
-		SizeType Left() const {
+		IndexType Left() const {
 			return cap - len + freeCount;
 		}
 
-		SizeType Count() const {
+		IndexType Count() const {
 			return len - freeCount;
 		}
 
-		bool Empty() const {
+		[[nodiscard]] bool Empty() const {
 			return len - freeCount == 0;
 		}
 
 		// ll.Foreach( [&](auto& o) { o..... } );
 		// ll.Foreach( [&](auto& o)->bool { if ( o.... ) return ... } );
 		template<typename F>
-		void Foreach(F&& f) {
+		void Foreach(F&& f, IndexType beginIdx = -1) {
+            if (beginIdx == -1) {
+                beginIdx = head;
+            }
 			if constexpr (std::is_void_v<decltype(f(buf[0].value))>) {
-				for (auto idx = head; idx != -1; idx = Next(idx)) {
+				for (auto idx = beginIdx; idx != -1; idx = Next(idx)) {
 					f(buf[idx].value);
 				}
 			} else {
-				for (SizeType next, idx = head; idx != -1;) {
+				for (IndexType next, idx = beginIdx; idx != -1;) {
 					next = Next(idx);
 					if (f(buf[idx].value)) {
 						Remove(idx);
@@ -309,7 +319,7 @@ namespace xx {
 					f(buf[idx].value);
 				}
 			} else {
-				for (SizeType prev, idx = tail; idx != -1;) {
+				for (IndexType prev, idx = tail; idx != -1;) {
 					prev = Prev(idx);
 					if (f(buf[idx].value)) {
 						Remove(idx);
@@ -319,6 +329,9 @@ namespace xx {
 			}
 		}
 	};
+
+    template<typename T, typename IndexType, typename VersionType>
+    struct IsPod<ListDoubleLink<T, IndexType, VersionType>> : std::true_type {};
 }
 
 

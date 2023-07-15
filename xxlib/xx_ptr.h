@@ -70,7 +70,7 @@ namespace xx {
             return pointer->operator[](idx);
         }
 
-        [[maybe_unused]] [[nodiscard]] XX_INLINE explicit operator bool() const noexcept {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE operator bool() const noexcept {
             return pointer != nullptr;
         }
 
@@ -288,7 +288,7 @@ namespace xx {
             return h->typeId;
         }
 
-        [[maybe_unused]] [[nodiscard]] XX_INLINE explicit operator bool() const noexcept {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE operator bool() const noexcept {
             return h && h->sharedCount;
         }
 
@@ -296,6 +296,12 @@ namespace xx {
         [[maybe_unused]] [[nodiscard]] XX_INLINE T *pointer() const {
             return (T *) (h + 1);
         }
+
+        // unsafe
+        [[maybe_unused]] XX_INLINE void SetH(void* const& h_) {
+            h = (HeaderType*)h_;
+        }
+
 
         XX_INLINE void Reset() {
             if (h) {

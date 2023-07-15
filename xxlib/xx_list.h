@@ -31,6 +31,9 @@ namespace xx {
 			Clear(true);
 		}
 
+        bool Empty() const {
+            return !len;
+        }
 
 		void Reserve(SizeType const& cap_) noexcept {
 			if (auto newBuf = ReserveBegin(cap_)) {
@@ -160,6 +163,34 @@ namespace xx {
 			}
 		}
 
+        void SwapRemoveAt(SizeType const& idx) noexcept {
+            if (idx + 1 <= len) {
+                if constexpr (IsPod_v<T>) {
+                    ::memcpy(&buf[idx], &Back(), sizeof(T) );
+                } else {
+                    buf[idx] = std::move(Back());
+                }
+            }
+            PopBack();
+		}
+
+        XX_FORCE_INLINE void PopBack() {
+            assert(len);
+            --len;
+            if constexpr (!(std::is_standard_layout_v<T> && std::is_trivial_v<T>)) {
+                buf[len].~T();
+            }
+        }
+
+        XX_FORCE_INLINE T& Back() {
+            assert(len);
+            return buf[len-1];
+        }
+        XX_FORCE_INLINE T const& Back() const {
+            assert(len);
+            return buf[len-1];
+        }
+
 		template<typename...Args>
 		T& Emplace(Args&&...args) noexcept {
 			if (auto newBuf = ReserveBegin(len + 1)) {
@@ -216,8 +247,8 @@ namespace xx {
 			return SizeType(-1);
 		}
 
-		bool Exists(std::function<bool(T const& v)>&& cond) const noexcept {
-			if (!cond) return false;
+        template<typename Func>
+		bool Exists(Func&& cond) const noexcept {
 			for (SizeType i = 0; i < len; ++i) {
 				if (cond(buf[i])) return true;
 			}

@@ -21,7 +21,7 @@ namespace xx {
 		ListLink() = default;
 		ListLink(ListLink const&) = delete;
 		ListLink& operator=(ListLink const&) = delete;
-		ListLink(ListLink&& o) {
+		ListLink(ListLink&& o) noexcept {
 			buf = o.buf;
 			cap = o.cap;
 			len = o.len;
@@ -37,7 +37,7 @@ namespace xx {
 			o.freeHead = -1;
 			o.freeCount = {};
 		}
-		ListLink& operator=(ListLink&& o) {
+		ListLink& operator=(ListLink&& o) noexcept {
 			std::swap(buf, o.buf);
 			std::swap(cap, o.cap);
 			std::swap(len, o.len);
@@ -142,7 +142,7 @@ namespace xx {
 		void Clear() {
 
 			if (!cap) return;
-			if constexpr (IsPod_v<T>) {
+			if constexpr (!IsPod_v<T>) {
 				while (head >= 0) {
 					buf[head].value.~T();
 					head = buf[head].next;
@@ -179,7 +179,7 @@ namespace xx {
 			return len - freeCount;
 		}
 
-		bool Empty() const {
+		[[nodiscard]] bool Empty() const {
 			return len - freeCount == 0;
 		}
 
@@ -204,4 +204,7 @@ namespace xx {
 			}
 		}
 	};
+
+    template<typename T, typename SizeType, SizeType initCap>
+    struct IsPod<ListLink<T, SizeType, initCap>> : std::true_type {};
 }
