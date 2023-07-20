@@ -1,12 +1,12 @@
 
--- ²âÊÔ½á¹û£¬ 10 Íò¸ö quad, º¯Êı°æ 46 fps
+-- æµ‹è¯•ç»“æœï¼Œ 10 ä¸‡ä¸ª quad, å‡½æ•°ç‰ˆ 46 fps
 
 
 
 gTimePool = 0
 gDelta = 0.0166666666666667
 
--- ±» cpp Ã¿Ö¡µ÷ÓÃ
+-- è¢« cpp æ¯å¸§è°ƒç”¨
 function Update(delta)
 --	local tp = gTimePool
 --	tp = tp + delta
@@ -110,7 +110,7 @@ end
 gTimePool = 0
 gDelta = 0.0166666666666667
 
--- ±» cpp Ã¿Ö¡µ÷ÓÃ
+-- è¢« cpp æ¯å¸§è°ƒç”¨
 function Update(delta)
 
 --	local tp = gTimePool
