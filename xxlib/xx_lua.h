@@ -387,7 +387,8 @@ namespace xx::Lua {
     template<typename K, typename...VS>
     inline void SetFieldCClosure(lua_State* const& L, K&& k, lua_CFunction&& f, VS&&...upvalues) {
         CheckStack(L, 3 + CalcCheckStackSize<0, VS...>());
-        auto n = Push(L, std::forward<K>(k), std::forward<VS>(upvalues)...);    // ..., table, k, upvalues...
+        Push(L, std::forward<K>(k));                                            // ..., table, k
+        auto n = Push(L, std::forward<VS>(upvalues)...);                        // ..., table, k, upvalues...
         lua_pushcclosure(L, f, n);								                // ..., table, k, cfunc
         lua_rawset(L, -3);													    // ..., table,
     }
