@@ -130,9 +130,9 @@ namespace SpaceShooter {
 		void Init(GameLooper* looper) override;
 		int Update() override;
 
-		xx::Coro SceneLogic();
-		xx::Coro SceneLogic_CreateMonsterTeam(int n, int64_t bonus);
-		xx::Coro SceneLogic_PlaneReborn(xx::XY deathPos = {}, xx::XY bornPos = {});
+		xx::Task<> SceneLogic();
+		xx::Task<> SceneLogic_CreateMonsterTeam(int n, int64_t bonus);
+		xx::Task<> SceneLogic_PlaneReborn(xx::XY deathPos = {}, xx::XY bornPos = {});
 
 		void AddMonster(MonsterBase* m);	// insert into monsters & sync index
 		void EraseMonster(MonsterBase* m);	// remove from monsters & clear index
@@ -176,6 +176,6 @@ namespace SpaceShooter {
 		// ...
 
 		xx::Audio audio;
-		xx::Coros coros;
+		xx::Tasks tasks;
 	};
 }

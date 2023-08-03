@@ -3,27 +3,25 @@
 
 namespace MoreParticleTest {
 
-	xx::Coro ExplodeEffect::Action_ScaleTo(float s, float step) {
-		CoYield;
+	xx::Task<> ExplodeEffect::Action_ScaleTo(float s, float step) {
 		for (; ring.scale.x < s; ring.scale += step) {
-			CoYield;
+			co_yield 0;
 		}
 		ring.scale = {s, s};
 	}
 
-	xx::Coro ExplodeEffect::Action_FadeOut(uint8_t step) {
-		CoYield;
+	xx::Task<> ExplodeEffect::Action_FadeOut(uint8_t step) {
 		for (; ring.color.a >= step; ring.color.a -= step) {
-			CoYield;
+			co_yield 0;
 		}
 		ring.color.a = 0;
 	}
 
-	xx::Coro ExplodeEffect::Action_Explode() {
+	xx::Task<> ExplodeEffect::Action_Explode() {
 		particle.FireAt(pos);
 		do {
 			particle.Update(1.f / 60);
-			CoYield;
+			co_yield 0;
 		} while (!particle.Empty());
 	}
 
@@ -31,9 +29,9 @@ namespace MoreParticleTest {
 		pos = pos_;
 		ring.SetPosition(pos).SetScale(0.01).SetTexture(scene_->texRing).SetColorA((uint8_t)200);
 		particle.Init(scene_->cfg, 20);
-		actions.Add(Action_ScaleTo(3.f, 3.f / 15));
-		actions.Add(Action_FadeOut(255 / 15));
-		actions.Add(Action_Explode());
+		actions.AddTask(Action_ScaleTo(3.f, 3.f / 15));
+		actions.AddTask(Action_FadeOut(255 / 15));
+		actions.AddTask(Action_Explode());
 	}
 
 	bool ExplodeEffect::Update() {

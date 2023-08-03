@@ -4,6 +4,9 @@
 // important: only support static function or lambda !!!  COPY data from arguments !!! do not ref !!!
 
 #include "xx_typetraits.h"
+#include "xx_time.h"
+#include "xx_list.h"
+#include "xx_listlink.h"
 
 namespace xx {
     template<typename R> struct CoroBase_promise_type { R y; };
@@ -102,3 +105,94 @@ LabLoop:
 }
 
 */
+
+
+
+namespace xx {
+
+    /*************************************************************************************************************************/
+    /*************************************************************************************************************************/
+
+    template<typename WeakType>
+    struct CorosBase {
+        ListLink<std::pair<WeakType, Coro>, int32_t> tasks;
+    };
+
+    template<>
+    struct CorosBase<void> {
+        ListLink<Coro, int32_t> tasks;
+    };
+
+    template<typename WeakType>
+    struct Coros_ : CorosBase<WeakType> {
+        Coros_(Coros_ const&) = delete;
+        Coros_& operator=(Coros_ const&) = delete;
+        Coros_(Coros_&&) noexcept = default;
+        Coros_& operator=(Coros_&&) noexcept = default;
+        explicit Coros_(int32_t cap = 8) {
+            this->tasks.Reserve(cap);
+        }
+
+        template<typename WT, typename CT>
+        void Add(WT&& w, CT&& c) {
+            if (!w || c) return;
+            this->tasks.Emplace(std::pair<WeakType, Coro> { std::forward<WT>(w), std::forward<CT>(c) });
+        }
+
+        template<typename CT>
+        void Add(CT&& c) {
+            if (c) return;
+            this->tasks.Emplace(std::forward<CT>(c));
+        }
+
+        template<typename F>
+        int AddLambda(F&& f) {
+            return Add([](F f)->Coro {
+                co_await f();
+            }(std::forward<F>(f)));
+        }
+
+        void Clear() {
+            this->tasks.Clear();
+        }
+
+        int32_t operator()() {
+            int prev = -1, next{};
+            for (auto idx = this->tasks.head; idx != -1;) {
+                auto& o = this->tasks[idx];
+                bool needRemove;
+                if constexpr(std::is_void_v<WeakType>) {
+                    needRemove = o.Resume();
+                } else {
+                    needRemove = !o.first || o.second.Resume();
+                }
+                if (needRemove) {
+                    next = this->tasks.Remove(idx, prev);
+                } else {
+                    next = this->tasks.Next(idx);
+                    prev = idx;
+                }
+                idx = next;
+            }
+            return this->tasks.Count();
+        }
+
+        [[nodiscard]] int32_t Count() const {
+            return this->tasks.Count();
+        }
+
+        [[nodiscard]] bool Empty() const {
+            return !this->tasks.Count();
+        }
+
+        void Reserve(int32_t cap) {
+            this->tasks.Reserve(cap);
+        }
+    };
+
+    using Coros = Coros_<void>;
+
+    template<typename WeakType>
+    using CondCoros = Coros_<WeakType>;
+
+}

@@ -13,12 +13,12 @@ namespace ShootGame {
 		player.Emplace()->Init(this);
 
 		running = true;
-		coros.Add([](Scene* scene)->xx::Coro {
+		tasks.AddTask([](Scene* scene)->xx::Task<> {
 			while (scene->running) {
 				for (size_t i = 0; i < 5; ++i) {
 					scene->monsters.emplace_back().Emplace()->Init(scene);
 				}
-				CoYield;
+				co_yield 0;
 			}
 		}(this));
 	}
@@ -26,7 +26,7 @@ namespace ShootGame {
 	void Scene::Update() {
 
 		// call scene looper
-		coros();
+		tasks();
 
 		/*********************************************/
 		// move monsters

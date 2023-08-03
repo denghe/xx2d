@@ -26,12 +26,12 @@ namespace ShootGameWithIndex {
 		
 
 		running = true;
-		coros.Add([](Scene* scene)->xx::Coro {
+		tasks.AddTask([](Scene* scene)->xx::Task<> {
 			while (scene->running) {
 				for (size_t i = 0; i < 20; ++i) {
 					scene->monsters.Emplace().Init(scene, scene->monsters.Tail());
 				}
-				CoYield;
+				co_yield 0;
 			}
 		}(this));
 	}
@@ -39,7 +39,7 @@ namespace ShootGameWithIndex {
 	void Scene::Update() {
 
 		// call scene looper
-		coros();
+		tasks();
 
 		/*********************************************/
 		// move & erase monsters

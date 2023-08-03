@@ -26,8 +26,8 @@ namespace MovePath {
 		xx::Shared<xx::GLTexture> tex;
 		xx::Rnd rnd;
 		std::vector<xx::Shared<Monster>> monsters;
-		xx::vector<xx::Shared<xx::MovePathCache>> mpcs;
-		xx::Coros coros;
+		std::vector<xx::Shared<xx::MovePathCache>> mpcs;
+		xx::Tasks tasks;
 
 		xx::Shared<Monster>& AddMonster();
 		void EraseMonster(Monster* m);

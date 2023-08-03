@@ -19,11 +19,11 @@ struct GameLooper : xx::GameLooperBase {
 struct Monster {
 	GameLooper& owner;
 	Monster(GameLooper& owner) : owner(owner), coro(Logic()) {}
-	xx::Coro coro;
-	xx::Coro Logic() {
+	xx::Task<> coro;
+	xx::Task<> Logic() {
 		while (true) {
 			for (size_t i = 0; i < 60; i++) {		// idle 1 seconds
-				CoYield;
+				co_yield 0;
 				std::cout << ".";
 			}
 			std::cout << "!" << std::endl;

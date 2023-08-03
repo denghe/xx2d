@@ -497,7 +497,7 @@ namespace SpaceShooter {
 		audio.PlayBG("res/bg.ogg");
 
 		// run script
-		coros.Add(SceneLogic());
+		tasks.AddTask(SceneLogic());
 	}
 
 	/***********************************************************************/
@@ -512,14 +512,14 @@ namespace SpaceShooter {
 			++frameNumber;
 
 			// generate monsters
-			coros();
+			tasks();
 
 			// move bg
 			space.Update();
 
 			// move player's plane
 			if (plane && plane->Update()) {
-				coros.Add(SceneLogic_PlaneReborn(plane->pos, plane->pos));	// reborn
+				tasks.AddTask(SceneLogic_PlaneReborn(plane->pos, plane->pos));	// reborn
 				plane.Reset();
 			}
 
@@ -613,11 +613,11 @@ namespace SpaceShooter {
 
 	/***********************************************************************/
 
-	xx::Coro Scene::SceneLogic() {
+	xx::Task<> Scene::SceneLogic() {
 		while (true) {
 			for (size_t i = 0; i < 30; i++) {
-				coros.Add(SceneLogic_CreateMonsterTeam(1, 2000));
-				CoSleep(0.5s);
+				tasks.AddTask(SceneLogic_CreateMonsterTeam(1, 2000));
+				for (auto e = xx::NowSteadyEpochSeconds() + 0.5; xx::NowSteadyEpochSeconds() < e;) co_yield 0;
 			}
 			{
 				int n1 = 120 * 5, n2 = 50;
@@ -633,14 +633,14 @@ namespace SpaceShooter {
 						m->Init2(bornPos, radians);
 						AddMonster(m);
 					}
-					CoYield;	//CoSleep(50ms);
+					co_yield 0;
 				}
 			}
 			// ...
 		}
 	}
 
-	xx::Coro Scene::SceneLogic_CreateMonsterTeam(int n, int64_t bonus) {
+	xx::Task<> Scene::SceneLogic_CreateMonsterTeam(int n, int64_t bonus) {
 		auto dt = xx::Make<Listener<MonsterBase>>([this, n, bonus] (MonsterBase* m) mutable {
 			if (--n == 0) {
 				score.Add(bonus);
@@ -657,12 +657,12 @@ namespace SpaceShooter {
 			m->Init1(this, 4.f, { 255,255,255,255 }, dt);
 			m->Init2({ -1000, 300 }, mpc);
 			AddMonster(m);
-			CoSleep(600ms);
+			for (auto e = xx::NowSteadyEpochSeconds() + 0.6; xx::NowSteadyEpochSeconds() < e;) co_yield 0;
 		}
 	}
 
-	xx::Coro Scene::SceneLogic_PlaneReborn(xx::XY deathPos, xx::XY bornPos) {
-		CoSleep(3s);
+	xx::Task<> Scene::SceneLogic_PlaneReborn(xx::XY deathPos, xx::XY bornPos) {
+		for (auto e = xx::NowSteadyEpochSeconds() + 3; xx::NowSteadyEpochSeconds() < e;) co_yield 0;
 		assert(!plane);
 		plane.Emplace()->Init(this, bornPos, 240);
 	}

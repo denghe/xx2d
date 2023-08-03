@@ -80,7 +80,7 @@ namespace MovePath {
 
 		monsters.reserve(200000);
 
-		coros.Add([](Scene* self)->xx::Coro {
+		tasks.AddTask([](Scene* self)->xx::Task<> {
 			auto hw = (int)xx::engine.hw;
 			auto hh = (int)xx::engine.hh;
 			auto r = 32;
@@ -93,13 +93,13 @@ namespace MovePath {
 					auto&& mpc = self->mpcs[self->rnd.Next(0, (int)self->mpcs.size() - 1)];
 					m->Init(v.As<float>(), mpc, 2, (xx::RGBA8&)color);
 				}
-				CoYield;
+				co_yield 0;
 			}
 		}(this));
 	}
 
 	void Scene::Update() {
-		coros();
+		tasks();
 
 		for (auto i = (ptrdiff_t)monsters.size() - 1; i >= 0; --i) {
 			auto& m = monsters[i];

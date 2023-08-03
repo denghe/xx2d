@@ -12,8 +12,8 @@ namespace SpineTest {
 		spShared.Init1(atlasFN.data()).Init2_Skel(skelFN.data(), 0.5);
 
 		for (int i = 0; i < 1000; i++) {
-			coros.Add([](Scene* self, int delay)->xx::Coro {
-				CoDelay(delay);
+			tasks.AddTask([](Scene* self, int delay)->xx::Task<> {
+				while (delay-- >= 0) co_yield 0;
 				spine::XxPlayer sp;
 				sp.Init(self->spShared)
 					.SetMix("walk", "jump", 0.2f)
@@ -53,7 +53,7 @@ namespace SpineTest {
 					//	})
 					;
 				while (true) {
-					CoYield;
+					co_yield 0;
 					sp.Update(xx::engine.delta).Draw();
 				}
 				} (this, i));
@@ -63,7 +63,7 @@ namespace SpineTest {
 
 	int Scene::Update() {
 		xx::engine.PushBlendFunc();
-		coros();
+		tasks();
 		xx::engine.PopBlendFunc();
 		return 0;
 	}

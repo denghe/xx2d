@@ -3,20 +3,18 @@
 
 namespace ActionTest {
 
-	xx::Coro Foo::Action_Shake(float r1, float r2, float step) {
-		CoYield;
+	xx::Task<> Foo::Action_Shake(float r1, float r2, float step) {
 		while (true) {	// repeat forever
 			for (radians = r1; radians < r2; radians += step) {
-				CoYield;
+				co_yield 0;
 			}
 			for (radians = r2; radians >= r1; radians -= step) {
-				CoYield;
+				co_yield 0;
 			}
 		}
 	}
 
-	xx::Coro Foo::Action_MoveTo(xx::XY tar) {
-		CoYield;
+	xx::Task<> Foo::Action_MoveTo(xx::XY tar) {
 		while (true) {	// repeat until
 			auto v = tar - pos;
 			if (v.x * v.x + v.y * v.y <= speed * speed) {
@@ -25,36 +23,33 @@ namespace ActionTest {
 			} else {
 				pos += v.MakeNormalize() * speed;
 			}
-			CoYield;
+			co_yield 0;
 		}
 		dying = true;	// set state flag
 	}
 
-	xx::Coro Foo::Action_Shake_MoveTo(xx::XY tar) {
-		CoYield;
-		xx::Coros cs(2);
-		cs.Add(Action_Shake(-0.07f, 0.07f, 0.03f));
-		cs.Add(Action_MoveTo(tar));
-		while (cs() && cs.Count() == 2) CoYield;	// wait one
-		cs.Clear();
-		cs.Add(Action_FadeOut(1.f / 60));
-		cs.Add(Action_ScaleTo(0, 1.f / 60));
-		while (cs()) CoYield;						// wait all
+	xx::Task<> Foo::Action_Shake_MoveTo(xx::XY tar) {
+		xx::Tasks tasks(2);
+		tasks.AddTask(Action_Shake(-0.07f, 0.07f, 0.03f));
+		tasks.AddTask(Action_MoveTo(tar));
+		while (tasks() && tasks.Count() == 2) co_yield 0;	// wait one
+		tasks.Clear();
+		tasks.AddTask(Action_FadeOut(1.f / 60));
+		tasks.AddTask(Action_ScaleTo(0, 1.f / 60));
+		while (tasks()) co_yield 0;						// wait all
 		dead = true;
 	}
 
-	xx::Coro Foo::Action_FadeOut(float step) {
-		CoYield;
+	xx::Task<> Foo::Action_FadeOut(float step) {
 		for (; alpha >= 0; alpha -= step) {
-			CoYield;
+			co_yield 0;
 		}
 		alpha = 0;
 	}
 
-	xx::Coro Foo::Action_ScaleTo(float s, float step) {
-		CoYield;
+	xx::Task<> Foo::Action_ScaleTo(float s, float step) {
 		for (; scale >= s; scale -= step) {
-			CoYield;
+			co_yield 0;
 		}
 		scale = s;
 	}

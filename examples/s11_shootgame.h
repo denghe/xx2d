@@ -17,7 +17,7 @@ namespace ShootGame {
 		std::vector<xx::Shared<Monster>> monsters;
 		std::vector<xx::Shared<HPLabel>> labels;
 		std::vector<xx::Sprite*> tmp;
-		xx::Coros coros;
+		xx::Tasks tasks;
 		xx::Rnd rnd;
 		bool running{};
 

@@ -20,7 +20,7 @@ namespace ShootGameWithIndex {
 		xx::ListDoubleLink<Monster> monsters;
 		xx::ListLink<HPLabel> labels;
 		std::vector<xx::Quad*> tmp;
-		xx::Coros coros;
+		xx::Tasks tasks;
 		xx::Rnd rnd;
 		bool running{};
 

@@ -13,9 +13,9 @@ struct GameLooper : xx::GameLooperBase {
 
 	//xx::Shared<xx::GLTexture> tex;
 	//xx::ListDoubleLink<xx::Quad> quads;
-	//xx::Coros coros;
+	//xx::Tasks tasks;
 	//double timePool{};
-	//xx::Coro QuadLogic();
+	//xx::Task<> QuadLogic();
 
 	void AfterGLInit() override;
 	int Update() override;

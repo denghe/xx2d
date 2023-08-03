@@ -22,23 +22,23 @@ namespace Scissor {
 
 		scissor.rect = { -100, -100, 200, 200 };
 
-		coros.Add([](Scene* self)->xx::Coro {
+		tasks.AddTask([](Scene* self)->xx::Task<> {
 			float ay = 0;
 			while (true) {
 				for (; ay < 1.f; ay += 0.001f) {
 					self->spr.SetAnchor({ 0.5, ay });
-					CoYield;
+					co_yield 0;
 				}
 				for (; ay >= 0; ay -= 0.001f) {
 					self->spr.SetAnchor({ 0.5, ay });
-					CoYield;
+					co_yield 0;
 				}
 			}
 			}(this));
 	}
 
 	int Scene::Update() {
-		coros();
+		tasks();
 		scissor.Begin();
 		spr.Draw();
 		scissor.End();

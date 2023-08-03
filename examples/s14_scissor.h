@@ -12,7 +12,7 @@ namespace Scissor {
 	struct Scene : SceneBase {
 		GLScissor scissor;
 		xx::Sprite spr;
-		xx::Coros coros;
+		xx::Tasks tasks;
 		void Init(GameLooper* looper) override;
 		int Update() override;
 	};

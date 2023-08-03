@@ -57,23 +57,6 @@ int main() {
 
 
 
-//xx::Coros cs;
-//for (size_t i = 0; i < 1000000; i++) {
-//	cs.Add([]()->xx::Coro {
-//		while (true) {
-//			CoYield;
-//		}
-//	}());
-//}
-//auto secs = xx::NowEpochSeconds();
-//for (size_t i = 0; i < 100; i++) {
-//	cs();
-//}
-//xx::CoutN(xx::NowEpochSeconds(secs));
-
-//return 0;
-
-
 
 // todo: package searcher
 
@@ -122,7 +105,7 @@ int main() {
 //	auto n = 100000;
 //	quads.Reserve(n);
 //	for (int j = 0; j < n; ++j) {
-//		coros.Add(QuadLogic());
+//		tasks.Add(QuadLogic());
 //	}
 //#endif
 //}
@@ -134,7 +117,7 @@ int main() {
 //	//timePool += xx::engine.delta;
 //	//while (timePool >= 1.f / 60) {
 //	//	timePool -= 1.f / 60;
-//	coros();
+//	tasks();
 //	//}
 //	quads.Foreach([&](auto& o) { o.Draw(); });
 //#endif

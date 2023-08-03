@@ -5,7 +5,7 @@
 #include <xx_helpers.h>
 #include <xx_file.h>
 #include <xx_ptr.h>
-#include <xx_coro_simple.h>	// xx_listlink.h
+#include <xx_task.h>	// xx_listlink.h
 #include <xx_listdoublelink.h>
 #ifndef __EMSCRIPTEN__
 #include <xx_threadpool.h>
