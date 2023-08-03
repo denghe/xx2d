@@ -172,11 +172,13 @@ inline void Sleep(int const& ms) {
     #define xx_assert assert
 #else
     #ifdef _MSC_VER
-        _ACRTIMP void __cdecl _wassert(
+        extern "C" {
+            _ACRTIMP void __cdecl _wassert(
                 _In_z_ wchar_t const* _Message,
                 _In_z_ wchar_t const* _File,
                 _In_   unsigned       _Line
-        );
+            );
+        }
         #define xx_assert(expression) (void)(                                                        \
             (!!(expression)) ||                                                              \
             (_wassert(_CRT_WIDE(#expression), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0) \
