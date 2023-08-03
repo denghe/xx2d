@@ -350,6 +350,63 @@ endif()
 
 
 
+
+###########################################################################################################################################
+###########################################################################################################################################
+###########################################################################################################################################
+# tests3
+
+
+include_directories(
+	tests3
+	spine-runtimes/spine-cpp/spine-cpp/include
+)
+
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
+	tests3/*.h
+	tests3/*.hpp
+	tests3/*.inc
+	tests3/*.c
+	tests3/*.cpp
+)
+add_executable(tests3 ${SRCS})
+
+target_link_libraries(tests3 ${name} glfw imgui pugixml libzstd_static)
+
+target_link_libraries(tests3 spine-cpp)
+
+if(MSVC)	# vs2022+
+	target_link_libraries(tests3 ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
+endif()
+
+if(MSVC)	# vs2022+
+
+	target_link_options(tests3
+		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
+		PRIVATE $<$<CONFIG:Release>:/LTCG>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
+	)
+
+	target_compile_options(tests3
+		PRIVATE $<$<PLATFORM_ID:Windows>:/std:c17>
+		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
+	)
+
+	set_source_files_properties(tests3/main.cpp PROPERTIES COMPILE_FLAGS "/Ycmain.h")
+	target_compile_options(tests3 PRIVATE $<$<PLATFORM_ID:Windows>:/Yumain.h>)
+
+	set_target_properties(tests3 PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+else()
+	target_precompile_headers(tests3
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tests3/main.h>
+	)
+endif()
+
+
+
+
+
 ###########################################################################################################################################
 ###########################################################################################################################################
 ###########################################################################################################################################

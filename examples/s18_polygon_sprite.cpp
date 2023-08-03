@@ -31,7 +31,7 @@ namespace PolygonSpriteTest {
 		std::cout << "PolygonSpriteTest::Scene::Init" << std::endl;
 
 		xx::TP tp;
-		tp.Fill("res/sword.plist");
+		tp.Load("res/sword.plist");
 		assert(tp.frames.size());
 		f = tp.frames[0];
 	}

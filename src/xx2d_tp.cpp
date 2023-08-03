@@ -2,7 +2,7 @@
 
 namespace xx {
 
-	void TP::Fill(std::string_view plistFn, bool sortByName) {
+	void TP::Load(std::string_view plistFn, bool sortByName) {
 		std::string rootPath;
 		if (auto&& [d, fp] = engine.LoadFileData(plistFn); !d) {
 			throw std::logic_error("read file error: " + std::string(plistFn));
@@ -11,7 +11,7 @@ namespace xx {
 			if (auto&& i = fp.find_last_of("/"); i != fp.npos) {
 				rootPath = fp.substr(0, i + 1);
 			}
-			if (int r = Fill(d, rootPath)) {
+			if (int r = Load(d, rootPath)) {
 				throw std::logic_error(xx::ToString("parse plist file content error: r = ", r, ", fn = ", fp));
 			}
 		}
@@ -28,7 +28,7 @@ namespace xx {
 		}
 	}
 
-	int TP::Fill(std::string_view text, std::string_view const& rootPath) {
+	int TP::Load(std::string_view text, std::string_view const& rootPath) {
 		frames.clear();
 		size_t i, j;
 

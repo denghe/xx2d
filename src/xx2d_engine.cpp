@@ -104,4 +104,12 @@ namespace xx {
 		ninePoints[8] = { 0, hh };
 		ninePoints[9] = { hw, hh };
 	}
+
+	Task<> Engine::TaskSleep(double secs) {
+		auto e = nowSecs + secs;
+		do {
+			co_yield 0;
+		} while (nowSecs < e);
+	}
+
 }

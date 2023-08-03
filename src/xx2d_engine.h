@@ -140,6 +140,10 @@ namespace xx {
 		void UpdateEnd();
 		void Destroy();
 
+
+		// co_await TaskSleep( 
+		Task<> TaskSleep(double secs);
+
 		// ...
 
 		/**********************************************************************************/

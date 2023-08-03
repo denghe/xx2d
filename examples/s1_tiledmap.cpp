@@ -93,7 +93,7 @@ namespace TiledMap {
 		cam.SetPosition({ 830, 510 });
 
 		// load plist
-		player.tp.Fill("res/ww.plist"sv);
+		player.tp.Load("res/ww.plist"sv);
 		float maxSpriteHeight{}, anchor{ 0.5 };
 		for (auto& f : player.tp.frames) {
 			f->anchor = { anchor, anchor };

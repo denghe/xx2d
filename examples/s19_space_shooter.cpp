@@ -445,7 +445,7 @@ namespace SpaceShooter {
 
 		// res preload
 		xx::TP tp;
-		tp.Fill("res/space_shooter/space_shooter.plist");
+		tp.Load("res/space_shooter/space_shooter.plist");
 
 		tp.GetTo(framesPlane, { "p" });
 		tp.GetToByPrefix(framesPlane, "p");
@@ -617,7 +617,7 @@ namespace SpaceShooter {
 		while (true) {
 			for (size_t i = 0; i < 30; i++) {
 				tasks.AddTask(SceneLogic_CreateMonsterTeam(1, 2000));
-				for (auto e = xx::NowSteadyEpochSeconds() + 0.5; xx::NowSteadyEpochSeconds() < e;) co_yield 0;
+				co_await xx::engine.TaskSleep(0.5);
 			}
 			{
 				int n1 = 120 * 5, n2 = 50;
@@ -657,12 +657,12 @@ namespace SpaceShooter {
 			m->Init1(this, 4.f, { 255,255,255,255 }, dt);
 			m->Init2({ -1000, 300 }, mpc);
 			AddMonster(m);
-			for (auto e = xx::NowSteadyEpochSeconds() + 0.6; xx::NowSteadyEpochSeconds() < e;) co_yield 0;
+			co_await xx::engine.TaskSleep(0.6);
 		}
 	}
 
 	xx::Task<> Scene::SceneLogic_PlaneReborn(xx::XY deathPos, xx::XY bornPos) {
-		for (auto e = xx::NowSteadyEpochSeconds() + 3; xx::NowSteadyEpochSeconds() < e;) co_yield 0;
+		co_await xx::engine.TaskSleep(3);
 		assert(!plane);
 		plane.Emplace()->Init(this, bornPos, 240);
 	}

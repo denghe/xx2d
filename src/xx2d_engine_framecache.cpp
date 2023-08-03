@@ -9,7 +9,7 @@ namespace xx {
 		if (auto i = p.find_last_of("/"); i != p.npos) {
 			rootPath = p.substr(0, i + 1);
 		}
-		if (auto r = c.Fill(d, rootPath)) throw std::logic_error(xx::ToString("texture packer's plist file fill error. r = ", r, ". file = ", p));
+		if (auto r = c.Load(d, rootPath)) throw std::logic_error(xx::ToString("texture packer's plist file fill error. r = ", r, ". file = ", p));
 		return c;
 	}
 

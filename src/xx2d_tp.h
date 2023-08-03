@@ -11,10 +11,10 @@ namespace xx {
 		std::string plistFullPath;
 
 		// fill below fields by plist file
-		void Fill(std::string_view plistFn, bool sortByName = true);
+		void Load(std::string_view plistFn, bool sortByName = true);
 
 		// fill by plist file's content
-		int Fill(std::string_view text, std::string_view const& rootPath);
+		int Load(std::string_view text, std::string_view const& rootPath);
 
 		// get frame by key
 		xx::Shared<Frame> const& Get(std::string_view const& key) const;
