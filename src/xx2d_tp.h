@@ -5,7 +5,7 @@ namespace xx {
 
 	// texture packer's data container. fill data from export for cocos 3.x .plist file
 	struct TP {
-		std::vector<xx::Shared<Frame>> frames;
+		std::vector<Shared<Frame>> frames;
 		bool premultiplyAlpha;
 		std::string realTextureFileName;
 		std::string plistFullPath;
@@ -17,18 +17,18 @@ namespace xx {
 		int Load(std::string_view text, std::string_view const& rootPath);
 
 		// get frame by key
-		xx::Shared<Frame> const& Get(std::string_view const& key) const;
-		xx::Shared<Frame> const& Get(char const* const& buf, size_t const& len) const;
+		Shared<Frame> const& Get(std::string_view const& key) const;
+		Shared<Frame> const& Get(char const* const& buf, size_t const& len) const;
 
 		// get frames by key's prefix + number. example: "p1 p2 p3" prefix is 'p'
-		std::vector<xx::Shared<xx::Frame>> GetByPrefix(std::string_view const& prefix) const;
-		size_t GetToByPrefix(std::vector<xx::Shared<xx::Frame>>& fs, std::string_view const& prefix) const;
-		void GetTo(std::vector<xx::Shared<xx::Frame>>& fs, std::initializer_list<std::string_view> keys) const;
+		std::vector<Shared<Frame>> GetByPrefix(std::string_view const& prefix) const;
+		size_t GetToByPrefix(std::vector<Shared<Frame>>& fs, std::string_view const& prefix) const;
+		void GetTo(std::vector<Shared<Frame>>& fs, std::initializer_list<std::string_view> keys) const;
 
-		xx::Shared<Frame> TryGet(std::string_view const& key) const;
+		Shared<Frame> TryGet(std::string_view const& key) const;
 
-		std::unordered_map<std::string_view, xx::Shared<Frame>> GetMapSV() const;
-		std::unordered_map<std::string, xx::Shared<Frame>> GetMapS() const;
+		std::unordered_map<std::string_view, Shared<Frame>> GetMapSV() const;
+		std::unordered_map<std::string, Shared<Frame>> GetMapS() const;
 
 	protected:
 

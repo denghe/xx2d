@@ -11,7 +11,7 @@ namespace xx {
 	}
 
 	Quad& Quad::SetFrame(Shared<Frame> const& f) {
-		assert(f && !f->textureRotated);
+		assert(f && !f->textureRotated);	// known issue: not support now
 		tex = f->tex;
 		texRectX = f->textureRect.x;
 		texRectY = f->textureRect.y;

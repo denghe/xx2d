@@ -4,7 +4,7 @@
     <dict>
         <key>frames</key>
         <dict>
-            <key>plane_b1.png</key>
+            <key>plane_b1</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -15,11 +15,11 @@
                 <key>spriteSourceSize</key>
                 <string>{21,25}</string>
                 <key>textureRect</key>
-                <string>{{1,78},{21,25}}</string>
+                <string>{{81,1},{21,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>plane_b2.png</key>
+            <key>plane_b2</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -30,11 +30,11 @@
                 <key>spriteSourceSize</key>
                 <string>{24,25}</string>
                 <key>textureRect</key>
-                <string>{{1,28},{24,25}}</string>
+                <string>{{31,1},{24,25}}</string>
                 <key>textureRotated</key>
-                <true/>
+                <false/>
             </dict>
-            <key>plane_b3.png</key>
+            <key>plane_b3</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -49,7 +49,7 @@
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>plane_b4.png</key>
+            <key>plane_b4</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -60,11 +60,11 @@
                 <key>spriteSourceSize</key>
                 <string>{24,25}</string>
                 <key>textureRect</key>
-                <string>{{28,28},{24,25}}</string>
+                <string>{{31,28},{24,25}}</string>
                 <key>textureRotated</key>
-                <true/>
+                <false/>
             </dict>
-            <key>plane_b5.png</key>
+            <key>plane_b5</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -75,26 +75,26 @@
                 <key>spriteSourceSize</key>
                 <string>{21,25}</string>
                 <key>textureRect</key>
-                <string>{{1,105},{21,25}}</string>
-                <key>textureRotated</key>
-                <true/>
-            </dict>
-            <key>plane_r1.png</key>
-            <dict>
-                <key>aliases</key>
-                <array/>
-                <key>spriteOffset</key>
-                <string>{0,0}</string>
-                <key>spriteSize</key>
-                <string>{20,25}</string>
-                <key>spriteSourceSize</key>
-                <string>{20,25}</string>
-                <key>textureRect</key>
-                <string>{{24,78},{20,25}}</string>
+                <string>{{104,1},{21,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>plane_r2.png</key>
+            <key>plane_r1</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{20,25}</string>
+                <key>spriteSourceSize</key>
+                <string>{20,25}</string>
+                <key>textureRect</key>
+                <string>{{81,28},{20,25}}</string>
+                <key>textureRotated</key>
+                <false/>
+            </dict>
+            <key>plane_r2</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -105,11 +105,11 @@
                 <key>spriteSourceSize</key>
                 <string>{22,25}</string>
                 <key>textureRect</key>
-                <string>{{1,54},{22,25}}</string>
+                <string>{{57,1},{22,25}}</string>
                 <key>textureRotated</key>
-                <true/>
+                <false/>
             </dict>
-            <key>plane_r3.png</key>
+            <key>plane_r3</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -120,11 +120,11 @@
                 <key>spriteSourceSize</key>
                 <string>{28,25}</string>
                 <key>textureRect</key>
-                <string>{{31,1},{28,25}}</string>
+                <string>{{1,28},{28,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
-            <key>plane_r4.png</key>
+            <key>plane_r4</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -135,11 +135,11 @@
                 <key>spriteSourceSize</key>
                 <string>{22,25}</string>
                 <key>textureRect</key>
-                <string>{{28,54},{22,25}}</string>
+                <string>{{57,28},{22,25}}</string>
                 <key>textureRotated</key>
-                <true/>
+                <false/>
             </dict>
-            <key>plane_r5.png</key>
+            <key>plane_r5</key>
             <dict>
                 <key>aliases</key>
                 <array/>
@@ -150,9 +150,9 @@
                 <key>spriteSourceSize</key>
                 <string>{20,25}</string>
                 <key>textureRect</key>
-                <string>{{28,105},{20,25}}</string>
+                <string>{{103,28},{20,25}}</string>
                 <key>textureRotated</key>
-                <true/>
+                <false/>
             </dict>
         </dict>
         <key>metadata</key>
@@ -166,9 +166,9 @@
             <key>realTextureFileName</key>
             <string>gemini.png</string>
             <key>size</key>
-            <string>{64,128}</string>
+            <string>{128,64}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:6799f84f6b08bc757cdb2e3bb2d26ec4:d056afd703f275d7225237d2432d2379:4e9267fb21a88a12c3a8c844b417d8ff$</string>
+            <string>$TexturePacker:SmartUpdate:6a082cead28ba9813da4c4dd1ecfba7b:d056afd703f275d7225237d2432d2379:4e9267fb21a88a12c3a8c844b417d8ff$</string>
             <key>textureFileName</key>
             <string>gemini.png</string>
         </dict>
