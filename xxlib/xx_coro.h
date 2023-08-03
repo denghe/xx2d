@@ -115,12 +115,12 @@ namespace xx {
 
     template<typename WeakType>
     struct CorosBase {
-        ListLink<std::pair<WeakType, Coro>, int32_t> tasks;
+        ListLink<std::pair<WeakType, Coro>, int32_t> coros;
     };
 
     template<>
     struct CorosBase<void> {
-        ListLink<Coro, int32_t> tasks;
+        ListLink<Coro, int32_t> coros;
     };
 
     template<typename WeakType>
@@ -130,19 +130,19 @@ namespace xx {
         Coros_(Coros_&&) noexcept = default;
         Coros_& operator=(Coros_&&) noexcept = default;
         explicit Coros_(int32_t cap = 8) {
-            this->tasks.Reserve(cap);
+            this->coros.Reserve(cap);
         }
 
         template<typename WT, typename CT>
         void Add(WT&& w, CT&& c) {
             if (!w || c) return;
-            this->tasks.Emplace(std::pair<WeakType, Coro> { std::forward<WT>(w), std::forward<CT>(c) });
+            this->coros.Emplace(std::pair<WeakType, Coro> { std::forward<WT>(w), std::forward<CT>(c) });
         }
 
         template<typename CT>
         void Add(CT&& c) {
             if (c) return;
-            this->tasks.Emplace(std::forward<CT>(c));
+            this->coros.Emplace(std::forward<CT>(c));
         }
 
         template<typename F>
@@ -153,13 +153,13 @@ namespace xx {
         }
 
         void Clear() {
-            this->tasks.Clear();
+            this->coros.Clear();
         }
 
         int32_t operator()() {
             int prev = -1, next{};
-            for (auto idx = this->tasks.head; idx != -1;) {
-                auto& o = this->tasks[idx];
+            for (auto idx = this->coros.head; idx != -1;) {
+                auto& o = this->coros[idx];
                 bool needRemove;
                 if constexpr(std::is_void_v<WeakType>) {
                     needRemove = o.Resume();
@@ -167,26 +167,26 @@ namespace xx {
                     needRemove = !o.first || o.second.Resume();
                 }
                 if (needRemove) {
-                    next = this->tasks.Remove(idx, prev);
+                    next = this->coros.Remove(idx, prev);
                 } else {
-                    next = this->tasks.Next(idx);
+                    next = this->coros.Next(idx);
                     prev = idx;
                 }
                 idx = next;
             }
-            return this->tasks.Count();
+            return this->coros.Count();
         }
 
         [[nodiscard]] int32_t Count() const {
-            return this->tasks.Count();
+            return this->coros.Count();
         }
 
         [[nodiscard]] bool Empty() const {
-            return !this->tasks.Count();
+            return !this->coros.Count();
         }
 
         void Reserve(int32_t cap) {
-            this->tasks.Reserve(cap);
+            this->coros.Reserve(cap);
         }
     };
 
