@@ -497,7 +497,7 @@ namespace SpaceShooter {
 		audio.PlayBG("res/bg.ogg");
 
 		// run script
-		tasks.AddTask(SceneLogic());
+		tasks.Add(SceneLogic());
 	}
 
 	/***********************************************************************/
@@ -519,7 +519,7 @@ namespace SpaceShooter {
 
 			// move player's plane
 			if (plane && plane->Update()) {
-				tasks.AddTask(SceneLogic_PlaneReborn(plane->pos, plane->pos));	// reborn
+				tasks.Add(SceneLogic_PlaneReborn(plane->pos, plane->pos));	// reborn
 				plane.Reset();
 			}
 
@@ -616,7 +616,7 @@ namespace SpaceShooter {
 	xx::Task<> Scene::SceneLogic() {
 		while (true) {
 			for (size_t i = 0; i < 30; i++) {
-				tasks.AddTask(SceneLogic_CreateMonsterTeam(1, 2000));
+				tasks.Add(SceneLogic_CreateMonsterTeam(1, 2000));
 				co_await xx::engine.TaskSleep(0.5);
 			}
 			{

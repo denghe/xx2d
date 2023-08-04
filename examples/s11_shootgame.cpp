@@ -13,7 +13,7 @@ namespace ShootGame {
 		player.Emplace()->Init(this);
 
 		running = true;
-		tasks.AddTask([](Scene* scene)->xx::Task<> {
+		tasks.Add([](Scene* scene)->xx::Task<> {
 			while (scene->running) {
 				for (size_t i = 0; i < 5; ++i) {
 					scene->monsters.emplace_back().Emplace()->Init(scene);

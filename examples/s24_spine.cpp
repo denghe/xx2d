@@ -12,7 +12,7 @@ namespace SpineTest {
 		spShared.Init1(atlasFN.data()).Init2_Skel(skelFN.data(), 0.5);
 
 		for (int i = 0; i < 1000; i++) {
-			tasks.AddTask([](Scene* self, int delay)->xx::Task<> {
+			tasks.Add([](Scene* self, int delay)->xx::Task<> {
 				while (delay-- >= 0) co_yield 0;
 				spine::XxPlayer sp;
 				sp.Init(self->spShared)

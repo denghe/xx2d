@@ -15,7 +15,7 @@ void GameLooper::AfterGLInit() {
 	tp.GetToByPrefix(frames_plane_blue, "plane_b");
 	tp.GetToByPrefix(frames_plane_red, "plane_r");
 
-	tasks.AddTask(MasterLogic());
+	tasks.Add(MasterLogic());
 }
 
 int GameLooper::Update() {
@@ -47,10 +47,14 @@ int GameLooper::Update() {
 
 xx::Task<> GameLooper::MasterLogic() {
 	// sleep 2s
-	co_await gEngine.TaskSleep(2);
+	co_await gEngine.TaskSleep(5);
 
 	// create player's plane
-	player_planes[0].Emplace<Plane>()->Init();
+	for (size_t i = 0; i < 10000; i++) {
+		player_planes.emplace_back(xx::Make<Plane>())->Init(0);
+		player_planes.emplace_back(xx::Make<Plane>())->Init(1);
+		co_yield 0;
+	}
 	
 	// todo: create monsters?
 	while (true) {
@@ -61,11 +65,12 @@ xx::Task<> GameLooper::MasterLogic() {
 void Plane::Init(int planeIndex_) {
 	// data init
 	planeIndex = planeIndex_;
+	frames = planeIndex == 0 ? &gLooper->frames_plane_blue : &gLooper->frames_plane_red;
 	speed0 = gPlaneNormalSpeed;
 	speed1 = speed0 * gScale;
 	frameIndexs[1] = 0;
-	frameIndexs[2] = gLooper->frames_plane_blue.size() / 2;
-	frameIndexs[3] = gLooper->frames_plane_blue.size() - 1;
+	frameIndexs[2] = frames->size() / 2;
+	frameIndexs[3] = frames->size() - 1;
 	frameIndexs[0] = frameIndexs[2];
 	frameChangeSpeed = speed0 * 0.2;
 	radius = 9 * gScale;
@@ -74,8 +79,8 @@ void Plane::Init(int planeIndex_) {
 	body.SetScale(gScale);
 
 	// script init
-	tasks.AddTask(Born());
-	tasks.AddTask(Shine());
+	tasks.Add(Born());
+	tasks.Add(Shine());
 }
 
 xx::Task<> Plane::Born() {
@@ -86,7 +91,7 @@ xx::Task<> Plane::Born() {
 	}
 	pos.y = gPlaneBornYTo;
 	
-	tasks.AddTask(Update());			// switch to normal mode
+	tasks.Add(Update());			// switch to normal mode
 }
 
 xx::Task<> Plane::Shine() {
@@ -103,8 +108,10 @@ xx::Task<> Plane::Shine() {
 
 xx::Task<> Plane::Update() {
 	while (true) {
-		auto x = pos.x;	// bak for change frame compare
+		// bak for change frame display
+		auto x = pos.x;
 
+		// move by mouse ois
 		auto d = gMousePos - pos;
 		auto dd = d.x * d.x + d.y * d.y;
 
@@ -152,6 +159,6 @@ xx::Task<> Plane::Update() {
 void Plane::Draw() {
 	if (!visible) return;
 	body.SetPosition(pos)
-		.SetFrame(gLooper->frames_plane_blue[frameIndexs[0]])
+		.SetFrame(frames->operator[](frameIndexs[0]))
 		.Draw();
 }

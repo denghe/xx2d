@@ -29,9 +29,9 @@ namespace MoreParticleTest {
 		pos = pos_;
 		ring.SetPosition(pos).SetScale(0.01).SetTexture(scene_->texRing).SetColorA((uint8_t)200);
 		particle.Init(scene_->cfg, 20);
-		actions.AddTask(Action_ScaleTo(3.f, 3.f / 15));
-		actions.AddTask(Action_FadeOut(255 / 15));
-		actions.AddTask(Action_Explode());
+		actions.Add(Action_ScaleTo(3.f, 3.f / 15));
+		actions.Add(Action_FadeOut(255 / 15));
+		actions.Add(Action_Explode());
 	}
 
 	bool ExplodeEffect::Update() {

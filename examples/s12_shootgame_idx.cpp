@@ -26,7 +26,7 @@ namespace ShootGameWithIndex {
 		
 
 		running = true;
-		tasks.AddTask([](Scene* scene)->xx::Task<> {
+		tasks.Add([](Scene* scene)->xx::Task<> {
 			while (scene->running) {
 				for (size_t i = 0; i < 20; ++i) {
 					scene->monsters.Emplace().Init(scene, scene->monsters.Tail());

@@ -30,12 +30,12 @@ namespace ActionTest {
 
 	xx::Task<> Foo::Action_Shake_MoveTo(xx::XY tar) {
 		xx::Tasks tasks(2);
-		tasks.AddTask(Action_Shake(-0.07f, 0.07f, 0.03f));
-		tasks.AddTask(Action_MoveTo(tar));
+		tasks.Add(Action_Shake(-0.07f, 0.07f, 0.03f));
+		tasks.Add(Action_MoveTo(tar));
 		while (tasks() && tasks.Count() == 2) co_yield 0;	// wait one
 		tasks.Clear();
-		tasks.AddTask(Action_FadeOut(1.f / 60));
-		tasks.AddTask(Action_ScaleTo(0, 1.f / 60));
+		tasks.Add(Action_FadeOut(1.f / 60));
+		tasks.Add(Action_ScaleTo(0, 1.f / 60));
 		while (tasks()) co_yield 0;						// wait all
 		dead = true;
 	}

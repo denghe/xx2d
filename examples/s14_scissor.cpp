@@ -22,7 +22,7 @@ namespace Scissor {
 
 		scissor.rect = { -100, -100, 200, 200 };
 
-		tasks.AddTask([](Scene* self)->xx::Task<> {
+		tasks.Add([](Scene* self)->xx::Task<> {
 			float ay = 0;
 			while (true) {
 				for (; ay < 1.f; ay += 0.001f) {

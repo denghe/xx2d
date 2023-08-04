@@ -19,7 +19,7 @@ struct GameLooper : xx::GameLooperBase {
 	std::vector<xx::Shared<xx::Frame>> frames_plane_red;			// plane_r?     ? = 1~5
 
 	// runtime objects
-	std::array<xx::Shared<Plane>, 2> player_planes;
+	std::vector<xx::Shared<Plane>> player_planes;
 
 	// engine event handlers
 	void AfterGLInit() override;
@@ -50,26 +50,28 @@ inline constexpr float gPlaneBornSpeed = 1.f;
 inline constexpr float gPlaneNormalSpeed = 1.5f;
 
 struct Plane {
-	xx::Quad body;								// texture brush
+	xx::Quad body;									// texture brush
 
-	int planeIndex{};							// 0: p1, 1: p2
-	bool godMode{ true }, visible{};			// for born shine 5 secs
-	float radius{};								// for collision detect
+	int planeIndex{};								// 0: p1, 1: p2
+	std::vector<xx::Shared<xx::Frame>>* frames{};	// planeIndex == 0: frames_plane_blue; == 1: frames_plane_red
 
-	xx::XY pos{};								// current position
-	float speed0{};								// base speed
-	float speed1{};								// speed0 * gScale
+	bool godMode{ true }, visible{};				// for born shine 5 secs
+	float radius{};									// for collision detect
 
-	float frameIndexs[4];						// for move left/right switch frame. [0] curr [1] min [2] mid [3] max
-	float frameChangeSpeed{};					// speed0 / 5
+	xx::XY pos{};									// current position
+	float speed0{};									// base speed
+	float speed1{};									// speed0 * gScale
+
+	float frameIndexs[4];							// for move left/right switch frame. [0] curr [1] min [2] mid [3] max
+	float frameChangeSpeed{};						// speed0 / 5
 
 	xx::Tasks tasks;
 
 	void Init(int planeIndex_ = 0);
 	void Draw();
-	xx::Task<> Born();							// let the player's plane move in from outside the screen
-	xx::Task<> Shine();							// shine 5 secs ( god mode )
-	xx::Task<> Update();						// can control move & fire
+	xx::Task<> Born();								// let the player's plane move in from outside the screen
+	xx::Task<> Shine();								// shine 5 secs ( god mode )
+	xx::Task<> Update();							// can control move & fire
 };
 
 #endif

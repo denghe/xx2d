@@ -80,7 +80,7 @@ namespace MovePath {
 
 		monsters.reserve(200000);
 
-		tasks.AddTask([](Scene* self)->xx::Task<> {
+		tasks.Add([](Scene* self)->xx::Task<> {
 			auto hw = (int)xx::engine.hw;
 			auto hh = (int)xx::engine.hh;
 			auto r = 32;
