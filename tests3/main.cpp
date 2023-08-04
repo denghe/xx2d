@@ -126,10 +126,9 @@ xx::Task<> Plane::SyncBombPos() {
 				pos = tarPos;
 			}
 			else {
-				auto inc = d.As<float>() / (i ? gBombFollowSteps : gBombFirstFollowSteps);
-				pos += inc;
+				pos += d.As<float>() / (i ? (moving ? gBombMovingFollowSteps : gBombStopFollowSteps) : gBombFirstFollowSteps);
 			}
-			tarPos = { pos.x, pos.y - (moving ? gBombMinSpeed : gBombDiameter) };
+			tarPos = { pos.x, pos.y - (moving ? 0 : gBombDiameter) };
 		}
 	}
 }

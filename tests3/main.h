@@ -55,10 +55,11 @@ inline constexpr float gPlaneNormalSpeed = 2.f;
 inline constexpr float gBombAnchorYDist = 18.f * gScale;	// plane.pos.y - offset
 inline constexpr float gBombRadius = 6.f * gScale;
 inline constexpr float gBombDiameter = gBombRadius * 2;
-inline constexpr float gBombMinSpeed = 1.f * gScale;
+inline constexpr float gBombMinSpeed = 0.5f * gScale;
 inline constexpr float gBombMinSpeedPow2 = gBombMinSpeed * gBombMinSpeed;
 inline constexpr float gBombFirstFollowSteps = 2;
-inline constexpr float gBombFollowSteps = 5;
+inline constexpr float gBombMovingFollowSteps = 9;
+inline constexpr float gBombStopFollowSteps = 6;
 
 
 enum class BombTypes {
