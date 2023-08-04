@@ -10,10 +10,18 @@ int main() {
 
 void GameLooper::AfterGLInit() {
 	fontBase = gEngine.LoadBMFont("res/font/coderscrux.fnt"sv);
+
 	xx::TP tp;
 	tp.Load("res/gemini/gemini.plist");
+
 	tp.GetToByPrefix(frames_plane_blue, "plane_b");
+	xx_assert(frames_plane_blue.size() == 5);
+
 	tp.GetToByPrefix(frames_plane_red, "plane_r");
+	xx_assert(frames_plane_red.size() == 5);
+
+	tp.GetToByPrefix(frames_bomb, "bomb");
+	xx_assert(frames_bomb.size() == 1);
 
 	tasks.Add(MasterLogic());
 }
@@ -46,11 +54,12 @@ int GameLooper::Update() {
 }
 
 xx::Task<> GameLooper::MasterLogic() {
-	// sleep 2s
-	co_await gEngine.TaskSleep(5);
+	// sleep a while
+	//co_await gEngine.TaskSleep(5);
 
 	// create player's plane
-	for (size_t i = 0; i < 10000; i++) {
+	//for (size_t i = 0; i < 10000; i++)
+	{
 		player_planes.emplace_back(xx::Make<Plane>())->Init(0);
 		player_planes.emplace_back(xx::Make<Plane>())->Init(1);
 		co_yield 0;
@@ -74,17 +83,61 @@ void Plane::Init(int planeIndex_) {
 	frameIndexs[0] = frameIndexs[2];
 	frameChangeSpeed = speed0 * 0.2;
 	radius = 9 * gScale;
+	godMode = true;
+	visible = false;
+
+	// bomb data init
+	for (size_t i = 0; i < 30; i++) {
+		auto&& b = bombs.Emplace();
+		b.type = BombTypes::Trident;
+	}
 
 	// brush partial init
-	body.SetScale(gScale);
+	texBrush.SetScale(gScale);
 
 	// script init
 	tasks.Add(Born());
 	tasks.Add(Shine());
+	tasks.Add(SyncBombPos());
+}
+
+void Plane::InitBombPos() {
+	if (auto n = bombs.Count()) {
+		float y = pos.y - gBombAnchorYDist;
+		for (size_t i = 0; i < n; i++) {
+			bombs[i].pos = { pos.x, y - gBombDiameter * i };
+		}
+	}
+}
+
+xx::Task<> Plane::SyncBombPos() {
+	while (true) {
+		co_yield 0;
+		auto n = bombs.Count();
+		if (!n) continue;
+		
+		auto tarPos = xx::XY{ pos.x, pos.y - gBombAnchorYDist };
+		for (size_t i = 0; i < n; i++) {
+			auto& pos = bombs[i].pos;
+
+			auto d = tarPos - pos;
+			auto dd = d.x * d.x + d.y * d.y;
+			if (gBombMinSpeedPow2 > dd) {
+				pos = tarPos;
+			}
+			else {
+				auto inc = d.As<float>() / (i ? gBombFollowSteps : gBombFirstFollowSteps);
+				pos += inc;
+			}
+			tarPos = { pos.x, pos.y - (moving ? gBombMinSpeed : gBombDiameter) };
+		}
+	}
 }
 
 xx::Task<> Plane::Born() {
 	pos = { gPlaneBornXs[planeIndex], gPlaneBornYFrom };
+	InitBombPos();
+	moving = true;
 	while (gPlaneBornYTo - pos.y > speed1) {
 		pos.y += gPlaneBornSpeed * gScale;
 		co_yield 0;
@@ -109,7 +162,7 @@ xx::Task<> Plane::Shine() {
 xx::Task<> Plane::Update() {
 	while (true) {
 		// bak for change frame display
-		auto x = pos.x;
+		auto oldPos = pos;
 
 		// move by mouse ois
 		auto d = gMousePos - pos;
@@ -125,13 +178,13 @@ xx::Task<> Plane::Update() {
 
 		// change frame display
 		float &fidx = frameIndexs[0], &fmin = frameIndexs[1], &fmid = frameIndexs[2], &fmax = frameIndexs[3];
-		if (x < pos.x) {
+		if (oldPos.x < pos.x) {
 			fidx += frameChangeSpeed;
 			if (fidx > fmax) {
 				fidx = fmax;
 			}
 		}
-		else if (x > pos.x) {
+		else if (oldPos.x > pos.x) {
 			fidx -= frameChangeSpeed;
 			if (fidx < fmin) {
 				fidx = fmin;
@@ -152,13 +205,25 @@ xx::Task<> Plane::Update() {
 			}
 		}
 
+		// sync state
+		moving = oldPos != pos;
 		co_yield 0;
 	}
 }
 
 void Plane::Draw() {
-	if (!visible) return;
-	body.SetPosition(pos)
-		.SetFrame(frames->operator[](frameIndexs[0]))
-		.Draw();
+	// draw bombs
+	for (auto i = (ptrdiff_t)bombs.Count() - 1; i >= 0; --i) {
+		auto& b = bombs[i];
+		texBrush.SetPosition(b.pos)
+			.SetFrame(gLooper->frames_bomb[(int)b.type])
+			.Draw();
+	}
+
+	if (visible) {
+		// draw plane body
+		texBrush.SetPosition(pos)
+			.SetFrame(frames->operator[](frameIndexs[0]))
+			.Draw();
+	}
 }

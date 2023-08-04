@@ -4,6 +4,21 @@
     <dict>
         <key>frames</key>
         <dict>
+            <key>bomb0</key>
+            <dict>
+                <key>aliases</key>
+                <array/>
+                <key>spriteOffset</key>
+                <string>{0,0}</string>
+                <key>spriteSize</key>
+                <string>{12,12}</string>
+                <key>spriteSourceSize</key>
+                <string>{12,12}</string>
+                <key>textureRect</key>
+                <string>{{113,1},{12,12}}</string>
+                <key>textureRotated</key>
+                <false/>
+            </dict>
             <key>plane_b1</key>
             <dict>
                 <key>aliases</key>
@@ -15,7 +30,7 @@
                 <key>spriteSourceSize</key>
                 <string>{21,25}</string>
                 <key>textureRect</key>
-                <string>{{81,1},{21,25}}</string>
+                <string>{{1,82},{21,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -30,7 +45,7 @@
                 <key>spriteSourceSize</key>
                 <string>{24,25}</string>
                 <key>textureRect</key>
-                <string>{{31,1},{24,25}}</string>
+                <string>{{61,1},{24,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -60,7 +75,7 @@
                 <key>spriteSourceSize</key>
                 <string>{24,25}</string>
                 <key>textureRect</key>
-                <string>{{31,28},{24,25}}</string>
+                <string>{{87,1},{24,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -75,7 +90,7 @@
                 <key>spriteSourceSize</key>
                 <string>{21,25}</string>
                 <key>textureRect</key>
-                <string>{{104,1},{21,25}}</string>
+                <string>{{24,82},{21,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -90,7 +105,7 @@
                 <key>spriteSourceSize</key>
                 <string>{20,25}</string>
                 <key>textureRect</key>
-                <string>{{81,28},{20,25}}</string>
+                <string>{{25,28},{20,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -105,7 +120,7 @@
                 <key>spriteSourceSize</key>
                 <string>{22,25}</string>
                 <key>textureRect</key>
-                <string>{{57,1},{22,25}}</string>
+                <string>{{1,28},{22,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -120,7 +135,7 @@
                 <key>spriteSourceSize</key>
                 <string>{28,25}</string>
                 <key>textureRect</key>
-                <string>{{1,28},{28,25}}</string>
+                <string>{{31,1},{28,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -135,7 +150,7 @@
                 <key>spriteSourceSize</key>
                 <string>{22,25}</string>
                 <key>textureRect</key>
-                <string>{{57,28},{22,25}}</string>
+                <string>{{1,55},{22,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -150,7 +165,7 @@
                 <key>spriteSourceSize</key>
                 <string>{20,25}</string>
                 <key>textureRect</key>
-                <string>{{103,28},{20,25}}</string>
+                <string>{{25,55},{20,25}}</string>
                 <key>textureRotated</key>
                 <false/>
             </dict>
@@ -166,9 +181,9 @@
             <key>realTextureFileName</key>
             <string>gemini.png</string>
             <key>size</key>
-            <string>{128,64}</string>
+            <string>{128,128}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:6a082cead28ba9813da4c4dd1ecfba7b:d056afd703f275d7225237d2432d2379:4e9267fb21a88a12c3a8c844b417d8ff$</string>
+            <string>$TexturePacker:SmartUpdate:ca0a1e72e576ae30bcebab726cf60cbe:3704b561207403cf0508463aa2bc384d:4e9267fb21a88a12c3a8c844b417d8ff$</string>
             <key>textureFileName</key>
             <string>gemini.png</string>
         </dict>
