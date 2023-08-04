@@ -65,13 +65,13 @@ struct Plane {
 	float frameIndexs[4];							// for move left/right switch frame. [0] curr [1] min [2] mid [3] max
 	float frameChangeSpeed{};						// speed0 / 5
 
-	xx::Tasks tasks;
-
 	void Init(int planeIndex_ = 0);
 	void Draw();
+
 	xx::Task<> Born();								// let the player's plane move in from outside the screen
 	xx::Task<> Shine();								// shine 5 secs ( god mode )
 	xx::Task<> Update();							// can control move & fire
+	xx::Tasks tasks;
 };
 
 #endif
