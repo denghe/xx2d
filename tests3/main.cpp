@@ -20,8 +20,12 @@ void GameLooper::AfterGLInit() {
 	tp.GetToByPrefix(frames_plane_red, "plane_r");
 	xx_assert(frames_plane_red.size() == 5);
 
+	tp.GetToByPrefix(frames_bullet_plane, "bullet_p");
+	xx_assert(frames_bullet_plane.size() == 3);
+	frames_bullet_plane.emplace_back(frames_bullet_plane.back());	// light bullet +1 frame
+
 	tp.GetToByPrefix(frames_bomb, "bomb");
-	xx_assert(frames_bomb.size() == 1);
+	xx_assert(frames_bomb.size() == 7);
 
 	tasks.Add(MasterLogic());
 }
@@ -61,7 +65,7 @@ xx::Task<> GameLooper::MasterLogic() {
 	//for (size_t i = 0; i < 10000; i++)
 	{
 		player_planes.emplace_back(xx::Make<Plane>())->Init(0);
-		player_planes.emplace_back(xx::Make<Plane>())->Init(1);
+		//player_planes.emplace_back(xx::Make<Plane>())->Init(1);
 		co_yield 0;
 	}
 	
@@ -86,10 +90,10 @@ void Plane::Init(int planeIndex_) {
 	godMode = true;
 	visible = false;
 
-	// bomb data init
-	for (size_t i = 0; i < 30; i++) {
+	// bombs init
+	for (size_t i = 0; i < 300; i++) {
 		auto&& b = bombs.Emplace();
-		b.type = BombTypes::Trident;
+		b.type = BombTypes(gEngine.rnd.Next(5));
 	}
 
 	// brush partial init
@@ -99,6 +103,7 @@ void Plane::Init(int planeIndex_) {
 	tasks.Add(Born());
 	tasks.Add(Shine());
 	tasks.Add(SyncBombPos());
+	tasks.Add(SyncBulletPosCol());
 }
 
 void Plane::InitBombPos() {
@@ -113,6 +118,7 @@ void Plane::InitBombPos() {
 xx::Task<> Plane::SyncBombPos() {
 	while (true) {
 		co_yield 0;
+
 		auto n = bombs.Count();
 		if (!n) continue;
 		
@@ -130,6 +136,25 @@ xx::Task<> Plane::SyncBombPos() {
 			}
 			tarPos = { pos.x, pos.y - (moving ? 0 : gBombDiameter) };
 		}
+	}
+}
+
+xx::Task<> Plane::SyncBulletPosCol() {
+	while (true) {
+		co_yield 0;
+
+		// loop switch tex
+		bulletBeginFrameIndex += gPlaneBulletFrameChangeStep;
+		if ((size_t)bulletBeginFrameIndex >= gLooper->frames_bullet_plane.size()) {
+			bulletBeginFrameIndex = 0;
+		}
+
+		bullets.Foreach([](PlaneBullet& b)->bool {
+			b.pos.y += gPlaneBulletSpeed;
+			if (b.pos.y + gPlaneBulletHight_2 > gWndHeight_2) return true;	// flying out of the screen 
+			// todo: hit check
+			return false;
+		});
 	}
 }
 
@@ -162,6 +187,15 @@ xx::Task<> Plane::Update() {
 	while (true) {
 		// bak for change frame display
 		auto oldPos = pos;
+
+		// todo: use bomb?
+
+		// fire
+		if (gEngine.Pressed(xx::Mbtns::Left) && gEngine.nowSecs >= bulletNextFireTime) {
+			bulletNextFireTime = gEngine.nowSecs + gPlaneBulletFireCD;			// renew cd limit vars
+
+			bullets.Emplace(xx::XY{ pos.x, pos.y + gPlaneBulletFireYOffset });
+		}
 
 		// move by mouse ois
 		auto d = gMousePos - pos;
@@ -214,15 +248,17 @@ void Plane::Draw() {
 	// draw bombs
 	for (auto i = (ptrdiff_t)bombs.Count() - 1; i >= 0; --i) {
 		auto& b = bombs[i];
-		texBrush.SetPosition(b.pos)
-			.SetFrame(gLooper->frames_bomb[(int)b.type])
-			.Draw();
+		texBrush.SetFrame(gLooper->frames_bomb[(int)b.type]).SetPosition(b.pos).Draw();
 	}
 
-	if (visible) {
-		// draw plane body
-		texBrush.SetPosition(pos)
-			.SetFrame(frames->operator[](frameIndexs[0]))
-			.Draw();
+	if (visible) {	// draw plane body
+		texBrush.SetFrame(frames->operator[](frameIndexs[0])).SetPosition(pos).Draw();
 	}
+
+	// draw bullets
+	texBrush.SetFrame(gLooper->frames_bullet_plane[(int)bulletBeginFrameIndex]);
+	bullets.Foreach([&](PlaneBullet& b) {
+		texBrush.SetPosition({ b.pos.x - gPlaneBulletSpacing_2, b.pos.y }).Draw();
+		texBrush.SetPosition({ b.pos.x + gPlaneBulletSpacing_2, b.pos.y }).Draw();
+	});
 }

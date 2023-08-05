@@ -18,6 +18,7 @@ struct GameLooper : xx::GameLooperBase {
 	// res
 	std::vector<xx::Shared<xx::Frame>> frames_plane_blue;			// plane_b?     ? = 1 ~ 5
 	std::vector<xx::Shared<xx::Frame>> frames_plane_red;			// plane_r?     ? = 1 ~ 5
+	std::vector<xx::Shared<xx::Frame>> frames_bullet_plane;			// bullet_p?	? = 0 ~ 2
 	std::vector<xx::Shared<xx::Frame>> frames_bomb;					// bomb?		? = 0 ~ 8
 
 	// runtime objects
@@ -52,6 +53,15 @@ inline constexpr float gPlaneBornYTo = gWndHeight_2 - 220 * gScale;
 inline constexpr float gPlaneBornSpeed = 1.f;
 inline constexpr float gPlaneNormalSpeed = 2.f;
 
+inline constexpr float gPlaneBulletHight = 16.f * gScale;
+inline constexpr float gPlaneBulletHight_2 = gPlaneBulletHight / 2;
+inline constexpr float gPlaneBulletSpacing = 13.f * gScale;
+inline constexpr float gPlaneBulletSpacing_2 = gPlaneBulletSpacing / 2;
+inline constexpr float gPlaneBulletFrameChangeStep = 1.f / 5;
+inline constexpr float gPlaneBulletSpeed = 5.f * gScale;
+inline constexpr float gPlaneBulletFireYOffset = 14.f * gScale;
+inline constexpr float gPlaneBulletFireCD = 0.1f;
+
 inline constexpr float gBombAnchorYDist = 18.f * gScale;	// plane.pos.y - offset
 inline constexpr float gBombRadius = 6.f * gScale;
 inline constexpr float gBombDiameter = gBombRadius * 2;
@@ -62,12 +72,15 @@ inline constexpr float gBombMovingFollowSteps = 9;
 inline constexpr float gBombStopFollowSteps = 6;
 
 
-enum class BombTypes {
+
+
+
+enum class BombTypes : int {
 	Trident,	// bomb0
 	Circle,
+	Missle,
 	Bar,
 	Pillar,
-	Missle,
 	Speed,
 	Life,
 	Bonus2,
@@ -80,24 +93,31 @@ struct Bomb {
 	xx::XY pos{};
 };
 
+struct PlaneBullet {
+	xx::XY pos{};
+};
+
 struct Plane {
-	xx::Quad texBrush;									// draw body, bomb
+	xx::Quad texBrush;									// draw body, bomb, bullet ...
 
 	int planeIndex{};									// 0: p1, 1: p2
 	std::vector<xx::Shared<xx::Frame>>* frames{};		// planeIndex == 0: frames_plane_blue; == 1: frames_plane_red
 
-	bool godMode{}, visible{};							// for born shine 5 secs
+	bool godMode{}, visible{};							// for born shine 5 secs	// todo: dead state
 	bool moving{};
 	float radius{};										// for collision detect
 
 	xx::XY pos{};										// current position
-	float speed0{};										// base speed
+	float speed0{};										// base speed ( for calc )
 	float speed1{};										// speed0 * gScale
 
 	float frameIndexs[4];								// for move left/right switch frame. [0] curr [1] min [2] mid [3] max
 	float frameChangeSpeed{};							// speed0 / 5
 
 	xx::Queue<Bomb> bombs;								// tail bomb icons
+	xx::ListLink<PlaneBullet> bullets;					// bullets fired from the front of the plane
+	float bulletBeginFrameIndex{};						// bullets will be auto change frame every 5 frames
+	float bulletNextFireTime{};							// next avaliable fire time by engine.nowSecs + CD
 
 	void Init(int planeIndex_ = 0);
 	void InitBombPos();
@@ -106,8 +126,9 @@ struct Plane {
 	xx::Task<> Born();									// let the player's plane move in from outside the screen
 	xx::Task<> Shine();									// shine 5 secs ( god mode )
 	xx::Task<> Update();								// can control move & fire
-	xx::Task<> SyncBombPos();							// 
-	xx::Tasks tasks;
+	xx::Task<> SyncBombPos();							// let tail bombs follow plane move
+	xx::Task<> SyncBulletPosCol();						// move bullet & switch frame
+	xx::Tasks tasks;									// manager for above tasks
 };
 
 #endif
