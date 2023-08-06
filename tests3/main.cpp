@@ -17,9 +17,9 @@ void GameLooper::AfterGLInit() {
 	tp.GetToByPrefix(frames_plane_blue, "plane_blue");
 	tp.GetToByPrefix(frames_plane_red, "plane_red");
 	tp.GetToByPrefix(frames_bullet_plane, "plane_bullet");
-	frames_bullet_plane.push_back(frames_bullet_plane.back());	// plane bullet last frame repeat 1 time
 	tp.GetToByPrefix(frames_bomb, "bomb");
 	tp.GetToByPrefix(frames_monster_strawberry, "monster_strawberry");
+	tp.GetToByPrefix(frames_explosion_monster, "explosion_monster");
 
 	tasks.Add(MasterLogic());
 }
@@ -40,11 +40,19 @@ int GameLooper::Update() {
 			return o->Update.Resume();
 		});
 
+		explosion_monsters.Foreach([&](auto& o) {
+			return o->Update.Resume();
+		});
+
 		// todo: more Update
 	}
 
 	xx::Quad texBrush;
 	texBrush.SetScale(gDisplayScale);
+
+	explosion_monsters.Foreach([&](auto& o) {
+		o->Draw(texBrush);
+	});
 
 	monster_strawberries.Foreach([&](auto& o) {
 		o->Draw(texBrush);
@@ -64,7 +72,7 @@ int GameLooper::Update() {
 
 xx::Task<> GameLooper::MasterLogic() {
 	// sleep a while for OBS record
-	co_await gEngine.TaskSleep(5);
+	//co_await gEngine.TaskSleep(5);
 
 	// create player's plane
 	//for (size_t i = 0; i < 10000; i++)
@@ -294,6 +302,25 @@ void Plane::Draw(xx::Quad& texBrush) {
 
 
 
+void ExplosionMonster::Init(xx::XY const& pos_) {
+	pos = pos_;
+	frameIndex = gExplosionMonsterFrameIndexMin;
+}
+
+xx::Task<> ExplosionMonster::Update_() {
+	while (true) {
+		frameIndex += gExplosionMonsterFrameSwitchDelay;
+		if ((int)frameIndex > gExplosionMonsterFrameIndexMax) break;
+		co_yield 0;
+	}
+};
+
+void ExplosionMonster::Draw(xx::Quad& texBrush) {
+	texBrush.SetFrame(gLooper->frames_explosion_monster[frameIndex]).SetPosition(pos).Draw();
+}
+
+
+
 void MonsterStrawberry::Init() {
 	if (gRnd.Next<bool>()) {
 		pos.x = -gMonsterStrawberryRadius - gWndWidth_2;
@@ -344,4 +371,8 @@ xx::Task<> MonsterStrawberry::Update_() {
 
 void MonsterStrawberry::Draw(xx::Quad& texBrush) {
 	texBrush.SetFrame(gLooper->frames_monster_strawberry[frameIndex]).SetPosition(pos).Draw();
+}
+
+MonsterStrawberry::~MonsterStrawberry() {
+	gLooper->explosion_monsters.Emplace().Emplace()->Init(pos);
 }

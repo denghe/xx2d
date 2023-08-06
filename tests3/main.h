@@ -6,6 +6,7 @@
 
 struct Plane;
 struct MonsterStrawberry;
+struct ExplosionMonster;
 
 struct GameLooper : xx::GameLooperBase {
 	// base res
@@ -27,10 +28,14 @@ struct GameLooper : xx::GameLooperBase {
 	std::vector<xx::Shared<xx::Frame>> frames_monster_strawberry;
 	// ... more mosters
 
-	// ... more ffects
+	std::vector<xx::Shared<xx::Frame>> frames_explosion_monster;
+	// ... more effects
 
 	// runtime objects
 	std::vector<xx::Shared<Plane>> player_planes;
+
+	xx::ListLink<xx::Shared<ExplosionMonster>, int> explosion_monsters;
+	// ... more explosions
 
 	xx::ListLink<xx::Shared<MonsterStrawberry>, int> monster_strawberries;
 	// ... more monsters
@@ -84,7 +89,7 @@ inline constexpr float gPlaneBulletHight = 16.f * gDisplayScale;
 inline constexpr float gPlaneBulletHight_2 = gPlaneBulletHight / 2;
 inline constexpr float gPlaneBulletSpacing = 13.f * gDisplayScale;
 inline constexpr float gPlaneBulletSpacing_2 = gPlaneBulletSpacing / 2;
-inline constexpr float gPlaneBulletFrameChangeStep = 1.f / 5;
+inline constexpr float gPlaneBulletFrameChangeStep = 1.f / 5 * gSpeedScale;
 inline constexpr float gPlaneBulletSpeed = 5.f * gDisplayScale * gSpeedScale;
 inline constexpr float gPlaneBulletFireYOffset = 14.f * gDisplayScale;
 inline constexpr float gPlaneBulletFireCD = 1.f / 12;
@@ -98,19 +103,23 @@ inline constexpr float gBombFirstFollowSteps = 2 / gSpeedScale;
 inline constexpr float gBombMovingFollowSteps = 9 / gSpeedScale;
 inline constexpr float gBombStopFollowSteps = 6 / gSpeedScale;
 
+inline constexpr float gExplosionMonsterFrameSwitchDelay = 1.f / 4 * gSpeedScale;
+inline constexpr int gExplosionMonsterFrameIndexMin = 0;
+inline constexpr int gExplosionMonsterFrameIndexMax = 5;
+
 inline constexpr float gMonsterStrawberryRadius = 6.f * gDisplayScale;
 inline constexpr float gMonsterStrawberryDiameter = gMonsterStrawberryRadius * 2;
 inline constexpr float gMonsterStrawberryBornYFrom = gWndHeight_2 - 96 * gDisplayScale;
 inline constexpr float gMonsterStrawberryBornYTo = gWndHeight_2 - 40 * gDisplayScale;
 inline constexpr float gMonsterStrawberryHorizontalMoveSpeed = 1.5f * gDisplayScale * gSpeedScale;
-inline constexpr float gMonsterStrawberryHorizontalMoveFrameSwitchDelay = 1.f / (60 / 6);
+inline constexpr float gMonsterStrawberryHorizontalMoveFrameSwitchDelay = 1.f / 6 * gSpeedScale;
 inline constexpr int gMonsterStrawberryHorizontalFrameIndexMin = 0;
 inline constexpr int gMonsterStrawberryHorizontalFrameIndexMax = 3;
 inline constexpr float gMonsterStrawberryHorizontalMoveTotalSeconds = (gWndWidth + gMonsterStrawberryDiameter) / gMonsterStrawberryHorizontalMoveSpeed / gFps;
 inline constexpr int gMonsterStrawberrySwitchToVerticalMoveDelayFrom = gFps * (gMonsterStrawberryHorizontalMoveTotalSeconds * 0.2);
 inline constexpr int gMonsterStrawberrySwitchToVerticalMoveDelayTo = gFps * (gMonsterStrawberryHorizontalMoveTotalSeconds * 0.8);
 inline constexpr float gMonsterStrawberryVerticalMoveSpeed = 1.f * gDisplayScale * gSpeedScale;
-inline constexpr float gMonsterStrawberryVerticalMoveFrameSwitchDelay = 1.f / (60 / 4);
+inline constexpr float gMonsterStrawberryVerticalMoveFrameSwitchDelay = 1.f / 4 * gSpeedScale;
 inline constexpr int gMonsterStrawberryVerticalFrameIndexMin = 4;
 inline constexpr int gMonsterStrawberryVerticalFrameIndexMax = 5;
 inline constexpr int gMonsterStrawberryVerticalRepeatFrameIndexMin = 6;
@@ -177,6 +186,15 @@ struct Plane {
 	xx::Tasks tasks;									// manager for above tasks
 };
 
+struct ExplosionMonster {
+	xx::XY pos{};
+	float frameIndex{};
+	void Init(xx::XY const& pos_);
+	void Draw(xx::Quad& texBrush);
+	xx::Task<> Update = Update_();
+	xx::Task<> Update_();
+};
+
 struct MonsterStrawberry {
 	xx::XY pos{}, inc{};
 	int switchDelay{};
@@ -185,6 +203,7 @@ struct MonsterStrawberry {
 	void Draw(xx::Quad& texBrush);
 	xx::Task<> Update = Update_();
 	xx::Task<> Update_();
+	~MonsterStrawberry();
 };
 
 #endif
