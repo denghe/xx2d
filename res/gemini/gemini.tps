@@ -214,9 +214,8 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">bullet_p0.png</key>
-            <key type="filename">bullet_p1.png</key>
-            <key type="filename">bullet_p2.png</key>
+            <key type="filename">monster_strawberry0.png</key>
+            <key type="filename">monster_strawberry1.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -225,14 +224,44 @@
                 <key>scale9Enabled</key>
                 <false/>
                 <key>scale9Borders</key>
-                <rect>1,4,1,8</rect>
+                <rect>3,3,7,5</rect>
                 <key>scale9Paddings</key>
-                <rect>1,4,1,8</rect>
+                <rect>3,3,7,5</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">plane_b1.png</key>
-            <key type="filename">plane_b5.png</key>
+            <key type="filename">monster_strawberry2.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,3,7,5</rect>
+                <key>scale9Paddings</key>
+                <rect>4,3,7,5</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_strawberry3.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>3,2,7,4</rect>
+                <key>scale9Paddings</key>
+                <rect>3,2,7,4</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">plane_blue0.png</key>
+            <key type="filename">plane_blue4.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -247,8 +276,8 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">plane_b2.png</key>
-            <key type="filename">plane_b4.png</key>
+            <key type="filename">plane_blue1.png</key>
+            <key type="filename">plane_blue3.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -263,8 +292,8 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">plane_b3.png</key>
-            <key type="filename">plane_r3.png</key>
+            <key type="filename">plane_blue2.png</key>
+            <key type="filename">plane_red2.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -279,8 +308,25 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">plane_r1.png</key>
-            <key type="filename">plane_r5.png</key>
+            <key type="filename">plane_bullet0.png</key>
+            <key type="filename">plane_bullet1.png</key>
+            <key type="filename">plane_bullet2.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>1,4,1,8</rect>
+                <key>scale9Paddings</key>
+                <rect>1,4,1,8</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">plane_red0.png</key>
+            <key type="filename">plane_red4.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -295,8 +341,8 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">plane_r2.png</key>
-            <key type="filename">plane_r4.png</key>
+            <key type="filename">plane_red1.png</key>
+            <key type="filename">plane_red3.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -318,26 +364,30 @@
             <struct type="SpriteSheet">
                 <key>files</key>
                 <array>
-                    <filename>plane_b1.png</filename>
-                    <filename>plane_b2.png</filename>
-                    <filename>plane_b3.png</filename>
-                    <filename>plane_b4.png</filename>
-                    <filename>plane_b5.png</filename>
-                    <filename>plane_r1.png</filename>
-                    <filename>plane_r2.png</filename>
-                    <filename>plane_r3.png</filename>
-                    <filename>plane_r4.png</filename>
-                    <filename>plane_r5.png</filename>
                     <filename>bomb0.png</filename>
-                    <filename>bullet_p0.png</filename>
-                    <filename>bullet_p1.png</filename>
-                    <filename>bullet_p2.png</filename>
                     <filename>bomb1.png</filename>
                     <filename>bomb2.png</filename>
                     <filename>bomb3.png</filename>
                     <filename>bomb4.png</filename>
                     <filename>bomb5.png</filename>
                     <filename>bomb7.png</filename>
+                    <filename>monster_strawberry0.png</filename>
+                    <filename>monster_strawberry1.png</filename>
+                    <filename>monster_strawberry2.png</filename>
+                    <filename>monster_strawberry3.png</filename>
+                    <filename>plane_blue0.png</filename>
+                    <filename>plane_blue1.png</filename>
+                    <filename>plane_blue2.png</filename>
+                    <filename>plane_blue3.png</filename>
+                    <filename>plane_blue4.png</filename>
+                    <filename>plane_bullet0.png</filename>
+                    <filename>plane_bullet1.png</filename>
+                    <filename>plane_bullet2.png</filename>
+                    <filename>plane_red0.png</filename>
+                    <filename>plane_red1.png</filename>
+                    <filename>plane_red2.png</filename>
+                    <filename>plane_red3.png</filename>
+                    <filename>plane_red4.png</filename>
                 </array>
             </struct>
         </map>

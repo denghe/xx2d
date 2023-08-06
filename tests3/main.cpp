@@ -14,18 +14,12 @@ void GameLooper::AfterGLInit() {
 	xx::TP tp;
 	tp.Load("res/gemini/gemini.plist");
 
-	tp.GetToByPrefix(frames_plane_blue, "plane_b");
-	xx_assert(frames_plane_blue.size() == 5);
-
-	tp.GetToByPrefix(frames_plane_red, "plane_r");
-	xx_assert(frames_plane_red.size() == 5);
-
-	tp.GetToByPrefix(frames_bullet_plane, "bullet_p");
-	xx_assert(frames_bullet_plane.size() == 3);
-	frames_bullet_plane.emplace_back(frames_bullet_plane.back());	// light bullet +1 frame
-
+	tp.GetToByPrefix(frames_plane_blue, "plane_blue");
+	tp.GetToByPrefix(frames_plane_red, "plane_red");
+	tp.GetToByPrefix(frames_bullet_plane, "plane_bullet");
+	frames_bullet_plane.push_back(frames_bullet_plane.back());	// plane bullet last frame repeat 1 time
 	tp.GetToByPrefix(frames_bomb, "bomb");
-	xx_assert(frames_bomb.size() == 7);
+	tp.GetToByPrefix(frames_monster_strawberry, "monster_strawberry");
 
 	tasks.Add(MasterLogic());
 }
@@ -45,9 +39,12 @@ int GameLooper::Update() {
 		// todo: more Update
 	}
 
+	xx::Quad texBrush;
+	texBrush.SetScale(gDisplayScale);
+
 	for (auto& o : player_planes) {
 		if (o) {
-			o->Draw();
+			o->Draw(texBrush);
 		}
 	}
 
@@ -78,26 +75,19 @@ xx::Task<> GameLooper::MasterLogic() {
 void Plane::Init(int planeIndex_) {
 	// data init
 	planeIndex = planeIndex_;
-	frames = planeIndex == 0 ? &gLooper->frames_plane_blue : &gLooper->frames_plane_red;
 	speed0 = gPlaneNormalSpeed;
-	speed1 = speed0 * gScale;
-	frameIndexs[1] = 0;
-	frameIndexs[2] = frames->size() / 2;
-	frameIndexs[3] = frames->size() - 1;
-	frameIndexs[0] = frameIndexs[2];
+	speed1 = speed0 * gDisplayScale;
+	frameIndex = gPlaneFrameIndexMid;
 	frameChangeSpeed = speed0 * 0.2;
-	radius = 9 * gScale;
+	radius = 9 * gDisplayScale;
 	godMode = true;
 	visible = false;
 
 	// bombs init
-	for (size_t i = 0; i < 300; i++) {
+	for (size_t i = 0; i < 15; i++) {
 		auto&& b = bombs.Emplace();
 		b.type = BombTypes(gEngine.rnd.Next(5));
 	}
-
-	// brush partial init
-	texBrush.SetScale(gScale);
 
 	// script init
 	tasks.Add(Born());
@@ -151,7 +141,7 @@ xx::Task<> Plane::SyncBulletPosCol() {
 
 		bullets.Foreach([](PlaneBullet& b)->bool {
 			b.pos.y += gPlaneBulletSpeed;
-			if (b.pos.y + gPlaneBulletHight_2 > gWndHeight_2) return true;	// flying out of the screen 
+			if (b.pos.y - gPlaneBulletHight_2 > gWndHeight_2) return true;	// flying out of the screen 
 			// todo: hit check
 			return false;
 		});
@@ -163,7 +153,7 @@ xx::Task<> Plane::Born() {
 	InitBombPos();
 	moving = true;
 	while (gPlaneBornYTo - pos.y > speed1) {
-		pos.y += gPlaneBornSpeed * gScale;
+		pos.y += gPlaneBornSpeed * gDisplayScale;
 		co_yield 0;
 	}
 	pos.y = gPlaneBornYTo;
@@ -188,13 +178,19 @@ xx::Task<> Plane::Update() {
 		// bak for change frame display
 		auto oldPos = pos;
 
-		// todo: use bomb?
 
 		// fire
 		if (gEngine.Pressed(xx::Mbtns::Left) && gEngine.nowSecs >= bulletNextFireTime) {
-			bulletNextFireTime = gEngine.nowSecs + gPlaneBulletFireCD;			// renew cd limit vars
+			bulletNextFireTime = gEngine.nowSecs + gPlaneBulletFireCD;			// apply cd effect
 
 			bullets.Emplace(xx::XY{ pos.x, pos.y + gPlaneBulletFireYOffset });
+		}
+
+		// use bomb
+		if (gEngine.Pressed(xx::Mbtns::Right) && gEngine.nowSecs >= bulletNextFireTime) {
+			bombNextUseTime = gEngine.nowSecs + gPlaneBulletFireCD;				// apply cd effect
+
+			// todo switch first bomb type ....
 		}
 
 		// move by mouse ois
@@ -210,30 +206,29 @@ xx::Task<> Plane::Update() {
 		}
 
 		// change frame display
-		float &fidx = frameIndexs[0], &fmin = frameIndexs[1], &fmid = frameIndexs[2], &fmax = frameIndexs[3];
 		if (oldPos.x < pos.x) {
-			fidx += frameChangeSpeed;
-			if (fidx > fmax) {
-				fidx = fmax;
+			frameIndex += frameChangeSpeed;
+			if (frameIndex > gPlaneFrameIndexMax) {
+				frameIndex = gPlaneFrameIndexMax;
 			}
 		}
 		else if (oldPos.x > pos.x) {
-			fidx -= frameChangeSpeed;
-			if (fidx < fmin) {
-				fidx = fmin;
+			frameIndex -= frameChangeSpeed;
+			if (frameIndex < gPlaneFrameIndexMin) {
+				frameIndex = gPlaneFrameIndexMin;
 			}
 		}
 		else {
-			if (fidx > fmid) {
-				fidx -= frameChangeSpeed;
-				if (fidx < fmid) {
-					fidx = fmid;
+			if (frameIndex > gPlaneFrameIndexMid) {
+				frameIndex -= frameChangeSpeed;
+				if (frameIndex < gPlaneFrameIndexMid) {
+					frameIndex = gPlaneFrameIndexMid;
 				}
 			}
-			else if (fidx < fmid) {
-				fidx += frameChangeSpeed;
-				if (fidx > fmid) {
-					fidx = fmid;
+			else if (frameIndex < gPlaneFrameIndexMid) {
+				frameIndex += frameChangeSpeed;
+				if (frameIndex > gPlaneFrameIndexMid) {
+					frameIndex = gPlaneFrameIndexMid;
 				}
 			}
 		}
@@ -244,7 +239,7 @@ xx::Task<> Plane::Update() {
 	}
 }
 
-void Plane::Draw() {
+void Plane::Draw(xx::Quad& texBrush) {
 	// draw bombs
 	for (auto i = (ptrdiff_t)bombs.Count() - 1; i >= 0; --i) {
 		auto& b = bombs[i];
@@ -252,7 +247,8 @@ void Plane::Draw() {
 	}
 
 	if (visible) {	// draw plane body
-		texBrush.SetFrame(frames->operator[](frameIndexs[0])).SetPosition(pos).Draw();
+		auto& frames = (planeIndex == 0 ? gLooper->frames_plane_blue : gLooper->frames_plane_red);
+		texBrush.SetFrame(frames[frameIndex]).SetPosition(pos).Draw();
 	}
 
 	// draw bullets
