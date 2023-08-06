@@ -79,8 +79,7 @@ xx::Task<> GameLooper::MasterLogic() {
 	//monster_strawberries.Emplace().Emplace()->Init();
 
 	while (true) {
-		//co_await gEngine.TaskSleep(0.1);
-		co_yield 0;
+		co_await gEngine.TaskSleep(1.f / 10);
 
 		monster_strawberries.Emplace().Emplace()->Init();
 	}
@@ -156,7 +155,19 @@ xx::Task<> Plane::SyncBulletPosCol() {
 		bullets.Foreach([](PlaneBullet& b)->bool {
 			b.pos.y += gPlaneBulletSpeed;
 			if (b.pos.y - gPlaneBulletHight_2 > gWndHeight_2) return true;	// flying out of the screen 
-			// todo: hit check
+			// todo: optimize performance ( space index ? )
+			auto idx = gLooper->monster_strawberries.FindIf([&](xx::Shared<MonsterStrawberry>& o)->bool {
+				auto d = b.pos - o->pos;
+				auto constexpr rr = (gPlaneBulletHight_2 + gMonsterStrawberryRadius)
+					* (gPlaneBulletHight_2 + gMonsterStrawberryRadius);
+				auto dd = d.x * d.x + d.y * d.y;
+				return dd < rr;
+			});
+			if (idx != -1) {
+				// todo: effect
+				gLooper->monster_strawberries.Remove(idx);
+				return true;
+			}
 			return false;
 		});
 	}
@@ -204,7 +215,7 @@ xx::Task<> Plane::Update() {
 		if (gEngine.Pressed(xx::Mbtns::Right) && gEngine.nowSecs >= bulletNextFireTime) {
 			bombNextUseTime = gEngine.nowSecs + gPlaneBulletFireCD;				// apply cd effect
 
-			// todo switch first bomb type ....
+			// todo: switch( first bomb type ) ....
 		}
 
 		// move by mouse ois

@@ -32,7 +32,7 @@ struct GameLooper : xx::GameLooperBase {
 	// runtime objects
 	std::vector<xx::Shared<Plane>> player_planes;
 
-	xx::ListDoubleLink< xx::Shared<MonsterStrawberry>, int, uint32_t> monster_strawberries;
+	xx::ListDoubleLink<xx::Shared<MonsterStrawberry>, int, uint32_t> monster_strawberries;
 	// ... more monsters
 
 	// engine event handlers
@@ -87,7 +87,7 @@ inline constexpr float gPlaneBulletSpacing_2 = gPlaneBulletSpacing / 2;
 inline constexpr float gPlaneBulletFrameChangeStep = 1.f / 5;
 inline constexpr float gPlaneBulletSpeed = 5.f * gDisplayScale * gSpeedScale;
 inline constexpr float gPlaneBulletFireYOffset = 14.f * gDisplayScale;
-inline constexpr float gPlaneBulletFireCD = 1.f / 10;
+inline constexpr float gPlaneBulletFireCD = 1.f / 12;
 
 inline constexpr float gBombAnchorYDist = 18.f * gDisplayScale;	// plane.pos.y - offset
 inline constexpr float gBombRadius = 6.f * gDisplayScale;
@@ -98,7 +98,7 @@ inline constexpr float gBombFirstFollowSteps = 2 / gSpeedScale;
 inline constexpr float gBombMovingFollowSteps = 9 / gSpeedScale;
 inline constexpr float gBombStopFollowSteps = 6 / gSpeedScale;
 
-inline constexpr float gMonsterStrawberryRadius = 7.f * gDisplayScale;
+inline constexpr float gMonsterStrawberryRadius = 6.f * gDisplayScale;
 inline constexpr float gMonsterStrawberryDiameter = gMonsterStrawberryRadius * 2;
 inline constexpr float gMonsterStrawberryBornYFrom = gWndHeight_2 - 96 * gDisplayScale;
 inline constexpr float gMonsterStrawberryBornYTo = gWndHeight_2 - 40 * gDisplayScale;
