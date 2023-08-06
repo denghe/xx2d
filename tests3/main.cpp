@@ -78,6 +78,13 @@ xx::Task<> GameLooper::MasterLogic() {
 
 	//monster_strawberries.Emplace().Emplace()->Init();
 
+	//while (true) {
+	//	co_yield 0;
+	//	for (int i = 0; i < 100; ++i) {
+	//		monster_strawberries.Emplace().Emplace()->Init();
+	//	}
+	//}
+
 	while (true) {
 		co_await gEngine.TaskSleep(1.f / 10);
 
@@ -156,7 +163,7 @@ xx::Task<> Plane::SyncBulletPosCol() {
 			b.pos.y += gPlaneBulletSpeed;
 			if (b.pos.y - gPlaneBulletHight_2 > gWndHeight_2) return true;	// flying out of the screen 
 			// todo: optimize performance ( space index ? )
-			auto idx = gLooper->monster_strawberries.FindIf([&](xx::Shared<MonsterStrawberry>& o)->bool {
+			auto [idx, next] = gLooper->monster_strawberries.FindIf([&](xx::Shared<MonsterStrawberry>& o)->bool {
 				auto d = b.pos - o->pos;
 				auto constexpr rr = (gPlaneBulletHight_2 + gMonsterStrawberryRadius)
 					* (gPlaneBulletHight_2 + gMonsterStrawberryRadius);
@@ -165,7 +172,7 @@ xx::Task<> Plane::SyncBulletPosCol() {
 			});
 			if (idx != -1) {
 				// todo: effect
-				gLooper->monster_strawberries.Remove(idx);
+				gLooper->monster_strawberries.Remove(idx, next);
 				return true;
 			}
 			return false;

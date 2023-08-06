@@ -32,7 +32,7 @@ struct GameLooper : xx::GameLooperBase {
 	// runtime objects
 	std::vector<xx::Shared<Plane>> player_planes;
 
-	xx::ListDoubleLink<xx::Shared<MonsterStrawberry>, int, uint32_t> monster_strawberries;
+	xx::ListLink<xx::Shared<MonsterStrawberry>, int> monster_strawberries;
 	// ... more monsters
 
 	// engine event handlers
