@@ -200,6 +200,8 @@
             </struct>
             <key type="filename">bomb5.png</key>
             <key type="filename">bomb7.png</key>
+            <key type="filename">monster_strawberry5.png</key>
+            <key type="filename">monster_strawberry8.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -230,6 +232,22 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
+            <key type="filename">monster_strawberry10.png</key>
+            <key type="filename">monster_strawberry6.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,4,7,8</rect>
+                <key>scale9Paddings</key>
+                <rect>4,4,7,8</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
             <key type="filename">monster_strawberry2.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
@@ -257,6 +275,37 @@
                 <rect>3,2,7,4</rect>
                 <key>scale9Paddings</key>
                 <rect>3,2,7,4</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_strawberry4.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,3,7,6</rect>
+                <key>scale9Paddings</key>
+                <rect>4,3,7,6</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_strawberry7.png</key>
+            <key type="filename">monster_strawberry9.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>3,4,7,8</rect>
+                <key>scale9Paddings</key>
+                <rect>3,4,7,8</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
@@ -373,8 +422,15 @@
                     <filename>bomb7.png</filename>
                     <filename>monster_strawberry0.png</filename>
                     <filename>monster_strawberry1.png</filename>
+                    <filename>monster_strawberry10.png</filename>
                     <filename>monster_strawberry2.png</filename>
                     <filename>monster_strawberry3.png</filename>
+                    <filename>monster_strawberry4.png</filename>
+                    <filename>monster_strawberry5.png</filename>
+                    <filename>monster_strawberry6.png</filename>
+                    <filename>monster_strawberry7.png</filename>
+                    <filename>monster_strawberry8.png</filename>
+                    <filename>monster_strawberry9.png</filename>
                     <filename>plane_blue0.png</filename>
                     <filename>plane_blue1.png</filename>
                     <filename>plane_blue2.png</filename>

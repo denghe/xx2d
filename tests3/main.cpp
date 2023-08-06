@@ -36,11 +36,19 @@ int GameLooper::Update() {
 			}
 		}
 
+		monster_strawberries.Foreach([&](auto& o)->bool {
+			return o->Update.Resume();
+		});
+
 		// todo: more Update
 	}
 
 	xx::Quad texBrush;
 	texBrush.SetScale(gDisplayScale);
+
+	monster_strawberries.Foreach([&](auto& o) {
+		o->Draw(texBrush);
+	});
 
 	for (auto& o : player_planes) {
 		if (o) {
@@ -55,8 +63,8 @@ int GameLooper::Update() {
 }
 
 xx::Task<> GameLooper::MasterLogic() {
-	// sleep a while
-	//co_await gEngine.TaskSleep(5);
+	// sleep a while for OBS record
+	co_await gEngine.TaskSleep(5);
 
 	// create player's plane
 	//for (size_t i = 0; i < 10000; i++)
@@ -67,8 +75,14 @@ xx::Task<> GameLooper::MasterLogic() {
 	}
 	
 	// todo: create monsters?
+
+	//monster_strawberries.Emplace().Emplace()->Init();
+
 	while (true) {
+		//co_await gEngine.TaskSleep(0.1);
 		co_yield 0;
+
+		monster_strawberries.Emplace().Emplace()->Init();
 	}
 }
 
@@ -81,12 +95,12 @@ void Plane::Init(int planeIndex_) {
 	frameChangeSpeed = speed0 * 0.2;
 	radius = 9 * gDisplayScale;
 	godMode = true;
-	visible = false;
+	visible = 0;
 
 	// bombs init
 	for (size_t i = 0; i < 15; i++) {
 		auto&& b = bombs.Emplace();
-		b.type = BombTypes(gEngine.rnd.Next(5));
+		b.type = BombTypes(gRnd.Next(5));
 	}
 
 	// script init
@@ -164,12 +178,12 @@ xx::Task<> Plane::Born() {
 xx::Task<> Plane::Shine() {
 	auto e = gEngine.nowSecs + 5;
 	do {
-		visible = !visible;
+		visible += gPlaneVisibleInc;
 		co_yield 0;
 		co_yield 0;
 	} while (gEngine.nowSecs < e);
 
-	visible = true;
+	visible = 0;
 	godMode = false;			// close god mode
 }
 
@@ -246,7 +260,8 @@ void Plane::Draw(xx::Quad& texBrush) {
 		texBrush.SetFrame(gLooper->frames_bomb[(int)b.type]).SetPosition(b.pos).Draw();
 	}
 
-	if (visible) {	// draw plane body
+	// draw plane
+	if ((int)visible << 31 == 0) {
 		auto& frames = (planeIndex == 0 ? gLooper->frames_plane_blue : gLooper->frames_plane_red);
 		texBrush.SetFrame(frames[frameIndex]).SetPosition(pos).Draw();
 	}
@@ -257,4 +272,58 @@ void Plane::Draw(xx::Quad& texBrush) {
 		texBrush.SetPosition({ b.pos.x - gPlaneBulletSpacing_2, b.pos.y }).Draw();
 		texBrush.SetPosition({ b.pos.x + gPlaneBulletSpacing_2, b.pos.y }).Draw();
 	});
+}
+
+
+
+void MonsterStrawberry::Init() {
+	if (gRnd.Next<bool>()) {
+		pos.x = -gMonsterStrawberryRadius - gWndWidth_2;
+		inc = { gMonsterStrawberryHorizontalMoveSpeed, 0 };
+	}
+	else {
+		pos.x = gMonsterStrawberryRadius + gWndWidth_2;
+		inc = { -gMonsterStrawberryHorizontalMoveSpeed, 0 };
+	}
+	pos.y = gRnd.Next(gMonsterStrawberryBornYFrom, gMonsterStrawberryBornYTo);
+	frameIndex = gRnd.Next((float)gMonsterStrawberryHorizontalFrameIndexMin, gMonsterStrawberryHorizontalFrameIndexMax + 0.999f);
+	switchDelay = gRnd.Next(gMonsterStrawberrySwitchToVerticalMoveDelayFrom, gMonsterStrawberrySwitchToVerticalMoveDelayTo);
+}
+
+xx::Task<> MonsterStrawberry::Update_() {
+	// horizontal move
+	while (true) {
+		co_yield 0;
+		pos += inc;
+		if (--switchDelay <= 0) break;
+		frameIndex += gMonsterStrawberryHorizontalMoveFrameSwitchDelay;
+		if ((int)frameIndex > gMonsterStrawberryHorizontalFrameIndexMax) {
+			frameIndex = gMonsterStrawberryHorizontalFrameIndexMin + (frameIndex - gMonsterStrawberryHorizontalFrameIndexMax - 1);
+		}
+	}
+
+	// vertical move begin
+	inc = { 0, -gMonsterStrawberryVerticalMoveSpeed };
+	frameIndex = gMonsterStrawberryVerticalFrameIndexMin;
+	while (pos.y > -gWndHeight_2 - gMonsterStrawberryDiameter) {
+		co_yield 0;
+		pos += inc;
+		frameIndex += gMonsterStrawberryVerticalMoveFrameSwitchDelay;
+		if ((int)frameIndex > gMonsterStrawberryVerticalFrameIndexMax) break;
+	}
+
+	// vertical move repeat
+	frameIndex = gMonsterStrawberryVerticalRepeatFrameIndexMin + (frameIndex - gMonsterStrawberryVerticalFrameIndexMax - 1);
+	while (pos.y > -gWndHeight_2 - gMonsterStrawberryDiameter) {
+		co_yield 0;
+		pos += inc;
+		frameIndex += gMonsterStrawberryHorizontalMoveFrameSwitchDelay;
+		if ((int)frameIndex > gMonsterStrawberryVerticalRepeatFrameIndexMax) {
+			frameIndex = gMonsterStrawberryVerticalRepeatFrameIndexMin + (frameIndex - gMonsterStrawberryVerticalRepeatFrameIndexMax - 1);
+		}
+	}
+};
+
+void MonsterStrawberry::Draw(xx::Quad& texBrush) {
+	texBrush.SetFrame(gLooper->frames_monster_strawberry[frameIndex]).SetPosition(pos).Draw();
 }
