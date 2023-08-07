@@ -14,8 +14,7 @@ struct GameLooper : xx::GameLooperBase {
 	xx::FpsViewer fpsViewer;
 
 	// frame update envs
-	double timePool{};
-	int64_t frameNumber{};
+	double timePool{}, nowSecs{};
 	xx::Tasks tasks;
 
 	// res
@@ -57,25 +56,21 @@ inline xx::Rnd& gRnd = gEngine.rnd;
 
 // following speed mean: position increase value by every frame
 inline constexpr float gFps = 120.f;	//60.f;
-inline constexpr float gFds = 1.f / gFps;
+inline constexpr double gFds = 1. / gFps;
 inline constexpr float gSpeedScale = 60.f / gFps;
-inline constexpr float gDisplayScale = 4;					// upscale pixel style textures
-inline constexpr float g1_Scale = 1. / 4;
+inline constexpr float gDisplayScale = 4.f;					// design size * display scale = window size
+inline constexpr float g1_DisplayScale = 1.f / gDisplayScale;
 inline constexpr float gDesignWidth = 224;
 inline constexpr float gDesignHeight = 256;
 inline constexpr float gDesignWidth_2 = gDesignWidth / 2;
 inline constexpr float gDesignHeight_2 = gDesignHeight / 2;
-inline constexpr float gWndWidth = gDesignWidth * gDisplayScale;
-inline constexpr float gWndHeight = gDesignHeight * gDisplayScale;
-inline constexpr float gWndWidth_2 = gWndWidth / 2;
-inline constexpr float gWndHeight_2 = gWndHeight / 2;
 
-inline constexpr float gPlaneHeight = 25.f * gDisplayScale;
+inline constexpr float gPlaneHeight = 25.f;
 inline constexpr float gPlaneHeight_2 = gPlaneHeight / 2;
-inline constexpr float gPlaneRadius = 9.f * gDisplayScale;
-inline constexpr float gPlaneBornXs[2] = { 80 * gDisplayScale - gWndWidth_2, 128 * gDisplayScale - gWndWidth_2 };
-inline constexpr float gPlaneBornYFrom = -gWndHeight_2 - gPlaneHeight_2;
-inline constexpr float gPlaneBornYTo = gWndHeight_2 - 220 * gDisplayScale;
+inline constexpr float gPlaneRadius = 9.f;
+inline constexpr float gPlaneBornXs[2] = { 80 - gDesignWidth_2, 128 - gDesignWidth_2 };
+inline constexpr float gPlaneBornYFrom = -gDesignHeight_2 - gPlaneHeight_2;
+inline constexpr float gPlaneBornYTo = gDesignHeight_2 - 220;
 inline constexpr float gPlaneBornSpeed = 1.f * gSpeedScale;
 inline constexpr float gPlaneNormalSpeed = 1.5f * gSpeedScale;
 inline constexpr float gPlaneMaxSpeed = 4.f * gSpeedScale;
@@ -85,19 +80,19 @@ inline constexpr float gPlaneFrameIndexMin = 0;
 inline constexpr float gPlaneFrameIndexMid = 2;
 inline constexpr float gPlaneFrameIndexMax = 4;
 
-inline constexpr float gPlaneBulletHight = 16.f * gDisplayScale;
+inline constexpr float gPlaneBulletHight = 16.f;
 inline constexpr float gPlaneBulletHight_2 = gPlaneBulletHight / 2;
-inline constexpr float gPlaneBulletSpacing = 13.f * gDisplayScale;
+inline constexpr float gPlaneBulletSpacing = 13.f;
 inline constexpr float gPlaneBulletSpacing_2 = gPlaneBulletSpacing / 2;
 inline constexpr float gPlaneBulletFrameChangeStep = 1.f / 5 * gSpeedScale;
-inline constexpr float gPlaneBulletSpeed = 5.f * gDisplayScale * gSpeedScale;
-inline constexpr float gPlaneBulletFireYOffset = 14.f * gDisplayScale;
+inline constexpr float gPlaneBulletSpeed = 5.f * gSpeedScale;
+inline constexpr float gPlaneBulletFireYOffset = 14.f;
 inline constexpr float gPlaneBulletFireCD = 1.f / 12;
 
-inline constexpr float gBombAnchorYDist = 18.f * gDisplayScale;	// plane.pos.y - offset
-inline constexpr float gBombRadius = 6.f * gDisplayScale;
+inline constexpr float gBombAnchorYDist = 18.f;	// plane.pos.y - offset
+inline constexpr float gBombRadius = 6.f;
 inline constexpr float gBombDiameter = gBombRadius * 2;
-inline constexpr float gBombMinSpeed = 0.5f * gDisplayScale * gSpeedScale;
+inline constexpr float gBombMinSpeed = 0.5f * gSpeedScale;
 inline constexpr float gBombMinSpeedPow2 = gBombMinSpeed * gBombMinSpeed;
 inline constexpr float gBombFirstFollowSteps = 2 / gSpeedScale;
 inline constexpr float gBombMovingFollowSteps = 9 / gSpeedScale;
@@ -107,18 +102,18 @@ inline constexpr float gExplosionMonsterFrameSwitchDelay = 1.f / 4 * gSpeedScale
 inline constexpr int gExplosionMonsterFrameIndexMin = 0;
 inline constexpr int gExplosionMonsterFrameIndexMax = 5;
 
-inline constexpr float gMonsterStrawberryRadius = 6.f * gDisplayScale;
+inline constexpr float gMonsterStrawberryRadius = 6.f;
 inline constexpr float gMonsterStrawberryDiameter = gMonsterStrawberryRadius * 2;
-inline constexpr float gMonsterStrawberryBornYFrom = gWndHeight_2 - 96 * gDisplayScale;
-inline constexpr float gMonsterStrawberryBornYTo = gWndHeight_2 - 40 * gDisplayScale;
-inline constexpr float gMonsterStrawberryHorizontalMoveSpeed = 1.5f * gDisplayScale * gSpeedScale;
+inline constexpr float gMonsterStrawberryBornYFrom = gDesignHeight_2 - 96;
+inline constexpr float gMonsterStrawberryBornYTo = gDesignHeight_2 - 40;
+inline constexpr float gMonsterStrawberryHorizontalMoveSpeed = 1.5f * gSpeedScale;
 inline constexpr float gMonsterStrawberryHorizontalMoveFrameSwitchDelay = 1.f / 6 * gSpeedScale;
 inline constexpr int gMonsterStrawberryHorizontalFrameIndexMin = 0;
 inline constexpr int gMonsterStrawberryHorizontalFrameIndexMax = 3;
-inline constexpr float gMonsterStrawberryHorizontalMoveTotalSeconds = (gWndWidth + gMonsterStrawberryDiameter) / gMonsterStrawberryHorizontalMoveSpeed / gFps;
+inline constexpr float gMonsterStrawberryHorizontalMoveTotalSeconds = (gDesignWidth + gMonsterStrawberryDiameter) / gMonsterStrawberryHorizontalMoveSpeed / gFps;
 inline constexpr int gMonsterStrawberrySwitchToVerticalMoveDelayFrom = gFps * (gMonsterStrawberryHorizontalMoveTotalSeconds * 0.2);
 inline constexpr int gMonsterStrawberrySwitchToVerticalMoveDelayTo = gFps * (gMonsterStrawberryHorizontalMoveTotalSeconds * 0.8);
-inline constexpr float gMonsterStrawberryVerticalMoveSpeed = 1.f * gDisplayScale * gSpeedScale;
+inline constexpr float gMonsterStrawberryVerticalMoveSpeed = 1.f * gSpeedScale;
 inline constexpr float gMonsterStrawberryVerticalMoveFrameSwitchDelay = 1.f / 4 * gSpeedScale;
 inline constexpr int gMonsterStrawberryVerticalFrameIndexMin = 4;
 inline constexpr int gMonsterStrawberryVerticalFrameIndexMax = 5;
@@ -158,11 +153,9 @@ struct Plane {
 	bool godMode{};										// for born shine 5 secs ( no hit check )	// todo: dead state
 	bool moving{};
 	float visible{};									// god mode shine delay control
-	float radius{};										// for collision detect
 
 	xx::XY pos{};										// current position
-	float speed0{};										// base speed ( for calc )
-	float speed1{};										// speed0 * gDisplayScale
+	float speed{};
 
 	float frameIndex{};									// for move left/right switch frame
 	float frameChangeSpeed{};							// speed0 / 5

@@ -3,8 +3,8 @@
 int main() {
 	auto g = std::make_unique<GameLooper>();
 	gLooper = g.get();
-	gEngine.w = gWndWidth;
-	gEngine.h = gWndHeight;
+	gEngine.w = gDesignWidth * gDisplayScale;
+	gEngine.h = gDesignHeight * gDisplayScale;
 	return g->Run("arcade: gemini wings");
 }
 
@@ -28,6 +28,7 @@ int GameLooper::Update() {
 	timePool += gEngine.delta;
 	while (timePool >= gFds) {
 		timePool -= gFds;
+		nowSecs += gFds;
 		tasks();
 
 		for (auto& o : player_planes) {
@@ -86,28 +87,28 @@ xx::Task<> GameLooper::MasterLogic() {
 
 	//monster_strawberries.Emplace().Emplace()->Init();
 
-	//while (true) {
-	//	co_yield 0;
-	//	for (int i = 0; i < 100; ++i) {
-	//		monster_strawberries.Emplace().Emplace()->Init();
-	//	}
-	//}
-
+#if 1
+	while (true) {
+		co_yield 0;
+		for (int i = 0; i < 100; ++i) {
+			monster_strawberries.Emplace().Emplace()->Init();
+		}
+	}
+#else
 	while (true) {
 		co_await gEngine.TaskSleep(1.f / 10);
 
 		monster_strawberries.Emplace().Emplace()->Init();
 	}
+#endif
 }
 
 void Plane::Init(int planeIndex_) {
 	// data init
 	planeIndex = planeIndex_;
-	speed0 = gPlaneNormalSpeed;
-	speed1 = speed0 * gDisplayScale;
+	speed = gPlaneNormalSpeed;
 	frameIndex = gPlaneFrameIndexMid;
-	frameChangeSpeed = speed0 * 0.2;
-	radius = 9 * gDisplayScale;
+	frameChangeSpeed = speed * 0.2;
 	godMode = true;
 	visible = 0;
 
@@ -169,7 +170,7 @@ xx::Task<> Plane::SyncBulletPosCol() {
 
 		bullets.Foreach([](PlaneBullet& b)->bool {
 			b.pos.y += gPlaneBulletSpeed;
-			if (b.pos.y - gPlaneBulletHight_2 > gWndHeight_2) return true;	// flying out of the screen 
+			if (b.pos.y - gPlaneBulletHight_2 > gDesignHeight_2) return true;	// flying out of the screen 
 			// todo: optimize performance ( space index ? )
 			auto [idx, next] = gLooper->monster_strawberries.FindIf([&](xx::Shared<MonsterStrawberry>& o)->bool {
 				auto d = b.pos - o->pos;
@@ -192,8 +193,8 @@ xx::Task<> Plane::Born() {
 	pos = { gPlaneBornXs[planeIndex], gPlaneBornYFrom };
 	InitBombPos();
 	moving = true;
-	while (gPlaneBornYTo - pos.y > speed1) {
-		pos.y += gPlaneBornSpeed * gDisplayScale;
+	while (gPlaneBornYTo - pos.y > gPlaneBornSpeed) {
+		pos.y += gPlaneBornSpeed;
 		co_yield 0;
 	}
 	pos.y = gPlaneBornYTo;
@@ -202,12 +203,12 @@ xx::Task<> Plane::Born() {
 }
 
 xx::Task<> Plane::Shine() {
-	auto e = gEngine.nowSecs + 5;
+	auto e = gLooper->nowSecs + 5;
 	do {
 		visible += gPlaneVisibleInc;
 		co_yield 0;
 		co_yield 0;
-	} while (gEngine.nowSecs < e);
+	} while (gLooper->nowSecs < e);
 
 	visible = 0;
 	godMode = false;			// close god mode
@@ -218,30 +219,30 @@ xx::Task<> Plane::Update() {
 		// bak for change frame display
 		auto oldPos = pos;
 
-
 		// fire
-		if (gEngine.Pressed(xx::Mbtns::Left) && gEngine.nowSecs >= bulletNextFireTime) {
-			bulletNextFireTime = gEngine.nowSecs + gPlaneBulletFireCD;			// apply cd effect
+		if (gEngine.Pressed(xx::Mbtns::Left) && gLooper->nowSecs >= bulletNextFireTime) {
+			bulletNextFireTime = gLooper->nowSecs + gPlaneBulletFireCD;			// apply cd effect
 
 			bullets.Emplace(xx::XY{ pos.x, pos.y + gPlaneBulletFireYOffset });
 		}
 
 		// use bomb
-		if (gEngine.Pressed(xx::Mbtns::Right) && gEngine.nowSecs >= bulletNextFireTime) {
-			bombNextUseTime = gEngine.nowSecs + gPlaneBulletFireCD;				// apply cd effect
+		if (gEngine.Pressed(xx::Mbtns::Right) && gLooper->nowSecs >= bulletNextFireTime) {
+			bombNextUseTime = gLooper->nowSecs + gPlaneBulletFireCD;				// apply cd effect
 
 			// todo: switch( first bomb type ) ....
 		}
 
 		// move by mouse ois
-		auto d = gMousePos - pos;
+		auto mp = gMousePos * g1_DisplayScale;
+		auto d = mp - pos;
 		auto dd = d.x * d.x + d.y * d.y;
 
-		if (speed1 * speed1 > dd) {
-			pos = gMousePos;
+		if (speed * speed > dd) {
+			pos = mp;
 		}
 		else {
-			auto inc = d.As<float>() / std::sqrt(float(dd)) * speed1;
+			auto inc = d.As<float>() / std::sqrt(float(dd)) * speed;
 			pos += inc;
 		}
 
@@ -283,20 +284,20 @@ void Plane::Draw(xx::Quad& texBrush) {
 	// draw bombs
 	for (auto i = (ptrdiff_t)bombs.Count() - 1; i >= 0; --i) {
 		auto& b = bombs[i];
-		texBrush.SetFrame(gLooper->frames_bomb[(int)b.type]).SetPosition(b.pos).Draw();
+		texBrush.SetFrame(gLooper->frames_bomb[(int)b.type]).SetPosition(b.pos * gDisplayScale).Draw();
 	}
 
 	// draw plane
 	if ((int)visible << 31 == 0) {
 		auto& frames = (planeIndex == 0 ? gLooper->frames_plane_blue : gLooper->frames_plane_red);
-		texBrush.SetFrame(frames[frameIndex]).SetPosition(pos).Draw();
+		texBrush.SetFrame(frames[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
 	}
 
 	// draw bullets
 	texBrush.SetFrame(gLooper->frames_bullet_plane[(int)bulletBeginFrameIndex]);
 	bullets.Foreach([&](PlaneBullet& b) {
-		texBrush.SetPosition({ b.pos.x - gPlaneBulletSpacing_2, b.pos.y }).Draw();
-		texBrush.SetPosition({ b.pos.x + gPlaneBulletSpacing_2, b.pos.y }).Draw();
+		texBrush.SetPosition(xx::XY{ b.pos.x - gPlaneBulletSpacing_2, b.pos.y } * gDisplayScale).Draw();
+		texBrush.SetPosition(xx::XY{ b.pos.x + gPlaneBulletSpacing_2, b.pos.y } * gDisplayScale).Draw();
 	});
 }
 
@@ -316,18 +317,18 @@ xx::Task<> ExplosionMonster::Update_() {
 };
 
 void ExplosionMonster::Draw(xx::Quad& texBrush) {
-	texBrush.SetFrame(gLooper->frames_explosion_monster[frameIndex]).SetPosition(pos).Draw();
+	texBrush.SetFrame(gLooper->frames_explosion_monster[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
 }
 
 
 
 void MonsterStrawberry::Init() {
 	if (gRnd.Next<bool>()) {
-		pos.x = -gMonsterStrawberryRadius - gWndWidth_2;
+		pos.x = -gMonsterStrawberryRadius - gDesignWidth_2;
 		inc = { gMonsterStrawberryHorizontalMoveSpeed, 0 };
 	}
 	else {
-		pos.x = gMonsterStrawberryRadius + gWndWidth_2;
+		pos.x = gMonsterStrawberryRadius + gDesignWidth_2;
 		inc = { -gMonsterStrawberryHorizontalMoveSpeed, 0 };
 	}
 	pos.y = gRnd.Next(gMonsterStrawberryBornYFrom, gMonsterStrawberryBornYTo);
@@ -350,7 +351,7 @@ xx::Task<> MonsterStrawberry::Update_() {
 	// vertical move begin
 	inc = { 0, -gMonsterStrawberryVerticalMoveSpeed };
 	frameIndex = gMonsterStrawberryVerticalFrameIndexMin;
-	while (pos.y > -gWndHeight_2 - gMonsterStrawberryDiameter) {
+	while (pos.y > -gDesignHeight_2 - gMonsterStrawberryDiameter) {
 		co_yield 0;
 		pos += inc;
 		frameIndex += gMonsterStrawberryVerticalMoveFrameSwitchDelay;
@@ -359,7 +360,7 @@ xx::Task<> MonsterStrawberry::Update_() {
 
 	// vertical move repeat
 	frameIndex = gMonsterStrawberryVerticalRepeatFrameIndexMin + (frameIndex - gMonsterStrawberryVerticalFrameIndexMax - 1);
-	while (pos.y > -gWndHeight_2 - gMonsterStrawberryDiameter) {
+	while (pos.y > -gDesignHeight_2 - gMonsterStrawberryDiameter) {
 		co_yield 0;
 		pos += inc;
 		frameIndex += gMonsterStrawberryHorizontalMoveFrameSwitchDelay;
@@ -370,7 +371,7 @@ xx::Task<> MonsterStrawberry::Update_() {
 };
 
 void MonsterStrawberry::Draw(xx::Quad& texBrush) {
-	texBrush.SetFrame(gLooper->frames_monster_strawberry[frameIndex]).SetPosition(pos).Draw();
+	texBrush.SetFrame(gLooper->frames_monster_strawberry[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
 }
 
 MonsterStrawberry::~MonsterStrawberry() {
