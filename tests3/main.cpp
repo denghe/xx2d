@@ -234,6 +234,7 @@ xx::Task<> Plane::SyncBulletPosCol() {
 					auto dd = d.x * d.x + d.y * d.y;
 					if (dd < rr) {
 						// +score ??
+						std::cout << o->pos.x << std::endl;
 						gLooper->explosion_monsters.Emplace().Emplace()->Init(o->pos, true);
 						return true;
 					}
@@ -457,6 +458,7 @@ void MonsterStrawberry::Draw(xx::Quad& texBrush) {
 void MonsterDragonfly::Init(xx::MovePathCache* path_) {
 	path = path_;
 	frameIndex = gRnd.Next((float)gMonsterDragonflyFrameIndexMin, gMonsterDragonflyFrameIndexMax + 0.999f);
+	pos = path->points[0].pos;
 }
 
 xx::Task<> MonsterDragonfly::Update_() {
