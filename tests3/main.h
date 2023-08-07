@@ -6,6 +6,7 @@
 
 struct Plane;
 struct MonsterStrawberry;
+struct MonsterDragonfly;
 struct ExplosionMonster;
 
 struct GameLooper : xx::GameLooperBase {
@@ -25,9 +26,11 @@ struct GameLooper : xx::GameLooperBase {
 	// ... bomb effects
 
 	std::vector<xx::Shared<xx::Frame>> frames_monster_strawberry;
+	std::vector<xx::Shared<xx::Frame>> frames_monster_dragonfly;
 	// ... more mosters
 
 	std::vector<xx::Shared<xx::Frame>> frames_explosion_monster;
+	std::vector<xx::Shared<xx::Frame>> frames_explosion_bigmonster;
 	// ... more effects
 
 	// runtime objects
@@ -37,6 +40,7 @@ struct GameLooper : xx::GameLooperBase {
 	// ... more explosions
 
 	xx::ListLink<xx::Shared<MonsterStrawberry>, int> monster_strawberries;
+	xx::ListLink<xx::Shared<MonsterDragonfly>, int> monster_dragonflies;
 	// ... more monsters
 
 	// engine event handlers
@@ -121,6 +125,8 @@ inline constexpr float gBombStopFollowSteps = 6 / gSpeedScale;
 inline constexpr float gExplosionMonsterFrameSwitchDelay = 1.f / 4 * gSpeedScale;
 inline constexpr int gExplosionMonsterFrameIndexMin = 0;
 inline constexpr int gExplosionMonsterFrameIndexMax = 5;
+inline constexpr int gExplosionBigMonsterFrameIndexMin = 0;
+inline constexpr int gExplosionBigMonsterFrameIndexMax = 4;
 
 inline constexpr float gMonsterStrawberryRadius = 6.f;
 inline constexpr float gMonsterStrawberryDiameter = gMonsterStrawberryRadius * 2;
@@ -140,6 +146,13 @@ inline constexpr int gMonsterStrawberryVerticalFrameIndexMax = 5;
 inline constexpr int gMonsterStrawberryVerticalRepeatFrameIndexMin = 6;
 inline constexpr int gMonsterStrawberryVerticalRepeatFrameIndexMax = 9;
 
+// dragon fly S path: 190, 10     30, 100     194 174      30 250
+inline constexpr float gMonsterDragonflyRadius = 13.f;
+inline constexpr float gMonsterDragonflyDiameter = gMonsterDragonflyRadius * 2;
+inline constexpr float gMonsterDragonflySpeed = 2.f * gSpeedScale;
+inline constexpr int gMonsterDragonflyFrameIndexMin = 0;
+inline constexpr int gMonsterDragonflyFrameIndexMax = 3;
+inline constexpr float gMonsterDragonflyFrameSwitchDelay = 1.f / 5 * gSpeedScale;
 
 /*****************************************************************************************************/
 /*****************************************************************************************************/
@@ -202,10 +215,12 @@ struct Plane {
 struct ExplosionMonster {
 	xx::XY pos{};
 	float frameIndex{};
-	void Init(xx::XY const& pos_);
+	std::vector<xx::Shared<xx::Frame>>* frames;
+	void Init(xx::XY const& pos_, bool isBig = false);
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update = Update_();
+	xx::Task<> Update;
 	xx::Task<> Update_();
+	xx::Task<> UpdateBig_();
 };
 
 struct MonsterStrawberry {
@@ -216,7 +231,16 @@ struct MonsterStrawberry {
 	void Draw(xx::Quad& texBrush);
 	xx::Task<> Update = Update_();
 	xx::Task<> Update_();
-	~MonsterStrawberry();
+};
+
+struct MonsterDragonfly {
+	xx::XY pos{};
+	float frameIndex{}, totalDistance{};
+	xx::MovePathCache* path;
+	void Init(xx::MovePathCache* path_);
+	void Draw(xx::Quad& texBrush);
+	xx::Task<> Update = Update_();
+	xx::Task<> Update_();
 };
 
 #endif

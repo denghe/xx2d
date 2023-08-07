@@ -19,7 +19,9 @@ void GameLooper::AfterGLInit() {
 	tp.GetToByPrefix(frames_bullet_plane, "plane_bullet");
 	tp.GetToByPrefix(frames_bomb, "bomb");
 	tp.GetToByPrefix(frames_monster_strawberry, "monster_strawberry");
+	tp.GetToByPrefix(frames_monster_dragonfly, "monster_dragonfly");
 	tp.GetToByPrefix(frames_explosion_monster, "explosion_monster");
+	tp.GetToByPrefix(frames_explosion_bigmonster, "explosion_bigmonster");
 
 	tasks.Add(MasterLogic());
 }
@@ -41,6 +43,10 @@ int GameLooper::Update() {
 			return o->Update.Resume();
 		});
 
+		monster_dragonflies.Foreach([&](auto& o)->bool {
+			return o->Update.Resume();
+		});
+
 		explosion_monsters.Foreach([&](auto& o) {
 			return o->Update.Resume();
 		});
@@ -56,6 +62,10 @@ int GameLooper::Update() {
 	});
 
 	monster_strawberries.Foreach([&](auto& o) {
+		o->Draw(texBrush);
+	});
+
+	monster_dragonflies.Foreach([&](auto& o) {
 		o->Draw(texBrush);
 	});
 
@@ -83,11 +93,38 @@ xx::Task<> GameLooper::MasterLogic() {
 		co_yield 0;
 	}
 	
-	// todo: create monsters?
+	xx::MovePathCache dragonflyPath1, dragonflyPath2;
+	{
+		xx::MovePath mp;
+		xx::CurvePoints cps;
+		cps.points.emplace_back().pos = { g9Pos7X + 190, g9Pos7Y - 10 };
+		cps.points.emplace_back().pos = { g9Pos7X + 30, g9Pos7Y - 100 };
+		cps.points.emplace_back().pos = { g9Pos7X + 194, g9Pos7Y - 174 };
+		cps.points.emplace_back().pos = { g9Pos7X + 30, g9Pos7Y - 250 };
+		mp.Clear();
+		mp.FillCurve(cps.isLoop, cps.points);
+		dragonflyPath1.Init(mp, 1);
 
-	//monster_strawberries.Emplace().Emplace()->Init();
+		cps.points.clear();
+		cps.points.emplace_back().pos = { g9Pos9X - 190, g9Pos9Y - 10 };
+		cps.points.emplace_back().pos = { g9Pos9X - 30, g9Pos9Y - 100 };
+		cps.points.emplace_back().pos = { g9Pos9X - 194, g9Pos9Y - 174 };
+		cps.points.emplace_back().pos = { g9Pos9X - 30, g9Pos9Y - 250 };
+		mp.Clear();
+		mp.FillCurve(cps.isLoop, cps.points);
+		dragonflyPath2.Init(mp, 1);
+	}
 
-#if 1
+	while (nowSecs < 10) {
+		co_await gEngine.TaskSleep(1.f / 10);
+
+		// todo: if (plane is left  use path 1  else use path 2)
+		monster_dragonflies.Emplace().Emplace()->Init( gRnd.Next<bool>() ? &dragonflyPath1 : &dragonflyPath2);
+	}
+
+	// todo: create more monsters?
+
+#if 0
 	while (true) {
 		co_yield 0;
 		for (int i = 0; i < 100; ++i) {
@@ -171,19 +208,45 @@ xx::Task<> Plane::SyncBulletPosCol() {
 		bullets.Foreach([](PlaneBullet& b)->bool {
 			b.pos.y += gPlaneBulletSpeed;
 			if (b.pos.y - gPlaneBulletHight_2 > gDesignHeight_2) return true;	// flying out of the screen 
-			// todo: optimize performance ( space index ? )
-			auto [idx, next] = gLooper->monster_strawberries.FindIf([&](xx::Shared<MonsterStrawberry>& o)->bool {
-				auto d = b.pos - o->pos;
-				auto constexpr rr = (gPlaneBulletHight_2 + gMonsterStrawberryRadius)
-					* (gPlaneBulletHight_2 + gMonsterStrawberryRadius);
-				auto dd = d.x * d.x + d.y * d.y;
-				return dd < rr;
-			});
-			if (idx != -1) {
-				// todo: effect
-				gLooper->monster_strawberries.Remove(idx, next);
-				return true;
+			{
+				auto [idx, next] = gLooper->monster_strawberries.FindIf([&](xx::Shared<MonsterStrawberry>& o)->bool {
+					auto d = b.pos - o->pos;
+					auto constexpr rr = (gPlaneBulletHight_2 + gMonsterStrawberryRadius)
+						* (gPlaneBulletHight_2 + gMonsterStrawberryRadius);
+					auto dd = d.x * d.x + d.y * d.y;
+					if (dd < rr) {
+						// +score ??
+						gLooper->explosion_monsters.Emplace().Emplace()->Init(o->pos);
+						return true;
+					}
+					return false;
+					});
+				if (idx != -1) {
+					gLooper->monster_strawberries.Remove(idx, next);
+					return true;
+				}
 			}
+			{
+				auto [idx, next] = gLooper->monster_dragonflies.FindIf([&](xx::Shared<MonsterDragonfly>& o)->bool {
+					auto d = b.pos - o->pos;
+					auto constexpr rr = (gPlaneBulletHight_2 + gMonsterDragonflyRadius)
+						* (gPlaneBulletHight_2 + gMonsterDragonflyRadius);
+					auto dd = d.x * d.x + d.y * d.y;
+					if (dd < rr) {
+						// +score ??
+						gLooper->explosion_monsters.Emplace().Emplace()->Init(o->pos, true);
+						return true;
+					}
+					return false;
+					});
+				if (idx != -1) {
+					gLooper->monster_dragonflies.Remove(idx, next);
+					return true;
+				}
+			}
+
+			// todo: find other monsters ?
+			// todo: optimize performance ( space index ? )
 			return false;
 		});
 	}
@@ -303,11 +366,19 @@ void Plane::Draw(xx::Quad& texBrush) {
 
 
 
-void ExplosionMonster::Init(xx::XY const& pos_) {
+void ExplosionMonster::Init(xx::XY const& pos_, bool isBig) {
 	pos = pos_;
-	frameIndex = gExplosionMonsterFrameIndexMin;
+	if (isBig) {
+		frameIndex = gExplosionBigMonsterFrameIndexMin;
+		Update = UpdateBig_();
+		frames = &gLooper->frames_explosion_bigmonster;
+	}
+	else {
+		frameIndex = gExplosionMonsterFrameIndexMin;
+		Update = Update_();
+		frames = &gLooper->frames_explosion_monster;
+	}
 }
-
 xx::Task<> ExplosionMonster::Update_() {
 	while (true) {
 		frameIndex += gExplosionMonsterFrameSwitchDelay;
@@ -315,9 +386,16 @@ xx::Task<> ExplosionMonster::Update_() {
 		co_yield 0;
 	}
 };
+xx::Task<> ExplosionMonster::UpdateBig_() {
+	while (true) {
+		frameIndex += gExplosionMonsterFrameSwitchDelay;
+		if ((int)frameIndex > gExplosionBigMonsterFrameIndexMax) break;
+		co_yield 0;
+	}
+};
 
 void ExplosionMonster::Draw(xx::Quad& texBrush) {
-	texBrush.SetFrame(gLooper->frames_explosion_monster[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
+	texBrush.SetFrame(frames->operator[](frameIndex)).SetPosition(pos * gDisplayScale).Draw();
 }
 
 
@@ -374,6 +452,27 @@ void MonsterStrawberry::Draw(xx::Quad& texBrush) {
 	texBrush.SetFrame(gLooper->frames_monster_strawberry[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
 }
 
-MonsterStrawberry::~MonsterStrawberry() {
-	gLooper->explosion_monsters.Emplace().Emplace()->Init(pos);
+
+
+void MonsterDragonfly::Init(xx::MovePathCache* path_) {
+	path = path_;
+	frameIndex = gRnd.Next((float)gMonsterDragonflyFrameIndexMin, gMonsterDragonflyFrameIndexMax + 0.999f);
+}
+
+xx::Task<> MonsterDragonfly::Update_() {
+	do {
+		totalDistance += gMonsterDragonflySpeed;
+		auto&& o = path->Move(totalDistance);
+		if (!o) break;
+		pos = o->pos;
+		frameIndex += gMonsterDragonflyFrameSwitchDelay;
+		if ((int)frameIndex > gMonsterDragonflyFrameIndexMax) {
+			frameIndex = gMonsterDragonflyFrameIndexMin + (frameIndex - gMonsterDragonflyFrameIndexMax - 1);
+		}
+		co_yield 0;
+	} while (pos.y > -gDesignHeight_2 - gMonsterDragonflyDiameter);
+};
+
+void MonsterDragonfly::Draw(xx::Quad& texBrush) {
+	texBrush.SetFrame(gLooper->frames_monster_dragonfly[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
 }
