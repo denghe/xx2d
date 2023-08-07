@@ -58,19 +58,39 @@ inline xx::Rnd& gRnd = gEngine.rnd;
 inline constexpr float gFps = 120.f;	//60.f;
 inline constexpr double gFds = 1. / gFps;
 inline constexpr float gSpeedScale = 60.f / gFps;
+
 inline constexpr float gDisplayScale = 4.f;					// design size * display scale = window size
 inline constexpr float g1_DisplayScale = 1.f / gDisplayScale;
+
 inline constexpr float gDesignWidth = 224;
 inline constexpr float gDesignHeight = 256;
 inline constexpr float gDesignWidth_2 = gDesignWidth / 2;
 inline constexpr float gDesignHeight_2 = gDesignHeight / 2;
+inline constexpr float g9Pos1X = -gDesignWidth_2;
+inline constexpr float g9Pos1Y = -gDesignHeight_2;
+inline constexpr float g9Pos2X = 0.f;
+inline constexpr float g9Pos2Y = -gDesignHeight_2;
+inline constexpr float g9Pos3X = gDesignWidth_2;
+inline constexpr float g9Pos3Y = -gDesignHeight_2;
+inline constexpr float g9Pos4X = -gDesignWidth_2;
+inline constexpr float g9Pos4Y = 0.f;
+inline constexpr float g9Pos5X = 0.f;
+inline constexpr float g9Pos5Y = 0.f;
+inline constexpr float g9Pos6X = gDesignWidth_2;
+inline constexpr float g9Pos6Y = 0.f;
+inline constexpr float g9Pos7X = -gDesignWidth_2;
+inline constexpr float g9Pos7Y = gDesignHeight_2;
+inline constexpr float g9Pos8X = 0.f;
+inline constexpr float g9Pos8Y = gDesignHeight_2;
+inline constexpr float g9Pos9X = gDesignWidth_2;
+inline constexpr float g9Pos9Y = gDesignHeight_2;
 
 inline constexpr float gPlaneHeight = 25.f;
 inline constexpr float gPlaneHeight_2 = gPlaneHeight / 2;
 inline constexpr float gPlaneRadius = 9.f;
-inline constexpr float gPlaneBornXs[2] = { 80 - gDesignWidth_2, 128 - gDesignWidth_2 };
-inline constexpr float gPlaneBornYFrom = -gDesignHeight_2 - gPlaneHeight_2;
-inline constexpr float gPlaneBornYTo = gDesignHeight_2 - 220;
+inline constexpr float gPlaneBornXs[2] = { g9Pos7X + 80 , g9Pos1X + 128  };
+inline constexpr float gPlaneBornYFrom = g9Pos2Y - gPlaneHeight_2;	// out of the screen
+inline constexpr float gPlaneBornYTo = g9Pos7Y - 220;
 inline constexpr float gPlaneBornSpeed = 1.f * gSpeedScale;
 inline constexpr float gPlaneNormalSpeed = 1.5f * gSpeedScale;
 inline constexpr float gPlaneMaxSpeed = 4.f * gSpeedScale;
@@ -104,8 +124,8 @@ inline constexpr int gExplosionMonsterFrameIndexMax = 5;
 
 inline constexpr float gMonsterStrawberryRadius = 6.f;
 inline constexpr float gMonsterStrawberryDiameter = gMonsterStrawberryRadius * 2;
-inline constexpr float gMonsterStrawberryBornYFrom = gDesignHeight_2 - 96;
-inline constexpr float gMonsterStrawberryBornYTo = gDesignHeight_2 - 40;
+inline constexpr float gMonsterStrawberryBornYFrom = g9Pos7Y - 96;
+inline constexpr float gMonsterStrawberryBornYTo = g9Pos7Y - 40;
 inline constexpr float gMonsterStrawberryHorizontalMoveSpeed = 1.5f * gSpeedScale;
 inline constexpr float gMonsterStrawberryHorizontalMoveFrameSwitchDelay = 1.f / 6 * gSpeedScale;
 inline constexpr int gMonsterStrawberryHorizontalFrameIndexMin = 0;
