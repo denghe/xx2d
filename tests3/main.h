@@ -7,6 +7,8 @@
 struct Plane;
 struct MonsterStrawberry;
 struct MonsterDragonfly;
+struct MonsterHermitCrab;
+struct MonsterFly;
 struct ExplosionMonster;
 
 struct GameLooper : xx::GameLooperBase {
@@ -27,6 +29,8 @@ struct GameLooper : xx::GameLooperBase {
 
 	std::vector<xx::Shared<xx::Frame>> frames_monster_strawberry;
 	std::vector<xx::Shared<xx::Frame>> frames_monster_dragonfly;
+	std::vector<xx::Shared<xx::Frame>> frames_monster_hermit_crab;
+	std::vector<xx::Shared<xx::Frame>> frames_monster_fly;
 	// ... more mosters
 
 	std::vector<xx::Shared<xx::Frame>> frames_explosion_monster;
@@ -36,12 +40,14 @@ struct GameLooper : xx::GameLooperBase {
 	// runtime objects
 	std::vector<xx::Shared<Plane>> player_planes;
 
-	xx::ListLink<xx::Shared<ExplosionMonster>, int> explosion_monsters;
-	// ... more explosions
-
-	xx::ListLink<xx::Shared<MonsterStrawberry>, int> monster_strawberries;
-	xx::ListLink<xx::Shared<MonsterDragonfly>, int> monster_dragonflies;
+	xx::ListLink<xx::Shared<MonsterStrawberry>, int> monsters_strawberry;
+	xx::ListLink<xx::Shared<MonsterDragonfly>, int> monsters_dragonfly;
+	xx::ListLink<xx::Shared<MonsterHermitCrab>, int> monsters_hermit_crab;
+	xx::ListLink<xx::Shared<MonsterFly>, int> monsters_fly;
 	// ... more monsters
+
+	xx::ListLink<xx::Shared<ExplosionMonster>, int> explosions_monster;
+	// ... more effects
 
 	// engine event handlers
 	void AfterGLInit() override;
@@ -52,111 +58,159 @@ struct GameLooper : xx::GameLooperBase {
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 
-// global configs ( for easy use )
+// global runtimes ( for easy use )
 inline GameLooper* gLooper;									// fill by main()
 inline xx::Engine& gEngine = xx::engine;
 inline xx::XY& gMousePos = gEngine.mousePosition;
 inline xx::Rnd& gRnd = gEngine.rnd;
 
-// following speed mean: position increase value by every frame
-inline constexpr float gFps = 120.f;	//60.f;
-inline constexpr double gFds = 1. / gFps;
-inline constexpr float gSpeedScale = 60.f / gFps;
+// global configs
+constexpr float gFps = 120.f;	//60.f;
+constexpr double gFds = 1. / gFps;
+constexpr float gSpeedScale = 60.f / gFps;
 
-inline constexpr float gDisplayScale = 4.f;					// design size * display scale = window size
-inline constexpr float g1_DisplayScale = 1.f / gDisplayScale;
+// window size = design size * display scale
+constexpr float gDisplayScale = 4.f;					
+constexpr float g1_DisplayScale = 1.f / gDisplayScale;
 
-inline constexpr float gDesignWidth = 224;
-inline constexpr float gDesignHeight = 256;
-inline constexpr float gDesignWidth_2 = gDesignWidth / 2;
-inline constexpr float gDesignHeight_2 = gDesignHeight / 2;
-inline constexpr float g9Pos1X = -gDesignWidth_2;
-inline constexpr float g9Pos1Y = -gDesignHeight_2;
-inline constexpr float g9Pos2X = 0.f;
-inline constexpr float g9Pos2Y = -gDesignHeight_2;
-inline constexpr float g9Pos3X = gDesignWidth_2;
-inline constexpr float g9Pos3Y = -gDesignHeight_2;
-inline constexpr float g9Pos4X = -gDesignWidth_2;
-inline constexpr float g9Pos4Y = 0.f;
-inline constexpr float g9Pos5X = 0.f;
-inline constexpr float g9Pos5Y = 0.f;
-inline constexpr float g9Pos6X = gDesignWidth_2;
-inline constexpr float g9Pos6Y = 0.f;
-inline constexpr float g9Pos7X = -gDesignWidth_2;
-inline constexpr float g9Pos7Y = gDesignHeight_2;
-inline constexpr float g9Pos8X = 0.f;
-inline constexpr float g9Pos8Y = gDesignHeight_2;
-inline constexpr float g9Pos9X = gDesignWidth_2;
-inline constexpr float g9Pos9Y = gDesignHeight_2;
+#define STCO static constexpr
+struct {
+	STCO float width = 224;
+	STCO float height = 256;
+	STCO float width_2 = width / 2;
+	STCO float height_2 = height / 2;
+} constexpr gDesign;
 
-inline constexpr float gPlaneHeight = 25.f;
-inline constexpr float gPlaneHeight_2 = gPlaneHeight / 2;
-inline constexpr float gPlaneRadius = 9.f;
-inline constexpr float gPlaneBornXs[2] = { g9Pos7X + 80 , g9Pos1X + 128  };
-inline constexpr float gPlaneBornYFrom = g9Pos2Y - gPlaneHeight_2;	// out of the screen
-inline constexpr float gPlaneBornYTo = g9Pos7Y - 220;
-inline constexpr float gPlaneBornSpeed = 1.f * gSpeedScale;
-inline constexpr float gPlaneNormalSpeed = 1.5f * gSpeedScale;
-inline constexpr float gPlaneMaxSpeed = 4.f * gSpeedScale;
-inline constexpr float gPlaneVisibleInc = 0.8 * gSpeedScale;
-inline constexpr float gPlaneSpeedIncreaseStep = 0.5f * gSpeedScale;	// eat "S" effect
-inline constexpr float gPlaneFrameIndexMin = 0;
-inline constexpr float gPlaneFrameIndexMid = 2;
-inline constexpr float gPlaneFrameIndexMax = 4;
+/*
+	screen design anchor point
+   ┌───────────────────────────────┐
+   │ 7             8             9 │
+   │                               │
+   │                               │
+   │ 4             5             6 │
+   │                               │
+   │                               │
+   │ 1             2             3 │
+   └───────────────────────────────┘
+*/
+struct {
+	STCO float x1 = -gDesign.width_2;
+	STCO float y1 = -gDesign.height_2;
+	STCO float x2 = 0.f;
+	STCO float y2 = -gDesign.height_2;
+	STCO float x3 = gDesign.width_2;
+	STCO float y3 = -gDesign.height_2;
+	STCO float x4 = -gDesign.width_2;
+	STCO float y4 = 0.f;
+	STCO float x5 = 0.f;
+	STCO float y5 = 0.f;
+	STCO float x6 = gDesign.width_2;
+	STCO float y6 = 0.f;
+	STCO float x7 = -gDesign.width_2;
+	STCO float y7 = gDesign.height_2;
+	STCO float x8 = 0.f;
+	STCO float y8 = gDesign.height_2;
+	STCO float x9 = gDesign.width_2;
+	STCO float y9 = gDesign.height_2;
+} constexpr g9Pos;
 
-inline constexpr float gPlaneBulletHight = 16.f;
-inline constexpr float gPlaneBulletHight_2 = gPlaneBulletHight / 2;
-inline constexpr float gPlaneBulletSpacing = 13.f;
-inline constexpr float gPlaneBulletSpacing_2 = gPlaneBulletSpacing / 2;
-inline constexpr float gPlaneBulletFrameChangeStep = 1.f / 5 * gSpeedScale;
-inline constexpr float gPlaneBulletSpeed = 5.f * gSpeedScale;
-inline constexpr float gPlaneBulletFireYOffset = 14.f;
-inline constexpr float gPlaneBulletFireCD = 1.f / 12;
+struct {
+	STCO float height = 25.f;
+	STCO float height_2 = height / 2;
+	STCO float radius = 9.f;
+	STCO float bornXs[2] = { g9Pos.x7 + 80 , g9Pos.x1 + 128 };
+	STCO float bornYFrom = g9Pos.y2 - height_2;	// out of the screen
+	STCO float bornYTo = g9Pos.y7 - 220;
+	STCO float bornSpeed = 1.f * gSpeedScale;
+	STCO float normalSpeed = 1.5f * gSpeedScale;
+	STCO float maxSpeed = 4.f * gSpeedScale;
+	STCO float visibleInc = 0.8 * gSpeedScale;
+	STCO float speedIncreaseStep = 0.5f * gSpeedScale;	// eat "S" effect
+	STCO float frameIndexMin = 0;
+	STCO float frameIndexMid = 2;
+	STCO float frameIndexMax = 4;
+} constexpr gPlane;
 
-inline constexpr float gBombAnchorYDist = 18.f;	// plane.pos.y - offset
-inline constexpr float gBombRadius = 6.f;
-inline constexpr float gBombDiameter = gBombRadius * 2;
-inline constexpr float gBombMinSpeed = 0.5f * gSpeedScale;
-inline constexpr float gBombMinSpeedPow2 = gBombMinSpeed * gBombMinSpeed;
-inline constexpr float gBombFirstFollowSteps = 2 / gSpeedScale;
-inline constexpr float gBombMovingFollowSteps = 9 / gSpeedScale;
-inline constexpr float gBombStopFollowSteps = 6 / gSpeedScale;
+struct {
+	STCO float hight = 16.f;
+	STCO float hight_2 = hight / 2;
+	STCO float spacing = 13.f;
+	STCO float spacing_2 = spacing / 2;
+	STCO float frameChangeStep = 1.f / 5 * gSpeedScale;
+	STCO float speed = 5.f * gSpeedScale;
+	STCO float fireYOffset = 14.f;
+	STCO float fireCD = 1.f / 12;
+} constexpr gPlaneBullet;
 
-inline constexpr float gExplosionMonsterFrameSwitchDelay = 1.f / 4 * gSpeedScale;
-inline constexpr int gExplosionMonsterFrameIndexMin = 0;
-inline constexpr int gExplosionMonsterFrameIndexMax = 5;
-inline constexpr int gExplosionBigMonsterFrameIndexMin = 0;
-inline constexpr int gExplosionBigMonsterFrameIndexMax = 4;
+struct {
+	STCO float anchorYDist = 18.f;	// plane.pos.y - offset
+	STCO float radius = 6.f;
+	STCO float diameter = radius * 2;
+	STCO float minSpeed = 0.5f * gSpeedScale;
+	STCO float minSpeedPow2 = minSpeed * minSpeed;
+	STCO float firstFollowSteps = 2 / gSpeedScale;
+	STCO float movingFollowSteps = 9 / gSpeedScale;
+	STCO float stopFollowSteps = 6 / gSpeedScale;
+} constexpr gBomb;
 
-inline constexpr float gMonsterStrawberryRadius = 6.f;
-inline constexpr float gMonsterStrawberryDiameter = gMonsterStrawberryRadius * 2;
-inline constexpr float gMonsterStrawberryBornYFrom = g9Pos7Y - 96;
-inline constexpr float gMonsterStrawberryBornYTo = g9Pos7Y - 40;
-inline constexpr float gMonsterStrawberryHorizontalMoveSpeed = 1.5f * gSpeedScale;
-inline constexpr float gMonsterStrawberryHorizontalMoveFrameSwitchDelay = 1.f / 6 * gSpeedScale;
-inline constexpr int gMonsterStrawberryHorizontalFrameIndexMin = 0;
-inline constexpr int gMonsterStrawberryHorizontalFrameIndexMax = 3;
-inline constexpr float gMonsterStrawberryHorizontalMoveTotalSeconds = (gDesignWidth + gMonsterStrawberryDiameter) / gMonsterStrawberryHorizontalMoveSpeed / gFps;
-inline constexpr int gMonsterStrawberrySwitchToVerticalMoveDelayFrom = gFps * (gMonsterStrawberryHorizontalMoveTotalSeconds * 0.2);
-inline constexpr int gMonsterStrawberrySwitchToVerticalMoveDelayTo = gFps * (gMonsterStrawberryHorizontalMoveTotalSeconds * 0.8);
-inline constexpr float gMonsterStrawberryVerticalMoveSpeed = 1.f * gSpeedScale;
-inline constexpr float gMonsterStrawberryVerticalMoveFrameSwitchDelay = 1.f / 4 * gSpeedScale;
-inline constexpr int gMonsterStrawberryVerticalFrameIndexMin = 4;
-inline constexpr int gMonsterStrawberryVerticalFrameIndexMax = 5;
-inline constexpr int gMonsterStrawberryVerticalRepeatFrameIndexMin = 6;
-inline constexpr int gMonsterStrawberryVerticalRepeatFrameIndexMax = 9;
+struct {
+    STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+    STCO int frameIndexMin = 0;
+    STCO int frameIndexMax = 5;
+    STCO int bigFrameIndexMin = 0;
+    STCO int bigFrameIndexMax = 4;
+} constexpr gExplosionMonster;
 
-// dragon fly S path: 190, 10     30, 100     194 174      30 250
-inline constexpr float gMonsterDragonflyRadius = 13.f;
-inline constexpr float gMonsterDragonflyDiameter = gMonsterDragonflyRadius * 2;
-inline constexpr float gMonsterDragonflySpeed = 2.f * gSpeedScale;
-inline constexpr int gMonsterDragonflyFrameIndexMin = 0;
-inline constexpr int gMonsterDragonflyFrameIndexMax = 3;
-inline constexpr float gMonsterDragonflyFrameSwitchDelay = 1.f / 5 * gSpeedScale;
+struct {
+	STCO float radius = 6.f;
+	STCO float diameter = radius * 2;
+	STCO float bornYFrom = g9Pos.y7 - 96;
+	STCO float bornYTo = g9Pos.y7 - 40;
+	STCO float horizontalMoveSpeed = 1.5f * gSpeedScale;
+	STCO float horizontalMoveFrameSwitchDelay = 1.f / 6 * gSpeedScale;
+	STCO int horizontalFrameIndexMin = 0;
+	STCO int horizontalFrameIndexMax = 3;
+	STCO float horizontalMoveTotalSeconds = (gDesign.width + diameter) / horizontalMoveSpeed / gFps;
+	STCO int switchToVerticalMoveDelayFrom = gFps * (horizontalMoveTotalSeconds * 0.2);
+	STCO int switchToVerticalMoveDelayTo = gFps * (horizontalMoveTotalSeconds * 0.8);
+	STCO float verticalMoveSpeed = 1.f * gSpeedScale;
+	STCO float verticalMoveFrameSwitchDelay = 1.f / 4 * gSpeedScale;
+	STCO int verticalFrameIndexMin = 4;
+	STCO int verticalFrameIndexMax = 5;
+	STCO int verticalRepeatFrameIndexMin = 6;
+	STCO int verticalRepeatFrameIndexMax = 9;
+} constexpr gMonsterStrawberry;
+
+struct {
+	STCO float radius = 13.f;
+	STCO float diameter = radius * 2;
+	STCO float speed = 2.f * gSpeedScale;
+	STCO int frameIndexMin = 0;
+	STCO int frameIndexMax = 3;
+	STCO float frameSwitchDelay = 1.f / 5 * gSpeedScale;
+} constexpr gMonsterDragonfly;
+
+struct {
+	STCO float radius = 5.f;
+	STCO float diameter = radius * 2;
+	STCO float speed = 3.f * gSpeedScale;
+	STCO int frameIndexMin = 0;
+	STCO int frameIndexMax = 7;
+	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+} constexpr gMonsterFly;
+
+struct {
+	STCO float radius = 5.f;
+	STCO float diameter = radius * 2;
+	STCO float speed = 1.f * gSpeedScale;
+	STCO int frameIndexMin = 0;
+	STCO int frameIndexMax = 7;
+	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+} constexpr gMonsterHermitCrab;
+
 
 /*****************************************************************************************************/
 /*****************************************************************************************************/
-
 
 enum class BombTypes : int {
 	Trident,	// bomb0
@@ -212,6 +266,29 @@ struct Plane {
 	xx::Tasks tasks;									// manager for above tasks
 };
 
+template<float radius, bool isBigExplosions, typename MT>
+std::optional<xx::XY> HitCheck(PlaneBullet& b, xx::ListLink<xx::Shared<MT>, int>& tar) {
+	auto [idx, next] = tar.FindIf([&](xx::Shared<MT>& o)->bool {
+		auto d = b.pos - o->pos;
+		auto constexpr rr = (gPlaneBullet.hight_2 + radius) * (gPlaneBullet.hight_2 + radius);
+		auto dd = d.x * d.x + d.y * d.y;
+		if (dd < rr) {
+			gLooper->explosions_monster.Emplace().Emplace()->Init(o->pos, isBigExplosions);
+			return true;
+		}
+		return false;
+	});
+	if (idx != -1) {
+		auto r = tar[idx]->pos;
+		tar.Remove(idx, next);
+		return r;
+	}
+	return {};
+}
+
+/*****************************************************************************************************/
+/*****************************************************************************************************/
+
 struct ExplosionMonster {
 	xx::XY pos{};
 	float frameIndex{};
@@ -222,6 +299,9 @@ struct ExplosionMonster {
 	xx::Task<> Update_();
 	xx::Task<> UpdateBig_();
 };
+
+/*****************************************************************************************************/
+/*****************************************************************************************************/
 
 struct MonsterStrawberry {
 	xx::XY pos{}, inc{};
@@ -238,6 +318,24 @@ struct MonsterDragonfly {
 	float frameIndex{}, totalDistance{};
 	xx::MovePathCache* path;
 	void Init(xx::MovePathCache* path_);
+	void Draw(xx::Quad& texBrush);
+	xx::Task<> Update = Update_();
+	xx::Task<> Update_();
+};
+
+struct MonsterHermitCrab {
+	xx::XY pos{};
+	float frameIndex{}, totalDistance{};
+	void Init();
+	void Draw(xx::Quad& texBrush);
+	xx::Task<> Update = Update_();
+	xx::Task<> Update_();
+};
+
+struct MonsterFly {
+	xx::XY pos{};
+	float frameIndex{}, totalDistance{};
+	void Init();
 	void Draw(xx::Quad& texBrush);
 	xx::Task<> Update = Update_();
 	xx::Task<> Update_();
