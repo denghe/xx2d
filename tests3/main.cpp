@@ -43,6 +43,10 @@ int GameLooper::Update() {
 			}
 		}
 
+		bombs.Foreach([&](auto& o)->bool {
+			return o->Update.Resume();
+		});
+
 		monsters_strawberry.Foreach([&](auto& o)->bool {
 			return o->Update.Resume();
 		});
@@ -69,10 +73,6 @@ int GameLooper::Update() {
 	xx::Quad texBrush;
 	texBrush.SetScale(gDisplayScale);
 
-	explosions_monster.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
-
 	monsters_hermit_crab.Foreach([&](auto& o) {
 		o->Draw(texBrush);
 	});
@@ -89,6 +89,13 @@ int GameLooper::Update() {
 		o->Draw(texBrush);
 	});
 
+	bombs.Foreach([&](auto& o) {
+		o->Draw(texBrush);
+	});
+
+	explosions_monster.Foreach([&](auto& o) {
+		o->Draw(texBrush);
+	});
 
 	for (auto& o : player_planes) {
 		if (o) {
@@ -104,7 +111,7 @@ int GameLooper::Update() {
 
 xx::Task<> GameLooper::MasterLogic() {
 	// sleep a while for OBS record
-	//co_await gEngine.TaskSleep(5);
+	co_await gEngine.TaskSleep(3);
 
 	// create player's plane
 	//for (size_t i = 0; i < 10000; i++)
@@ -113,30 +120,40 @@ xx::Task<> GameLooper::MasterLogic() {
 		//player_planes.emplace_back(xx::Make<Plane>())->Init(1);
 		co_yield 0;
 	}
+
+	while (nowSecs < 10) {
+		co_await gEngine.TaskSleep(1.f / 5);
+
+		monsters_hermit_crab.Emplace().Emplace()->Init();
+	}
 	
 	xx::MovePathCache dragonflyPath1, dragonflyPath2;
 	{
 		xx::MovePath mp;
 		xx::CurvePoints cps;
+		cps.points.emplace_back().pos = { g9Pos.x7 + 150, g9Pos.y7 + gMonsterDragonfly.diameter };
 		cps.points.emplace_back().pos = { g9Pos.x7 + 190, g9Pos.y7 - 10 };
 		cps.points.emplace_back().pos = { g9Pos.x7 + 30, g9Pos.y7 - 100 };
-		cps.points.emplace_back().pos = { g9Pos.x7 + 194, g9Pos.y7 - 174 };
+		cps.points.emplace_back().pos = { g9Pos.x7 + 190, g9Pos.y7 - 170 };
 		cps.points.emplace_back().pos = { g9Pos.x7 + 30, g9Pos.y7 - 250 };
+		cps.points.emplace_back().pos = { g9Pos.x7 + 60, g9Pos.y3 - gMonsterDragonfly.diameter };
 		mp.Clear();
 		mp.FillCurve(cps.isLoop, cps.points);
 		dragonflyPath1.Init(mp, 1);
 
 		cps.points.clear();
+		cps.points.emplace_back().pos = { g9Pos.x9 - 150, g9Pos.y9 + gMonsterDragonfly.diameter };
 		cps.points.emplace_back().pos = { g9Pos.x9 - 190, g9Pos.y9 - 10 };
 		cps.points.emplace_back().pos = { g9Pos.x9 - 30, g9Pos.y9 - 100 };
-		cps.points.emplace_back().pos = { g9Pos.x9 - 194, g9Pos.y9 - 174 };
+		cps.points.emplace_back().pos = { g9Pos.x9 - 190, g9Pos.y9 - 170 };
 		cps.points.emplace_back().pos = { g9Pos.x9 - 30, g9Pos.y9 - 250 };
+		cps.points.emplace_back().pos = { g9Pos.x9 - 60, g9Pos.y3 - gMonsterDragonfly.diameter };
 		mp.Clear();
 		mp.FillCurve(cps.isLoop, cps.points);
 		dragonflyPath2.Init(mp, 1);
 	}
 
-	while (nowSecs < 10) {
+	while (nowSecs < 20) {
 		co_await gEngine.TaskSleep(1.f / 10);
 
 		// todo: if (plane is left  use path 1  else use path 2)
@@ -171,9 +188,9 @@ void Plane::Init(int planeIndex_) {
 	visible = 0;
 
 	// bombs init
-	for (size_t i = 0; i < 15; i++) {
+	for (size_t i = 0; i < 3; i++) {
 		auto&& b = bombs.Emplace();
-		b.type = BombTypes(gRnd.Next(5));
+		b.type = BombTypes::Trident;
 	}
 
 	// script init
@@ -195,6 +212,20 @@ void Plane::InitBombPos() {
 xx::Task<> Plane::SyncBombPos() {
 	while (true) {
 		co_yield 0;
+
+		// eat bomb check
+		gLooper->bombs.Foreach([this](auto& o)->bool {
+			auto d = pos - o->pos;
+			auto constexpr rr = (gPlane.radius + gBomb.radius) * (gPlane.radius + gBomb.radius);
+			auto dd = d.x * d.x + d.y * d.y;
+			if (dd < rr) {
+				bombs.Push(PlaneBomb{ o->type, o->pos });
+				return true;
+			}
+			return false;
+		});
+
+		// move all tail bombs
 
 		auto n = bombs.Count();
 		if (!n) continue;
@@ -232,9 +263,9 @@ xx::Task<> Plane::SyncBulletPosCol() {
 
 			if (HitCheck<gMonsterStrawberry.radius, false>(b, gLooper->monsters_strawberry).has_value()) return true;
 			if (HitCheck<gMonsterDragonfly.radius, true>(b, gLooper->monsters_dragonfly).has_value()) return true;
-			if (HitCheck<gMonsterFly.radius, true>(b, gLooper->monsters_fly).has_value()) return true;
-			if (auto pos = HitCheck<gMonsterHermitCrab.radius, true>(b, gLooper->monsters_hermit_crab); pos.has_value()) {
-				// todo: gen bomb at pos
+			if (HitCheck<gMonsterFly.radius, false>(b, gLooper->monsters_fly).has_value()) return true;
+			if (auto pos = HitCheck<gMonsterHermitCrab.radius, false>(b, gLooper->monsters_hermit_crab); pos.has_value()) {
+				gLooper->bombs.Emplace().Emplace()->Init(pos.value(), BombTypes::MAX_VALUE_UNKNOWN);
 				return true;
 			}
 
@@ -395,6 +426,29 @@ void ExplosionMonster::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 
+void Bomb::Init(xx::XY const& pos_, BombTypes type_) {
+	if (type_ == BombTypes::MAX_VALUE_UNKNOWN) {
+		type = (BombTypes)gRnd.Next((int)BombTypes::MAX_VALUE_UNKNOWN - 1);
+	}
+	else {
+		type = type_;
+	}
+	pos = pos_;
+}
+xx::Task<> Bomb::Update_() {
+	do {
+		pos.y -= gBomb.minSpeed;
+		co_yield 0;
+	} while (pos.y > -gDesign.height_2 - gBomb.diameter);
+}
+void Bomb::Draw(xx::Quad& texBrush) {
+	texBrush.SetFrame(gLooper->frames_bomb[(int)type]).SetPosition(pos * gDisplayScale).Draw();
+}
+
+
+/*****************************************************************************************************/
+/*****************************************************************************************************/
+
 void MonsterStrawberry::Init() {
 	if (gRnd.Next<bool>()) {
 		pos.x = -gMonsterStrawberry.radius - gDesign.width_2;
@@ -477,13 +531,15 @@ void MonsterDragonfly::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 
-// todo
 void MonsterHermitCrab::Init() {
 	frameIndex = gRnd.Next((float)gMonsterHermitCrab.frameIndexMin, gMonsterHermitCrab.frameIndexMax + 0.999f);
+	pos.x = gRnd.Next(gMonsterHermitCrab.bornPosXFrom, gMonsterHermitCrab.bornPosXTo);
+	pos.y = gMonsterHermitCrab.bornPosY;
 }
 
 xx::Task<> MonsterHermitCrab::Update_() {
 	do {
+		pos.y -= gMonsterHermitCrab.speed;
 		frameIndex += gMonsterHermitCrab.frameSwitchDelay;
 		if ((int)frameIndex > gMonsterHermitCrab.frameIndexMax) {
 			frameIndex = gMonsterHermitCrab.frameIndexMin + (frameIndex - gMonsterHermitCrab.frameIndexMax - 1);

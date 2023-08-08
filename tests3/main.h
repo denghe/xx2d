@@ -10,6 +10,7 @@ struct MonsterDragonfly;
 struct MonsterHermitCrab;
 struct MonsterFly;
 struct ExplosionMonster;
+struct Bomb;
 
 struct GameLooper : xx::GameLooperBase {
 	// base res
@@ -39,6 +40,8 @@ struct GameLooper : xx::GameLooperBase {
 
 	// runtime objects
 	std::vector<xx::Shared<Plane>> player_planes;
+
+	xx::ListLink<xx::Shared<Bomb>, int> bombs;
 
 	xx::ListLink<xx::Shared<MonsterStrawberry>, int> monsters_strawberry;
 	xx::ListLink<xx::Shared<MonsterDragonfly>, int> monsters_dragonfly;
@@ -136,6 +139,7 @@ struct {
 	STCO float hight_2 = hight / 2;
 	STCO float spacing = 13.f;
 	STCO float spacing_2 = spacing / 2;
+	STCO float radius = spacing_2;
 	STCO float frameChangeStep = 1.f / 5 * gSpeedScale;
 	STCO float speed = 5.f * gSpeedScale;
 	STCO float fireYOffset = 14.f;
@@ -190,8 +194,9 @@ struct {
 	STCO float frameSwitchDelay = 1.f / 5 * gSpeedScale;
 } constexpr gMonsterDragonfly;
 
+
 struct {
-	STCO float radius = 5.f;
+	STCO float radius = 5.f;		// todo
 	STCO float diameter = radius * 2;
 	STCO float speed = 3.f * gSpeedScale;
 	STCO int frameIndexMin = 0;
@@ -200,17 +205,16 @@ struct {
 } constexpr gMonsterFly;
 
 struct {
-	STCO float radius = 5.f;
+	STCO float radius = 6.f;
 	STCO float diameter = radius * 2;
 	STCO float speed = 1.f * gSpeedScale;
+	STCO float bornPosY = g9Pos.y7 + diameter;
+	STCO float bornPosXFrom = g9Pos.x7 + 20;
+	STCO float bornPosXTo = g9Pos.x9 - 20;
 	STCO int frameIndexMin = 0;
 	STCO int frameIndexMax = 7;
 	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
 } constexpr gMonsterHermitCrab;
-
-
-/*****************************************************************************************************/
-/*****************************************************************************************************/
 
 enum class BombTypes : int {
 	Trident,	// bomb0
@@ -225,7 +229,10 @@ enum class BombTypes : int {
 	MAX_VALUE_UNKNOWN
 };
 
-struct Bomb {
+/*****************************************************************************************************/
+/*****************************************************************************************************/
+
+struct PlaneBomb {
 	BombTypes type = BombTypes::MAX_VALUE_UNKNOWN;
 	xx::XY pos{};
 };
@@ -247,7 +254,7 @@ struct Plane {
 	float frameIndex{};									// for move left/right switch frame
 	float frameChangeSpeed{};							// speed0 / 5
 
-	xx::Queue<Bomb> bombs;								// tail bomb icons
+	xx::Queue<PlaneBomb> bombs;							// tail bomb icons
 	float bombNextUseTime{};							// next avaliable use bomb time by engine.nowSecs + CD
 
 	xx::ListLink<PlaneBullet> bullets;					// bullets fired from the front of the plane
@@ -270,7 +277,7 @@ template<float radius, bool isBigExplosions, typename MT>
 std::optional<xx::XY> HitCheck(PlaneBullet& b, xx::ListLink<xx::Shared<MT>, int>& tar) {
 	auto [idx, next] = tar.FindIf([&](xx::Shared<MT>& o)->bool {
 		auto d = b.pos - o->pos;
-		auto constexpr rr = (gPlaneBullet.hight_2 + radius) * (gPlaneBullet.hight_2 + radius);
+		auto constexpr rr = (gPlaneBullet.radius + radius) * (gPlaneBullet.radius + radius);
 		auto dd = d.x * d.x + d.y * d.y;
 		if (dd < rr) {
 			gLooper->explosions_monster.Emplace().Emplace()->Init(o->pos, isBigExplosions);
@@ -298,6 +305,19 @@ struct ExplosionMonster {
 	xx::Task<> Update;
 	xx::Task<> Update_();
 	xx::Task<> UpdateBig_();
+};
+
+
+/*****************************************************************************************************/
+/*****************************************************************************************************/
+
+struct Bomb {
+	BombTypes type = BombTypes::MAX_VALUE_UNKNOWN;
+	xx::XY pos{};
+	void Init(xx::XY const& pos_, BombTypes type_);
+	void Draw(xx::Quad& texBrush);
+	xx::Task<> Update = Update_();
+	xx::Task<> Update_();
 };
 
 /*****************************************************************************************************/

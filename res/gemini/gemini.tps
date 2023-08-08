@@ -199,7 +199,9 @@
                 <false/>
             </struct>
             <key type="filename">bomb5.png</key>
+            <key type="filename">bomb6.png</key>
             <key type="filename">bomb7.png</key>
+            <key type="filename">bomb8.png</key>
             <key type="filename">explosion_monster1.png</key>
             <key type="filename">explosion_monster3.png</key>
             <key type="filename">monster_strawberry5.png</key>
@@ -692,6 +694,8 @@
                     <filename>explosion_bigmonster2.png</filename>
                     <filename>explosion_bigmonster3.png</filename>
                     <filename>explosion_bigmonster4.png</filename>
+                    <filename>bomb6.png</filename>
+                    <filename>bomb8.png</filename>
                 </array>
             </struct>
         </map>
