@@ -1,4 +1,14 @@
 ﻿#include "main.h"
+#ifdef _WIN32
+#include <mmsystem.h>
+#pragma comment(lib, "winmm")
+namespace dummyxxx {
+	inline int intval = []() {
+		timeBeginPeriod(1);
+		return 0;
+	}();
+}
+#endif
 
 int main() {
 	auto g = std::make_unique<GameLooper>();
@@ -106,6 +116,10 @@ int GameLooper::Update() {
 	// todo: more Draw
 
 	fpsViewer.Draw(fontBase);
+	// reduce cpu usage
+	if (xx::NowSteadyEpochSeconds() - gEngine.nowSecs < gFds / 2) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(int(gFds / 2 * 1000)));
+	}
 	return 0;
 }
 
@@ -122,9 +136,12 @@ xx::Task<> GameLooper::MasterLogic() {
 	}
 
 	while (nowSecs < 10) {
-		co_await gEngine.TaskSleep(1.f / 5);
+		//co_await gEngine.TaskSleep(1.f / 5);
+		co_yield 0;
 
+		for (size_t i = 0; i < 100; i++) {
 		monsters_hermit_crab.Emplace().Emplace()->Init();
+		}
 	}
 	
 	xx::MovePathCache dragonflyPath1, dragonflyPath2;
