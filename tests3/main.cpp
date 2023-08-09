@@ -136,12 +136,9 @@ xx::Task<> GameLooper::MasterLogic() {
 	}
 
 	while (nowSecs < 10) {
-		//co_await gEngine.TaskSleep(1.f / 5);
-		co_yield 0;
+		co_await gEngine.TaskSleep(1.f / 5);
 
-		for (size_t i = 0; i < 100; i++) {
 		monsters_hermit_crab.Emplace().Emplace()->Init();
-		}
 	}
 	
 	xx::MovePathCache dragonflyPath1, dragonflyPath2;

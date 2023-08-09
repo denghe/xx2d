@@ -204,6 +204,7 @@
             <key type="filename">bomb8.png</key>
             <key type="filename">explosion_monster1.png</key>
             <key type="filename">explosion_monster3.png</key>
+            <key type="filename">monster_clip6.png</key>
             <key type="filename">monster_strawberry5.png</key>
             <key type="filename">monster_strawberry8.png</key>
             <struct type="IndividualSpriteSettings">
@@ -346,6 +347,255 @@
                 <rect>2,2,5,3</rect>
                 <key>scale9Paddings</key>
                 <rect>2,2,5,3</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_bigfly0.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>6,5,13,9</rect>
+                <key>scale9Paddings</key>
+                <rect>6,5,13,9</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_bigfly1.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>7,4,13,8</rect>
+                <key>scale9Paddings</key>
+                <rect>7,4,13,8</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_bigfly2.png</key>
+            <key type="filename">plane_blue1.png</key>
+            <key type="filename">plane_blue3.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>6,6,12,13</rect>
+                <key>scale9Paddings</key>
+                <rect>6,6,12,13</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_bigfly3.png</key>
+            <key type="filename">plane_red1.png</key>
+            <key type="filename">plane_red3.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>6,6,11,13</rect>
+                <key>scale9Paddings</key>
+                <rect>6,6,11,13</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_bigfly4.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>7,4,13,9</rect>
+                <key>scale9Paddings</key>
+                <rect>7,4,13,9</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_bigfly5.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>6,4,13,8</rect>
+                <key>scale9Paddings</key>
+                <rect>6,4,13,8</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_bullet0.png</key>
+            <key type="filename">monster_bullet1.png</key>
+            <key type="filename">monster_bullet2.png</key>
+            <key type="filename">monster_bullet3.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>1,1,3,3</rect>
+                <key>scale9Paddings</key>
+                <rect>1,1,3,3</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_butterfly0.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,6,7,11</rect>
+                <key>scale9Paddings</key>
+                <rect>4,6,7,11</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_butterfly1.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>8,6,16,11</rect>
+                <key>scale9Paddings</key>
+                <rect>8,6,16,11</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_butterfly2.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>8,5,15,11</rect>
+                <key>scale9Paddings</key>
+                <rect>8,5,15,11</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_butterfly3.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>5,6,9,11</rect>
+                <key>scale9Paddings</key>
+                <rect>5,6,9,11</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_clip0.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>2,4,3,8</rect>
+                <key>scale9Paddings</key>
+                <rect>2,4,3,8</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_clip1.png</key>
+            <key type="filename">monster_clip3.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>2,4,4,8</rect>
+                <key>scale9Paddings</key>
+                <rect>2,4,4,8</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_clip2.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>3,4,6,8</rect>
+                <key>scale9Paddings</key>
+                <rect>3,4,6,8</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_clip4.png</key>
+            <key type="filename">monster_clip5.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,3,8,6</rect>
+                <key>scale9Paddings</key>
+                <rect>4,3,8,6</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">monster_clip7.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,4,8,7</rect>
+                <key>scale9Paddings</key>
+                <rect>4,4,8,7</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
@@ -541,22 +791,6 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">plane_blue1.png</key>
-            <key type="filename">plane_blue3.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>spriteScale</key>
-                <double>1</double>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>6,6,12,13</rect>
-                <key>scale9Paddings</key>
-                <rect>6,6,12,13</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
             <key type="filename">plane_blue2.png</key>
             <key type="filename">plane_red2.png</key>
             <struct type="IndividualSpriteSettings">
@@ -604,22 +838,6 @@
                 <rect>5,6,10,13</rect>
                 <key>scale9Paddings</key>
                 <rect>5,6,10,13</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">plane_red1.png</key>
-            <key type="filename">plane_red3.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>spriteScale</key>
-                <double>1</double>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>6,6,11,13</rect>
-                <key>scale9Paddings</key>
-                <rect>6,6,11,13</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
@@ -696,6 +914,28 @@
                     <filename>explosion_bigmonster4.png</filename>
                     <filename>bomb6.png</filename>
                     <filename>bomb8.png</filename>
+                    <filename>monster_bigfly0.png</filename>
+                    <filename>monster_bigfly1.png</filename>
+                    <filename>monster_bigfly2.png</filename>
+                    <filename>monster_bigfly3.png</filename>
+                    <filename>monster_bigfly4.png</filename>
+                    <filename>monster_bigfly5.png</filename>
+                    <filename>monster_butterfly0.png</filename>
+                    <filename>monster_butterfly1.png</filename>
+                    <filename>monster_butterfly2.png</filename>
+                    <filename>monster_butterfly3.png</filename>
+                    <filename>monster_clip0.png</filename>
+                    <filename>monster_clip1.png</filename>
+                    <filename>monster_clip2.png</filename>
+                    <filename>monster_clip3.png</filename>
+                    <filename>monster_clip4.png</filename>
+                    <filename>monster_clip5.png</filename>
+                    <filename>monster_clip6.png</filename>
+                    <filename>monster_clip7.png</filename>
+                    <filename>monster_bullet0.png</filename>
+                    <filename>monster_bullet1.png</filename>
+                    <filename>monster_bullet2.png</filename>
+                    <filename>monster_bullet3.png</filename>
                 </array>
             </struct>
         </map>
