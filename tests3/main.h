@@ -12,7 +12,7 @@ struct MonsterDragonfly;
 struct MonsterHermitCrab;
 struct MonsterFly;
 struct MonsterBigFly;
-struct MonsterButterFly;
+struct MonsterButterfly;
 struct MonsterClip;
 
 struct GameLooper : xx::GameLooperBase {
@@ -52,7 +52,7 @@ struct GameLooper : xx::GameLooperBase {
 	xx::ListLink<xx::Shared<MonsterHermitCrab>, int> monsters_hermit_crab;
 	xx::ListLink<xx::Shared<MonsterFly>, int> monsters_fly;
 	xx::ListLink<xx::Shared<MonsterBigFly>, int> monsters_bigfly;
-	xx::ListLink<xx::Shared<MonsterButterFly>, int> monsters_butterfly;
+	xx::ListLink<xx::Shared<MonsterButterfly>, int> monsters_butterfly;
 	xx::ListLink<xx::Shared<MonsterClip>, int> monsters_clip;
 	// ... more monsters
 
@@ -147,7 +147,9 @@ struct {
 	STCO float spacing = 13.f;
 	STCO float spacing_2 = spacing / 2;
 	STCO float radius = spacing_2;
-	STCO float frameChangeStep = 1.f / 5 * gSpeedScale;
+	STCO float frameSwitchDelay = 1.f / 5 * gSpeedScale;
+	STCO int frameIndexMin = 0;
+	STCO int frameIndexMax = 3;
 	STCO float speed = 5.f * gSpeedScale;
 	STCO float fireYOffset = 14.f;
 	STCO float fireCD = 1.f / 12;
@@ -177,8 +179,8 @@ struct {
 	STCO float diameter = radius * 2;
 	STCO float bornYFrom = g9Pos.y7 - 96;
 	STCO float bornYTo = g9Pos.y7 - 40;
+	STCO float frameSwitchDelay = 1.f / 6 * gSpeedScale;
 	STCO float horizontalMoveSpeed = 1.5f * gSpeedScale;
-	STCO float horizontalMoveFrameSwitchDelay = 1.f / 6 * gSpeedScale;
 	STCO int horizontalFrameIndexMin = 0;
 	STCO int horizontalFrameIndexMax = 3;
 	STCO float horizontalMoveTotalSeconds = (gDesign.width + diameter) / horizontalMoveSpeed / gFps;
@@ -214,21 +216,26 @@ struct {
 } constexpr gMonsterHermitCrab;
 
 struct {
-	STCO float radius = 5.f;		// todo
+	STCO float radius = 7.f;
 	STCO float diameter = radius * 2;
-	STCO float speed = 3.f * gSpeedScale;
+	STCO float speedMin = 0.5f * gSpeedScale;
+	STCO float speedMax = 2.f * gSpeedScale;
 	STCO int frameIndexMin = 0;
 	STCO int frameIndexMax = 7;
-	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+	STCO float frameSwitchDelay = 1.f / 3 * gSpeedScale;
 } constexpr gMonsterFly;
 
 struct {
-	STCO float radius = 5.f;		// todo
+	STCO float radius = 8.f;
 	STCO float diameter = radius * 2;
-	STCO float speed = 3.f * gSpeedScale;
+	STCO float speed = 1.f * gSpeedScale;
+	STCO float x1 = g9Pos.x7 + 33;
+	STCO float x2 = g9Pos.x9 - 33;
+	STCO float horizontalMoveToY = g9Pos.y7 - 146;
 	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 7;
-	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+	STCO int frameIndexMax = 5;
+	STCO float frameSwitchDelay1 = 1.f / 8 * gSpeedScale;	// horizontal move
+	STCO float frameSwitchDelay2 = 1.f / 2 * gSpeedScale;
 } constexpr gMonsterBigFly;
 
 struct {
@@ -236,19 +243,25 @@ struct {
 	STCO float diameter = radius * 2;
 	STCO float speed = 3.f * gSpeedScale;
 	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 7;
+	STCO int frameIndexMax = 3;
 	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
 } constexpr gMonsterButterfly;
 
 struct {
-	STCO float radius = 5.f;		// todo
+	STCO float radius = 4.f;
 	STCO float diameter = radius * 2;
-	STCO float speed = 3.f * gSpeedScale;
+	STCO float speed = 1.f * gSpeedScale;
+	STCO float xFrom = g9Pos.x7 + diameter * 2;
+	STCO float xTo = g9Pos.x9 - diameter * 2;
+	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
 	STCO int frameIndexMin = 0;
 	STCO int frameIndexMax = 3;
-	STCO int verticalFrameIndexMin = 4;
+	STCO float aimPosYOffset = -gPlane.height_2 / 2;
+	STCO float aimDelaySeconds = 1.f / 60 * 4;
+	STCO int verticalFrameIndexMin = 4;	// right to left
 	STCO int verticalFrameIndexMax = 7;
-	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+	STCO int verticalFrameIndexMin2 = 8;	// left to right
+	STCO int verticalFrameIndexMax2 = 11;
 } constexpr gMonsterClip;
 
 
@@ -381,27 +394,26 @@ struct MonsterDragonfly {
 
 struct MonsterHermitCrab {
 	xx::XY pos{};
-	float frameIndex{}, totalDistance{};
+	float frameIndex{};
 	void Init();
 	void Draw(xx::Quad& texBrush);
 	xx::Task<> Update = Update_();
 	xx::Task<> Update_();
 };
 
-// todo
 struct MonsterFly {
-	xx::XY pos{};
-	float frameIndex{}, totalDistance{};
+	xx::XY pos{}, inc{};
+	int lifeCycle{};
+	float frameIndex{};
 	void Init();
 	void Draw(xx::Quad& texBrush);
 	xx::Task<> Update = Update_();
 	xx::Task<> Update_();
 };
 
-// todo
 struct MonsterBigFly {
 	xx::XY pos{};
-	float frameIndex{}, totalDistance{};
+	float frameIndex{}, xInc{};
 	void Init();
 	void Draw(xx::Quad& texBrush);
 	xx::Task<> Update = Update_();
@@ -409,7 +421,7 @@ struct MonsterBigFly {
 };
 
 // todo
-struct MonsterButterFly {
+struct MonsterButterfly {
 	xx::XY pos{};
 	float frameIndex{}, totalDistance{};
 	void Init();
@@ -418,10 +430,9 @@ struct MonsterButterFly {
 	xx::Task<> Update_();
 };
 
-// todo
 struct MonsterClip {
 	xx::XY pos{};
-	float frameIndex{}, totalDistance{};
+	float frameIndex{};
 	void Init();
 	void Draw(xx::Quad& texBrush);
 	xx::Task<> Update = Update_();
