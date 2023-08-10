@@ -5,12 +5,15 @@
 #include "xx_queue.h"
 
 struct Plane;
+struct ExplosionMonster;
+struct Bomb;
 struct MonsterStrawberry;
 struct MonsterDragonfly;
 struct MonsterHermitCrab;
 struct MonsterFly;
-struct ExplosionMonster;
-struct Bomb;
+struct MonsterBigFly;
+struct MonsterButterFly;
+struct MonsterClip;
 
 struct GameLooper : xx::GameLooperBase {
 	// base res
@@ -22,20 +25,21 @@ struct GameLooper : xx::GameLooperBase {
 	xx::Tasks tasks;
 
 	// res
-	std::vector<xx::Shared<xx::Frame>> frames_plane_blue;
-	std::vector<xx::Shared<xx::Frame>> frames_plane_red;
-	std::vector<xx::Shared<xx::Frame>> frames_bullet_plane;
-	std::vector<xx::Shared<xx::Frame>> frames_bomb;
+	std::vector<xx::Shared<xx::Frame>> frames_plane_blue
+		, frames_plane_red
+		, frames_bullet_plane
+	    , frames_bomb
 	// ... bomb effects
-
-	std::vector<xx::Shared<xx::Frame>> frames_monster_strawberry;
-	std::vector<xx::Shared<xx::Frame>> frames_monster_dragonfly;
-	std::vector<xx::Shared<xx::Frame>> frames_monster_hermit_crab;
-	std::vector<xx::Shared<xx::Frame>> frames_monster_fly;
+	    , frames_monster_strawberry
+	    , frames_monster_dragonfly
+	    , frames_monster_hermit_crab
+	    , frames_monster_fly
+	    , frames_monster_bigfly
+	    , frames_monster_butterfly
+	    , frames_monster_clip
 	// ... more mosters
-
-	std::vector<xx::Shared<xx::Frame>> frames_explosion_monster;
-	std::vector<xx::Shared<xx::Frame>> frames_explosion_bigmonster;
+	    , frames_explosion_monster
+	    , frames_explosion_bigmonster;
 	// ... more effects
 
 	// runtime objects
@@ -47,6 +51,9 @@ struct GameLooper : xx::GameLooperBase {
 	xx::ListLink<xx::Shared<MonsterDragonfly>, int> monsters_dragonfly;
 	xx::ListLink<xx::Shared<MonsterHermitCrab>, int> monsters_hermit_crab;
 	xx::ListLink<xx::Shared<MonsterFly>, int> monsters_fly;
+	xx::ListLink<xx::Shared<MonsterBigFly>, int> monsters_bigfly;
+	xx::ListLink<xx::Shared<MonsterButterFly>, int> monsters_butterfly;
+	xx::ListLink<xx::Shared<MonsterClip>, int> monsters_clip;
 	// ... more monsters
 
 	xx::ListLink<xx::Shared<ExplosionMonster>, int> explosions_monster;
@@ -194,16 +201,6 @@ struct {
 	STCO float frameSwitchDelay = 1.f / 5 * gSpeedScale;
 } constexpr gMonsterDragonfly;
 
-
-struct {
-	STCO float radius = 5.f;		// todo
-	STCO float diameter = radius * 2;
-	STCO float speed = 3.f * gSpeedScale;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 7;
-	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
-} constexpr gMonsterFly;
-
 struct {
 	STCO float radius = 6.f;
 	STCO float diameter = radius * 2;
@@ -215,6 +212,45 @@ struct {
 	STCO int frameIndexMax = 7;
 	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
 } constexpr gMonsterHermitCrab;
+
+struct {
+	STCO float radius = 5.f;		// todo
+	STCO float diameter = radius * 2;
+	STCO float speed = 3.f * gSpeedScale;
+	STCO int frameIndexMin = 0;
+	STCO int frameIndexMax = 7;
+	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+} constexpr gMonsterFly;
+
+struct {
+	STCO float radius = 5.f;		// todo
+	STCO float diameter = radius * 2;
+	STCO float speed = 3.f * gSpeedScale;
+	STCO int frameIndexMin = 0;
+	STCO int frameIndexMax = 7;
+	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+} constexpr gMonsterBigFly;
+
+struct {
+	STCO float radius = 5.f;		// todo
+	STCO float diameter = radius * 2;
+	STCO float speed = 3.f * gSpeedScale;
+	STCO int frameIndexMin = 0;
+	STCO int frameIndexMax = 7;
+	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+} constexpr gMonsterButterfly;
+
+struct {
+	STCO float radius = 5.f;		// todo
+	STCO float diameter = radius * 2;
+	STCO float speed = 3.f * gSpeedScale;
+	STCO int frameIndexMin = 0;
+	STCO int frameIndexMax = 3;
+	STCO int verticalFrameIndexMin = 4;
+	STCO int verticalFrameIndexMax = 7;
+	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+} constexpr gMonsterClip;
+
 
 enum class BombTypes : int {
 	Trident,	// bomb0
@@ -352,7 +388,38 @@ struct MonsterHermitCrab {
 	xx::Task<> Update_();
 };
 
+// todo
 struct MonsterFly {
+	xx::XY pos{};
+	float frameIndex{}, totalDistance{};
+	void Init();
+	void Draw(xx::Quad& texBrush);
+	xx::Task<> Update = Update_();
+	xx::Task<> Update_();
+};
+
+// todo
+struct MonsterBigFly {
+	xx::XY pos{};
+	float frameIndex{}, totalDistance{};
+	void Init();
+	void Draw(xx::Quad& texBrush);
+	xx::Task<> Update = Update_();
+	xx::Task<> Update_();
+};
+
+// todo
+struct MonsterButterFly {
+	xx::XY pos{};
+	float frameIndex{}, totalDistance{};
+	void Init();
+	void Draw(xx::Quad& texBrush);
+	xx::Task<> Update = Update_();
+	xx::Task<> Update_();
+};
+
+// todo
+struct MonsterClip {
 	xx::XY pos{};
 	float frameIndex{}, totalDistance{};
 	void Init();

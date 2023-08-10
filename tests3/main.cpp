@@ -33,6 +33,9 @@ void GameLooper::AfterGLInit() {
 	tp.GetToByPrefix(frames_monster_dragonfly, "monster_dragonfly");
 	tp.GetToByPrefix(frames_monster_hermit_crab, "monster_hermit_crab");
 	tp.GetToByPrefix(frames_monster_fly, "monster_fly");
+	tp.GetToByPrefix(frames_monster_bigfly, "monster_bigfly");
+	tp.GetToByPrefix(frames_monster_butterfly, "monster_butterfly");
+	tp.GetToByPrefix(frames_monster_clip, "monster_clip");
 
 	tp.GetToByPrefix(frames_explosion_monster, "explosion_monster");
 	tp.GetToByPrefix(frames_explosion_bigmonster, "explosion_bigmonster");
@@ -73,6 +76,18 @@ int GameLooper::Update() {
 			return o->Update.Resume();
 		});
 
+		monsters_bigfly.Foreach([&](auto& o)->bool {
+			return o->Update.Resume();
+		});
+
+		monsters_butterfly.Foreach([&](auto& o)->bool {
+			return o->Update.Resume();
+		});
+
+		monsters_clip.Foreach([&](auto& o)->bool {
+			return o->Update.Resume();
+		});
+
 		explosions_monster.Foreach([&](auto& o) {
 			return o->Update.Resume();
 		});
@@ -92,6 +107,18 @@ int GameLooper::Update() {
 	});
 
 	monsters_fly.Foreach([&](auto& o) {
+		o->Draw(texBrush);
+	});
+
+	monsters_bigfly.Foreach([&](auto& o) {
+		o->Draw(texBrush);
+	});
+
+	monsters_butterfly.Foreach([&](auto& o) {
+		o->Draw(texBrush);
+	});
+
+	monsters_clip.Foreach([&](auto& o) {
 		o->Draw(texBrush);
 	});
 
@@ -277,7 +304,10 @@ xx::Task<> Plane::SyncBulletPosCol() {
 
 			if (HitCheck<gMonsterStrawberry.radius, false>(b, gLooper->monsters_strawberry).has_value()) return true;
 			if (HitCheck<gMonsterDragonfly.radius, true>(b, gLooper->monsters_dragonfly).has_value()) return true;
+			if (HitCheck<gMonsterBigFly.radius, true>(b, gLooper->monsters_bigfly).has_value()) return true;
 			if (HitCheck<gMonsterFly.radius, false>(b, gLooper->monsters_fly).has_value()) return true;
+			if (HitCheck<gMonsterButterfly.radius, false>(b, gLooper->monsters_butterfly).has_value()) return true;
+			if (HitCheck<gMonsterClip.radius, false>(b, gLooper->monsters_clip).has_value()) return true;
 			if (auto pos = HitCheck<gMonsterHermitCrab.radius, false>(b, gLooper->monsters_hermit_crab); pos.has_value()) {
 				gLooper->bombs.Emplace().Emplace()->Init(pos.value(), BombTypes::MAX_VALUE_UNKNOWN);
 				return true;
@@ -585,5 +615,71 @@ xx::Task<> MonsterFly::Update_() {
 };
 
 void MonsterFly::Draw(xx::Quad& texBrush) {
+	texBrush.SetFrame(gLooper->frames_monster_fly[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
+}
+
+/*****************************************************************************************************/
+/*****************************************************************************************************/
+
+// todo
+void MonsterBigFly::Init() {
+	frameIndex = gRnd.Next((float)gMonsterFly.frameIndexMin, gMonsterFly.frameIndexMax + 0.999f);
+}
+
+xx::Task<> MonsterBigFly::Update_() {
+	do {
+		frameIndex += gMonsterFly.frameSwitchDelay;
+		if ((int)frameIndex > gMonsterFly.frameIndexMax) {
+			frameIndex = gMonsterFly.frameIndexMin + (frameIndex - gMonsterFly.frameIndexMax - 1);
+		}
+		co_yield 0;
+	} while (pos.y > -gDesign.height_2 - gMonsterFly.diameter);
+};
+
+void MonsterBigFly::Draw(xx::Quad& texBrush) {
+	texBrush.SetFrame(gLooper->frames_monster_fly[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
+}
+
+/*****************************************************************************************************/
+/*****************************************************************************************************/
+
+// todo
+void MonsterButterFly::Init() {
+	frameIndex = gRnd.Next((float)gMonsterFly.frameIndexMin, gMonsterFly.frameIndexMax + 0.999f);
+}
+
+xx::Task<> MonsterButterFly::Update_() {
+	do {
+		frameIndex += gMonsterFly.frameSwitchDelay;
+		if ((int)frameIndex > gMonsterFly.frameIndexMax) {
+			frameIndex = gMonsterFly.frameIndexMin + (frameIndex - gMonsterFly.frameIndexMax - 1);
+		}
+		co_yield 0;
+	} while (pos.y > -gDesign.height_2 - gMonsterFly.diameter);
+};
+
+void MonsterButterFly::Draw(xx::Quad& texBrush) {
+	texBrush.SetFrame(gLooper->frames_monster_fly[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
+}
+
+/*****************************************************************************************************/
+/*****************************************************************************************************/
+
+// todo
+void MonsterClip::Init() {
+	frameIndex = gRnd.Next((float)gMonsterFly.frameIndexMin, gMonsterFly.frameIndexMax + 0.999f);
+}
+
+xx::Task<> MonsterClip::Update_() {
+	do {
+		frameIndex += gMonsterFly.frameSwitchDelay;
+		if ((int)frameIndex > gMonsterFly.frameIndexMax) {
+			frameIndex = gMonsterFly.frameIndexMin + (frameIndex - gMonsterFly.frameIndexMax - 1);
+		}
+		co_yield 0;
+	} while (pos.y > -gDesign.height_2 - gMonsterFly.diameter);
+};
+
+void MonsterClip::Draw(xx::Quad& texBrush) {
 	texBrush.SetFrame(gLooper->frames_monster_fly[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
 }
