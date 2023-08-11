@@ -124,19 +124,19 @@ int GameLooper::Update() {
 		tasks();
 
 		for (auto& o : player_planes) {
-			o->tasks();
+			o();
 		}
 
-		bombs.Foreach([&](auto& o) { return o->Update.Resume(); });
-		monsters_strawberry.Foreach([&](auto& o) { return o->Update.Resume(); });
-		monsters_dragonfly.Foreach([&](auto& o) { return o->Update.Resume(); });
-		monsters_hermit_crab.Foreach([&](auto& o) { return o->Update.Resume(); });
-		monsters_fly.Foreach([&](auto& o) { return o->Update.Resume(); });
-		monsters_bigfly.Foreach([&](auto& o) { return o->Update.Resume(); });
-		monsters_butterfly.Foreach([&](auto& o) { return o->Update.Resume(); });
-		monsters_clip.Foreach([&](auto& o) { return o->Update.Resume(); });
-		explosions_monster.Foreach([&](auto& o) { return o->Update.Resume(); });
-		explosions_bigmonster.Foreach([&](auto& o) { return o->Update.Resume(); });
+		bombs.Foreach([&](auto& o) { return !o() || o->disposing; });
+		monsters_strawberry.Foreach([&](auto& o) { return !o() || o->disposing; });
+		monsters_dragonfly.Foreach([&](auto& o) { return !o() || o->disposing; });
+		monsters_hermit_crab.Foreach([&](auto& o) { return !o() || o->disposing; });
+		monsters_fly.Foreach([&](auto& o) { return !o() || o->disposing; });
+		monsters_bigfly.Foreach([&](auto& o) { return !o() || o->disposing; });
+		monsters_butterfly.Foreach([&](auto& o) { return !o() || o->disposing; });
+		monsters_clip.Foreach([&](auto& o) { return !o() || o->disposing; });
+		explosions_monster.Foreach([&](auto& o) { return !o() || o->disposing; });
+		explosions_bigmonster.Foreach([&](auto& o) { return !o() || o->disposing; });
 
 		// todo: more Update
 	}
@@ -241,10 +241,10 @@ void Plane::Init(int planeIndex_) {
 	}
 
 	// script init
-	tasks.Add(Born());
-	tasks.Add(Shine());
-	tasks.Add(SyncBombPos());
-	tasks.Add(SyncBulletPosCol());
+	Add(Born());
+	Add(Shine());
+	Add(SyncBombPos());
+	Add(SyncBulletPosCol());
 }
 
 void Plane::InitBombPos() {
@@ -333,7 +333,7 @@ xx::Task<> Plane::Born() {
 	}
 	pos.y = bornYTo;
 	
-	tasks.Add(Update());			// switch to normal mode
+	Add(Update());			// switch to normal mode
 }
 
 xx::Task<> Plane::Shine() {
@@ -440,7 +440,7 @@ void Plane::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void Bomb::Init(xx::XY const& pos_, BombTypes type_) {
-	this->Update = Update_();
+	Add(MainLogic());
 	if (type_ == BombTypes::MAX_VALUE_UNKNOWN) {
 		type = (BombTypes)gRnd.Next((int)BombTypes::MAX_VALUE_UNKNOWN - 1);
 	} else {
@@ -448,12 +448,14 @@ void Bomb::Init(xx::XY const& pos_, BombTypes type_) {
 	}
 	pos = pos_;
 }
-xx::Task<> Bomb::Update_() {
+
+xx::Task<> Bomb::MainLogic() {
 	do {
 		pos.y -= minSpeed;
 		co_yield 0;
 	} while (pos.y > g9Pos.y1 - diameter);
 }
+
 void Bomb::Draw(xx::Quad& texBrush) {
 	texBrush.SetFrame(gLooper->frames_bomb[(int)type]).SetPosition(pos * gDisplayScale).Draw();
 }
@@ -462,12 +464,12 @@ void Bomb::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void ExplosionMonster::Init(xx::XY const& pos_) {
-	this->Update = Update_();
+	Add(MainLogic());
 	pos = pos_;
 	frameIndex = frameIndexMin;
 }
 
-xx::Task<> ExplosionMonster::Update_() {
+xx::Task<> ExplosionMonster::MainLogic() {
 	do {
 		co_yield 0;
 		frameIndex += frameSwitchDelay;
@@ -480,12 +482,12 @@ void ExplosionMonster::Draw(xx::Quad& texBrush) {
 
 
 void ExplosionBigMonster::Init(xx::XY const& pos_) {
-	this->Update = Update_();
+	Add(MainLogic());
 	pos = pos_;
 	frameIndex = frameIndexMin;
 }
 
-xx::Task<> ExplosionBigMonster::Update_() {
+xx::Task<> ExplosionBigMonster::MainLogic() {
 	do {
 		co_yield 0;
 		frameIndex += frameSwitchDelay;
@@ -500,13 +502,13 @@ void ExplosionBigMonster::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterStrawberry::Init() {
-	this->Update = Update_();
+	Add(MainLogic());
 	pos.x = gRnd.Next<bool>() ? (-radius - gDesign.width_2) : (radius + gDesign.width_2);
 	pos.y = gRnd.Next(bornYFrom, bornYTo);
 	frameIndex = gRnd.Next((float)horizontalFrameIndexMin, horizontalFrameIndexMax + 0.999f);
 }
 
-xx::Task<> MonsterStrawberry::Update_() {
+xx::Task<> MonsterStrawberry::MainLogic() {
 	xx::XY inc{ pos.x < 0 ? horizontalMoveSpeed : -horizontalMoveSpeed, 0 };
 	auto switchDelay = gRnd.Next(switchToVerticalMoveDelayFrom, switchToVerticalMoveDelayTo);
 	// horizontal move
@@ -543,11 +545,11 @@ void MonsterStrawberry::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterDragonfly::Init() {
-	this->Update = Update_();
+	Add(MainLogic());
 	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
 }
 
-xx::Task<> MonsterDragonfly::Update_() {
+xx::Task<> MonsterDragonfly::MainLogic() {
 	auto path = &paths[0];
 	if (!gLooper->player_planes.empty() && gLooper->player_planes[0]->pos.x > 0) {
 		path = &paths[1];
@@ -574,13 +576,13 @@ void MonsterDragonfly::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterHermitCrab::Init() {
-	this->Update = Update_();
+	Add(MainLogic());
 	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
 	pos.x = gRnd.Next(bornPosXFrom, bornPosXTo);
 	pos.y = bornPosY;
 }
 
-xx::Task<> MonsterHermitCrab::Update_() {
+xx::Task<> MonsterHermitCrab::MainLogic() {
 	do {
 		pos.y -= speed;
 		StepFrameIndex<frameSwitchDelay, frameIndexMin, frameIndexMax>(frameIndex);
@@ -596,12 +598,12 @@ void MonsterHermitCrab::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterFly::Init() {
-	this->Update = Update_();
+	Add(MainLogic());
 	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
 	pos = { g9Pos.x7 + gRnd.Next<float>(gDesign.width - diameter), g9Pos.y7 + diameter };
 }
 
-xx::Task<> MonsterFly::Update_() {
+xx::Task<> MonsterFly::MainLogic() {
 	xx::XY tar{ g9Pos.x1 + gRnd.Next<float>(gDesign.width - diameter), g9Pos.y1 - diameter };
 	auto d = tar - pos;
 	auto dist = std::sqrt(d.x * d.x + d.y * d.y);
@@ -623,13 +625,13 @@ void MonsterFly::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterBigFly::Init() {
-	this->Update = Update_();
+	Add(MainLogic());
 	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
 	pos.x = gRnd.Next<bool>() ? x1 : x2;
 	pos.y = g9Pos.y7 + diameter;
 }
 
-xx::Task<> MonsterBigFly::Update_() {
+xx::Task<> MonsterBigFly::MainLogic() {
 	float xInc = pos.x == x1 ? speed : -speed;
 	do {
 		pos.y -= speed;
@@ -654,11 +656,11 @@ void MonsterBigFly::Draw(xx::Quad& texBrush) {
 
 // todo
 void MonsterButterfly::Init() {
-	this->Update = Update_();
+	Add(MainLogic());
 	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
 }
 
-xx::Task<> MonsterButterfly::Update_() {
+xx::Task<> MonsterButterfly::MainLogic() {
 	do {
 		StepFrameIndex<frameSwitchDelay, frameIndexMin, frameIndexMax>(frameIndex);
 		co_yield 0;
@@ -673,12 +675,12 @@ void MonsterButterfly::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterClip::Init() {
-	this->Update = Update_();
+	Add(MainLogic());
 	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
 	pos = { gRnd.Next<float>(xFrom, xTo), g9Pos.y7 + diameter };
 }
 
-xx::Task<> MonsterClip::Update_() {
+xx::Task<> MonsterClip::MainLogic() {
 	do {
 		pos.y -= speed;
 		StepFrameIndex<frameSwitchDelay, frameIndexMin, frameIndexMax>(frameIndex);
@@ -690,7 +692,6 @@ xx::Task<> MonsterClip::Update_() {
 	co_return;
 
 LabVerticalMove:
-
 	float delay = aimDelaySeconds;
 	do {
 		delay -= gFds;

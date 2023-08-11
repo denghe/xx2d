@@ -129,6 +129,12 @@ struct {
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 
+struct PosFrameIndexTasks : xx::Tasks {
+	xx::XY pos{};
+	float frameIndex{};
+	bool disposing{};
+};
+
 enum class BombTypes : int {
 	Trident,	// bomb0
 	Circle,
@@ -163,7 +169,7 @@ struct PlaneBullet {
 	xx::XY pos{};
 };
 
-struct Plane {
+struct Plane : PosFrameIndexTasks {
 	STCO float height = 25.f;
 	STCO float height_2 = height / 2;
 	STCO float radius = 9.f;
@@ -185,10 +191,8 @@ struct Plane {
 	bool moving{};
 	float visible{};									// god mode shine delay control
 
-	xx::XY pos{};										// current position
 	float speed{};
 
-	float frameIndex{};									// for move left/right switch frame
 
 	xx::Queue<PlaneBomb> bombs;							// tail bomb icons
 	float bombNextUseTime{};							// next avaliable use bomb time by engine.nowSecs + CD
@@ -206,19 +210,13 @@ struct Plane {
 	xx::Task<> Update();								// can control move & fire
 	xx::Task<> SyncBombPos();							// let tail bombs follow plane move
 	xx::Task<> SyncBulletPosCol();						// move bullet & switch frame
-	xx::Tasks tasks;									// manager for above tasks
 };
 
-struct PosFrameIndexUpdate {
-	xx::XY pos{};
-	float frameIndex{};
-	xx::Task<> Update;
-};
 
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 
-struct Bomb : PosFrameIndexUpdate {
+struct Bomb : PosFrameIndexTasks {
 	STCO float anchorYDist = 18.f;	// plane.pos.y - offset
 	STCO float radius = 6.f;
 	STCO float diameter = radius * 2;
@@ -231,30 +229,30 @@ struct Bomb : PosFrameIndexUpdate {
 	BombTypes type = BombTypes::MAX_VALUE_UNKNOWN;
 	void Init(xx::XY const& pos_, BombTypes type_);
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
-struct ExplosionMonster : PosFrameIndexUpdate {
+struct ExplosionMonster : PosFrameIndexTasks {
 	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
 	STCO int frameIndexMin = 0;
 	STCO int frameIndexMax = 5;
 
 	void Init(xx::XY const& pos_);
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
-struct ExplosionBigMonster : PosFrameIndexUpdate {
+struct ExplosionBigMonster : PosFrameIndexTasks {
 	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
 	STCO int frameIndexMin = 0;
 	STCO int frameIndexMax = 4;
 
 	void Init(xx::XY const& pos_);
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
-struct MonsterStrawberry : PosFrameIndexUpdate {
+struct MonsterStrawberry : PosFrameIndexTasks {
 	STCO float radius = 6.f;
 	STCO float diameter = radius * 2;
 	STCO float bornYFrom = g9Pos.y7 - 96;
@@ -275,10 +273,10 @@ struct MonsterStrawberry : PosFrameIndexUpdate {
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
-struct MonsterDragonfly : PosFrameIndexUpdate {
+struct MonsterDragonfly : PosFrameIndexTasks {
 	STCO float radius = 13.f;
 	STCO float diameter = radius * 2;
 	STCO float speed = 2.f * gSpeedScale;
@@ -289,10 +287,10 @@ struct MonsterDragonfly : PosFrameIndexUpdate {
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
-struct MonsterHermitCrab : PosFrameIndexUpdate {
+struct MonsterHermitCrab : PosFrameIndexTasks {
 	STCO float radius = 6.f;
 	STCO float diameter = radius * 2;
 	STCO float speed = 1.f * gSpeedScale;
@@ -305,10 +303,10 @@ struct MonsterHermitCrab : PosFrameIndexUpdate {
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
-struct MonsterFly : PosFrameIndexUpdate {
+struct MonsterFly : PosFrameIndexTasks {
 	STCO float radius = 7.f;
 	STCO float diameter = radius * 2;
 	STCO float speedMin = 0.5f * gSpeedScale;
@@ -319,10 +317,10 @@ struct MonsterFly : PosFrameIndexUpdate {
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
-struct MonsterBigFly : PosFrameIndexUpdate {
+struct MonsterBigFly : PosFrameIndexTasks {
 	STCO float radius = 8.f;
 	STCO float diameter = radius * 2;
 	STCO float speed = 1.f * gSpeedScale;
@@ -336,10 +334,10 @@ struct MonsterBigFly : PosFrameIndexUpdate {
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
-struct MonsterButterfly : PosFrameIndexUpdate {		// todo
+struct MonsterButterfly : PosFrameIndexTasks {		// todo
 	STCO float radius = 5.f;
 	STCO float diameter = radius * 2;
 	STCO float speed = 3.f * gSpeedScale;
@@ -349,10 +347,10 @@ struct MonsterButterfly : PosFrameIndexUpdate {		// todo
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
-struct MonsterClip : PosFrameIndexUpdate {
+struct MonsterClip : PosFrameIndexTasks {
 	STCO float radius = 4.f;
 	STCO float diameter = radius * 2;
 	STCO float speed = 1.f * gSpeedScale;
@@ -370,7 +368,7 @@ struct MonsterClip : PosFrameIndexUpdate {
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
-	xx::Task<> Update_();
+	xx::Task<> MainLogic();
 };
 
 #endif
