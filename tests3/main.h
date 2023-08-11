@@ -285,9 +285,9 @@ struct MonsterDragonfly : PosFrameIndexUpdate {
 	STCO int frameIndexMin = 0;
 	STCO int frameIndexMax = 3;
 	STCO float frameSwitchDelay = 1.f / 5 * gSpeedScale;
+	inline static xx::MovePathCache paths[2];
 
-	xx::MovePathCache* path;
-	void Init(xx::MovePathCache* path_);
+	void Init();
 	void Draw(xx::Quad& texBrush);
 	xx::Task<> Update_();
 };

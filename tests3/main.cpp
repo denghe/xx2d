@@ -67,6 +67,7 @@ std::optional<xx::XY> HitCheck(PlaneBullet& b, xx::ListLink<xx::Shared<MT>, int>
 void GameLooper::AfterGLInit() {
 	fontBase = gEngine.LoadBMFont("res/font/coderscrux.fnt"sv);
 
+	// preload texs
 	xx::TP tp;
 	tp.Load("res/gemini/gemini.plist");
 
@@ -86,6 +87,32 @@ void GameLooper::AfterGLInit() {
 	tp.GetToByPrefix(frames_explosion_monster, "explosion_monster");
 	tp.GetToByPrefix(frames_explosion_bigmonster, "explosion_bigmonster");
 
+	// preload some move path
+	{
+		xx::MovePath mp;
+		xx::CurvePoints cps;
+		cps.points.emplace_back().pos = { g9Pos.x7 + 150, g9Pos.y7 + MonsterDragonfly::diameter };
+		cps.points.emplace_back().pos = { g9Pos.x7 + 190, g9Pos.y7 - 10 };
+		cps.points.emplace_back().pos = { g9Pos.x7 + 30, g9Pos.y7 - 100 };
+		cps.points.emplace_back().pos = { g9Pos.x7 + 190, g9Pos.y7 - 170 };
+		cps.points.emplace_back().pos = { g9Pos.x7 + 30, g9Pos.y7 - 250 };
+		cps.points.emplace_back().pos = { g9Pos.x7 + 60, g9Pos.y3 - MonsterDragonfly::diameter };
+		mp.Clear();
+		mp.FillCurve(cps.isLoop, cps.points);
+		MonsterDragonfly::paths[0].Init(mp, 1);
+
+		cps.points.clear();
+		cps.points.emplace_back().pos = { g9Pos.x9 - 150, g9Pos.y9 + MonsterDragonfly::diameter };
+		cps.points.emplace_back().pos = { g9Pos.x9 - 190, g9Pos.y9 - 10 };
+		cps.points.emplace_back().pos = { g9Pos.x9 - 30, g9Pos.y9 - 100 };
+		cps.points.emplace_back().pos = { g9Pos.x9 - 190, g9Pos.y9 - 170 };
+		cps.points.emplace_back().pos = { g9Pos.x9 - 30, g9Pos.y9 - 250 };
+		cps.points.emplace_back().pos = { g9Pos.x9 - 60, g9Pos.y3 - MonsterDragonfly::diameter };
+		mp.Clear();
+		mp.FillCurve(cps.isLoop, cps.points);
+		MonsterDragonfly::paths[1].Init(mp, 1);
+	}
+
 	tasks.Add(MasterLogic());
 }
 
@@ -97,46 +124,18 @@ int GameLooper::Update() {
 		tasks();
 
 		for (auto& o : player_planes) {
-			if (o) {
-				o->tasks();
-			}
+			o->tasks();
 		}
 
-		bombs.Foreach([&](auto& o)->bool {
-			return o->Update.Resume();
-		});
-
-		monsters_strawberry.Foreach([&](auto& o)->bool {
-			return o->Update.Resume();
-		});
-
-		monsters_dragonfly.Foreach([&](auto& o)->bool {
-			return o->Update.Resume();
-		});
-
-		monsters_hermit_crab.Foreach([&](auto& o)->bool {
-			return o->Update.Resume();
-		});
-
-		monsters_fly.Foreach([&](auto& o)->bool {
-			return o->Update.Resume();
-		});
-
-		monsters_bigfly.Foreach([&](auto& o)->bool {
-			return o->Update.Resume();
-		});
-
-		monsters_butterfly.Foreach([&](auto& o)->bool {
-			return o->Update.Resume();
-		});
-
-		monsters_clip.Foreach([&](auto& o)->bool {
-			return o->Update.Resume();
-		});
-
-		explosions_monster.Foreach([&](auto& o) {
-			return o->Update.Resume();
-		});
+		bombs.Foreach([&](auto& o) { return o->Update.Resume(); });
+		monsters_strawberry.Foreach([&](auto& o) { return o->Update.Resume(); });
+		monsters_dragonfly.Foreach([&](auto& o) { return o->Update.Resume(); });
+		monsters_hermit_crab.Foreach([&](auto& o) { return o->Update.Resume(); });
+		monsters_fly.Foreach([&](auto& o) { return o->Update.Resume(); });
+		monsters_bigfly.Foreach([&](auto& o) { return o->Update.Resume(); });
+		monsters_butterfly.Foreach([&](auto& o) { return o->Update.Resume(); });
+		monsters_clip.Foreach([&](auto& o) { return o->Update.Resume(); });
+		explosions_monster.Foreach([&](auto& o) { return o->Update.Resume(); });
 
 		// todo: more Update
 	}
@@ -144,46 +143,18 @@ int GameLooper::Update() {
 	xx::Quad texBrush;
 	texBrush.SetScale(gDisplayScale);
 
-	monsters_hermit_crab.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
-
-	monsters_strawberry.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
-
-	monsters_fly.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
-
-	monsters_bigfly.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
-
-	monsters_butterfly.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
-
-	monsters_clip.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
-
-	monsters_dragonfly.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
-
-	bombs.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
-
-	explosions_monster.Foreach([&](auto& o) {
-		o->Draw(texBrush);
-	});
+	monsters_hermit_crab.Foreach([&](auto& o) { o->Draw(texBrush); });
+	monsters_strawberry.Foreach([&](auto& o) { o->Draw(texBrush); });
+	monsters_fly.Foreach([&](auto& o) { o->Draw(texBrush); });
+	monsters_bigfly.Foreach([&](auto& o) { o->Draw(texBrush); });
+	monsters_butterfly.Foreach([&](auto& o) { o->Draw(texBrush); });
+	monsters_clip.Foreach([&](auto& o) { o->Draw(texBrush); });
+	monsters_dragonfly.Foreach([&](auto& o) { o->Draw(texBrush); });
+	bombs.Foreach([&](auto& o) { o->Draw(texBrush); });
+	explosions_monster.Foreach([&](auto& o) { o->Draw(texBrush); });
 
 	for (auto& o : player_planes) {
-		if (o) {
-			o->Draw(texBrush);
-		}
+		o->Draw(texBrush);
 	}
 
 	// todo: more Draw
@@ -208,68 +179,47 @@ xx::Task<> GameLooper::MasterLogic() {
 		co_yield 0;
 	}
 
-	//while (nowSecs < 10) {
-	//	co_await gEngine.TaskSleep(1.f / 5);
+	tasks.Add([this]()->xx::Task<> {
+		while (true) {
+			co_await gEngine.TaskSleep(1.f);
+			monsters_hermit_crab.Emplace().Emplace()->Init();
+		}
+	});
 
-	//	monsters_hermit_crab.Emplace().Emplace()->Init();
-	//}
-	//
-	//xx::MovePathCache dragonflyPath1, dragonflyPath2;
-	//{
-	//	xx::MovePath mp;
-	//	xx::CurvePoints cps;
-	//	cps.points.emplace_back().pos = { g9Pos.x7 + 150, g9Pos.y7 + MonsterDragonfly::diameter };
-	//	cps.points.emplace_back().pos = { g9Pos.x7 + 190, g9Pos.y7 - 10 };
-	//	cps.points.emplace_back().pos = { g9Pos.x7 + 30, g9Pos.y7 - 100 };
-	//	cps.points.emplace_back().pos = { g9Pos.x7 + 190, g9Pos.y7 - 170 };
-	//	cps.points.emplace_back().pos = { g9Pos.x7 + 30, g9Pos.y7 - 250 };
-	//	cps.points.emplace_back().pos = { g9Pos.x7 + 60, g9Pos.y3 - MonsterDragonfly::diameter };
-	//	mp.Clear();
-	//	mp.FillCurve(cps.isLoop, cps.points);
-	//	dragonflyPath1.Init(mp, 1);
+	tasks.Add([this]()->xx::Task<> {
+		while (true) {
+			co_await gEngine.TaskSleep(1.f);
+			monsters_dragonfly.Emplace().Emplace()->Init();
+		}
+	});
 
-	//	cps.points.clear();
-	//	cps.points.emplace_back().pos = { g9Pos.x9 - 150, g9Pos.y9 + MonsterDragonfly::diameter };
-	//	cps.points.emplace_back().pos = { g9Pos.x9 - 190, g9Pos.y9 - 10 };
-	//	cps.points.emplace_back().pos = { g9Pos.x9 - 30, g9Pos.y9 - 100 };
-	//	cps.points.emplace_back().pos = { g9Pos.x9 - 190, g9Pos.y9 - 170 };
-	//	cps.points.emplace_back().pos = { g9Pos.x9 - 30, g9Pos.y9 - 250 };
-	//	cps.points.emplace_back().pos = { g9Pos.x9 - 60, g9Pos.y3 - MonsterDragonfly::diameter };
-	//	mp.Clear();
-	//	mp.FillCurve(cps.isLoop, cps.points);
-	//	dragonflyPath2.Init(mp, 1);
-	//}
+	tasks.Add([this]()->xx::Task<> {
+		while (true) {
+			co_await gEngine.TaskSleep(1.f);
+			monsters_strawberry.Emplace().Emplace()->Init();
+		}
+	});
 
-	//while (nowSecs < 20) {
-	//	co_await gEngine.TaskSleep(1.f / 10);
+	tasks.Add([this]()->xx::Task<> {
+		while (true) {
+			co_await gEngine.TaskSleep(1.f);
+			monsters_fly.Emplace().Emplace()->Init();
+		}
+	});
 
-	//	// todo: if (plane is left  use path 1  else use path 2)
-	//	monsters_dragonfly.Emplace().Emplace()->Init( gRnd.Next<bool>() ? &dragonflyPath1 : &dragonflyPath2);
-	//}
+	tasks.Add([this]()->xx::Task<> {
+		while (true) {
+			co_await gEngine.TaskSleep(1.f);
+			monsters_bigfly.Emplace().Emplace()->Init();
+		}
+	});
 
-	//while (nowSecs < 30) {
-	//	co_await gEngine.TaskSleep(1.f / 10);
-
-	//	monsters_strawberry.Emplace().Emplace()->Init();
-	//}
-
-	//while (nowSecs < 40) {
-	//	co_await gEngine.TaskSleep(1.f / 20);
-
-	//	monsters_fly.Emplace().Emplace()->Init();
-	//}
-
-	//while (nowSecs < 50) {
-	//	co_await gEngine.TaskSleep(1.f / 5);
-
-	//	monsters_bigfly.Emplace().Emplace()->Init();
-	//}
-
-	while (true) {
-		co_await gEngine.TaskSleep(1.f / 5);
-
-		monsters_clip.Emplace().Emplace()->Init();
-	}
+	tasks.Add([this]()->xx::Task<> {
+		while (true) {
+			co_await gEngine.TaskSleep(1.f);
+			monsters_clip.Emplace().Emplace()->Init();
+		}
+	});
 
 	// todo: create more monsters?
 }
@@ -590,14 +540,18 @@ void MonsterStrawberry::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 
-void MonsterDragonfly::Init(xx::MovePathCache* path_) {
+void MonsterDragonfly::Init() {
 	this->Update = Update_();
-	path = path_;
 	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
-	pos = path->points[0].pos;
 }
 
 xx::Task<> MonsterDragonfly::Update_() {
+	auto path = &paths[0];
+	if (!gLooper->player_planes.empty() && gLooper->player_planes[0]->pos.x > 0) {
+		path = &paths[1];
+	}
+	pos = path->points[0].pos;
+	
 	float totalDistance{};
 	do {
 		totalDistance += speed;
@@ -667,6 +621,7 @@ void MonsterFly::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterBigFly::Init() {
+	this->Update = Update_();
 	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
 	pos.x = gRnd.Next<bool>() ? x1 : x2;
 	pos.y = g9Pos.y7 + diameter;
