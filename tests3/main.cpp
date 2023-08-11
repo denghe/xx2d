@@ -24,20 +24,41 @@ int main() {
 
 // loop switch tex
 template<float delay, int indexMin, int indexMax>
-void RepeatIncreaseFrameIndex(float& frameIndex) {
+void StepFrameIndex(float& frameIndex) {
 	frameIndex += delay;
 	if ((int)frameIndex > indexMax) {
 		frameIndex = indexMin + (frameIndex - indexMax - 1);
 	}
 }
 
-xx::Shared<xx::Frame> FlipXFrame(xx::Shared<xx::Frame> const& f) {
-	auto r = xx::Make<xx::Frame>();
-	*r = *f;
-	r->key += "_flip";
-	r->textureRect.x += r->textureRect.wh.x;
-	r->textureRect.wh.x = -r->textureRect.wh.x;
-	return r;
+template<float r1, float r2>
+bool HitCheck(xx::XY const& p1, xx::XY const& p2) {
+	auto d = p1 - p2;
+	auto constexpr rr = (r1 + r2) * (r1 + r2);
+	auto dd = d.x * d.x + d.y * d.y;
+	return dd < rr;
+}
+
+template<typename MT>
+std::optional<xx::XY> HitCheck(PlaneBullet& b, xx::ListLink<xx::Shared<MT>, int>& tar) {
+
+	auto [idx, next] = tar.FindIf([&](xx::Shared<MT>& o)->bool {
+		if (HitCheck<PlaneBullet::radius, MT::radius>(b.pos, o->pos)) {
+			if constexpr (MT::radius > 8) {
+				gLooper->explosions_bigmonster.Emplace().Emplace()->Init(o->pos);
+			} else {
+				gLooper->explosions_monster.Emplace().Emplace()->Init(o->pos);
+			}
+			return true;
+		}
+		return false;
+		});
+	if (idx != -1) {
+		auto r = tar[idx]->pos;
+		tar.Remove(idx, next);
+		return r;
+	}
+	return {};
 }
 
 /*****************************************************************************************************/
@@ -197,23 +218,23 @@ xx::Task<> GameLooper::MasterLogic() {
 	//{
 	//	xx::MovePath mp;
 	//	xx::CurvePoints cps;
-	//	cps.points.emplace_back().pos = { g9Pos.x7 + 150, g9Pos.y7 + gMonsterDragonfly.diameter };
+	//	cps.points.emplace_back().pos = { g9Pos.x7 + 150, g9Pos.y7 + MonsterDragonfly::diameter };
 	//	cps.points.emplace_back().pos = { g9Pos.x7 + 190, g9Pos.y7 - 10 };
 	//	cps.points.emplace_back().pos = { g9Pos.x7 + 30, g9Pos.y7 - 100 };
 	//	cps.points.emplace_back().pos = { g9Pos.x7 + 190, g9Pos.y7 - 170 };
 	//	cps.points.emplace_back().pos = { g9Pos.x7 + 30, g9Pos.y7 - 250 };
-	//	cps.points.emplace_back().pos = { g9Pos.x7 + 60, g9Pos.y3 - gMonsterDragonfly.diameter };
+	//	cps.points.emplace_back().pos = { g9Pos.x7 + 60, g9Pos.y3 - MonsterDragonfly::diameter };
 	//	mp.Clear();
 	//	mp.FillCurve(cps.isLoop, cps.points);
 	//	dragonflyPath1.Init(mp, 1);
 
 	//	cps.points.clear();
-	//	cps.points.emplace_back().pos = { g9Pos.x9 - 150, g9Pos.y9 + gMonsterDragonfly.diameter };
+	//	cps.points.emplace_back().pos = { g9Pos.x9 - 150, g9Pos.y9 + MonsterDragonfly::diameter };
 	//	cps.points.emplace_back().pos = { g9Pos.x9 - 190, g9Pos.y9 - 10 };
 	//	cps.points.emplace_back().pos = { g9Pos.x9 - 30, g9Pos.y9 - 100 };
 	//	cps.points.emplace_back().pos = { g9Pos.x9 - 190, g9Pos.y9 - 170 };
 	//	cps.points.emplace_back().pos = { g9Pos.x9 - 30, g9Pos.y9 - 250 };
-	//	cps.points.emplace_back().pos = { g9Pos.x9 - 60, g9Pos.y3 - gMonsterDragonfly.diameter };
+	//	cps.points.emplace_back().pos = { g9Pos.x9 - 60, g9Pos.y3 - MonsterDragonfly::diameter };
 	//	mp.Clear();
 	//	mp.FillCurve(cps.isLoop, cps.points);
 	//	dragonflyPath2.Init(mp, 1);
@@ -256,9 +277,8 @@ xx::Task<> GameLooper::MasterLogic() {
 void Plane::Init(int planeIndex_) {
 	// data init
 	planeIndex = planeIndex_;
-	speed = gPlane.normalSpeed;
-	frameIndex = gPlane.frameIndexMid;
-	frameChangeSpeed = speed * 0.2;
+	speed = normalSpeed;
+	frameIndex = frameIndexMid;
 	godMode = true;
 	visible = 0;
 
@@ -277,9 +297,9 @@ void Plane::Init(int planeIndex_) {
 
 void Plane::InitBombPos() {
 	if (auto n = bombs.Count()) {
-		float y = pos.y - gBomb.anchorYDist;
+		float y = pos.y - Bomb::anchorYDist;
 		for (size_t i = 0; i < n; i++) {
-			bombs[i].pos = { pos.x, y - gBomb.diameter * i };
+			bombs[i].pos = { pos.x, y - Bomb::diameter * i };
 		}
 	}
 }
@@ -291,7 +311,7 @@ xx::Task<> Plane::SyncBombPos() {
 		// eat bomb check
 		gLooper->bombs.Foreach([this](auto& o)->bool {
 			auto d = pos - o->pos;
-			auto constexpr rr = (gPlane.radius + gBomb.radius) * (gPlane.radius + gBomb.radius);
+			auto constexpr rr = (radius + Bomb::radius) * (radius + Bomb::radius);
 			auto dd = d.x * d.x + d.y * d.y;
 			if (dd < rr) {
 				bombs.Push(PlaneBomb{ o->type, o->pos });
@@ -305,19 +325,19 @@ xx::Task<> Plane::SyncBombPos() {
 		auto n = bombs.Count();
 		if (!n) continue;
 		
-		auto tarPos = xx::XY{ pos.x, pos.y - gBomb.anchorYDist };
+		auto tarPos = xx::XY{ pos.x, pos.y - Bomb::anchorYDist };
 		for (size_t i = 0; i < n; i++) {
 			auto& pos = bombs[i].pos;
 
 			auto d = tarPos - pos;
 			auto dd = d.x * d.x + d.y * d.y;
-			if (gBomb.minSpeedPow2 > dd) {
+			if (Bomb::minSpeedPow2 > dd) {
 				pos = tarPos;
 			}
 			else {
-				pos += d.As<float>() / (i ? (moving ? gBomb.movingFollowSteps : gBomb.stopFollowSteps) : gBomb.firstFollowSteps);
+				pos += d.As<float>() / (i ? (moving ? Bomb::movingFollowSteps : Bomb::stopFollowSteps) : Bomb::firstFollowSteps);
 			}
-			tarPos = { pos.x, pos.y - (moving ? 0 : gBomb.diameter) };
+			tarPos = { pos.x, pos.y - (moving ? 0 : Bomb::diameter) };
 		}
 	}
 }
@@ -326,19 +346,20 @@ xx::Task<> Plane::SyncBulletPosCol() {
 	while (true) {
 		co_yield 0;
 
-		RepeatIncreaseFrameIndex<gPlaneBullet.frameSwitchDelay, gPlaneBullet.frameIndexMin, gPlaneBullet.frameIndexMax>(bulletBeginFrameIndex);
+		StepFrameIndex<PlaneBullet::frameSwitchDelay, PlaneBullet::frameIndexMin, PlaneBullet::frameIndexMax>(bulletBeginFrameIndex);
 
 		bullets.Foreach([](PlaneBullet& b)->bool {
-			b.pos.y += gPlaneBullet.speed;
-			if (b.pos.y - gPlaneBullet.hight_2 > gDesign.height_2) return true;	// flying out of the screen
+			b.pos.y += PlaneBullet::speed;
+			if (b.pos.y - PlaneBullet::hight_2 > gDesign.height_2) return true;	// flying out of the screen
 
-			if (HitCheck<gMonsterStrawberry.radius, false>(b, gLooper->monsters_strawberry).has_value()) return true;
-			if (HitCheck<gMonsterDragonfly.radius, true>(b, gLooper->monsters_dragonfly).has_value()) return true;
-			if (HitCheck<gMonsterBigFly.radius, true>(b, gLooper->monsters_bigfly).has_value()) return true;
-			if (HitCheck<gMonsterFly.radius, false>(b, gLooper->monsters_fly).has_value()) return true;
-			if (HitCheck<gMonsterButterfly.radius, false>(b, gLooper->monsters_butterfly).has_value()) return true;
-			if (HitCheck<gMonsterClip.radius, false>(b, gLooper->monsters_clip).has_value()) return true;
-			if (auto pos = HitCheck<gMonsterHermitCrab.radius, false>(b, gLooper->monsters_hermit_crab); pos.has_value()) {
+			// todo: remove ::radius
+			if (HitCheck(b, gLooper->monsters_strawberry).has_value()) return true;
+			if (HitCheck(b, gLooper->monsters_dragonfly).has_value()) return true;
+			if (HitCheck(b, gLooper->monsters_bigfly).has_value()) return true;
+			if (HitCheck(b, gLooper->monsters_fly).has_value()) return true;
+			if (HitCheck(b, gLooper->monsters_butterfly).has_value()) return true;
+			if (HitCheck(b, gLooper->monsters_clip).has_value()) return true;
+			if (auto pos = HitCheck(b, gLooper->monsters_hermit_crab); pos.has_value()) {
 				gLooper->bombs.Emplace().Emplace()->Init(pos.value(), BombTypes::MAX_VALUE_UNKNOWN);
 				return true;
 			}
@@ -351,14 +372,14 @@ xx::Task<> Plane::SyncBulletPosCol() {
 }
 
 xx::Task<> Plane::Born() {
-	pos = { gPlane.bornXs[planeIndex], gPlane.bornYFrom };
+	pos = { bornXs[planeIndex], bornYFrom };
 	InitBombPos();
 	moving = true;
-	while (gPlane.bornYTo - pos.y > gPlane.bornSpeed) {
-		pos.y += gPlane.bornSpeed;
+	while (bornYTo - pos.y > bornSpeed) {
+		pos.y += bornSpeed;
 		co_yield 0;
 	}
-	pos.y = gPlane.bornYTo;
+	pos.y = bornYTo;
 	
 	tasks.Add(Update());			// switch to normal mode
 }
@@ -366,7 +387,7 @@ xx::Task<> Plane::Born() {
 xx::Task<> Plane::Shine() {
 	auto e = gLooper->nowSecs + 5;
 	do {
-		visible += gPlane.visibleInc;
+		visible += visibleInc;
 		co_yield 0;
 		co_yield 0;
 	} while (gLooper->nowSecs < e);
@@ -382,14 +403,14 @@ xx::Task<> Plane::Update() {
 
 		// fire
 		if (gEngine.Pressed(xx::Mbtns::Left) && gLooper->nowSecs >= bulletNextFireTime) {
-			bulletNextFireTime = gLooper->nowSecs + gPlaneBullet.fireCD;			// apply cd effect
+			bulletNextFireTime = gLooper->nowSecs + PlaneBullet::fireCD;			// apply cd effect
 
-			bullets.Emplace(xx::XY{ pos.x, pos.y + gPlaneBullet.fireYOffset });
+			bullets.Emplace(xx::XY{ pos.x, pos.y + PlaneBullet::fireYOffset });
 		}
 
 		// use bomb
 		if (gEngine.Pressed(xx::Mbtns::Right) && gLooper->nowSecs >= bulletNextFireTime) {
-			bombNextUseTime = gLooper->nowSecs + gPlaneBullet.fireCD;				// apply cd effect
+			bombNextUseTime = gLooper->nowSecs + PlaneBullet::fireCD;				// apply cd effect
 
 			// todo: switch( first bomb type ) ....
 		}
@@ -408,29 +429,30 @@ xx::Task<> Plane::Update() {
 		}
 
 		// change frame display
+		auto frameChangeSpeed = speed * 0.2;
 		if (oldPos.x < pos.x) {
 			frameIndex += frameChangeSpeed;
-			if (frameIndex > gPlane.frameIndexMax) {
-				frameIndex = gPlane.frameIndexMax;
+			if (frameIndex > frameIndexMax) {
+				frameIndex = frameIndexMax;
 			}
 		}
 		else if (oldPos.x > pos.x) {
 			frameIndex -= frameChangeSpeed;
-			if (frameIndex < gPlane.frameIndexMin) {
-				frameIndex = gPlane.frameIndexMin;
+			if (frameIndex < frameIndexMin) {
+				frameIndex = frameIndexMin;
 			}
 		}
 		else {
-			if (frameIndex > gPlane.frameIndexMid) {
+			if (frameIndex > frameIndexMid) {
 				frameIndex -= frameChangeSpeed;
-				if (frameIndex < gPlane.frameIndexMid) {
-					frameIndex = gPlane.frameIndexMid;
+				if (frameIndex < frameIndexMid) {
+					frameIndex = frameIndexMid;
 				}
 			}
-			else if (frameIndex < gPlane.frameIndexMid) {
+			else if (frameIndex < frameIndexMid) {
 				frameIndex += frameChangeSpeed;
-				if (frameIndex > gPlane.frameIndexMid) {
-					frameIndex = gPlane.frameIndexMid;
+				if (frameIndex > frameIndexMid) {
+					frameIndex = frameIndexMid;
 				}
 			}
 		}
@@ -457,63 +479,28 @@ void Plane::Draw(xx::Quad& texBrush) {
 	// draw bullets
 	texBrush.SetFrame(gLooper->frames_bullet_plane[(int)bulletBeginFrameIndex]);
 	bullets.Foreach([&](PlaneBullet& b) {
-		texBrush.SetPosition(xx::XY{ b.pos.x - gPlaneBullet.spacing_2, b.pos.y } * gDisplayScale).Draw();
-		texBrush.SetPosition(xx::XY{ b.pos.x + gPlaneBullet.spacing_2, b.pos.y } * gDisplayScale).Draw();
+		texBrush.SetPosition(xx::XY{ b.pos.x - PlaneBullet::spacing_2, b.pos.y } * gDisplayScale).Draw();
+		texBrush.SetPosition(xx::XY{ b.pos.x + PlaneBullet::spacing_2, b.pos.y } * gDisplayScale).Draw();
 	});
 }
 
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 
-void ExplosionMonster::Init(xx::XY const& pos_, bool isBig) {
-	pos = pos_;
-	if (isBig) {
-		frameIndex = gExplosionMonster.bigFrameIndexMin;
-		Update = UpdateBig_();
-		frames = &gLooper->frames_explosion_bigmonster;
-	}
-	else {
-		frameIndex = gExplosionMonster.frameIndexMin;
-		Update = Update_();
-		frames = &gLooper->frames_explosion_monster;
-	}
-}
-
-xx::Task<> ExplosionMonster::Update_() {
-	do {
-		co_yield 0;
-		frameIndex += gExplosionMonster.frameSwitchDelay;
-	} while ((int)frameIndex <= gExplosionMonster.frameIndexMax);
-};
-
-xx::Task<> ExplosionMonster::UpdateBig_() {
-	do {
-		co_yield 0;
-		frameIndex += gExplosionMonster.frameSwitchDelay;
-	} while ((int)frameIndex <= gExplosionMonster.bigFrameIndexMax);
-};
-
-void ExplosionMonster::Draw(xx::Quad& texBrush) {
-	texBrush.SetFrame(frames->operator[](frameIndex)).SetPosition(pos * gDisplayScale).Draw();
-}
-
-/*****************************************************************************************************/
-/*****************************************************************************************************/
-
 void Bomb::Init(xx::XY const& pos_, BombTypes type_) {
+	this->Update = Update_();
 	if (type_ == BombTypes::MAX_VALUE_UNKNOWN) {
 		type = (BombTypes)gRnd.Next((int)BombTypes::MAX_VALUE_UNKNOWN - 1);
-	}
-	else {
+	} else {
 		type = type_;
 	}
 	pos = pos_;
 }
 xx::Task<> Bomb::Update_() {
 	do {
-		pos.y -= gBomb.minSpeed;
+		pos.y -= minSpeed;
 		co_yield 0;
-	} while (pos.y > g9Pos.y1 - gBomb.diameter);
+	} while (pos.y > g9Pos.y1 - diameter);
 }
 void Bomb::Draw(xx::Quad& texBrush) {
 	texBrush.SetFrame(gLooper->frames_bomb[(int)type]).SetPosition(pos * gDisplayScale).Draw();
@@ -522,46 +509,77 @@ void Bomb::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 
+void ExplosionMonster::Init(xx::XY const& pos_) {
+	this->Update = Update_();
+	pos = pos_;
+	frameIndex = frameIndexMin;
+}
+
+xx::Task<> ExplosionMonster::Update_() {
+	do {
+		co_yield 0;
+		frameIndex += frameSwitchDelay;
+	} while ((int)frameIndex <= frameIndexMax);
+};
+
+void ExplosionMonster::Draw(xx::Quad& texBrush) {
+	texBrush.SetFrame(gLooper->frames_explosion_monster[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
+}
+
+
+void ExplosionBigMonster::Init(xx::XY const& pos_) {
+	this->Update = Update_();
+	pos = pos_;
+	frameIndex = frameIndexMin;
+}
+
+xx::Task<> ExplosionBigMonster::Update_() {
+	do {
+		co_yield 0;
+		frameIndex += frameSwitchDelay;
+	} while ((int)frameIndex <= frameIndexMax);
+};
+
+void ExplosionBigMonster::Draw(xx::Quad& texBrush) {
+	texBrush.SetFrame(gLooper->frames_explosion_bigmonster[frameIndex]).SetPosition(pos * gDisplayScale).Draw();
+}
+
+/*****************************************************************************************************/
+/*****************************************************************************************************/
+
 void MonsterStrawberry::Init() {
-	if (gRnd.Next<bool>()) {
-		pos.x = -gMonsterStrawberry.radius - gDesign.width_2;
-		inc = { gMonsterStrawberry.horizontalMoveSpeed, 0 };
-	}
-	else {
-		pos.x = gMonsterStrawberry.radius + gDesign.width_2;
-		inc = { -gMonsterStrawberry.horizontalMoveSpeed, 0 };
-	}
-	pos.y = gRnd.Next(gMonsterStrawberry.bornYFrom, gMonsterStrawberry.bornYTo);
-	frameIndex = gRnd.Next((float)gMonsterStrawberry.horizontalFrameIndexMin, gMonsterStrawberry.horizontalFrameIndexMax + 0.999f);
-	switchDelay = gRnd.Next(gMonsterStrawberry.switchToVerticalMoveDelayFrom, gMonsterStrawberry.switchToVerticalMoveDelayTo);
+	this->Update = Update_();
+	pos.x = gRnd.Next<bool>() ? (-radius - gDesign.width_2) : (radius + gDesign.width_2);
+	pos.y = gRnd.Next(bornYFrom, bornYTo);
+	frameIndex = gRnd.Next((float)horizontalFrameIndexMin, horizontalFrameIndexMax + 0.999f);
 }
 
 xx::Task<> MonsterStrawberry::Update_() {
+	xx::XY inc{ pos.x < 0 ? horizontalMoveSpeed : -horizontalMoveSpeed, 0 };
+	auto switchDelay = gRnd.Next(switchToVerticalMoveDelayFrom, switchToVerticalMoveDelayTo);
 	// horizontal move
 	do {
 		co_yield 0;
 		pos += inc;
-		RepeatIncreaseFrameIndex<gMonsterStrawberry.frameSwitchDelay
-			, gMonsterStrawberry.horizontalFrameIndexMin, gMonsterStrawberry.horizontalFrameIndexMax>(frameIndex);
+		StepFrameIndex<frameSwitchDelay, horizontalFrameIndexMin, horizontalFrameIndexMax>(frameIndex);
 	} while (--switchDelay >= 0);
 
 	// vertical move begin
-	inc = { 0, -gMonsterStrawberry.verticalMoveSpeed };
-	frameIndex = gMonsterStrawberry.verticalFrameIndexMin;
-	while (pos.y > g9Pos.y1 - gMonsterStrawberry.diameter) {
+	inc = { 0, -verticalMoveSpeed };
+	frameIndex = verticalFrameIndexMin;
+	while (pos.y > g9Pos.y1 - diameter) {
 		co_yield 0;
 		pos += inc;
-		frameIndex += gMonsterStrawberry.verticalMoveFrameSwitchDelay;
-		if ((int)frameIndex > gMonsterStrawberry.verticalFrameIndexMax) break;
+		frameIndex += verticalMoveFrameSwitchDelay;
+		if ((int)frameIndex > verticalFrameIndexMax) break;
 	}
 
 	// vertical move repeat
-	frameIndex = gMonsterStrawberry.verticalRepeatFrameIndexMin + (frameIndex - gMonsterStrawberry.verticalFrameIndexMax - 1);
-	while (pos.y > g9Pos.y1 - gMonsterStrawberry.diameter) {
+	frameIndex = verticalRepeatFrameIndexMin + (frameIndex - verticalFrameIndexMax - 1);
+	while (pos.y > g9Pos.y1 - diameter) {
 		co_yield 0;
 		pos += inc;
-		RepeatIncreaseFrameIndex<gMonsterStrawberry.frameSwitchDelay
-			, gMonsterStrawberry.verticalRepeatFrameIndexMin, gMonsterStrawberry.verticalRepeatFrameIndexMax>(frameIndex);
+		StepFrameIndex<frameSwitchDelay, verticalRepeatFrameIndexMin, verticalRepeatFrameIndexMax>(frameIndex);
 	}
 };
 
@@ -573,21 +591,23 @@ void MonsterStrawberry::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterDragonfly::Init(xx::MovePathCache* path_) {
+	this->Update = Update_();
 	path = path_;
-	frameIndex = gRnd.Next((float)gMonsterDragonfly.frameIndexMin, gMonsterDragonfly.frameIndexMax + 0.999f);
+	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
 	pos = path->points[0].pos;
 }
 
 xx::Task<> MonsterDragonfly::Update_() {
+	float totalDistance{};
 	do {
-		totalDistance += gMonsterDragonfly.speed;
+		totalDistance += speed;
 		auto&& o = path->Move(totalDistance);
 		if (!o) break;
 		pos = o->pos;
-		RepeatIncreaseFrameIndex<gMonsterDragonfly.frameSwitchDelay
-			, gMonsterDragonfly.frameIndexMin, gMonsterDragonfly.frameIndexMax>(frameIndex);
+		StepFrameIndex<frameSwitchDelay
+			, frameIndexMin, frameIndexMax>(frameIndex);
 		co_yield 0;
-	} while (pos.y > g9Pos.y1 - gMonsterDragonfly.diameter);
+	} while (pos.y > g9Pos.y1 - diameter);
 };
 
 void MonsterDragonfly::Draw(xx::Quad& texBrush) {
@@ -598,18 +618,18 @@ void MonsterDragonfly::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterHermitCrab::Init() {
-	frameIndex = gRnd.Next((float)gMonsterHermitCrab.frameIndexMin, gMonsterHermitCrab.frameIndexMax + 0.999f);
-	pos.x = gRnd.Next(gMonsterHermitCrab.bornPosXFrom, gMonsterHermitCrab.bornPosXTo);
-	pos.y = gMonsterHermitCrab.bornPosY;
+	this->Update = Update_();
+	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
+	pos.x = gRnd.Next(bornPosXFrom, bornPosXTo);
+	pos.y = bornPosY;
 }
 
 xx::Task<> MonsterHermitCrab::Update_() {
 	do {
-		pos.y -= gMonsterHermitCrab.speed;
-		RepeatIncreaseFrameIndex<gMonsterHermitCrab.frameSwitchDelay
-			, gMonsterHermitCrab.frameIndexMin, gMonsterHermitCrab.frameIndexMax>(frameIndex);
+		pos.y -= speed;
+		StepFrameIndex<frameSwitchDelay, frameIndexMin, frameIndexMax>(frameIndex);
 		co_yield 0;
-	} while (pos.y > g9Pos.y1 - gMonsterHermitCrab.diameter);
+	} while (pos.y > g9Pos.y1 - diameter);
 };
 
 void MonsterHermitCrab::Draw(xx::Quad& texBrush) {
@@ -620,21 +640,21 @@ void MonsterHermitCrab::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterFly::Init() {
-	frameIndex = gRnd.Next((float)gMonsterFly.frameIndexMin, gMonsterFly.frameIndexMax + 0.999f);
-	pos = { g9Pos.x7 + gRnd.Next<float>(gDesign.width - gMonsterFly.diameter), g9Pos.y7 + gMonsterFly.diameter };
-	xx::XY tar{ g9Pos.x1 + gRnd.Next<float>(gDesign.width - gMonsterFly.diameter), g9Pos.y1 - gMonsterFly.diameter };
-	auto d = tar - pos;
-	auto dist = std::sqrt( d.x * d.x + d.y * d.y );
-	auto speed = gRnd.Next(gMonsterFly.speedMin, gMonsterFly.speedMax);
-	lifeCycle = dist / speed;
-	inc = d / lifeCycle;
+	this->Update = Update_();
+	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
+	pos = { g9Pos.x7 + gRnd.Next<float>(gDesign.width - diameter), g9Pos.y7 + diameter };
 }
 
 xx::Task<> MonsterFly::Update_() {
+	xx::XY tar{ g9Pos.x1 + gRnd.Next<float>(gDesign.width - diameter), g9Pos.y1 - diameter };
+	auto d = tar - pos;
+	auto dist = std::sqrt(d.x * d.x + d.y * d.y);
+	auto speed = gRnd.Next(speedMin, speedMax);
+	int lifeCycle = dist / speed;
+	auto inc = d / lifeCycle;
 	do {
 		pos += inc;
-		RepeatIncreaseFrameIndex<gMonsterFly.frameSwitchDelay
-			, gMonsterFly.frameIndexMin, gMonsterFly.frameIndexMax>(frameIndex);
+		StepFrameIndex<frameSwitchDelay, frameIndexMin, frameIndexMax>(frameIndex);
 		co_yield 0;
 	} while (--lifeCycle >= 0);
 };
@@ -647,33 +667,25 @@ void MonsterFly::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterBigFly::Init() {
-	frameIndex = gRnd.Next((float)gMonsterBigFly.frameIndexMin, gMonsterBigFly.frameIndexMax + 0.999f);
-	if (gRnd.Next<bool>()) {
-		pos.x = gMonsterBigFly.x1;
-		xInc = gMonsterBigFly.speed;
-	}
-	else {
-		pos.x = gMonsterBigFly.x2;
-		xInc = -gMonsterBigFly.speed;
-	}
-	pos.y = g9Pos.y7 + gMonsterBigFly.diameter;
+	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
+	pos.x = gRnd.Next<bool>() ? x1 : x2;
+	pos.y = g9Pos.y7 + diameter;
 }
 
 xx::Task<> MonsterBigFly::Update_() {
+	float xInc = pos.x == x1 ? speed : -speed;
 	do {
-		pos.y -= gMonsterBigFly.speed;
-		RepeatIncreaseFrameIndex<gMonsterBigFly.frameSwitchDelay1
-			, gMonsterBigFly.frameIndexMin, gMonsterBigFly.frameIndexMax>(frameIndex);
+		pos.y -= speed;
+		StepFrameIndex<frameSwitchDelay1, frameIndexMin, frameIndexMax>(frameIndex);
 		co_yield 0;
-	} while (pos.y > gMonsterBigFly.horizontalMoveToY);
+	} while (pos.y > horizontalMoveToY);
 
 	do {
 		pos.x += xInc;
-		pos.y -= gMonsterBigFly.speed;
-		RepeatIncreaseFrameIndex<gMonsterBigFly.frameSwitchDelay2
-			, gMonsterBigFly.frameIndexMin, gMonsterBigFly.frameIndexMax>(frameIndex);
+		pos.y -= speed;
+		StepFrameIndex<frameSwitchDelay2, frameIndexMin, frameIndexMax>(frameIndex);
 		co_yield 0;
-	} while (pos.y > g9Pos.y1 - gMonsterBigFly.diameter);
+	} while (pos.y > g9Pos.y1 - diameter);
 };
 
 void MonsterBigFly::Draw(xx::Quad& texBrush) {
@@ -685,15 +697,15 @@ void MonsterBigFly::Draw(xx::Quad& texBrush) {
 
 // todo
 void MonsterButterfly::Init() {
-	frameIndex = gRnd.Next((float)gMonsterButterfly.frameIndexMin, gMonsterButterfly.frameIndexMax + 0.999f);
+	this->Update = Update_();
+	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
 }
 
 xx::Task<> MonsterButterfly::Update_() {
 	do {
-		RepeatIncreaseFrameIndex<gMonsterButterfly.frameSwitchDelay
-			, gMonsterButterfly.frameIndexMin, gMonsterButterfly.frameIndexMax>(frameIndex);
+		StepFrameIndex<frameSwitchDelay, frameIndexMin, frameIndexMax>(frameIndex);
 		co_yield 0;
-	} while (pos.y > g9Pos.y1 - gMonsterButterfly.diameter);
+	} while (pos.y > g9Pos.y1 - diameter);
 };
 
 void MonsterButterfly::Draw(xx::Quad& texBrush) {
@@ -704,47 +716,45 @@ void MonsterButterfly::Draw(xx::Quad& texBrush) {
 /*****************************************************************************************************/
 
 void MonsterClip::Init() {
-	frameIndex = gRnd.Next((float)gMonsterClip.frameIndexMin, gMonsterClip.frameIndexMax + 0.999f);
-	pos = { gRnd.Next<float>(gMonsterClip.xFrom, gMonsterClip.xTo), g9Pos.y7 + gMonsterClip.diameter };
+	this->Update = Update_();
+	frameIndex = gRnd.Next((float)frameIndexMin, frameIndexMax + 0.999f);
+	pos = { gRnd.Next<float>(xFrom, xTo), g9Pos.y7 + diameter };
 }
 
 xx::Task<> MonsterClip::Update_() {
 	do {
-		pos.y -= gMonsterClip.speed;
-		RepeatIncreaseFrameIndex<gMonsterClip.frameSwitchDelay
-			, gMonsterClip.frameIndexMin, gMonsterClip.frameIndexMax>(frameIndex);
+		pos.y -= speed;
+		StepFrameIndex<frameSwitchDelay, frameIndexMin, frameIndexMax>(frameIndex);
 		if (!gLooper->player_planes.empty()) {
-			if (pos.y + gMonsterClip.aimPosYOffset <= gLooper->player_planes[0]->pos.y) goto LabVerticalMove;
+			if (pos.y + aimPosYOffset <= gLooper->player_planes[0]->pos.y) goto LabVerticalMove;
 		}
 		co_yield 0;
-	} while (pos.y > g9Pos.y1 - gMonsterClip.diameter);
+	} while (pos.y > g9Pos.y1 - diameter);
 	co_return;
 
 LabVerticalMove:
 
-	float delay = gMonsterClip.aimDelaySeconds;
+	float delay = aimDelaySeconds;
 	do {
 		delay -= gFds;
 		co_yield 0;
 	} while (delay >= 0);
 	
 	if (pos.x > gLooper->player_planes[0]->pos.x) {
-		frameIndex = gMonsterClip.verticalFrameIndexMin;
+		frameIndex = verticalFrameIndexMin;
 		do {
-			pos.x -= gMonsterClip.speed;
-			RepeatIncreaseFrameIndex<gMonsterClip.frameSwitchDelay
-				, gMonsterClip.verticalFrameIndexMin, gMonsterClip.verticalFrameIndexMax>(frameIndex);
+			pos.x -= speed;
+			StepFrameIndex<frameSwitchDelay, verticalFrameIndexMin, verticalFrameIndexMax>(frameIndex);
 			co_yield 0;
-		} while (pos.x > g9Pos.x1 - gMonsterClip.diameter);
+		} while (pos.x > g9Pos.x1 - diameter);
 	}
 	else {
-		frameIndex = gMonsterClip.verticalFrameIndexMin2;
+		frameIndex = verticalFrameIndexMin2;
 		do {
-			pos.x += gMonsterClip.speed;
-			RepeatIncreaseFrameIndex<gMonsterClip.frameSwitchDelay
-				, gMonsterClip.verticalFrameIndexMin2, gMonsterClip.verticalFrameIndexMax2>(frameIndex);
+			pos.x += speed;
+			StepFrameIndex<frameSwitchDelay, verticalFrameIndexMin2, verticalFrameIndexMax2>(frameIndex);
 			co_yield 0;
-		} while (pos.x < g9Pos.x3 + gMonsterClip.diameter);
+		} while (pos.x < g9Pos.x3 + diameter);
 	}
 };
 
