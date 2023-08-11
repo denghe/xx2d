@@ -44,7 +44,7 @@ std::optional<xx::XY> HitCheck(PlaneBullet& b, xx::ListLink<xx::Shared<MT>, int>
 
 	auto [idx, next] = tar.FindIf([&](xx::Shared<MT>& o)->bool {
 		if (HitCheck<PlaneBullet::radius, MT::radius>(b.pos, o->pos)) {
-			if constexpr (MT::radius > 8) {
+			if constexpr (MT::radius >= 8) {
 				gLooper->explosions_bigmonster.Emplace().Emplace()->Init(o->pos);
 			} else {
 				gLooper->explosions_monster.Emplace().Emplace()->Init(o->pos);
@@ -136,6 +136,7 @@ int GameLooper::Update() {
 		monsters_butterfly.Foreach([&](auto& o) { return o->Update.Resume(); });
 		monsters_clip.Foreach([&](auto& o) { return o->Update.Resume(); });
 		explosions_monster.Foreach([&](auto& o) { return o->Update.Resume(); });
+		explosions_bigmonster.Foreach([&](auto& o) { return o->Update.Resume(); });
 
 		// todo: more Update
 	}
@@ -152,6 +153,7 @@ int GameLooper::Update() {
 	monsters_dragonfly.Foreach([&](auto& o) { o->Draw(texBrush); });
 	bombs.Foreach([&](auto& o) { o->Draw(texBrush); });
 	explosions_monster.Foreach([&](auto& o) { o->Draw(texBrush); });
+	explosions_bigmonster.Foreach([&](auto& o) { o->Draw(texBrush); });
 
 	for (auto& o : player_planes) {
 		o->Draw(texBrush);
