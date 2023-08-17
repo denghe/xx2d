@@ -123,9 +123,7 @@ int GameLooper::Update() {
 		nowSecs += gFds;
 		tasks();
 
-		for (auto& o : player_planes) {
-			o();
-		}
+		for (auto& o : player_planes) { o(); }
 
 		bombs.Foreach([&](auto& o) { return !o() || o->disposing; });
 		monsters_strawberry.Foreach([&](auto& o) { return !o() || o->disposing; });
@@ -155,9 +153,7 @@ int GameLooper::Update() {
 	explosions_monster.Foreach([&](auto& o) { o->Draw(texBrush); });
 	explosions_bigmonster.Foreach([&](auto& o) { o->Draw(texBrush); });
 
-	for (auto& o : player_planes) {
-		o->Draw(texBrush);
-	}
+	for (auto& o : player_planes) { o->Draw(texBrush); }
 
 	// todo: more Draw
 
@@ -340,7 +336,6 @@ xx::Task<> Plane::Shine() {
 	auto e = gLooper->nowSecs + 5;
 	do {
 		visible += visibleInc;
-		co_yield 0;
 		co_yield 0;
 	} while (gLooper->nowSecs < e);
 
@@ -551,7 +546,7 @@ void MonsterDragonfly::Init() {
 
 xx::Task<> MonsterDragonfly::MainLogic() {
 	auto path = &paths[0];
-	if (!gLooper->player_planes.empty() && gLooper->player_planes[0]->pos.x > 0) {
+	if (auto pp = gLooper->GetPlanePos(); pp && pp->x > 0) {
 		path = &paths[1];
 	}
 	pos = path->points[0].pos;
@@ -684,9 +679,7 @@ xx::Task<> MonsterClip::MainLogic() {
 	do {
 		pos.y -= speed;
 		StepFrameIndex<frameSwitchDelay, frameIndexMin, frameIndexMax>(frameIndex);
-		if (!gLooper->player_planes.empty()) {
-			if (pos.y + aimPosYOffset <= gLooper->player_planes[0]->pos.y) goto LabVerticalMove;
-		}
+		if (auto pp = gLooper->GetPlanePos(); pp && pos.y + aimPosYOffset <= pp->y) goto LabVerticalMove;
 		co_yield 0;
 	} while (pos.y > g9Pos.y1 - diameter);
 	co_return;
@@ -698,7 +691,7 @@ LabVerticalMove:
 		co_yield 0;
 	} while (delay >= 0);
 	
-	if (pos.x > gLooper->player_planes[0]->pos.x) {
+	if (auto pp = gLooper->GetPlanePos(); pp && pos.x > pp->x) {
 		frameIndex = verticalFrameIndexMin;
 		do {
 			pos.x -= speed;

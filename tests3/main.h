@@ -61,6 +61,12 @@ struct GameLooper : xx::GameLooperBase {
 	xx::ListLink<xx::Shared<ExplosionBigMonster>, int> explosions_bigmonster;
 	// ... more effects
 
+	// utils
+	xx::XY const* GetPlanePos() {
+		if (player_planes.empty()) return {};
+		return &player_planes[0]->pos;	// todo: random index?
+	}
+
 	// engine event handlers
 	void AfterGLInit() override;
 	int Update() override;
@@ -85,12 +91,11 @@ constexpr float gSpeedScale = 60.f / gFps;
 constexpr float gDisplayScale = 4.f;					
 constexpr float g1_DisplayScale = 1.f / gDisplayScale;
 
-#define STCO static constexpr
 struct {
-	STCO float width = 224;
-	STCO float height = 256;
-	STCO float width_2 = width / 2;
-	STCO float height_2 = height / 2;
+	static constexpr float width = 224;
+	static constexpr float height = 256;
+	static constexpr float width_2 = width / 2;
+	static constexpr float height_2 = height / 2;
 } constexpr gDesign;
 
 /*
@@ -106,24 +111,24 @@ struct {
    └───────────────────────────────┘
 */
 struct {
-	STCO float x1 = -gDesign.width_2;
-	STCO float y1 = -gDesign.height_2;
-	STCO float x2 = 0.f;
-	STCO float y2 = -gDesign.height_2;
-	STCO float x3 = gDesign.width_2;
-	STCO float y3 = -gDesign.height_2;
-	STCO float x4 = -gDesign.width_2;
-	STCO float y4 = 0.f;
-	STCO float x5 = 0.f;
-	STCO float y5 = 0.f;
-	STCO float x6 = gDesign.width_2;
-	STCO float y6 = 0.f;
-	STCO float x7 = -gDesign.width_2;
-	STCO float y7 = gDesign.height_2;
-	STCO float x8 = 0.f;
-	STCO float y8 = gDesign.height_2;
-	STCO float x9 = gDesign.width_2;
-	STCO float y9 = gDesign.height_2;
+	static constexpr float x1 = -gDesign.width_2;
+	static constexpr float y1 = -gDesign.height_2;
+	static constexpr float x2 = 0.f;
+	static constexpr float y2 = -gDesign.height_2;
+	static constexpr float x3 = gDesign.width_2;
+	static constexpr float y3 = -gDesign.height_2;
+	static constexpr float x4 = -gDesign.width_2;
+	static constexpr float y4 = 0.f;
+	static constexpr float x5 = 0.f;
+	static constexpr float y5 = 0.f;
+	static constexpr float x6 = gDesign.width_2;
+	static constexpr float y6 = 0.f;
+	static constexpr float x7 = -gDesign.width_2;
+	static constexpr float y7 = gDesign.height_2;
+	static constexpr float x8 = 0.f;
+	static constexpr float y8 = gDesign.height_2;
+	static constexpr float x9 = gDesign.width_2;
+	static constexpr float y9 = gDesign.height_2;
 } constexpr g9Pos;
 
 /*****************************************************************************************************/
@@ -154,36 +159,36 @@ struct PlaneBomb {
 };
 
 struct PlaneBullet {
-	STCO float hight = 16.f;
-	STCO float hight_2 = hight / 2;
-	STCO float spacing = 13.f;
-	STCO float spacing_2 = spacing / 2;
-	STCO float radius = spacing_2;
-	STCO float frameSwitchDelay = 1.f / 5 * gSpeedScale;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 3;
-	STCO float speed = 5.f * gSpeedScale;
-	STCO float fireYOffset = 14.f;
-	STCO float fireCD = 1.f / 12;
+	static constexpr float hight = 16.f;
+	static constexpr float hight_2 = hight / 2;
+	static constexpr float spacing = 13.f;
+	static constexpr float spacing_2 = spacing / 2;
+	static constexpr float radius = spacing_2;
+	static constexpr float frameSwitchDelay = 1.f / 5 * gSpeedScale;
+	static constexpr int frameIndexMin = 0;
+	static constexpr int frameIndexMax = 3;
+	static constexpr float speed = 5.f * gSpeedScale;
+	static constexpr float fireYOffset = 14.f;
+	static constexpr float fireCD = 1.f / 12;
 
 	xx::XY pos{};
 };
 
 struct Plane : PosFrameIndexTasks {
-	STCO float height = 25.f;
-	STCO float height_2 = height / 2;
-	STCO float radius = 9.f;
-	STCO float bornXs[2] = { g9Pos.x7 + 80 , g9Pos.x1 + 128 };
-	STCO float bornYFrom = g9Pos.y2 - height_2;	// out of the screen
-	STCO float bornYTo = g9Pos.y7 - 220;
-	STCO float bornSpeed = 1.f * gSpeedScale;
-	STCO float normalSpeed = 1.5f * gSpeedScale;
-	STCO float maxSpeed = 4.f * gSpeedScale;
-	STCO float visibleInc = 0.8 * gSpeedScale;
-	STCO float speedIncreaseStep = 0.5f * gSpeedScale;	// eat "S" effect
-	STCO float frameIndexMin = 0;
-	STCO float frameIndexMid = 2;
-	STCO float frameIndexMax = 4;
+	static constexpr float height = 25.f;
+	static constexpr float height_2 = height / 2;
+	static constexpr float radius = 9.f;
+	static constexpr float bornXs[2] = { g9Pos.x7 + 80 , g9Pos.x1 + 128 };
+	static constexpr float bornYFrom = g9Pos.y2 - height_2;	// out of the screen
+	static constexpr float bornYTo = g9Pos.y7 - 220;
+	static constexpr float bornSpeed = 1.f * gSpeedScale;
+	static constexpr float normalSpeed = 1.5f * gSpeedScale;
+	static constexpr float maxSpeed = 4.f * gSpeedScale;
+	static constexpr float visibleInc = 0.4 * gSpeedScale;
+	static constexpr float speedIncreaseStep = 0.5f * gSpeedScale;	// eat "S" effect
+	static constexpr float frameIndexMin = 0;
+	static constexpr float frameIndexMid = 2;
+	static constexpr float frameIndexMax = 4;
 
 	int planeIndex{};									// 0: p1, 1: p2
 
@@ -217,14 +222,14 @@ struct Plane : PosFrameIndexTasks {
 /*****************************************************************************************************/
 
 struct Bomb : PosFrameIndexTasks {
-	STCO float anchorYDist = 18.f;	// plane.pos.y - offset
-	STCO float radius = 6.f;
-	STCO float diameter = radius * 2;
-	STCO float minSpeed = 0.5f * gSpeedScale;
-	STCO float minSpeedPow2 = minSpeed * minSpeed;
-	STCO float firstFollowSteps = 2 / gSpeedScale;
-	STCO float movingFollowSteps = 9 / gSpeedScale;
-	STCO float stopFollowSteps = 6 / gSpeedScale;
+	static constexpr float anchorYDist = 18.f;	// plane.pos.y - offset
+	static constexpr float radius = 6.f;
+	static constexpr float diameter = radius * 2;
+	static constexpr float minSpeed = 0.5f * gSpeedScale;
+	static constexpr float minSpeedPow2 = minSpeed * minSpeed;
+	static constexpr float firstFollowSteps = 2 / gSpeedScale;
+	static constexpr float movingFollowSteps = 9 / gSpeedScale;
+	static constexpr float stopFollowSteps = 6 / gSpeedScale;
 
 	BombTypes type = BombTypes::MAX_VALUE_UNKNOWN;
 	void Init(xx::XY const& pos_, BombTypes type_);
@@ -233,9 +238,9 @@ struct Bomb : PosFrameIndexTasks {
 };
 
 struct ExplosionMonster : PosFrameIndexTasks {
-	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 5;
+	static constexpr float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+	static constexpr int frameIndexMin = 0;
+	static constexpr int frameIndexMax = 5;
 
 	void Init(xx::XY const& pos_);
 	void Draw(xx::Quad& texBrush);
@@ -243,9 +248,9 @@ struct ExplosionMonster : PosFrameIndexTasks {
 };
 
 struct ExplosionBigMonster : PosFrameIndexTasks {
-	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 4;
+	static constexpr float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+	static constexpr int frameIndexMin = 0;
+	static constexpr int frameIndexMax = 4;
 
 	void Init(xx::XY const& pos_);
 	void Draw(xx::Quad& texBrush);
@@ -253,23 +258,23 @@ struct ExplosionBigMonster : PosFrameIndexTasks {
 };
 
 struct MonsterStrawberry : PosFrameIndexTasks {
-	STCO float radius = 6.f;
-	STCO float diameter = radius * 2;
-	STCO float bornYFrom = g9Pos.y7 - 96;
-	STCO float bornYTo = g9Pos.y7 - 40;
-	STCO float frameSwitchDelay = 1.f / 6 * gSpeedScale;
-	STCO float horizontalMoveSpeed = 1.5f * gSpeedScale;
-	STCO int horizontalFrameIndexMin = 0;
-	STCO int horizontalFrameIndexMax = 3;
-	STCO float horizontalMoveTotalSeconds = (gDesign.width + diameter) / horizontalMoveSpeed / gFps;
-	STCO int switchToVerticalMoveDelayFrom = gFps * (horizontalMoveTotalSeconds * 0.2);
-	STCO int switchToVerticalMoveDelayTo = gFps * (horizontalMoveTotalSeconds * 0.8);
-	STCO float verticalMoveSpeed = 1.f * gSpeedScale;
-	STCO float verticalMoveFrameSwitchDelay = 1.f / 4 * gSpeedScale;
-	STCO int verticalFrameIndexMin = 4;
-	STCO int verticalFrameIndexMax = 5;
-	STCO int verticalRepeatFrameIndexMin = 6;
-	STCO int verticalRepeatFrameIndexMax = 9;
+	static constexpr float radius = 6.f;
+	static constexpr float diameter = radius * 2;
+	static constexpr float bornYFrom = g9Pos.y7 - 96;
+	static constexpr float bornYTo = g9Pos.y7 - 40;
+	static constexpr float frameSwitchDelay = 1.f / 6 * gSpeedScale;
+	static constexpr float horizontalMoveSpeed = 1.5f * gSpeedScale;
+	static constexpr int horizontalFrameIndexMin = 0;
+	static constexpr int horizontalFrameIndexMax = 3;
+	static constexpr float horizontalMoveTotalSeconds = (gDesign.width + diameter) / horizontalMoveSpeed / gFps;
+	static constexpr int switchToVerticalMoveDelayFrom = gFps * (horizontalMoveTotalSeconds * 0.2);
+	static constexpr int switchToVerticalMoveDelayTo = gFps * (horizontalMoveTotalSeconds * 0.8);
+	static constexpr float verticalMoveSpeed = 1.f * gSpeedScale;
+	static constexpr float verticalMoveFrameSwitchDelay = 1.f / 4 * gSpeedScale;
+	static constexpr int verticalFrameIndexMin = 4;
+	static constexpr int verticalFrameIndexMax = 5;
+	static constexpr int verticalRepeatFrameIndexMin = 6;
+	static constexpr int verticalRepeatFrameIndexMax = 9;
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
@@ -277,12 +282,12 @@ struct MonsterStrawberry : PosFrameIndexTasks {
 };
 
 struct MonsterDragonfly : PosFrameIndexTasks {
-	STCO float radius = 13.f;
-	STCO float diameter = radius * 2;
-	STCO float speed = 2.f * gSpeedScale;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 3;
-	STCO float frameSwitchDelay = 1.f / 5 * gSpeedScale;
+	static constexpr float radius = 13.f;
+	static constexpr float diameter = radius * 2;
+	static constexpr float speed = 2.f * gSpeedScale;
+	static constexpr int frameIndexMin = 0;
+	static constexpr int frameIndexMax = 3;
+	static constexpr float frameSwitchDelay = 1.f / 5 * gSpeedScale;
 	inline static xx::MovePathCache paths[2];
 
 	void Init();
@@ -291,15 +296,15 @@ struct MonsterDragonfly : PosFrameIndexTasks {
 };
 
 struct MonsterHermitCrab : PosFrameIndexTasks {
-	STCO float radius = 6.f;
-	STCO float diameter = radius * 2;
-	STCO float speed = 1.f * gSpeedScale;
-	STCO float bornPosY = g9Pos.y7 + diameter;
-	STCO float bornPosXFrom = g9Pos.x7 + 20;
-	STCO float bornPosXTo = g9Pos.x9 - 20;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 7;
-	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+	static constexpr float radius = 6.f;
+	static constexpr float diameter = radius * 2;
+	static constexpr float speed = 1.f * gSpeedScale;
+	static constexpr float bornPosY = g9Pos.y7 + diameter;
+	static constexpr float bornPosXFrom = g9Pos.x7 + 20;
+	static constexpr float bornPosXTo = g9Pos.x9 - 20;
+	static constexpr int frameIndexMin = 0;
+	static constexpr int frameIndexMax = 7;
+	static constexpr float frameSwitchDelay = 1.f / 4 * gSpeedScale;
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
@@ -307,13 +312,13 @@ struct MonsterHermitCrab : PosFrameIndexTasks {
 };
 
 struct MonsterFly : PosFrameIndexTasks {
-	STCO float radius = 7.f;
-	STCO float diameter = radius * 2;
-	STCO float speedMin = 0.5f * gSpeedScale;
-	STCO float speedMax = 2.f * gSpeedScale;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 7;
-	STCO float frameSwitchDelay = 1.f / 3 * gSpeedScale;
+	static constexpr float radius = 7.f;
+	static constexpr float diameter = radius * 2;
+	static constexpr float speedMin = 0.5f * gSpeedScale;
+	static constexpr float speedMax = 2.f * gSpeedScale;
+	static constexpr int frameIndexMin = 0;
+	static constexpr int frameIndexMax = 7;
+	static constexpr float frameSwitchDelay = 1.f / 3 * gSpeedScale;
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
@@ -321,16 +326,16 @@ struct MonsterFly : PosFrameIndexTasks {
 };
 
 struct MonsterBigFly : PosFrameIndexTasks {
-	STCO float radius = 8.f;
-	STCO float diameter = radius * 2;
-	STCO float speed = 1.f * gSpeedScale;
-	STCO float x1 = g9Pos.x7 + 33;
-	STCO float x2 = g9Pos.x9 - 33;
-	STCO float horizontalMoveToY = g9Pos.y7 - 146;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 5;
-	STCO float frameSwitchDelay1 = 1.f / 8 * gSpeedScale;	// horizontal move
-	STCO float frameSwitchDelay2 = 1.f / 2 * gSpeedScale;
+	static constexpr float radius = 8.f;
+	static constexpr float diameter = radius * 2;
+	static constexpr float speed = 1.f * gSpeedScale;
+	static constexpr float x1 = g9Pos.x7 + 33;
+	static constexpr float x2 = g9Pos.x9 - 33;
+	static constexpr float horizontalMoveToY = g9Pos.y7 - 146;
+	static constexpr int frameIndexMin = 0;
+	static constexpr int frameIndexMax = 5;
+	static constexpr float frameSwitchDelay1 = 1.f / 8 * gSpeedScale;	// horizontal move
+	static constexpr float frameSwitchDelay2 = 1.f / 2 * gSpeedScale;
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
@@ -338,12 +343,12 @@ struct MonsterBigFly : PosFrameIndexTasks {
 };
 
 struct MonsterButterfly : PosFrameIndexTasks {		// todo
-	STCO float radius = 5.f;
-	STCO float diameter = radius * 2;
-	STCO float speed = 3.f * gSpeedScale;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 3;
-	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+	static constexpr float radius = 5.f;
+	static constexpr float diameter = radius * 2;
+	static constexpr float speed = 3.f * gSpeedScale;
+	static constexpr int frameIndexMin = 0;
+	static constexpr int frameIndexMax = 3;
+	static constexpr float frameSwitchDelay = 1.f / 4 * gSpeedScale;
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
@@ -351,20 +356,20 @@ struct MonsterButterfly : PosFrameIndexTasks {		// todo
 };
 
 struct MonsterClip : PosFrameIndexTasks {
-	STCO float radius = 4.f;
-	STCO float diameter = radius * 2;
-	STCO float speed = 1.f * gSpeedScale;
-	STCO float xFrom = g9Pos.x7 + diameter * 2;
-	STCO float xTo = g9Pos.x9 - diameter * 2;
-	STCO float frameSwitchDelay = 1.f / 4 * gSpeedScale;
-	STCO int frameIndexMin = 0;
-	STCO int frameIndexMax = 3;
-	STCO float aimPosYOffset = -Plane::height_2 / 2;
-	STCO float aimDelaySeconds = 1.f / 60 * 4;
-	STCO int verticalFrameIndexMin = 4;	// right to left
-	STCO int verticalFrameIndexMax = 7;
-	STCO int verticalFrameIndexMin2 = 8;	// left to right
-	STCO int verticalFrameIndexMax2 = 11;
+	static constexpr float radius = 4.f;
+	static constexpr float diameter = radius * 2;
+	static constexpr float speed = 1.f * gSpeedScale;
+	static constexpr float xFrom = g9Pos.x7 + diameter * 2;
+	static constexpr float xTo = g9Pos.x9 - diameter * 2;
+	static constexpr float frameSwitchDelay = 1.f / 4 * gSpeedScale;
+	static constexpr int frameIndexMin = 0;
+	static constexpr int frameIndexMax = 3;
+	static constexpr float aimPosYOffset = -Plane::height_2 / 2;
+	static constexpr float aimDelaySeconds = 1.f / 60 * 4;
+	static constexpr int verticalFrameIndexMin = 4;	// right to left
+	static constexpr int verticalFrameIndexMax = 7;
+	static constexpr int verticalFrameIndexMin2 = 8;	// left to right
+	static constexpr int verticalFrameIndexMax2 = 11;
 
 	void Init();
 	void Draw(xx::Quad& texBrush);
