@@ -493,3 +493,49 @@ else()
 		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/pngs2webm/main.h>
 	)
 endif()
+
+
+
+###########################################################################################################################################
+###########################################################################################################################################
+###########################################################################################################################################
+# tools
+
+# plist to blist ( for texture packer )
+
+
+include_directories(
+	tools/plist2blist
+)
+
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
+	tools/plist2blist/*.h
+	tools/plist2blist/*.hpp
+	tools/plist2blist/*.inc
+	tools/plist2blist/*.c
+	tools/plist2blist/*.cpp
+)
+add_executable(tools_plist2blist ${SRCS})
+
+target_link_libraries(tools_plist2blist ${name} glfw imgui imguicpp pugixml libzstd_static)
+if(MSVC)	# vs2022+
+	target_link_libraries(tools_plist2blist ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
+endif()
+
+if(MSVC)	# vs2022+
+
+	target_compile_options(tools_plist2blist
+		PRIVATE $<$<PLATFORM_ID:Windows>:/std:c17>
+		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
+	)
+
+	set_source_files_properties(tools/plist2blist/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+	target_compile_options(tools_plist2blist PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>)
+
+	set_target_properties(tools_plist2blist PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+else()
+	target_precompile_headers(tools_plist2blist
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/plist2blist/main.h>
+	)
+endif()

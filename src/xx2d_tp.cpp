@@ -2,7 +2,7 @@
 
 namespace xx {
 
-	void TP::Load(std::string_view plistFn, bool sortByName) {
+	void TP::Load(std::string_view plistFn, bool sortByName, bool fillTex) {
 		std::string rootPath;
 		if (auto&& [d, fp] = engine.LoadFileData(plistFn); !d) {
 			throw std::logic_error("read file error: " + std::string(plistFn));
@@ -22,6 +22,7 @@ namespace xx {
 				});
 		}
 
+		if (!fillTex) return;
 		auto tex = xx::Make<GLTexture>(engine.LoadTexture(realTextureFileName));
 		for (auto& f : frames) {
 			f->tex = tex;

@@ -145,6 +145,30 @@ namespace xx {
             return { R(x), R(-y) };
         }
     };
+
+    template<typename T>
+    struct IsPos : std::false_type {};
+    template<typename T>
+    struct IsPos<Pos<T>> : std::true_type {};
+    template<typename T>
+    struct IsPos<Pos<T>&> : std::true_type {};
+    template<typename T>
+    struct IsPos<Pos<T> const&> : std::true_type {};
+    template<typename T>
+    constexpr bool IsPos_v = IsPos<T>::value;
+
+    template<typename T>
+    struct DataFuncs<T, std::enable_if_t<IsPos_v<T>>> {
+        template<bool needReserve = true>
+        static inline void Write(Data& d, T const& in) {
+            d.Write<needReserve>(in.x, in.y);
+        }
+        static inline int Read(Data_r& d, T& out) {
+            return d.Read(out.x, out.y);
+        }
+    };
+
+
     using XY = Pos<float>;
 
     // texture uv mapping pos

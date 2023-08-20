@@ -11,7 +11,7 @@ namespace xx {
 		std::string plistFullPath;
 
 		// fill below fields by plist file
-		void Load(std::string_view plistFn, bool sortByName = true);
+		void Load(std::string_view plistFn, bool sortByName = true, bool fillTex = true);
 
 		// fill by plist file's content
 		int Load(std::string_view text, std::string_view const& rootPath);
