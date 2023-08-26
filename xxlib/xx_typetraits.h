@@ -463,12 +463,12 @@ namespace xx {
     // 针对模板基类，检查某类型是否其派生类. 用法: XX_IsTemplateOf(BT, T)::value
 
     struct IsTemplateOf {
-        template <template <class> class TM, class T> static std::true_type  check(TM<T>);
-        template <template <class> class TM>          static std::false_type check(...);
-        template <template <int>   class TM, int N>   static std::true_type  check(TM<N>);
-        template <template <int>   class TM>          static std::false_type check(...);
+        template <template <class> class TM, class T> static std::true_type  checkfunc(TM<T>);
+        template <template <class> class TM>          static std::false_type checkfunc(...);
+        template <template <int>   class TM, int N>   static std::true_type  checkfunc(TM<N>);
+        template <template <int>   class TM>          static std::false_type checkfunc(...);
     };
-#define XX_IsTemplateOf(TM, ...) decltype(::xx::IsTemplateOf::check<TM>(std::declval<__VA_ARGS__>()))
+#define XX_IsTemplateOf(TM, ...) decltype(::xx::IsTemplateOf::checkfunc<TM>(std::declval<__VA_ARGS__>()))
 
 
 
