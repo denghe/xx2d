@@ -406,6 +406,61 @@ endif()
 
 
 
+###########################################################################################################################################
+###########################################################################################################################################
+###########################################################################################################################################
+# tests4
+
+
+include_directories(
+	tests4
+	spine-runtimes/spine-cpp/spine-cpp/include
+)
+
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
+	tests4/*.h
+	tests4/*.hpp
+	tests4/*.inc
+	tests4/*.c
+	tests4/*.cpp
+)
+add_executable(tests4 ${SRCS})
+
+target_link_libraries(tests4 ${name} glfw imgui pugixml libzstd_static)
+
+target_link_libraries(tests4 spine-cpp)
+
+if(MSVC)	# vs2022+
+	target_link_libraries(tests4 ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
+endif()
+
+if(MSVC)	# vs2022+
+
+	target_link_options(tests4
+		PRIVATE $<$<CONFIG:MinSizeRel>:/LTCG>
+		PRIVATE $<$<CONFIG:Release>:/LTCG>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:/LTCG>
+	)
+
+	target_compile_options(tests4
+		PRIVATE $<$<PLATFORM_ID:Windows>:/std:c17>
+		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
+	)
+
+	set_source_files_properties(tests4/main.cpp PROPERTIES COMPILE_FLAGS "/Ycmain.h")
+	target_compile_options(tests4 PRIVATE $<$<PLATFORM_ID:Windows>:/Yumain.h>)
+
+	set_target_properties(tests4 PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+else()
+	target_precompile_headers(tests4
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tests4/main.h>
+	)
+endif()
+
+
+
+
 
 ###########################################################################################################################################
 ###########################################################################################################################################
