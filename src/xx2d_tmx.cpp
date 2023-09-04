@@ -7,8 +7,9 @@ namespace xx {
 
 		struct Filler {
 			// fill data by .tmx file
-			Filler(Map& map, std::string_view tmxfn);
+			Filler(Map& map, std::string_view tmxfn, bool autoLoadTextures);
 
+			bool autoLoadTextures{};
 			int rtv = 0;
 			Map& map;
 			pugi::xml_document docTmx, docTsx, docTx;
@@ -409,7 +410,9 @@ namespace xx {
 			if (iter == map.images.end()) {
 				auto&& img = out.Emplace();
 				img->source = std::move(s);
-				img->texture.Emplace(engine.LoadTexture(fp));
+				if (autoLoadTextures) {
+					img->texture.Emplace(engine.LoadTexture(fp));
+				}
 				TryFill(img->width, c.attribute("width"));
 				TryFill(img->height, c.attribute("height"));
 				TryFill(img->transparentColor, c.attribute("trans"));
@@ -780,8 +783,10 @@ namespace xx {
 		}
 
 		/**************************************************************************************************/
-		Filler::Filler(Map& map, std::string_view tmxfn)
-			: map(map) {
+		Filler::Filler(Map& map, std::string_view tmxfn, bool autoLoadTextures)
+			: map(map)
+			, autoLoadTextures(autoLoadTextures)
+		{
 
 			// load file & calc rootPath
 			if (auto&& [d, fp] = engine.LoadFileData(tmxfn); !d) {
@@ -917,8 +922,8 @@ namespace xx {
 			}
 		}
 
-		void FillTo(Map& map, std::string_view const& tmxfn) {
-			Filler(map, tmxfn);
+		void FillTo(Map& map, std::string_view const& tmxfn, bool autoLoadTextures) {
+			Filler(map, tmxfn, autoLoadTextures);
 		}
 
 

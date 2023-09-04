@@ -379,7 +379,7 @@ namespace xx {
 
 		/**********************************************************************************/
 
-		void FillTo(Map& map, std::string_view const& tmxfn);
+		void FillTo(Map& map, std::string_view const& tmxfn, bool autoLoadTextures = true);
 	};
 
 }
