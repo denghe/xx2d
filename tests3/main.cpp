@@ -64,6 +64,11 @@ std::optional<xx::XY> HitCheck(PlaneBullet& b, xx::ListLink<xx::Shared<MT>, int>
 /*****************************************************************************************************/
 /*****************************************************************************************************/
 
+xx::XY const* GameLooper::GetPlanePos() {
+	if (player_planes.empty()) return {};
+	return &player_planes[0]->pos;	// todo: random index?
+}
+
 void GameLooper::AfterGLInit() {
 	fontBase = gEngine.LoadBMFont("res/font/coderscrux.fnt"sv);
 

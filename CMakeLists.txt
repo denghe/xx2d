@@ -594,3 +594,49 @@ else()
 		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/plist2blist/main.h>
 	)
 endif()
+
+
+
+###########################################################################################################################################
+###########################################################################################################################################
+###########################################################################################################################################
+# tools
+
+# tmx to bmx ( tiled map store file )
+
+
+include_directories(
+	tools/tmx2bmx
+)
+
+set(SRCS)
+file(GLOB SRCS	#GLOB_RECURSE
+	tools/tmx2bmx/*.h
+	tools/tmx2bmx/*.hpp
+	tools/tmx2bmx/*.inc
+	tools/tmx2bmx/*.c
+	tools/tmx2bmx/*.cpp
+)
+add_executable(tools_tmx2bmx ${SRCS})
+
+target_link_libraries(tools_tmx2bmx ${name} glfw imgui imguicpp pugixml libzstd_static)
+if(MSVC)	# vs2022+
+	target_link_libraries(tools_tmx2bmx ${CMAKE_CURRENT_SOURCE_DIR}/libvpx_prebuilt/lib/windows/vpxmd.lib)
+endif()
+
+if(MSVC)	# vs2022+
+
+	target_compile_options(tools_tmx2bmx
+		PRIVATE $<$<PLATFORM_ID:Windows>:/std:c17>
+		PRIVATE $<$<PLATFORM_ID:Windows>:/bigobj>
+	)
+
+	set_source_files_properties(tools/tmx2bmx/pch.cpp PROPERTIES COMPILE_FLAGS "/Ycpch.h")
+	target_compile_options(tools_tmx2bmx PRIVATE $<$<PLATFORM_ID:Windows>:/Yupch.h>)
+
+	set_target_properties(tools_tmx2bmx PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+else()
+	target_precompile_headers(tools_tmx2bmx
+		PRIVATE	$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/tools/tmx2bmx/main.h>
+	)
+endif()

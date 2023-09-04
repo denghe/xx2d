@@ -62,10 +62,7 @@ struct GameLooper : xx::GameLooperBase {
 	// ... more effects
 
 	// utils
-	xx::XY const* GetPlanePos() {
-		if (player_planes.empty()) return {};
-		return &player_planes[0]->pos;	// todo: random index?
-	}
+	xx::XY const* GetPlanePos();
 
 	// engine event handlers
 	void AfterGLInit() override;
