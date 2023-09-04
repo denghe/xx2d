@@ -8,6 +8,8 @@ namespace xx {
 
 	namespace TMX {
 
+		struct SharedBase {};	// for all Shared<T>
+
 		enum class PropertyTypes : uint8_t {
 			Bool,
 			Color,
@@ -38,7 +40,7 @@ namespace xx {
 			MAX_VALUE_UNKNOWN
 		};
 
-		struct Object {
+		struct Object : SharedBase {
 			ObjectTypes type = ObjectTypes::MAX_VALUE_UNKNOWN;
 			uint32_t id = 0;
 			std::string name;
@@ -117,7 +119,7 @@ namespace xx {
 			MAX_VALUE_UNKNOWN
 		};
 
-		struct Layer {
+		struct Layer : SharedBase {
 			LayerTypes type = LayerTypes::MAX_VALUE_UNKNOWN;
 			uint32_t id = 0;
 			std::string name;
@@ -160,7 +162,7 @@ namespace xx {
 			std::vector<xx::Shared<Layer>> layers;
 		};
 
-		struct Image {
+		struct Image : SharedBase {
 			std::string source;
 			uint32_t width;
 			uint32_t height;
@@ -261,7 +263,7 @@ namespace xx {
 			MAX_VALUE_UNKNOWN
 		};
 
-		struct Tileset {
+		struct Tileset : SharedBase {
 			uint32_t firstgid;	// .tmx map/tileset.firstgid
 			std::string source;	// .tmx map/tileset.source
 

@@ -728,6 +728,7 @@ namespace xx {
         // 整数变长写( 1字节除外 ), double 看情况, float 拷贝内存, 容器先变长写长度
         template<bool needReserve = true>
         static inline void Write(Data& dw, T const& in) {
+            auto tn = TypeName<T>();
             assert(false);
         }
         // 返回非 0 表示操作失败
@@ -1081,6 +1082,32 @@ namespace xx {
                 out.insert(std::move(kv));
             }
             return 0;
+        }
+    };
+
+    // 适配 std::unique_ptr
+    template<typename T>
+    struct DataFuncs<T, std::enable_if_t< IsUniquePtr_v<T> >> {
+        template<bool needReserve = true>
+        static inline void Write(Data& d, T const& in) {
+            if (in) {
+                d.Write((uint8_t)1, *in);
+            } else {
+                d.Write((uint8_t)0);
+            }
+        }
+        static inline int Read(Data_r& d, T& out) {
+            uint8_t hasValue;
+            if (int r = d.Read(hasValue)) return r;
+            if (hasValue) {
+                if (!out) {
+                    out = std::make_unique<typename T::element_type>();
+                }
+                return d.Read(*out);
+            } else {
+                out.reset();
+                return 0;
+            }
         }
     };
 

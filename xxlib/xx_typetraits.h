@@ -95,15 +95,15 @@ namespace xx {
     // 检测 T 是否为 std::unique_ptr
 
     template<typename T>
-    struct IsUnique : std::false_type {};
+    struct IsUniquePtr : std::false_type {};
     template<typename T>
-    struct IsUnique<std::unique_ptr<T>> : std::true_type {};
+    struct IsUniquePtr<std::unique_ptr<T>> : std::true_type {};
     template<typename T>
-    struct IsUnique<std::unique_ptr<T>&> : std::true_type {};
+    struct IsUniquePtr<std::unique_ptr<T>&> : std::true_type {};
     template<typename T>
-    struct IsUnique<std::unique_ptr<T> const&> : std::true_type {};
+    struct IsUniquePtr<std::unique_ptr<T> const&> : std::true_type {};
     template<typename T>
-    constexpr bool IsUnique_v = IsUnique<T>::value;
+    constexpr bool IsUniquePtr_v = IsUniquePtr<T>::value;
 
     /************************************************************************************/
     // 检测 T 是否为 std::unordered_set
