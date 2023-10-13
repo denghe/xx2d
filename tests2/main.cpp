@@ -227,7 +227,7 @@ int main() {
 void GameLooper::Init() {
 	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 
-	monsters.EmplaceShared(*this);
+	monsters.Emplace().Emplace(*this);
 }
 
 int GameLooper::Update() {

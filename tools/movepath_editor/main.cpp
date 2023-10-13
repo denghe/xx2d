@@ -3,7 +3,7 @@
 #include "imgui_stdlib.h"
 
 int main() {
-	return GameLooper{}.Run("xx2d'ss movepath editor");
+	return GameLooper{}.Run("xx2d's movepath editor");
 }
 
 #include "ajson.hpp"

@@ -118,7 +118,7 @@ namespace xx {
         }
         operator bool() const { return /*!coro ||*/ coro.done(); }
         void operator()() { Run<true>(); }
-        bool Resume() { Run<true>(); return *this; }
+        bool Resume() { Run<true>(); return coro.done(); }
     };
 
     template<typename R>
@@ -167,30 +167,34 @@ namespace xx {
         }
     };
 
-    struct TaskDeleter {
+    struct TaskGuard {
         Tasks* ptr;
         Tasks::IndexAndVersion iv;
-        TaskDeleter() : ptr(nullptr) {};
-        TaskDeleter(TaskDeleter const&) = delete;
-        TaskDeleter& operator=(TaskDeleter const&) = delete;
-        TaskDeleter(TaskDeleter && o) noexcept {
+
+        TaskGuard() : ptr(nullptr) {};
+        TaskGuard(TaskGuard const&) = delete;
+        TaskGuard& operator=(TaskGuard const&) = delete;
+
+        TaskGuard(TaskGuard && o) noexcept {
             ptr = o.ptr;
             iv = o.iv;
             o.ptr = nullptr;
             o.iv = {};
         }
-        TaskDeleter& operator=(TaskDeleter &&o) noexcept {
+        TaskGuard& operator=(TaskGuard &&o) noexcept {
             std::swap(ptr, o.ptr);
             std::swap(iv, o.iv);
             return *this;
         }
+
         XX_FORCE_INLINE void Clear() {
             if (ptr) {
                 ptr->tasks.Remove(iv);
                 ptr = {};
             }
         }
-        ~TaskDeleter() {
+
+        ~TaskGuard() {
             Clear();
         }
 
@@ -198,7 +202,19 @@ namespace xx {
         void operator()(Tasks& tasks, T &&t) {
             Clear();
             ptr = &tasks;
-            iv = tasks.Add(std::forward<T>(t));
+            iv = tasks.Add([](T tt, Tasks*& p) -> Task<> {
+                if constexpr (std::is_convertible_v<Task<>, T>) {
+                    assert(!tt);
+                    co_await tt;
+                } else {
+                    co_await tt();
+                }
+                p = {};
+            }(std::forward<T>(t), ptr));
+        }
+
+        operator bool() const {
+            return !!ptr;
         }
     };
 

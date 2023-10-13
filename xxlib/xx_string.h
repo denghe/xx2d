@@ -131,7 +131,8 @@ namespace xx {
             o[4] = 0b1000'0000 | (c & 0b0011'1111);
             return 4;
         }
-        throw std::logic_error("out of char32_t handled range");
+        xx_assert(false);   // out of char32_t handled range
+        return {};
     }
 
 
@@ -319,13 +320,21 @@ namespace xx {
             }
             else if constexpr (std::is_floating_point_v<T>) {
                 std::array<char, 40> buf;
+                std::string_view sv;
 #ifndef _MSC_VER
-                snprintf(buf.data(), buf.size(), "%.16lf", (double) in);
-                s.append(buf.data());
+                snprintf(buf.data(), buf.size(), "%.16lf", (double)in);
+                sv = buf.data();
 #else
                 auto [ptr, _] = std::to_chars(buf.data(), buf.data() + buf.size(), in, std::chars_format::general, 16);
-                s.append(std::string_view(buf.data(), ptr - buf.data()));
+                sv = std::string_view(buf.data(), ptr - buf.data());
 #endif
+                if (sv.find('.') != sv.npos) {
+                    if (auto siz = sv.find_last_not_of('0'); siz != sv.npos) {
+                        if (sv[siz] == '.') --siz;
+                        sv = std::string_view(sv.data(), siz + 1);
+                    }
+                }
+                s.append(sv);
             }
             else {
                 if constexpr (std::is_same_v<char32_t, std::decay_t<T>>) {
@@ -546,6 +555,7 @@ namespace xx {
 
     constexpr std::string_view intToStringChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"sv;
 
+    // can't support negative interger now
     template<typename N = int, N toBase = 10, size_t fixedSize = 0, bool sClear = true, typename T>
     size_t IntToStringTo(T& s, N i) {
         if constexpr (sClear) {
@@ -559,8 +569,9 @@ namespace xx {
         }
         s += intToStringChars[i];
         std::reverse(s.begin(), s.end());
-        if (auto siz = s.size() >= fixedSize) return siz;
-        s = std::string(fixedSize - s.size(), '0') + s;
+        auto siz = s.size();
+        if (siz >= fixedSize) return siz;
+        s = std::string(fixedSize - siz, '0') + s;
         return fixedSize;
     }
 
@@ -871,14 +882,16 @@ namespace xx {
         for (auto&& c : s) {
             if (!c) c = '^';
         }
-        std::cout << s;
+        // std::cout << s;
+        printf("%s", s.c_str());
     }
 
     // 在 Cout 基础上添加了换行
     template<typename...Args>
     inline void CoutN(Args const& ...args) {
         Cout(args...);
-        std::cout << std::endl;
+        //std::cout << std::endl;
+        puts("");
     }
 
     // 在 CoutN 基础上于头部添加了时间
@@ -889,7 +902,8 @@ namespace xx {
 
     // 立刻输出
     inline void CoutFlush() {
-        std::cout.flush();
+        //std::cout.flush();
+        fflush(stdout);
     }
 
     // 带 format 格式化的 Cout
@@ -900,14 +914,16 @@ namespace xx {
         for (auto&& c : s) {
             if (!c) c = '^';
         }
-        std::cout << s;
+        //std::cout << s;
+        printf("%s", s.c_str());
     }
 
     // 在 CoutFormat 基础上添加了换行
     template<typename...Args>
     inline void CoutNFormat(char const* const& format, Args const& ...args) {
         CoutFormat(format, args...);
-        std::cout << std::endl;
+        //std::cout << std::endl;
+        puts("");
     }
 
     // 在 CoutNFormat 基础上于头部添加了时间

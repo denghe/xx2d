@@ -81,7 +81,7 @@ namespace xx {
 			}
 			else {	// len_ > len
 				Reserve(len_);
-				if constexpr (!std::is_pod_v<T>) {
+				if constexpr (!(std::is_standard_layout_v<T> && std::is_trivial_v<T>)) {
 					for (SizeType i = this->len; i < len_; ++i) {
 						new (buf + i) T();
 					}
@@ -203,12 +203,6 @@ namespace xx {
 			} else {
 				return *new (&buf[len++]) T(std::forward<Args>(args)...);
 			}
-		}
-
-		// only for T == Shared<?>
-		template<typename U = T, typename...Args>
-		U& EmplaceShared(Args&&...args) noexcept {
-			return Emplace().template Emplace<typename U::ElementType>(std::forward<Args>(args)...);
 		}
 
 		template<typename ...TS>

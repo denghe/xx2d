@@ -14,7 +14,7 @@ namespace xx {
 #endif
 
 #ifndef __EMSCRIPTEN__
-		std::cout << "working dir = " << xx::GetPath_Current().string() << std::endl;
+		std::cout << "working dir = " << (std::string&)xx::GetPath_Current().u8string() << std::endl;
 #endif
 
 		glfwSetErrorCallback([](int error, const char* description) {

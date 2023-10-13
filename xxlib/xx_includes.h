@@ -56,7 +56,7 @@
 #ifndef NOMINMAX
 #	define NOMINMAX
 #endif
-#	define NODRAWTEXT
+//#	define NODRAWTEXT
 //#	define NOGDI            // d3d9 need it
 #	define NOBITMAP
 #	define NOMCX

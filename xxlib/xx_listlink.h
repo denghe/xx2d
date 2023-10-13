@@ -79,7 +79,7 @@ namespace xx {
 			} else {
 				if (len == cap) {
 					if constexpr (initCap <= 0) {
-						throw std::logic_error("Memory usage has reached the maximum limit!");
+						xx_assert(false);	// Memory usage has reached the maximum limit!
 					} else {
 						Reserve(cap ? cap * 2 : initCap);
 					}
