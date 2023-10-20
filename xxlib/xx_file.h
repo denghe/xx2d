@@ -38,7 +38,7 @@ namespace xx
 		return 0;
 	}
 
-	inline int WriteAllBytes(std::filesystem::path const& path, char const* const& buf, size_t const& len) noexcept {
+	inline int WriteAllBytes(std::filesystem::path const& path, char const* buf, size_t len) noexcept {
 		std::ofstream f(path, std::ios::binary | std::ios::trunc);
 		if (!f) return -1;						// no create permission? exists readonly?
         auto sg = MakeScopeGuard([&] { f.close(); });

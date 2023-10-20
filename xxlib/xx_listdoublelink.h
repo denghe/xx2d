@@ -61,7 +61,7 @@ namespace xx {
 			Clear<true>();
 		}
 
-		void Reserve(IndexType const& newCap) noexcept {
+		void Reserve(IndexType newCap) noexcept {
 			assert(newCap > 0);
 			if (newCap <= cap) return;
 			cap = newCap;
@@ -148,7 +148,7 @@ namespace xx {
 			return *new (&AddCore<add_to_tail>()) U(std::forward<Args>(args)...);
 		}
 
-		bool Exists(IndexType const& idx) const {
+		bool Exists(IndexType idx) const {
 			assert(idx >= 0);
 			if (idx >= len) return false;
 			return buf[idx].version >= 0;
@@ -158,7 +158,7 @@ namespace xx {
 			return buf[iv.index].version == iv.version;
 		}
 
-		void Remove(IndexType const& idx) {
+		void Remove(IndexType idx) {
 			assert(Exists(idx));
 
 			auto& node = buf[idx];
@@ -190,7 +190,7 @@ namespace xx {
 			return true;
 		}
 
-		IndexAndVersion ToIndexAndVersion(IndexType const& idx) const {
+		IndexAndVersion ToIndexAndVersion(IndexType idx) const {
 			return { idx, buf[idx].version };
 		}
 
@@ -199,22 +199,22 @@ namespace xx {
 			return buf[iv.index].next;
 		}
 
-		IndexType Next(IndexType const& idx) const {
+		IndexType Next(IndexType idx) const {
 			assert(Exists(idx));
 			return buf[idx].next;
 		}
 
-		IndexType Prev(IndexType const& idx) const {
+		IndexType Prev(IndexType idx) const {
 			assert(Exists(idx));
 			return buf[idx].prev;
 		}
 
-		T const& At(IndexType const& idx) const {
+		T const& At(IndexType idx) const {
 			assert(Exists(idx));
 			return buf[idx].value;
 		}
 
-		T& At(IndexType const& idx) {
+		T& At(IndexType idx) {
 			assert(Exists(idx));
 			return buf[idx].value;
 		}
@@ -224,7 +224,7 @@ namespace xx {
 			return buf[iv.index].value;
 		}
 
-		T& At(IndexAndVersion const& iv) {
+		T& At(IndexAndVersion iv) {
 			assert(Exists(iv));
 			return buf[iv.index].value;
 		}
@@ -256,12 +256,12 @@ namespace xx {
 			}
 		}
 
-		T const& operator[](IndexType const& idx) const noexcept {
+		T const& operator[](IndexType idx) const noexcept {
 			assert(Exists(idx));
 			return buf[idx].value;
 		}
 
-		T& operator[](IndexType const& idx) noexcept {
+		T& operator[](IndexType idx) noexcept {
 			assert(Exists(idx));
 			return buf[idx].value;
 		}
@@ -291,19 +291,21 @@ namespace xx {
 		// ll.Foreach( [&](auto& o) { o..... } );
 		// ll.Foreach( [&](auto& o)->bool { if ( o.... ) return ... } );
 		template<typename F>
-		void Foreach(F&& f, IndexType beginIdx = -1) {
+		void Foreach(F&& func, IndexType beginIdx = -1) {
             if (beginIdx == -1) {
                 beginIdx = head;
             }
-			if constexpr (std::is_void_v<decltype(f(buf[0].value))>) {
+			if constexpr (std::is_void_v<decltype(func(buf[0].value))>) {
 				for (auto idx = beginIdx; idx != -1; idx = Next(idx)) {
-					f(buf[idx].value);
+					func(buf[idx].value);
 				}
 			} else {
 				for (IndexType next, idx = beginIdx; idx != -1;) {
-					next = Next(idx);
-					if (f(buf[idx].value)) {
+					if (func(buf[idx].value)) {
+						next = Next(idx);
 						Remove(idx);
+					} else {
+						next = Next(idx);
 					}
 					idx = next;
 				}
@@ -313,16 +315,18 @@ namespace xx {
 		// ll.ForeachReverse( [&](auto& o) { o..... } );
 		// ll.ForeachReverse( [&](auto& o)->bool { if ( o.... ) return ... } );
 		template<typename F>
-		void ForeachReverse(F&& f) {
-			if constexpr (std::is_void_v<decltype(f(buf[0].value))>) {
+		void ForeachReverse(F&& func) {
+			if constexpr (std::is_void_v<decltype(func(buf[0].value))>) {
 				for (auto idx = tail; idx != -1; idx = Prev(idx)) {
-					f(buf[idx].value);
+					func(buf[idx].value);
 				}
 			} else {
 				for (IndexType prev, idx = tail; idx != -1;) {
-					prev = Prev(idx);
-					if (f(buf[idx].value)) {
+					if (func(buf[idx].value)) {
+						prev = Prev(idx);
 						Remove(idx);
+					} else {
+						prev = Prev(idx);
 					}
 					idx = prev;
 				}
@@ -332,13 +336,13 @@ namespace xx {
 
 		// ll.FindIf( [&](auto& o)->bool { if ( o.... ) return ... } );
 		template<typename F>
-		IndexType FindIf(F&& f, IndexType beginIdx = -1) {
+		IndexType FindIf(F&& func, IndexType beginIdx = -1) {
 			if (beginIdx == -1) {
 				beginIdx = head;
 			}
 			for (IndexType next, idx = beginIdx; idx != -1;) {
 				next = Next(idx);
-				if (f(buf[idx].value)) return idx;
+				if (func(buf[idx].value)) return idx;
 				idx = next;
 			}
 			return -1;
@@ -346,10 +350,10 @@ namespace xx {
 
 		// ll.FindIfReverse( [&](auto& o)->bool { if ( o.... ) return ... } );
 		template<typename F>
-		IndexType FindIfReverse(F&& f) {
+		IndexType FindIfReverse(F&& func) {
 			for (IndexType prev, idx = tail; idx != -1;) {
 				prev = Prev(idx);
-				if (f(buf[idx].value)) return idx;
+				if (func(buf[idx].value)) return idx;
 				idx = prev;
 			}
 			return -1;

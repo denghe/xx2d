@@ -42,7 +42,7 @@ namespace xx {
 
     // 格式化追加, {0} {1}... 这种. 针对重复出现的参数, 是从已经追加出来的字串区域复制, 故追加自己并不会导致内容翻倍
     template<typename...TS>
-    size_t AppendFormat(std::string& s, char const* const& format, TS const&...vs) {
+    size_t AppendFormat(std::string& s, char const* format, TS const&...vs) {
         std::array<std::pair<size_t, size_t>, sizeof...(vs)> cache{};
         size_t offset = 0;
         while (auto c = format[offset]) {
@@ -89,7 +89,7 @@ namespace xx {
     }
 
     template<typename ...Args>
-    std::string ToStringFormat(char const* const& format, Args const& ... args) {
+    std::string ToStringFormat(char const* format, Args const& ... args) {
         std::string s;
         AppendFormat(s, format, args...);
         return s;
@@ -98,7 +98,7 @@ namespace xx {
 
 
     // ucs4 to utf8. write to out. return len
-    inline size_t Char32ToUtf8(char32_t const& c32, char* out) {
+    inline size_t Char32ToUtf8(char32_t c32, char* out) {
         auto& c = (uint32_t&)c32;
         auto& o = (uint8_t*&)out;
         if (c < 0x7F) {
@@ -236,7 +236,7 @@ namespace xx {
     // 适配 char* \0 结尾 字串
     template<>
     struct StringFuncs<char*, void> {
-        static inline void Append(std::string& s, char* const& in) {
+        static inline void Append(std::string& s, char* in) {
             s.append(in ? in: "null");
         }
     };
@@ -244,7 +244,7 @@ namespace xx {
     // 适配 char const* \0 结尾 字串
     template<>
     struct StringFuncs<char const*, void> {
-        static inline void Append(std::string& s, char const* const& in) {
+        static inline void Append(std::string& s, char const* in) {
             s.append(in ? in: "null");
         }
     };
@@ -706,7 +706,7 @@ namespace xx {
     }
 
     template<typename T>
-    inline std::string_view ToStringView(T const& v, char* const& buf, size_t const& len) {
+    inline std::string_view ToStringView(T const& v, char* buf, size_t len) {
         static_assert(std::is_integral_v<T>);
         if (auto [ptr, ec] = std::to_chars(buf, buf + len, v); ec == std::errc()) {
             return { buf, size_t(ptr - buf) };
@@ -721,7 +721,7 @@ namespace xx {
 
     // 转换 s 数据类型 为 T 填充 dst
     template<typename T>
-    inline void Convert(char const* const& s, T& dst) {
+    inline void Convert(char const* s, T& dst) {
         if (!s) {
             dst = T();
         }
@@ -753,7 +753,7 @@ namespace xx {
     }
 
 
-    inline int FromHex(uint8_t const& c) {
+    inline int FromHex(uint8_t c) {
         if (c >= 'A' && c <= 'Z') return c - 'A' + 10;
         else if (c >= 'a' && c <= 'z') return c - 'a' + 10;
         else if (c >= '0' && c <= '9') return c - '0';
@@ -763,7 +763,7 @@ namespace xx {
         return ((uint8_t)FromHex(c[0]) << 4) | (uint8_t)FromHex(c[1]);
     }
 
-    inline void ToHex(uint8_t const& c, uint8_t& h1, uint8_t& h2) {
+    inline void ToHex(uint8_t c, uint8_t& h1, uint8_t& h2) {
         auto a = c / 16;
         auto b = c % 16;
         h1 = (uint8_t)(a + ((a <= 9) ? '0' : ('a' - 10)));
@@ -837,7 +837,7 @@ namespace xx {
 
 
     // 将 string 里数字部分转为 n 字节定长（前面补0）后返回( 方便排序 ). 不支持小数
-    inline std::string InnerNumberToFixed(std::string_view const& s, int const& n = 16) {
+    inline std::string InnerNumberToFixed(std::string_view const& s, int n = 16) {
         std::string t, d;
         bool handleDigit = false;
         for (auto&& c : s) {

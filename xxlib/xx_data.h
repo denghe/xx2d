@@ -21,7 +21,7 @@ namespace xx {
 
 
         // 引用一段数据
-        [[maybe_unused]] Span(void const* const& buf, size_t const& len)
+        [[maybe_unused]] Span(void const* buf, size_t len)
             : buf((uint8_t*)buf), len(len) {
         }
 
@@ -32,14 +32,14 @@ namespace xx {
         }
 
         // 引用一段数据
-        [[maybe_unused]] XX_INLINE void Reset(void const* const& buf_, size_t const& len_) {
+        [[maybe_unused]] XX_INLINE void Reset(void const* buf_, size_t len_) {
             buf = (uint8_t*)buf_;
             len = len_;
         }
 
         // 引用一个 含有 buf + len 成员的对象的数据
         template<typename T, typename = std::enable_if_t<std::is_class_v<T>>>
-        [[maybe_unused]] XX_INLINE void Reset(T const& d, size_t const& offset_ = 0) {
+        [[maybe_unused]] XX_INLINE void Reset(T const& d, size_t offset_ = 0) {
             Reset(d.buf, d.len, offset_);
         }
 
@@ -62,13 +62,13 @@ namespace xx {
         }
 
         // 下标只读访问
-        XX_INLINE uint8_t const& operator[](size_t const& idx) const {
+        XX_INLINE uint8_t const& operator[](size_t idx) const {
             assert(idx < len);
             return buf[idx];
         }
 
         // 下标可写访问
-        XX_INLINE uint8_t& operator[](size_t const& idx) {
+        XX_INLINE uint8_t& operator[](size_t idx) {
             assert(idx < len);
             return buf[idx];
         }
@@ -106,25 +106,25 @@ namespace xx {
 
 
         // 引用一段数据
-        [[maybe_unused]] Data_r(void const *const &buf, size_t const &len, size_t const &offset = 0) {
+        [[maybe_unused]] Data_r(void const* buf, size_t len, size_t offset = 0) {
             Reset(buf, len, offset);
         }
 
         // 引用一个 含有 buf + len 成员的对象的数据
         template<typename T, typename = std::enable_if_t<std::is_class_v<T>>>
-        [[maybe_unused]] Data_r(T const& d, size_t const& offset = 0) {
+        [[maybe_unused]] Data_r(T const& d, size_t offset = 0) {
             Reset(d.buf, d.len, offset);
         }
 
         // 引用一段数据
-        [[maybe_unused]] XX_INLINE void Reset(void const *const &buf_, size_t const &len_, size_t const &offset_ = 0) {
+        [[maybe_unused]] XX_INLINE void Reset(void const* buf_, size_t len_, size_t offset_ = 0) {
             this->Span::Reset(buf_, len_);
             offset = offset_;
         }
 
         // 引用一个 含有 buf + len 成员的对象的数据
         template<typename T, typename = std::enable_if_t<std::is_class_v<T>>>
-        [[maybe_unused]] XX_INLINE void Reset(T const& d, size_t const &offset_ = 0) {
+        [[maybe_unused]] XX_INLINE void Reset(T const& d, size_t offset_ = 0) {
             Reset(d.buf, d.len, offset_);
         }
 
@@ -164,7 +164,7 @@ namespace xx {
             return Span(buf + offset, len - offset);
         }
 
-        [[nodiscard]] Data_r LeftData_r(size_t const& offset_ = 0) const {
+        [[nodiscard]] Data_r LeftData_r(size_t offset_ = 0) const {
             return Data_r(buf + offset, len - offset, offset_);
         }
 
@@ -184,7 +184,7 @@ namespace xx {
         }
 
         // 跳过 siz 字节不读. 返回非 0 则失败( 长度不足 )
-        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadJump(size_t const &siz) {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadJump(size_t siz) {
             assert(siz);
             if (offset + siz > len) return __LINE__;
             offset += siz;
@@ -192,7 +192,7 @@ namespace xx {
         }
 
         // 读 定长buf 到 tar. 返回非 0 则读取失败
-        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadBuf(void *const &tar, size_t const &siz) {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadBuf(void* tar, size_t siz) {
             assert(tar);
             if (offset + siz > len) return __LINE__;
             memcpy(tar, buf + offset, siz);
@@ -201,7 +201,7 @@ namespace xx {
         }
 
         // 从指定下标 读 定长buf. 不改变 offset. 返回非 0 则读取失败
-        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadBufAt(size_t const &idx, void *const &tar, size_t const &siz) const {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadBufAt(size_t idx, void* tar, size_t siz) const {
             assert(tar);
             if (idx + siz > len) return __LINE__;
             memcpy(tar, buf + idx, siz);
@@ -209,7 +209,7 @@ namespace xx {
         }
 
         // 读 定长buf 起始指针 方便外面 copy. 返回 nullptr 则读取失败
-        [[maybe_unused]] [[nodiscard]] XX_INLINE void* ReadBuf(size_t const& siz) {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE void* ReadBuf(size_t siz) {
             if (offset + siz > len) return nullptr;
             auto bak = offset;
             offset += siz;
@@ -217,7 +217,7 @@ namespace xx {
         }
 
         // 从指定下标 读 定长buf 起始指针 方便外面 copy. 返回 nullptr 则读取失败
-        [[maybe_unused]] [[nodiscard]] XX_INLINE void* ReadBufAt(size_t const& idx, size_t const& siz) const {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE void* ReadBufAt(size_t idx, size_t siz) const {
             if (idx + siz > len) return nullptr;
             return buf + idx;
         }
@@ -236,7 +236,7 @@ namespace xx {
 
         // 从指定下标 读 定长小尾数字. 不改变 offset. 返回非 0 则读取失败
         template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>>
-        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadFixedAt(size_t const &idx, T &v) {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadFixedAt(size_t idx, T &v) {
             if (idx + sizeof(T) > len) return __LINE__;
             memcpy(&v, buf + idx, sizeof(T));
             if constexpr (std::endian::native == std::endian::big) {
@@ -259,7 +259,7 @@ namespace xx {
 
         // 从指定下标 读 定长大尾数字. 不改变 offset. 返回非 0 则读取失败
         template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>>
-        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadFixedBEAt(size_t const& idx, T& v) {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadFixedBEAt(size_t idx, T& v) {
             if (idx + sizeof(T) >= len) return __LINE__;
             memcpy(&v, buf + idx, sizeof(T));
             if constexpr (std::endian::native == std::endian::little) {
@@ -270,7 +270,7 @@ namespace xx {
 
         // 读 定长小尾数字 数组. 返回非 0 则读取失败
         template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>>
-        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadFixedArray(T* const& tar, size_t const& siz) {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadFixedArray(T* tar, size_t siz) {
             assert(tar);
             if (offset + sizeof(T) * siz > len) return __LINE__;
             if constexpr (std::endian::native == std::endian::big) {
@@ -312,7 +312,7 @@ namespace xx {
 
 
         // 从 buf[offset] 处填充一个指定长度的 string_view. 返回非 0 则读取失败
-        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadSV(std::string_view& sv, size_t const& siz) {
+        [[maybe_unused]] [[nodiscard]] XX_INLINE int ReadSV(std::string_view& sv, size_t siz) {
             if (offset + siz >= len) return __LINE__;
             auto s = (char*)buf + offset;
             offset += siz;
@@ -370,13 +370,13 @@ namespace xx {
         }
 
         // unsafe: 直接设置成员数值, 常用于有把握的"借壳" 读写( 不会造成 Reserve 操作的 ), 最后记得 Reset 还原
-        [[maybe_unused]] XX_INLINE void Reset(void const* const& buf_ = nullptr, size_t const& len_ = 0, size_t const& offset_ = 0, size_t const& cap_ = 0) {
+        [[maybe_unused]] XX_INLINE void Reset(void const* buf_ = nullptr, size_t len_ = 0, size_t offset_ = 0, size_t cap_ = 0) {
             this->Data_r::Reset(buf_, len_, offset_);
             cap = cap_;
         }
 
         // 预分配空间
-        [[maybe_unused]] explicit Data_rw(size_t const &cap)
+        [[maybe_unused]] explicit Data_rw(size_t cap)
                 : cap(cap) {
             assert(cap);
             auto siz = Round2n(bufHeaderReserveLen + cap);
@@ -391,7 +391,7 @@ namespace xx {
         }
 
         // 复制, 顺便设置 offset
-        [[maybe_unused]] Data_rw(void const* const& ptr, size_t const& siz, size_t const& offset_ = 0)
+        [[maybe_unused]] Data_rw(void const* ptr, size_t siz, size_t offset_ = 0)
             : cap(0) {
             WriteBuf(ptr, siz);
             offset = offset_;
@@ -443,7 +443,7 @@ namespace xx {
 
         // 确保空间足够
         template<bool CheckCap = true>
-        XX_NOINLINE void Reserve(size_t const &newCap) {
+        XX_NOINLINE void Reserve(size_t newCap) {
             if (CheckCap && newCap <= cap) return;
 
             auto siz = Round2n(bufHeaderReserveLen + newCap);
@@ -480,7 +480,7 @@ namespace xx {
         }
 
         // 修改数据长度( 可能扩容 )。会返回旧长度
-        XX_INLINE size_t Resize(size_t const &newLen) {
+        XX_INLINE size_t Resize(size_t newLen) {
             if (newLen > cap) {
                 Reserve<false>(newLen);
             }
@@ -515,7 +515,7 @@ namespace xx {
         }
 
         // 从头部移除指定长度数据( 常见于拆包处理移除掉已经访问过的包数据, 将残留部分移动到头部 )
-        [[maybe_unused]] XX_INLINE void RemoveFront(size_t const &siz) {
+        [[maybe_unused]] XX_INLINE void RemoveFront(size_t siz) {
             assert(siz <= len);
             if (!siz) return;
             len -= siz;
@@ -533,7 +533,7 @@ namespace xx {
 
         // 追加写入一段 buf( 不记录数据长度 )
         template<bool needReserve = true>
-        XX_INLINE void WriteBuf(void const *const &ptr, size_t const &siz) {
+        XX_INLINE void WriteBuf(void const* ptr, size_t siz) {
             if constexpr (needReserve) {
                 if (len + siz > cap) {
                     Reserve<false>(len + siz);
@@ -558,7 +558,7 @@ namespace xx {
         }
 
         // 在指定 idx 写入一段 buf( 不记录数据长度 )
-        [[maybe_unused]] XX_INLINE void WriteBufAt(size_t const &idx, void const *const &ptr, size_t const &siz) {
+        [[maybe_unused]] XX_INLINE void WriteBufAt(size_t idx, void const* ptr, size_t siz) {
             if (idx + siz > len) {
                 Resize(idx + siz);
             }
@@ -583,7 +583,7 @@ namespace xx {
 
         // 在指定 idx 写入 float / double / integer ( 定长 Little Endian )
         template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>>
-        [[maybe_unused]] XX_INLINE void WriteFixedAt(size_t const &idx, T v) {
+        [[maybe_unused]] XX_INLINE void WriteFixedAt(size_t idx, T v) {
             if (idx + sizeof(T) > len) {
                 Resize(sizeof(T) + idx);
             }
@@ -610,7 +610,7 @@ namespace xx {
 
         // 在指定 idx 写入 float / double / integer ( 定长 Big Endian )
         template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>>
-        [[maybe_unused]] XX_INLINE void WriteFixedBEAt(size_t const& idx, T v) {
+        [[maybe_unused]] XX_INLINE void WriteFixedBEAt(size_t idx, T v) {
             if (idx + sizeof(T) > len) {
                 Resize(sizeof(T) + idx);
             }
@@ -622,7 +622,7 @@ namespace xx {
 
         // 追加写入 float / double / integer ( 定长 Little Endian ) 数组
         template<bool needReserve = true, typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>>
-        [[maybe_unused]] XX_INLINE void WriteFixedArray(T const* const& ptr, size_t const& siz) {
+        [[maybe_unused]] XX_INLINE void WriteFixedArray(T const* ptr, size_t siz) {
             assert(ptr);
             if constexpr (needReserve) {
                 if (len + sizeof(T) * siz > cap) {
@@ -666,7 +666,7 @@ namespace xx {
 
         // 跳过指定长度字节数不写。返回起始 len
         template<bool needReserve = true>
-        [[maybe_unused]] XX_INLINE size_t WriteJump(size_t const &siz) {
+        [[maybe_unused]] XX_INLINE size_t WriteJump(size_t siz) {
             auto bak = len;
             if constexpr (needReserve) {
                 if (len + siz > cap) {
@@ -679,7 +679,7 @@ namespace xx {
 
         // 跳过指定长度字节数不写。返回起始 指针
         template<bool needReserve = true>
-        [[maybe_unused]] XX_INLINE uint8_t* WriteSpace(size_t const& siz) {
+        [[maybe_unused]] XX_INLINE uint8_t* WriteSpace(size_t siz) {
             return buf + WriteJump<needReserve>(siz);
         }
 
@@ -701,7 +701,7 @@ namespace xx {
         }
 
         // len 清 0, 可彻底释放 buf
-        XX_INLINE void Clear(bool const &freeBuf = false) {
+        XX_INLINE void Clear(bool freeBuf = false) {
             if (freeBuf && cap) {
                 //delete[](buf - bufHeaderReserveLen);
                 free(buf - bufHeaderReserveLen);

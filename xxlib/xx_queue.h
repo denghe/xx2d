@@ -24,32 +24,32 @@ namespace xx {
 		Queue(Queue const& o) = delete;
 		Queue& operator=(Queue const& o) = delete;
 
-		T const& operator[](size_t const& idx) const noexcept;	// [0] = [ head ]
-		T& operator[](size_t const& idx) noexcept;
-		T const& At(size_t const& idx) const noexcept;			// []
-		T& At(size_t const& idx) noexcept;
+		T const& operator[](size_t idx) const noexcept;	// [0] = [ head ]
+		T& operator[](size_t idx) noexcept;
+		T const& At(size_t idx) const noexcept;			// []
+		T& At(size_t idx) noexcept;
 
 		size_t Count() const noexcept;
 		bool Empty() const noexcept;
 		void Clear() noexcept;
-		void Reserve(size_t const& capacity, bool const& afterPush = false) noexcept;
+		void Reserve(size_t capacity, bool afterPush = false) noexcept;
 
 		template<typename...Args>
-		T& Emplace(Args&&...ps) noexcept;						// [ tail++ ] = T( ps )
+		T& Emplace(Args&&...ps) noexcept;				// [ tail++ ] = T( ps )
 
 		template<typename ...TS>
 		void Push(TS&& ...vs) noexcept;
 
 		bool TryPop(T& outVal) noexcept;
 
-		T const& Top() const noexcept;							// [ head ]
+		T const& Top() const noexcept;					// [ head ]
 		T& Top() noexcept;
-		void Pop() noexcept;									// ++head
-		size_t PopMulti(size_t const& count) noexcept;			// head += count
+		void Pop() noexcept;							// ++head
+		size_t PopMulti(size_t count) noexcept;			// head += count
 
-		T const& Last() const noexcept;							// [ tail-1 ]
+		T const& Last() const noexcept;					// [ tail-1 ]
 		T& Last() noexcept;
-		void PopLast() noexcept;								// --tail
+		void PopLast() noexcept;						// --tail
 	};
 
     // mem moveable tag
@@ -176,7 +176,7 @@ namespace xx
 	}
 
 	template <typename T>
-	size_t Queue<T>::PopMulti(size_t const& count) noexcept {
+	size_t Queue<T>::PopMulti(size_t count) noexcept {
 		if (count <= 0) return 0;
 
 		auto dataLen = Count();
@@ -223,7 +223,7 @@ namespace xx
 	}
 
 	template <class T>
-	void Queue<T>::Reserve(size_t const& capacity, bool const& afterPush) noexcept {
+	void Queue<T>::Reserve(size_t capacity, bool afterPush) noexcept {
 		assert(capacity > 0);
 		if (capacity <= cap) return;
 
@@ -286,17 +286,17 @@ namespace xx
 
 
 	template<typename T>
-	T const& Queue<T>::operator[](size_t const& idx) const noexcept {
+	T const& Queue<T>::operator[](size_t idx) const noexcept {
 		return At(idx);
 	}
 
 	template<typename T>
-	T& Queue<T>::operator[](size_t const& idx) noexcept {
+	T& Queue<T>::operator[](size_t idx) noexcept {
 		return At(idx);
 	}
 
 	template<typename T>
-	T const& Queue<T>::At(size_t const& idx) const noexcept {
+	T const& Queue<T>::At(size_t idx) const noexcept {
 		return const_cast<Queue<T>*>(this)->At(idx);
 	}
 
@@ -313,7 +313,7 @@ namespace xx
 
 
 	template<typename T>
-	T& Queue<T>::At(size_t const& idx) noexcept {
+	T& Queue<T>::At(size_t idx) noexcept {
 		assert(idx < Count());
 		if (head + idx < cap) {
 			return buf[head + idx];

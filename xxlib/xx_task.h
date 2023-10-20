@@ -298,7 +298,7 @@ namespace xx {
         // void(*Handler)( void* ) = [???](auto p) { *(T*)p = ???; }
         // return 0: miss or success
         template<typename Handler>
-        ptrdiff_t operator()(ptrdiff_t const& v, Handler&& h) {
+        ptrdiff_t operator()(ptrdiff_t v, Handler&& h) {
             for (int i = eventTasks.len - 1; i >= 0; --i) {
                 auto& t = eventTasks[i];
                 if (v == std::get<0>(t)) {

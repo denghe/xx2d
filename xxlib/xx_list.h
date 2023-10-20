@@ -38,13 +38,13 @@ namespace xx {
             return len;
         }
 
-		void Reserve(SizeType const& cap_) noexcept {
+		void Reserve(SizeType cap_) noexcept {
 			if (auto newBuf = ReserveBegin(cap_)) {
 				ReserveEnd(newBuf);
 			}
 		}
 
-		T* ReserveBegin(SizeType const& cap_) noexcept {
+		T* ReserveBegin(SizeType cap_) noexcept {
 			assert(cap_ > 0);
 			if (cap_ <= cap) return {};
 			if (!cap) {
@@ -72,7 +72,7 @@ namespace xx {
 		}
 
 
-		void Resize(SizeType const& len_) noexcept {
+		void Resize(SizeType len_) noexcept {
 			if (len_ == len) return;
 			else if (len_ < len) {
 				for (SizeType i = len_; i < len; ++i) {
@@ -90,19 +90,19 @@ namespace xx {
 			len = len_;
 		}
 
-		T const& operator[](SizeType const& idx) const noexcept {
+		T const& operator[](SizeType idx) const noexcept {
 			assert(idx < len);
 			return buf[idx];
 		}
-		T& operator[](SizeType const& idx) noexcept {
+		T& operator[](SizeType idx) noexcept {
 			assert(idx < len);
 			return buf[idx];
 		}
-		T const& At(SizeType const& idx) const noexcept {
+		T const& At(SizeType idx) const noexcept {
 			xx_assert(idx < len);
 			return buf[idx];
 		}
-		T& At(SizeType const& idx) noexcept {
+		T& At(SizeType idx) noexcept {
 			xx_assert(idx < len);
 			return buf[idx];
 		}
@@ -127,7 +127,7 @@ namespace xx {
 			return true;
 		}
 
-		void Clear(bool const& freeBuf = false) noexcept {
+		void Clear(bool freeBuf = false) noexcept {
 			if (!cap) return;
 			if (len) {
 				for (SizeType i = 0; i < len; ++i) {
@@ -151,7 +151,7 @@ namespace xx {
 			}
 		}
 
-		void RemoveAt(SizeType const& idx) noexcept {
+		void RemoveAt(SizeType idx) noexcept {
 			assert(idx < len);
 			--len;
 			if constexpr (IsPod_v<T>) {
@@ -166,7 +166,7 @@ namespace xx {
 			}
 		}
 
-        void SwapRemoveAt(SizeType const& idx) noexcept {
+        void SwapRemoveAt(SizeType idx) noexcept {
             if (idx + 1 <= len) {
                 if constexpr (IsPod_v<T>) {
                     ::memcpy(&buf[idx], &Back(), sizeof(T) );
@@ -210,7 +210,7 @@ namespace xx {
 			(Emplace(std::forward<TS>(vs)), ...);
 		}
 
-		void AddRange(T const* const& items, SizeType const& count) noexcept {
+		void AddRange(T const* items, SizeType count) noexcept {
 			if (auto newBuf = ReserveBegin(len + count)) {
 				if constexpr (IsPod_v<T>) {
 					::memcpy(newBuf + len, items, count * sizeof(T));
