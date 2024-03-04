@@ -25,3 +25,6 @@
 [submodule "lua"]
 	path = lua
 	url = https://github.com/lua/lua.git
+[submodule "nameof"]
+	path = nameof
+	url = https://github.com/Neargye/nameof.git
