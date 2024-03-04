@@ -25,7 +25,7 @@ int main() {
 	for (int y = 0; y < numRows; ++y) {
 		for (int x = 0; x < numCols; ++x) {
 			if (data[y][x]) {
-				rects[y][x] = xx::Make<Rect>(Rect{ x, y, 1, 1 });
+				rects[y][x] = xx::MakeShared<Rect>(Rect{ x, y, 1, 1 });
 			}
 		}
 	}

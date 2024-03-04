@@ -104,8 +104,8 @@ namespace xx {
         Awaiter operator co_await() const& noexcept { return {coro}; }
 
         decltype(auto) Result() const { return *coro.promise().r; }
-        std::variant<int, void*> const& YieldValue() const { return coro.promise().y; }
-        std::variant<int, void*>& YieldValue() { return coro.promise().y; }
+        YieldType const& YieldValue() const { return coro.promise().y; }
+        YieldType& YieldValue() { return coro.promise().y; }
 
         template<bool runOnce = false>
         XX_FORCE_INLINE void Run() {
@@ -155,6 +155,12 @@ namespace xx {
                 return Add([](T t) -> Task<> {
                     co_await t();
                 }(std::forward<T>(t)));
+            }
+        }
+
+        void RemoveOldest() {
+            if (tasks.head != -1) {
+                tasks.Remove(tasks.head);
             }
         }
 

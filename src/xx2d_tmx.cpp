@@ -639,7 +639,7 @@ namespace xx {
 			if (auto&& cText = c.child("text"); o && o->type == ObjectTypes::Text || !cText.empty()) {
 				xx::Shared<Object_Text> a;
 				if (o) {
-					a = o.ReinterpretCast<Object_Text>();
+					a = o.Cast<Object_Text>();
 				} else {
 					a.Emplace();
 					a->type = ObjectTypes::Text;
@@ -662,7 +662,7 @@ namespace xx {
 			} else if (auto&& cPolygon = c.child("polygon"); o && o->type == ObjectTypes::Polygon || !cPolygon.empty()) {
 				xx::Shared<Object_Polygon> a;
 				if (o) {
-					a = o.ReinterpretCast<Object_Polygon>();
+					a = o.Cast<Object_Polygon>();
 				} else {
 					a.Emplace();
 					a->type = ObjectTypes::Polygon;
@@ -672,7 +672,7 @@ namespace xx {
 			} else if (auto&& cEllipse = c.child("ellipse"); o && o->type == ObjectTypes::Ellipse || !cEllipse.empty()) {
 				xx::Shared<Object_Ellipse> a;
 				if (o) {
-					a = o.ReinterpretCast<Object_Ellipse>();
+					a = o.Cast<Object_Ellipse>();
 				} else {
 					a.Emplace();
 					a->type = ObjectTypes::Ellipse;
@@ -683,7 +683,7 @@ namespace xx {
 			} else if (auto&& cPoint = c.child("point"); o && o->type == ObjectTypes::Point || !cPoint.empty()) {
 				xx::Shared<Object_Point> a;
 				if (o) {
-					a = o.ReinterpretCast<Object_Point>();
+					a = o.Cast<Object_Point>();
 				} else {
 					a.Emplace();
 					a->type = ObjectTypes::Point;
@@ -692,7 +692,7 @@ namespace xx {
 			} else if (auto&& aGid = c.attribute("gid"); o && o->type == ObjectTypes::Tile || !aGid.empty()) {
 				xx::Shared<Object_Tile> a;
 				if (o) {
-					a = o.ReinterpretCast<Object_Tile>();
+					a = o.Cast<Object_Tile>();
 				} else {
 					a.Emplace();
 					a->type = ObjectTypes::Tile;
@@ -709,7 +709,7 @@ namespace xx {
 			} else {
 				xx::Shared<Object_Rectangle> a;
 				if (o) {
-					a = o.ReinterpretCast<Object_Rectangle>();
+					a = o.Cast<Object_Rectangle>();
 				} else {
 					a.Emplace();
 					a->type = ObjectTypes::Rectangle;
@@ -761,19 +761,19 @@ namespace xx {
 				std::string_view name(c.name());
 				if (name == "properties"sv) continue;
 				if (name == "layer"sv) {
-					auto&& L = xx::Make<Layer_Tile>();
+					auto&& L = xx::MakeShared<Layer_Tile>();
 					TryFillLayer(*L, c);
 					pL.layers.emplace_back(std::move(L));
 				} else if (name == "imagelayer"sv) {
-					auto&& L = xx::Make<Layer_Image>();
+					auto&& L = xx::MakeShared<Layer_Image>();
 					TryFillLayer(*L, c);
 					pL.layers.emplace_back(std::move(L));
 				} else if (name == "objectgroup"sv) {
-					auto&& L = xx::Make<Layer_Object>();
+					auto&& L = xx::MakeShared<Layer_Object>();
 					TryFillLayer(*L, c);
 					pL.layers.emplace_back(std::move(L));
 				} else if (name == "group"sv) {
-					auto&& L = xx::Make<Layer_Group>();
+					auto&& L = xx::MakeShared<Layer_Group>();
 					TryFillLayer(*L, c);
 					pL.layers.emplace_back(std::move(L));
 				} else {
@@ -838,23 +838,23 @@ namespace xx {
 			for (auto&& c : cMap.children()) {
 				std::string_view name(c.name());
 				if (name == "tileset"sv) {
-					auto&& ts = xx::Make<Tileset>();
+					auto&& ts = xx::MakeShared<Tileset>();
 					TryFillTileset(*ts, c);
 					map.tilesets.emplace_back(std::move(ts));
 				} else if (name == "layer"sv) {
-					auto&& L = xx::Make<Layer_Tile>();
+					auto&& L = xx::MakeShared<Layer_Tile>();
 					TryFillLayer(*L, c);
 					map.layers.emplace_back(std::move(L));
 				} else if (name == "imagelayer"sv) {
-					auto&& L = xx::Make<Layer_Image>();
+					auto&& L = xx::MakeShared<Layer_Image>();
 					TryFillLayer(*L, c);
 					map.layers.emplace_back(std::move(L));
 				} else if (name == "objectgroup"sv) {
-					auto&& L = xx::Make<Layer_Object>();
+					auto&& L = xx::MakeShared<Layer_Object>();
 					TryFillLayer(*L, c);
 					map.layers.emplace_back(std::move(L));
 				} else if (name == "group"sv) {
-					auto&& L = xx::Make<Layer_Group>();
+					auto&& L = xx::MakeShared<Layer_Group>();
 					TryFillLayer(*L, c);
 					map.layers.emplace_back(std::move(L));
 				} else {

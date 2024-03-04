@@ -3,7 +3,7 @@
 namespace xx {
 
 	Shared<Frame> MakeFrame(Shared<GLTexture> t) {
-		auto f = xx::Make<Frame>();
+		auto f = xx::MakeShared<Frame>();
 		f->anchor = { 0.5, 0.5 };
 		f->textureRotated = false;
 		f->spriteSize = f->spriteSourceSize = { (float)t->Width(), (float)t->Height() };

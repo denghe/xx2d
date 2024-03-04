@@ -527,7 +527,7 @@ struct ContentViewer_Pic : ContentViewerBase {
 		info = std::move(info_);
 
 		auto secs = xx::NowEpochSeconds();
-		auto&& tex = xx::Make<xx::GLTexture>(xx::LoadGLTexture(buf, fullPath));	// todo: try ?
+		auto&& tex = xx::MakeShared<xx::GLTexture>(xx::LoadGLTexture(buf, fullPath));	// todo: try ?
 		// auto fill? calc zoom?
 		xx::CoutN("pic decode secs = ", xx::NowEpochSeconds(secs));
 
@@ -705,7 +705,7 @@ void GameLooper::DrawSelectedFile() {
 	case xx::SupportedFileFormats::Xxmv:
 	{
 		xx::Append(info, ", content type: xxmv");
-		auto v = xx::Make<ContentViewer_Webm>();
+		auto v = xx::MakeShared<ContentViewer_Webm>();
 		contentViewer = v;
 		v->Init(this, d, xx::U8AsString(fullPath.u8string()), std::move(info));
 		break;
@@ -716,7 +716,7 @@ void GameLooper::DrawSelectedFile() {
 	case xx::SupportedFileFormats::Jpg:
 	{
 		xx::Append(info, ", content type: astc");
-		auto v = xx::Make<ContentViewer_Pic>();
+		auto v = xx::MakeShared<ContentViewer_Pic>();
 		contentViewer = v;
 		v->Init(this, d, xx::U8AsString(fullPath.u8string()), std::move(info));
 		break;

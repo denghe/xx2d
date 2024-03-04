@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "xx_includes.h"
+#include <nameof.hpp>
 
 namespace xx {
 
@@ -537,6 +538,12 @@ namespace xx {
     constexpr bool IsLambda_v = IsLambda<T...>();
 
 
+    // for easy use
+    template<typename T>
+    constexpr std::string_view TypeName() noexcept {
+        return nameof::nameof_type<T>();
+    }
+
 
     /***********************************************************************************/
     // 找出 多个模板类型 的 sizeof 最大值
@@ -554,103 +561,6 @@ namespace xx {
 
     template<typename T, typename... Args>
     constexpr size_t MaxSizeof_v = MaxSizeof<T, Args...>::value;
-
-
-    /************************************************************************************/
-    // TypeName. 当前只支持运行时拿 std::string. android 下带混淆效果
-
-#ifndef RAW_TYPE_NAME_ANDROID_XOR_KEY
-#define RAW_TYPE_NAME_ANDROID_XOR_KEY 0b10101010
-#endif
-
-// for store __FUNCSIG__ or __PRETTY_FUNCTION__ raw content
-    template<size_t n>
-    struct RawTypeNameStr {
-        char v[n];
-        constexpr RawTypeNameStr(const char(&s)[n]) {
-            std::copy_n(s, n, v);
-#ifdef __ANDROID__
-            for (auto& c : v) {
-                c ^= RAW_TYPE_NAME_ANDROID_XOR_KEY;
-            }
-#endif
-        }
-    };
-
-    namespace Detail {
-
-        // store type name cut pos
-        inline static std::pair<size_t, size_t> typeNameOffsetLen{};
-
-        template<typename T>
-        struct TypeName_ {
-
-            // fill cut pos
-            template<RawTypeNameStr s>
-            inline static std::string Fil() {
-                for (std::size_t i = 0;; i++) {
-#ifdef __ANDROID__
-                    if (s.v[i] == char('i' ^ RAW_TYPE_NAME_ANDROID_XOR_KEY)
-                        && s.v[i + 1] == char('n' ^ RAW_TYPE_NAME_ANDROID_XOR_KEY)
-                        && s.v[i + 2] == char('t' ^ RAW_TYPE_NAME_ANDROID_XOR_KEY)) {
-#else
-                    if (s.v[i] == 'i' && s.v[i + 1] == 'n' && s.v[i + 2] == 't') {
-#endif
-                        typeNameOffsetLen.first = i;
-                        typeNameOffsetLen.second = sizeof(s.v) - i - 3;
-                        break;
-                    }
-                    }
-                return "";
-                }
-
-            // get type name string
-            template<RawTypeNameStr s>
-            inline static std::string Get() {
-                auto len = sizeof(s.v) - typeNameOffsetLen.first - typeNameOffsetLen.second;
-                std::string r;
-                r.resize(len);
-#ifdef __ANDROID__
-                for (size_t j = 0; j < len; j++) {
-                    r[j] = (s.v + typeNameOffsetLen.first)[j] ^ RAW_TYPE_NAME_ANDROID_XOR_KEY;
-                }
-#else
-                memcpy(r.data(), s.v + typeNameOffsetLen.first, len);
-#endif
-                return r;
-            }
-            };
-        }
-
-    // for calc type name cut pos
-    template<typename T>
-    std::string FillTNOL() {
-        return ::xx::Detail::TypeName_<T>::template Fil<
-#ifdef _MSC_VER
-            __FUNCSIG__
-#else
-            __PRETTY_FUNCTION__
-#endif
-        >();
-    }
-
-    // auto execute fill type name cut pos
-    inline static bool typeNameOffsetLenFilled = [] {
-        FillTNOL<int>();
-        return true;
-    }();
-
-    // get type name
-    template<typename T>
-    std::string TypeName() {
-        return ::xx::Detail::TypeName_<T>::template Get<
-#ifdef _MSC_VER
-            __FUNCSIG__
-#else
-            __PRETTY_FUNCTION__
-#endif
-        >();
-    }
 
 }
 

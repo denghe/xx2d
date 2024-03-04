@@ -29,14 +29,14 @@ namespace xx {
 	}
 	void ShaderManager::Init() {
 		// make all
-		shaders[Shader_Quad::index] = xx::Make<Shader_Quad>();
-		shaders[Shader_QuadInstance::index] = xx::Make<Shader_QuadInstance>();
-		shaders[Shader_LineStrip::index] = xx::Make<Shader_LineStrip>();
-		shaders[Shader_TexVerts::index] = xx::Make<Shader_TexVerts>();
-		shaders[Shader_Verts::index] = xx::Make<Shader_Verts>();
-		shaders[Shader_Yuva2Rgba::index] = xx::Make<Shader_Yuva2Rgba>();
-		shaders[Shader_Yuv2Rgb::index] = xx::Make<Shader_Yuv2Rgb>();
-		shaders[Shader_Spine::index] = xx::Make<Shader_Spine>();
+		shaders[Shader_Quad::index] = xx::MakeShared<Shader_Quad>();
+		shaders[Shader_QuadInstance::index] = xx::MakeShared<Shader_QuadInstance>();
+		shaders[Shader_LineStrip::index] = xx::MakeShared<Shader_LineStrip>();
+		shaders[Shader_TexVerts::index] = xx::MakeShared<Shader_TexVerts>();
+		shaders[Shader_Verts::index] = xx::MakeShared<Shader_Verts>();
+		shaders[Shader_Yuva2Rgba::index] = xx::MakeShared<Shader_Yuva2Rgba>();
+		shaders[Shader_Yuv2Rgb::index] = xx::MakeShared<Shader_Yuv2Rgb>();
+		shaders[Shader_Spine::index] = xx::MakeShared<Shader_Spine>();
 		// ...
 
 		// init all

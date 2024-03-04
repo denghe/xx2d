@@ -22,20 +22,7 @@ namespace xx {
 		ListLink(ListLink const&) = delete;
 		ListLink& operator=(ListLink const&) = delete;
 		ListLink(ListLink&& o) noexcept {
-			buf = o.buf;
-			cap = o.cap;
-			len = o.len;
-			head = o.head;
-			tail = o.tail;
-			freeHead = o.freeHead;
-			freeCount = o.freeCount;
-			o.buf = {};
-			o.cap = {};
-			o.len = {};
-			o.head = -1;
-			o.tail = -1;
-			o.freeHead = -1;
-			o.freeCount = {};
+			operator=(std::move(o));
 		}
 		ListLink& operator=(ListLink&& o) noexcept {
 			std::swap(buf, o.buf);
@@ -142,7 +129,7 @@ namespace xx {
 		void Clear() {
 
 			if (!cap) return;
-			if constexpr (!IsPod_v<T>) {
+			if constexpr (!(std::is_standard_layout_v<T> && std::is_trivial_v<T>)) {
 				while (head >= 0) {
 					buf[head].value.~T();
 					head = buf[head].next;

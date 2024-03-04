@@ -35,6 +35,7 @@ include_directories(
 	imgui/backends
 	miniaudio
 	libvpx_prebuilt/includes
+	nameof/include
 	3rd
 	xxlib
 	src
@@ -47,6 +48,7 @@ file(GLOB SRCS	#GLOB_RECURSE
 	glfw/include/GLFW/*.h
 	pugixml/src/*.hpp
 	miniaudio/*.h
+	nameof/include/*.hpp
 	3rd/*.*
 	xxlib/*.h
 	src/*.cpp

@@ -20,7 +20,7 @@ struct GameLooper : xx::GameLooperBase {
 	template<typename LT>
 	void DelaySwitchTo() {
 		xx::engine.DelayExecute([this] {
-			scene = xx::Make<LT>();
+			scene = xx::MakeShared<LT>();
 			scene->Init(this);
 			});
 	}

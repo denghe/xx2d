@@ -628,7 +628,7 @@ namespace SpaceShooter {
 						auto bornPos = v * (xx::engine.hw + 200);
 						auto d = lastPlanePos - bornPos;
 						radians = std::atan2(d.y, d.x);
-						auto m = xx::Make<Monster2>();
+						auto m = xx::MakeShared<Monster2>();
 						m->Init1(this, 2.f, { 255,255,255,255 });
 						m->Init2(bornPos, radians);
 						AddMonster(m);
@@ -641,7 +641,7 @@ namespace SpaceShooter {
 	}
 
 	xx::Task<> Scene::SceneLogic_CreateMonsterTeam(int n, int64_t bonus) {
-		auto dt = xx::Make<Listener<MonsterBase>>([this, n, bonus] (MonsterBase* m) mutable {
+		auto dt = xx::MakeShared<Listener<MonsterBase>>([this, n, bonus] (MonsterBase* m) mutable {
 			if (--n == 0) {
 				score.Add(bonus);
 				labels.emplace_back().Emplace()->Init(this, m->pos, xx::ToString("+", bonus));	// show label effect
@@ -653,7 +653,7 @@ namespace SpaceShooter {
 		});
 		auto&& mpc = mpcsMonster[0];
 		for (int i = 0; i < n; i++) {
-			auto m = xx::Make<Monster>();
+			auto m = xx::MakeShared<Monster>();
 			m->Init1(this, 4.f, { 255,255,255,255 }, dt);
 			m->Init2({ -1000, 300 }, mpc);
 			AddMonster(m);

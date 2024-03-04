@@ -15,7 +15,7 @@ namespace xx {
 
 
 	void Engine::LoadFramesFromCache(TP const& tpd) {
-		auto t = xx::Make<GLTexture>(LoadTexture(tpd.realTextureFileName));
+		auto t = xx::MakeShared<GLTexture>(LoadTexture(tpd.realTextureFileName));
 		for (auto& o : tpd.frames) {
 			auto&& result = frameCache.emplace(o->key, o);
 			if (!result.second) throw std::logic_error(xx::ToString("duplicated key in frameCache. key = ", o->key, ". plist fn = ", t->FileName()));

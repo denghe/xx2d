@@ -152,7 +152,7 @@ namespace xx {
 
         // load textures
         for (auto&& f : texFNs) {
-            texs.emplace_back(xx::Make<GLTexture>(engine.LoadTexture(f)));
+            texs.emplace_back(xx::MakeShared<GLTexture>(engine.LoadTexture(f)));
         }
 
         // store display info when success

@@ -38,6 +38,19 @@ namespace xx {
             return len;
         }
 
+		List Clone() const {
+			List rtv;
+			rtv.Reserve(len);
+			rtv.AddRange(*this);
+			return rtv;
+		}
+
+		// func == [](auto& a, auto& b) { return a->xxx < b->xxx; }
+		template<typename F>
+		XX_FORCE_INLINE void StdSort(F&& func) {
+			std::sort(buf, buf + len, std::forward<F>(func));
+		}
+
 		void Reserve(SizeType cap_) noexcept {
 			if (auto newBuf = ReserveBegin(cap_)) {
 				ReserveEnd(newBuf);
@@ -167,14 +180,16 @@ namespace xx {
 		}
 
         void SwapRemoveAt(SizeType idx) noexcept {
-            if (idx + 1 <= len) {
-                if constexpr (IsPod_v<T>) {
-                    ::memcpy(&buf[idx], &Back(), sizeof(T) );
-                } else {
-                    buf[idx] = std::move(Back());
-                }
-            }
-            PopBack();
+			assert(idx < len);
+			buf[idx].~T();
+			--len;
+			if (len != idx) {
+				if constexpr (IsPod_v<T>) {
+                    ::memcpy(&buf[idx], &buf[len], sizeof(T) );
+				} else {
+					new (&buf[idx]) T((T&&)buf[len]);
+				}
+			}
 		}
 
         XX_FORCE_INLINE void PopBack() {
@@ -212,28 +227,28 @@ namespace xx {
 
 		void AddRange(T const* items, SizeType count) noexcept {
 			if (auto newBuf = ReserveBegin(len + count)) {
-				if constexpr (IsPod_v<T>) {
+				if constexpr (std::is_standard_layout_v<T> && std::is_trivial_v<T>) {
 					::memcpy(newBuf + len, items, count * sizeof(T));
 				} else {
 					for (SizeType i = 0; i < count; ++i) {
-						new (&newBuf[len + i]) T((T&&)items[i]);
+						new (&newBuf[len + i]) T(items[i]);
 					}
 				}
 				ReserveEnd(newBuf);
 			} else {
-				if constexpr (IsPod_v<T>) {
+				if constexpr (std::is_standard_layout_v<T> && std::is_trivial_v<T>) {
 					::memcpy(buf + len, items, count * sizeof(T));
 				} else {
 					for (SizeType i = 0; i < count; ++i) {
-						new (&buf[len + i]) T((T&&)items[i]);
+						new (&buf[len + i]) T(items[i]);
 					}
 				}
 			}
 			len += count;
 		}
 
-		template<typename T2>
-		void AddRange(List<T2> const& list) noexcept {
+		template<typename L>
+		void AddRange(L const& list) noexcept {
 			return AddRange(list.buf, list.len);
 		}
 
@@ -268,4 +283,10 @@ namespace xx {
 	// mem moveable tag
 	template<typename T, typename SizeType>
 	struct IsPod<List<T, SizeType>, void> : std::true_type {};
+
+	template<typename T>
+	using Listi32 = List<T, int32_t>;
+
+	template<typename T>
+	using Listi = List<T, ptrdiff_t>;
 }

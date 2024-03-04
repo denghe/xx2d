@@ -89,7 +89,7 @@ namespace xx
 	}
 
 	template <class T>
-	size_t Queue<T>::Count() const noexcept {
+	XX_FORCE_INLINE size_t Queue<T>::Count() const noexcept {
 		//......Head+++++++++++Tail.......
 		//...............FR...............
 		if (head <= tail) return tail - head;
@@ -143,7 +143,7 @@ namespace xx
 
 	template<typename T>
 	template<typename ...TS>
-	void Queue<T>::Push(TS&& ...vs) noexcept {
+	XX_FORCE_INLINE void Queue<T>::Push(TS&& ...vs) noexcept {
 		std::initializer_list<int> n{ (Emplace(std::forward<TS>(vs)), 0)... };
 		(void)n;
 	}
@@ -286,34 +286,34 @@ namespace xx
 
 
 	template<typename T>
-	T const& Queue<T>::operator[](size_t idx) const noexcept {
+	XX_FORCE_INLINE T const& Queue<T>::operator[](size_t idx) const noexcept {
 		return At(idx);
 	}
 
 	template<typename T>
-	T& Queue<T>::operator[](size_t idx) noexcept {
+	XX_FORCE_INLINE T& Queue<T>::operator[](size_t idx) noexcept {
 		return At(idx);
 	}
 
 	template<typename T>
-	T const& Queue<T>::At(size_t idx) const noexcept {
+	XX_FORCE_INLINE T const& Queue<T>::At(size_t idx) const noexcept {
 		return const_cast<Queue<T>*>(this)->At(idx);
 	}
 
 	template<typename T>
-	T const& Queue<T>::Top() const noexcept {
-		assert(head != tail);
-		return buf[head];
-	}
-	template<typename T>
-	T& Queue<T>::Top() noexcept {
+	XX_FORCE_INLINE T const& Queue<T>::Top() const noexcept {
 		assert(head != tail);
 		return buf[head];
 	}
 
+	template<typename T>
+	XX_FORCE_INLINE T& Queue<T>::Top() noexcept {
+		assert(head != tail);
+		return buf[head];
+	}
 
 	template<typename T>
-	T& Queue<T>::At(size_t idx) noexcept {
+	XX_FORCE_INLINE T& Queue<T>::At(size_t idx) noexcept {
 		assert(idx < Count());
 		if (head + idx < cap) {
 			return buf[head + idx];
@@ -323,21 +323,19 @@ namespace xx
 		}
 	}
 
-
 	template<typename T>
-	T const& Queue<T>::Last() const noexcept {
+	XX_FORCE_INLINE T const& Queue<T>::Last() const noexcept {
 		assert(head != tail);
 		return buf[tail - 1 == (size_t)-1 ? cap - 1 : tail - 1];
 	}
 	template<typename T>
-	T& Queue<T>::Last() noexcept {
+	XX_FORCE_INLINE T& Queue<T>::Last() noexcept {
 		assert(head != tail);
 		return buf[tail - 1 == (size_t)-1 ? cap - 1 : tail - 1];
 	}
-
 
 	template <typename T>
-	bool Queue<T>::TryPop(T& outVal) noexcept {
+	XX_FORCE_INLINE bool Queue<T>::TryPop(T& outVal) noexcept {
 		if (head == tail) return false;
 		outVal = std::move(buf[head]);
 		Pop();

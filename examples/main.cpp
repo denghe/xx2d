@@ -8,7 +8,7 @@ void GameLooper::Init() {
 	fontBase = xx::engine.LoadBMFont("res/font/coderscrux.fnt"sv);
 	font3500 = xx::engine.LoadBMFont("res/font/3500+.fnt"sv);
 
-	scene = xx::Make<MainMenu::Scene>();
+	scene = xx::MakeShared<MainMenu::Scene>();
 	scene->Init(this);
 
 #ifndef __EMSCRIPTEN__

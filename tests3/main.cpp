@@ -177,8 +177,8 @@ xx::Task<> GameLooper::MasterLogic() {
 	// create player's plane
 	//for (size_t i = 0; i < 10000; i++)
 	{
-		player_planes.emplace_back(xx::Make<Plane>())->Init(0);
-		//player_planes.emplace_back(xx::Make<Plane>())->Init(1);
+		player_planes.emplace_back(xx::MakeShared<Plane>())->Init(0);
+		//player_planes.emplace_back(xx::MakeShared<Plane>())->Init(1);
 		co_yield 0;
 	}
 

@@ -23,7 +23,7 @@ namespace xx {
 		}
 
 		if (!fillTex) return;
-		auto tex = xx::Make<GLTexture>(engine.LoadTexture(realTextureFileName));
+		auto tex = xx::MakeShared<GLTexture>(engine.LoadTexture(realTextureFileName));
 		for (auto& f : frames) {
 			f->tex = tex;
 		}

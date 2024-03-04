@@ -218,7 +218,7 @@ namespace xx::Lua {
 	template<typename T>
 	struct MetaFuncs<T, std::enable_if_t<std::is_same_v<xx::Quad, std::decay_t<T>>>> {
 		using U = xx::Quad;
-		inline static std::string name = TypeName<U>();
+		inline static std::string name{ TypeName<U>() };
 		static void Fill(lua_State* const& L) {
 			SetType<U>(L);
 			luaL_setfuncs(L, ::xx::Lua::Quad::funcs, 0);

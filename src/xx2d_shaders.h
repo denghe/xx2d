@@ -50,7 +50,7 @@ namespace xx {
 		// direct ref to shader instance
 		template<typename T, typename ENABLED = std::enable_if_t<std::is_base_of_v<Shader, T>>>
 		T& RefShader() {
-			return *shaders[T::index].template ReinterpretCast<T>();
+			return *shaders[T::index].template Cast<T>();
 		}
 
 		// for logic: switch + ref to shader instance

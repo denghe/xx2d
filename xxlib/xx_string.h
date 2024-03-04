@@ -137,85 +137,93 @@ namespace xx {
 
 
 
-    inline std::u32string StringU8ToU32(std::string_view const& s) {
-        std::u32string ws;
-        ws.reserve(s.size());
+    inline void StringU8ToU32(std::u32string& out, std::string_view const& sv) {
+        out.reserve(out.size() + sv.size());
         char32_t wc{};
-        for (int i = 0; i < s.size(); ) {
-            char c = s[i];
+        for (int i = 0; i < sv.size(); ) {
+            char c = sv[i];
             if ((c & 0x80) == 0) {
                 wc = c;
                 ++i;
             } else if ((c & 0xE0) == 0xC0) {
-                wc = (s[i] & 0x1F) << 6;
-                wc |= (s[i + 1] & 0x3F);
+                wc = (sv[i] & 0x1F) << 6;
+                wc |= (sv[i + 1] & 0x3F);
                 i += 2;
             } else if ((c & 0xF0) == 0xE0) {
-                wc = (s[i] & 0xF) << 12;
-                wc |= (s[i + 1] & 0x3F) << 6;
-                wc |= (s[i + 2] & 0x3F);
+                wc = (sv[i] & 0xF) << 12;
+                wc |= (sv[i + 1] & 0x3F) << 6;
+                wc |= (sv[i + 2] & 0x3F);
                 i += 3;
             } else if ((c & 0xF8) == 0xF0) {
-                wc = (s[i] & 0x7) << 18;
-                wc |= (s[i + 1] & 0x3F) << 12;
-                wc |= (s[i + 2] & 0x3F) << 6;
-                wc |= (s[i + 3] & 0x3F);
+                wc = (sv[i] & 0x7) << 18;
+                wc |= (sv[i + 1] & 0x3F) << 12;
+                wc |= (sv[i + 2] & 0x3F) << 6;
+                wc |= (sv[i + 3] & 0x3F);
                 i += 4;
             } else if ((c & 0xFC) == 0xF8) {
-                wc = (s[i] & 0x3) << 24;
-                wc |= (s[i] & 0x3F) << 18;
-                wc |= (s[i] & 0x3F) << 12;
-                wc |= (s[i] & 0x3F) << 6;
-                wc |= (s[i] & 0x3F);
+                wc = (sv[i] & 0x3) << 24;
+                wc |= (sv[i] & 0x3F) << 18;
+                wc |= (sv[i] & 0x3F) << 12;
+                wc |= (sv[i] & 0x3F) << 6;
+                wc |= (sv[i] & 0x3F);
                 i += 5;
             } else if ((c & 0xFE) == 0xFC) {
-                wc = (s[i] & 0x1) << 30;
-                wc |= (s[i] & 0x3F) << 24;
-                wc |= (s[i] & 0x3F) << 18;
-                wc |= (s[i] & 0x3F) << 12;
-                wc |= (s[i] & 0x3F) << 6;
-                wc |= (s[i] & 0x3F);
+                wc = (sv[i] & 0x1) << 30;
+                wc |= (sv[i] & 0x3F) << 24;
+                wc |= (sv[i] & 0x3F) << 18;
+                wc |= (sv[i] & 0x3F) << 12;
+                wc |= (sv[i] & 0x3F) << 6;
+                wc |= (sv[i] & 0x3F);
                 i += 6;
             }
-            ws += wc;
+            out += wc;
         }
-        return ws;
     }
 
-    inline std::string StringU32ToU8(std::u32string_view const& ws) {
-        std::string s;
-        for (int i = 0; i < ws.size(); ++i) {
-            char32_t wc = ws[i];
+    inline std::u32string StringU8ToU32(std::string_view const& sv) {
+        std::u32string out;
+        StringU8ToU32(out, sv);
+        return out;
+    }
+
+    inline void StringU32ToU8(std::string& out, std::u32string_view const& sv) {
+        for (int i = 0; i < sv.size(); ++i) {
+            char32_t wc = sv[i];
             if (0 <= wc && wc <= 0x7f) {
-                s += (char)wc;
+                out += (char)wc;
             } else if (0x80 <= wc && wc <= 0x7ff) {
-                s += (0xc0 | (wc >> 6));
-                s += (0x80 | (wc & 0x3f));
+                out += (0xc0 | (wc >> 6));
+                out += (0x80 | (wc & 0x3f));
             } else if (0x800 <= wc && wc <= 0xffff) {
-                s += (0xe0 | (wc >> 12));
-                s += (0x80 | ((wc >> 6) & 0x3f));
-                s += (0x80 | (wc & 0x3f));
+                out += (0xe0 | (wc >> 12));
+                out += (0x80 | ((wc >> 6) & 0x3f));
+                out += (0x80 | (wc & 0x3f));
             } else if (0x10000 <= wc && wc <= 0x1fffff) {
-                s += (0xf0 | (wc >> 18));
-                s += (0x80 | ((wc >> 12) & 0x3f));
-                s += (0x80 | ((wc >> 6) & 0x3f));
-                s += (0x80 | (wc & 0x3f));
+                out += (0xf0 | (wc >> 18));
+                out += (0x80 | ((wc >> 12) & 0x3f));
+                out += (0x80 | ((wc >> 6) & 0x3f));
+                out += (0x80 | (wc & 0x3f));
             } else if (0x200000 <= wc && wc <= 0x3ffffff) {
-                s += (0xf8 | (wc >> 24));
-                s += (0x80 | ((wc >> 18) & 0x3f));
-                s += (0x80 | ((wc >> 12) & 0x3f));
-                s += (0x80 | ((wc >> 6) & 0x3f));
-                s += (0x80 | (wc & 0x3f));
+                out += (0xf8 | (wc >> 24));
+                out += (0x80 | ((wc >> 18) & 0x3f));
+                out += (0x80 | ((wc >> 12) & 0x3f));
+                out += (0x80 | ((wc >> 6) & 0x3f));
+                out += (0x80 | (wc & 0x3f));
             } else if (0x4000000 <= wc && wc <= 0x7fffffff) {
-                s += (0xfc | (wc >> 30));
-                s += (0x80 | ((wc >> 24) & 0x3f));
-                s += (0x80 | ((wc >> 18) & 0x3f));
-                s += (0x80 | ((wc >> 12) & 0x3f));
-                s += (0x80 | ((wc >> 6) & 0x3f));
-                s += (0x80 | (wc & 0x3f));
+                out += (0xfc | (wc >> 30));
+                out += (0x80 | ((wc >> 24) & 0x3f));
+                out += (0x80 | ((wc >> 18) & 0x3f));
+                out += (0x80 | ((wc >> 12) & 0x3f));
+                out += (0x80 | ((wc >> 6) & 0x3f));
+                out += (0x80 | (wc & 0x3f));
             }
         }
-        return s;
+    }
+
+    inline std::string StringU32ToU8(std::u32string_view const& sv) {
+        std::string out;
+        StringU32ToU8(out, sv);
+        return out;
     }
 
     template<typename T>
@@ -269,9 +277,7 @@ namespace xx {
     template<typename T>
     struct StringFuncs<T, std::enable_if_t<std::is_base_of_v<std::u32string_view, T>>> {
         static inline void Append(std::string& s, T const& in) {
-            for (auto& c : in) {
-                Append(s, c);
-            }
+            StringU32ToU8(s, in);
         }
     };
 
@@ -281,6 +287,16 @@ namespace xx {
         static inline void Append(std::string& s, T const& in) {
             s.push_back('\"');
             s.append(in);
+            s.push_back('\"');
+        }
+    };
+
+    // 适配 std::u32string( 前后加引号 )
+    template<typename T>
+    struct StringFuncs<T, std::enable_if_t<std::is_base_of_v<std::u32string, T>>> {
+        static inline void Append(std::string& s, T const& in) {
+            s.push_back('\"');
+            StringU32ToU8(s, in);
             s.push_back('\"');
         }
     };
@@ -322,18 +338,23 @@ namespace xx {
                 std::array<char, 40> buf;
                 std::string_view sv;
 #ifndef _MSC_VER
-                snprintf(buf.data(), buf.size(), "%.16lf", (double)in);
+                if constexpr (sizeof(T) == 4) {
+                    snprintf(buf.data(), buf.size(), "%.7f", in);
+                } else {
+                    static_assert(sizeof(T) == 8);
+                    snprintf(buf.data(), buf.size(), "%.16lf", in);
+                }
                 sv = buf.data();
-#else
-                auto [ptr, _] = std::to_chars(buf.data(), buf.data() + buf.size(), in, std::chars_format::general, 16);
-                sv = std::string_view(buf.data(), ptr - buf.data());
-#endif
                 if (sv.find('.') != sv.npos) {
                     if (auto siz = sv.find_last_not_of('0'); siz != sv.npos) {
                         if (sv[siz] == '.') --siz;
                         sv = std::string_view(sv.data(), siz + 1);
                     }
                 }
+#else
+                auto [ptr, _] = std::to_chars(buf.data(), buf.data() + buf.size(), in, std::chars_format::general, sizeof(T) == 4 ? 7 : 16);
+                sv = std::string_view(buf.data(), ptr - buf.data());
+#endif
                 s.append(sv);
             }
             else {
@@ -556,29 +577,55 @@ namespace xx {
     constexpr std::string_view intToStringChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"sv;
 
     // can't support negative interger now
-    template<typename N = int, N toBase = 10, size_t fixedSize = 0, bool sClear = true, typename T>
+    template<bool sClear = true, size_t fixedSize = 0, char fixedFill = '0', int toBase = 10, typename N, typename T>
     size_t IntToStringTo(T& s, N i) {
-        if constexpr (sClear) {
-            s.clear();
-        }
-        while (i >= toBase) {
-            auto a = i / toBase;
-            auto b = i - a * toBase;
-            s += intToStringChars[b];
+        constexpr int bufSiz{ sizeof(N) * 4 };
+        std::array<char, bufSiz> buf;
+
+        int idx{ bufSiz - 1 };
+        while (i >= (N)toBase) {
+            auto a = i / (N)toBase;
+            auto b = i - a * (N)toBase;
+            buf[idx--] = intToStringChars[b];
             i = a;
         }
-        s += intToStringChars[i];
-        std::reverse(s.begin(), s.end());
-        auto siz = s.size();
-        if (siz >= fixedSize) return siz;
-        s = std::string(fixedSize - siz, '0') + s;
-        return fixedSize;
+        buf[idx] = intToStringChars[i];
+
+        size_t numLen = bufSiz - idx;
+        size_t len = numLen;
+        if constexpr (fixedSize) {
+            if (fixedSize > numLen) {
+                len = fixedSize;
+            }
+        }
+
+        if constexpr (sClear) {
+            s.clear();
+            s.reserve(len);
+        } else {
+            s.reserve(s.size() + len);
+        }
+
+        if constexpr (fixedSize) {
+            if (fixedSize > numLen) {
+                s.append(fixedSize - numLen, fixedFill);
+            }
+        }
+        if constexpr (sizeof(typename T::value_type) == 1) {
+            s.append((typename T::value_type*)&buf[0] + idx, numLen);
+        } else {
+            for (; idx < bufSiz; ++idx) {
+                s.push_back((typename T::value_type)buf[idx]);
+            }
+        }
+
+        return (size_t)len;
     }
 
-    template<typename R = std::string, typename N = int, N toBase = 10, size_t fixedSize = 0>
+    template<typename R = std::string, size_t fixedSize = 0, char fixedFill = '0', int toBase = 10, typename N>
     R IntToString(N i) {
         R s;
-        ToStringTo<N, toBase, fixedSize>(s, i);
+        ToStringTo<false, fixedSize, fixedFill, toBase>(s, i);
         return s;
     }
 

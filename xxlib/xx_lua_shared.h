@@ -68,7 +68,7 @@ namespace xx::Lua {
 	template<typename T>
 	struct MetaFuncs<T, std::enable_if_t<xx::IsShared_v<T>>> {
 		using U = std::decay_t<T>;
-		inline static std::string name = TypeName<U>();
+		inline static std::string name{ TypeName<U>() };
 		static void Fill(lua_State* const& L) {
 			SetType<U>(L);
 			luaL_setfuncs(L, SharedTFuncs<U>::funcs, 0);

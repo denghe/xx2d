@@ -11,7 +11,7 @@ namespace ParticleTest {
         auto tex = xx::engine.LoadSharedTexture("res/particles/p11.png");
         tex->SetGLTexParm(GL_LINEAR);
 
-        auto cfg = xx::Make<xx::ParticleConfig>();
+        auto cfg = xx::MakeShared<xx::ParticleConfig>();
         cfg->sprite.SetTexture(tex);
         cfg->emission = 5000;
         cfg->lifetime = -1.f;

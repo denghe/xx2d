@@ -34,11 +34,31 @@ namespace xx {
 
 
     /************************************************************************************/
+    // helpers
+
+    template<typename T>
+    struct FromTo {
+        T from{}, to{};
+    };
+
+    template<typename T>
+    struct CurrentMax {
+        T current{}, max{};
+    };
+
+    template<typename T, class = std::enable_if_t<std::is_enum_v<T>>>
+    inline bool FlagContains(T const& a, T const& b) {
+        using U = std::underlying_type_t<T>;
+        return ((U)a & (U)b) != U{};
+    }
+
+
+    /************************************************************************************/
     // mem utils
 
     // 数字字节序交换
     template<typename T>
-    static T BSwap(T i) {
+    XX_FORCE_INLINE T BSwap(T i) {
         T r;
 #ifdef _WIN32
         if constexpr (sizeof(T) == 2) *(uint16_t*)&r = _byteswap_ushort(*(uint16_t*)&i);
@@ -53,51 +73,53 @@ namespace xx {
     }
 
     // 带符号整数 解码 return (in 为单数) ? -(in + 1) / 2 : in / 2
-    [[maybe_unused]] static int16_t ZigZagDecode(uint16_t in) {
+    inline XX_FORCE_INLINE int16_t ZigZagDecode(uint16_t in) {
         return (int16_t)((int16_t)(in >> 1) ^ (-(int16_t)(in & 1)));
     }
-    [[maybe_unused]] static int32_t ZigZagDecode(uint32_t in) {
+    inline XX_FORCE_INLINE int32_t ZigZagDecode(uint32_t in) {
         return (int32_t)(in >> 1) ^ (-(int32_t)(in & 1));
     }
-    [[maybe_unused]] static int64_t ZigZagDecode(uint64_t in) {
+    inline XX_FORCE_INLINE int64_t ZigZagDecode(uint64_t in) {
         return (int64_t)(in >> 1) ^ (-(int64_t)(in & 1));
     }
 
     // 返回首个出现 1 的 bit 的下标
-    static size_t Calc2n(size_t n) {
+    template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+    XX_FORCE_INLINE size_t Calc2n(T n) {
         assert(n);
 #ifdef _MSC_VER
         unsigned long r = 0;
-# if defined(_WIN64) || defined(_M_X64)
-        _BitScanReverse64(&r, n);
-# else
-        _BitScanReverse(&r, n);
-# endif
-        return (std::size_t)r;
+        if constexpr (sizeof(T) < 8) {
+            _BitScanReverse(&r, n);
+        } else {
+            _BitScanReverse64(&r, n);
+        }
+        return (size_t)r;
 #else
-# if defined(__LP64__) || __WORDSIZE == 64
-        return int(63 - __builtin_clzl(n));
-# else
-        return int(31 - __builtin_clz(n));
-# endif
+        if constexpr (sizeof(T) < 8) {
+            return int(31 - __builtin_clz(n));
+        } else {
+            return int(63 - __builtin_clzl(n));
+        }
 #endif
     }
 
     // 返回一个刚好大于 n 的 2^x 对齐数
-    static size_t Round2n(size_t n) {
-        auto rtv = size_t(1) << Calc2n(n);
+    template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+    XX_FORCE_INLINE T Round2n(T n) {
+        auto rtv = T(1) << Calc2n(n);
         if (rtv == n) return n;
         else return rtv << 1;
     }
 
     // 带符号整数 编码  return in < 0 ? (-in * 2 - 1) : (in * 2)
-    [[maybe_unused]] static uint16_t ZigZagEncode(int16_t in) {
+    inline XX_FORCE_INLINE uint16_t ZigZagEncode(int16_t in) {
         return (uint16_t)((in << 1) ^ (in >> 15));
     }
-    [[maybe_unused]] static uint32_t ZigZagEncode(int32_t in) {
+    inline XX_FORCE_INLINE uint32_t ZigZagEncode(int32_t in) {
         return (in << 1) ^ (in >> 31);
     }
-    [[maybe_unused]] static uint64_t ZigZagEncode(int64_t in) {
+    inline XX_FORCE_INLINE uint64_t ZigZagEncode(int64_t in) {
         return (in << 1) ^ (in >> 63);
     }
 }

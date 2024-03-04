@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+	<Type Name="xx::PtrHeaderBase" Inheritable="false">
+		<Expand>
+			<Item Name="sharedCount">sharedCount</Item>
+			<Item Name="weakCount">weakCount</Item>
+			<Item Name="placeHolder">placeHolder</Item>
+		</Expand>
+	</Type>
+
+	<Type Name="xx::Shared&lt;*&gt;">
+		<DisplayString Condition="pointer == 0">null</DisplayString>
+		<DisplayString Condition="pointer != 0">{*pointer}</DisplayString>
+		<Expand>
+			<Item Condition="pointer != 0" Name="[pointer]">pointer</Item>
+		</Expand>
+	</Type>
+
+	<Type Name="xx::Weak&lt;*&gt;">
+		<DisplayString Condition="h == 0 || (*h).sharedCount == 0">null</DisplayString>
+		<DisplayString Condition="h != 0 &amp;&amp; (*h).sharedCount != 0">{($T1*)(h+1)}</DisplayString>
+		<Expand>
+			<Item Condition="h != 0 &amp;&amp; (*h).sharedCount != 0" Name="[pointer]">($T1*)(h+1)</Item>
+		</Expand>
+	</Type>
+
+	<Type Name="xx::Ref&lt;*&gt;">
+		<DisplayString Condition="pointer == 0">null</DisplayString>
+		<DisplayString Condition="pointer != 0">{*pointer}</DisplayString>
+		<Expand>
+			<Item Condition="pointer != 0" Name="[pointer]">pointer</Item>
+		</Expand>
+	</Type>
+
+	<Type Name="xx::List&lt;*&gt;">
+		<DisplayString Condition="cap == 0">nil</DisplayString>
+		<DisplayString Condition="cap &gt; 0 &amp;&amp; len == 0">empty</DisplayString>
+		<DisplayString Condition="cap &gt; 0 &amp;&amp; len &gt; 0">len = {len}</DisplayString>
+		<Expand>
+			<Item Name="[len]" ExcludeView="simple">len</Item>
+			<Item Name="[cap]" ExcludeView="simple">cap</Item>
+			<ArrayItems>
+				<Size>len</Size>
+				<ValuePointer>buf</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+</AutoVisualizer>

@@ -8,7 +8,7 @@ namespace xx {
 	}
 
 	xx::Shared<GLTexture> Engine::LoadSharedTexture(std::string_view const& fn) {
-		return xx::Make<GLTexture>(LoadTexture(fn));
+		return xx::MakeShared<GLTexture>(LoadTexture(fn));
 	}
 
 	xx::Shared<GLTexture> Engine::LoadTextureFromCache(std::string_view const& fn) {
@@ -17,7 +17,7 @@ namespace xx {
 		if (auto iter = textureCache.find(p); iter != textureCache.end())
 			return iter->second;
 		else {
-			auto t = xx::Make<GLTexture>(LoadGLTexture(LoadFileDataWithFullPath(p), p));
+			auto t = xx::MakeShared<GLTexture>(LoadGLTexture(LoadFileDataWithFullPath(p), p));
 			textureCache.emplace(std::move(p), t);
 			return t;
 		}

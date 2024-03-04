@@ -128,37 +128,37 @@ namespace xx {
 					if (int r = d.Read(ot)) return r;
 					switch (ot) {
 					case TMX::ObjectTypes::Point: {
-						auto sp = Make<TMX::Object_Point>();
+						auto sp = MakeShared<TMX::Object_Point>();
 						td.objs[++td.key] = sp;
 						out.value = sp.pointer;
 						return d.Read(*sp);
 					}
 					case TMX::ObjectTypes::Ellipse: {
-						auto sp = Make<TMX::Object_Ellipse>();
+						auto sp = MakeShared<TMX::Object_Ellipse>();
 						td.objs[++td.key] = sp;
 						out.value = sp.pointer;
 						return d.Read(*sp);
 					}
 					case TMX::ObjectTypes::Polygon: {
-						auto sp = Make<TMX::Object_Polygon>();
+						auto sp = MakeShared<TMX::Object_Polygon>();
 						td.objs[++td.key] = sp;
 						out.value = sp.pointer;
 						return d.Read(*sp);
 					}
 					case TMX::ObjectTypes::Rectangle: {
-						auto sp = Make<TMX::Object_Rectangle>();
+						auto sp = MakeShared<TMX::Object_Rectangle>();
 						td.objs[++td.key] = sp;
 						out.value = sp.pointer;
 						return d.Read(*sp);
 					}
 					case TMX::ObjectTypes::Tile: {
-						auto sp = Make<TMX::Object_Tile>();
+						auto sp = MakeShared<TMX::Object_Tile>();
 						td.objs[++td.key] = sp;
 						out.value = sp.pointer;
 						return d.Read(*sp);
 					}
 					case TMX::ObjectTypes::Text: {
-						auto sp = Make<TMX::Object_Text>();
+						auto sp = MakeShared<TMX::Object_Text>();
 						td.objs[++td.key] = sp;
 						out.value = sp.pointer;
 						return d.Read(*sp);
@@ -352,43 +352,43 @@ namespace xx {
 			if (key == 0) {
 				out.Reset();
 			} else if (key > 0) {
-				out = td.objs[key].ReinterpretCast<TMX::Object>();
+				out = td.objs[key].Cast<TMX::Object>();
 			} else {
 				TMX::ObjectTypes ot;
 				if (int r = d.Read(ot)) return r;
 				switch (ot) {
 				case TMX::ObjectTypes::Point: {
-					auto sp = Make<TMX::Object_Point>();
+					auto sp = MakeShared<TMX::Object_Point>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
 				}
 				case TMX::ObjectTypes::Ellipse: {
-					auto sp = Make<TMX::Object_Ellipse>();
+					auto sp = MakeShared<TMX::Object_Ellipse>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
 				}
 				case TMX::ObjectTypes::Polygon: {
-					auto sp = Make<TMX::Object_Polygon>();
+					auto sp = MakeShared<TMX::Object_Polygon>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
 				}
 				case TMX::ObjectTypes::Rectangle: {
-					auto sp = Make<TMX::Object_Rectangle>();
+					auto sp = MakeShared<TMX::Object_Rectangle>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
 				}
 				case TMX::ObjectTypes::Tile: {
-					auto sp = Make<TMX::Object_Tile>();
+					auto sp = MakeShared<TMX::Object_Tile>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
 				}
 				case TMX::ObjectTypes::Text: {
-					auto sp = Make<TMX::Object_Text>();
+					auto sp = MakeShared<TMX::Object_Text>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
@@ -451,31 +451,31 @@ namespace xx {
 			if (key == 0) {
 				out.Reset();
 			} else if (key > 0) {
-				out = td.objs[key].ReinterpretCast<TMX::Layer>();
+				out = td.objs[key].Cast<TMX::Layer>();
 			} else {
 				TMX::LayerTypes ot;
 				if (int r = d.Read(ot)) return r;
 				switch (ot) {
 				case TMX::LayerTypes::TileLayer: {
-					auto sp = Make<TMX::Layer_Tile>();
+					auto sp = MakeShared<TMX::Layer_Tile>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
 				}
 				case TMX::LayerTypes::ObjectLayer: {
-					auto sp = Make<TMX::Layer_Object>();
+					auto sp = MakeShared<TMX::Layer_Object>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
 				}
 				case TMX::LayerTypes::ImageLayer: {
-					auto sp = Make<TMX::Layer_Image>();
+					auto sp = MakeShared<TMX::Layer_Image>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
 				}
 				case TMX::LayerTypes::GroupLayer: {
-					auto sp = Make<TMX::Layer_Group>();
+					auto sp = MakeShared<TMX::Layer_Group>();
 					td.objs[++td.key] = sp;
 					out = sp;
 					return d.Read(*sp);
@@ -522,9 +522,9 @@ namespace xx {
 			if (key == 0) {
 				out.Reset();
 			} else if (key > 0) {
-				out = td.objs[key].ReinterpretCast<TMX::Image>();
+				out = td.objs[key].Cast<TMX::Image>();
 			} else {
-				auto sp = Make<TMX::Image>();
+				auto sp = MakeShared<TMX::Image>();
 				td.objs[++td.key] = sp;
 				out = sp;
 				return d.Read(out->source, out->width, out->height, out->transparentColor);
@@ -579,9 +579,9 @@ namespace xx {
 			if (key == 0) {
 				out.Reset();
 			} else if (key > 0) {
-				out = td.objs[key].ReinterpretCast<TMX::Layer_Object>();
+				out = td.objs[key].Cast<TMX::Layer_Object>();
 			} else {
-				auto sp = Make<TMX::Layer_Object>();
+				auto sp = MakeShared<TMX::Layer_Object>();
 				td.objs[++td.key] = sp;
 				out = sp;
 				return d.Read(*out);
@@ -672,9 +672,9 @@ namespace xx {
 			if (key == 0) {
 				out.Reset();
 			} else if (key > 0) {
-				out = td.objs[key].ReinterpretCast<TMX::Tileset>();
+				out = td.objs[key].Cast<TMX::Tileset>();
 			} else {
-				auto sp = Make<TMX::Tileset>();
+				auto sp = MakeShared<TMX::Tileset>();
 				td.objs[++td.key] = sp;
 				out = sp;
 				return d.Read(out->firstgid, out->source, out->name, out->class_, out->objectAlignment, out->drawingOffset

@@ -73,7 +73,7 @@ namespace MovePath {
 			mp.Clear();
 			mp.FillCurve(cps.isLoop, cps.points);
 
-			auto mpc = xx::Make<xx::MovePathCache>();
+			auto mpc = xx::MakeShared<xx::MovePathCache>();
 			mpc->Init(mp, 1);
 			mpcs.emplace_back(std::move(mpc));
 		}

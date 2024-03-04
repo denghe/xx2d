@@ -39,6 +39,7 @@ namespace xx {
 
     template<typename T>
     struct Shared {
+        typedef void(*Deleter)(void*);
         using HeaderType = PtrHeader_t<T>;
         using ElementType = T;
         T *pointer = nullptr;
@@ -116,8 +117,7 @@ namespace xx {
                 // 不能在这里 -1, 这将导致成员 weak 指向自己时触发 free
                 if (h->sharedCount == 1) {
                     if constexpr (!std::has_virtual_destructor_v<T>) {
-                        typedef void(*D)(void*);
-                        (*(D*)&GetHeader()->placeHolder)(pointer);
+                        ((Deleter&)h->placeHolder)(pointer);
                     }
                     else {
                         pointer->~T();
@@ -246,7 +246,7 @@ namespace xx {
 
         // unsafe: 直接硬转返回. 使用前通常会根据 typeId 进行合法性检测
         template<typename U>
-        XX_INLINE Shared<U> &ReinterpretCast() const noexcept {
+        XX_INLINE Shared<U> &Cast() const noexcept {
             return *(Shared<U> *) this;
         }
 
@@ -254,7 +254,16 @@ namespace xx {
 
         // 填充式 make
         template<typename U = T, typename...Args>
-        Shared<U> &Emplace(Args &&...args);
+        Shared<U>& Emplace(Args &&...args) {
+            Reset();
+            auto h = (HeaderType*)malloc(sizeof(HeaderType) + sizeof(U));
+            HeaderType::template Init<U>(*h);
+            if constexpr (!std::has_virtual_destructor_v<U>) {
+                (Deleter&)h->placeHolder = [](void* o) { ((U*)o)->~U(); };
+            }
+            pointer = (T*)new(h + 1) U(std::forward<Args>(args)...);
+            return (Shared<U>&) * this;
+        }
 
         // singleton convert to std::shared_ptr ( usually for thread safe )
         std::shared_ptr<T> ToSharedPtr() noexcept {
@@ -300,6 +309,9 @@ namespace xx {
         // unsafe: 直接计算出指针
         [[maybe_unused]] [[nodiscard]] XX_INLINE T *pointer() const {
             return (T *) (h + 1);
+        }
+        [[maybe_unused]] [[nodiscard]] XX_INLINE T *GetPointer() const {
+            return pointer();
         }
 
         // unsafe
@@ -447,22 +459,6 @@ namespace xx {
         return {};
     }
 
-    template<typename T>
-    template<typename U, typename...Args>
-    Shared<U> &Shared<T>::Emplace(Args &&...args) {
-        Reset();
-        auto h = (HeaderType *) malloc(sizeof(HeaderType) + sizeof(U));
-        HeaderType::template Init<U>(*h);
-        if constexpr (!std::has_virtual_destructor_v<U>) {
-            typedef void(*D)(void*);
-            *(D*)&h->placeHolder = [](void* o) {
-                //std::cout << "delete (" << xx::TypeName<U>() << "*)o = " << (size_t)o << std::endl;
-                ((U*)o)->~U();
-            };
-        }
-        pointer = (T*)new(h + 1) U(std::forward<Args>(args)...);
-        return (Shared<U>&)*this;
-    }
 
     /************************************************************************************/
 
@@ -673,13 +669,13 @@ namespace xx {
 
 
     /************************************************************************************/
-    // tiny version Shared ( no deleter & weak )
+    // tiny version Shared ( no weak )
 
     template<typename T>
     struct Ref {
-        struct Header {
-            uint32_t refCount;
-            std::aligned_storage_t<sizeof(T), alignof(T)> value;
+        typedef void(*Deleter)(void*);
+        struct HeaderType {
+            size_t sharedCount, placeHolder;
         };
 
         using ElementType = T;
@@ -717,36 +713,48 @@ namespace xx {
             return pointer->operator[](idx);
         }
 
-        [[maybe_unused]] [[nodiscard]] XX_INLINE operator bool() const noexcept {
+        XX_INLINE operator bool() const noexcept {
             return pointer != nullptr;
         }
 
+        XX_INLINE size_t GetSharedCount() const noexcept {
+            if (!pointer) return 0;
+            return GetHeader()->sharedCount;
+        }
+
         // unsafe
-        [[maybe_unused]] [[nodiscard]] XX_INLINE Header* GetHeader() const noexcept {
-            return container_of(pointer, Header, value);
+        XX_INLINE HeaderType* GetHeader() const noexcept {
+            return ((HeaderType*)pointer - 1);
+        }
+
+        // unsafe
+        template<typename U>
+        XX_INLINE Ref<U>& Cast() const noexcept {
+            return *(Ref<U>*)this;
         }
 
         void Reset() {
             if (pointer) {
                 auto h = GetHeader();
-                assert(h->refCount);
-                if (h->refCount == 1) {
-                    ((T*)(&h->value))->~T();
+                assert(h->sharedCount);
+                if (h->sharedCount == 1) {
+                    ((Deleter&)h->placeHolder)(pointer);
                     pointer = nullptr;
                     free(h);
                 } else {
-                    --h->refCount;
+                    --h->sharedCount;
                     pointer = nullptr;
                 }
             }
         }
 
-        void Reset(T* ptr) {
+        template<std::derived_from<T> U>
+        void Reset(U* ptr) {
             if (pointer == ptr) return;
             Reset();
             if (ptr) {
                 pointer = ptr;
-                ++container_of(ptr, Header, value)->refCount;
+                ++((HeaderType*)ptr - 1)->sharedCount;
             }
         }
 
@@ -756,10 +764,18 @@ namespace xx {
 
         Ref() = default;
 
+        template<std::derived_from<T> U>
+        XX_INLINE Ref(U* ptr) {
+            pointer = ptr;
+            if (ptr) {
+                ++((HeaderType*)ptr - 1)->sharedCount;
+            }
+        }
+
         XX_INLINE Ref(T* ptr) {
             pointer = ptr;
             if (ptr) {
-                ++container_of(ptr, Header, value)->refCount;
+                ++((HeaderType*)ptr - 1)->sharedCount;
             }
         }
 
@@ -795,19 +811,14 @@ namespace xx {
             return pointer != o.pointer;
         }
 
-        template<typename...Args>
-        Ref& Emplace(Args &&...args) {
+        template<std::derived_from<T> U = T, typename...Args>
+        Ref<U>& Emplace(Args &&...args) {
             Reset();
-            Header* h;
-            if constexpr (alignof(T) > alignof(max_align_t)) {
-                h = (Header*)aligned_alloc(alignof(T), sizeof(Header));
-            } else {
-                h = (Header*)malloc(sizeof(Header));
-            }
-            h->refCount = 1;
-            new(&h->value) T(std::forward<Args>(args)...);
-            pointer = (T*)&h->value;
-            return (Ref&)*this;
+            auto h = (HeaderType*)malloc(sizeof(HeaderType) + sizeof(U));
+            h->sharedCount = 1;
+            (Deleter&)h->placeHolder = [](void* o) { ((U*)o)->~U(); };
+            pointer = (T*)new(h + 1) U(std::forward<Args>(args)...);
+            return (Ref<U>&) * this;
         }
 
     };
