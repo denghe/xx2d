@@ -1,0 +1,118 @@
+xx::List<xx::Ref<Frame>, int32_t>
+    frames_b1,
+    frames_b2,
+    frames_b3,
+    frames_b4,
+    frames_b5,
+    frames_b6,
+    frames_b7,
+    frames_b8,
+    frames_b9,
+    frames_bg1,
+    frames_e1,
+    frames_e2,
+    frames_e3,
+    frames_e4,
+    frames_e5,
+    frames_eb1,
+    frames_eb2,
+    frames_eb3,
+    frames_eb4,
+    frames_ma1,
+    frames_ma2,
+    frames_ma3,
+    frames_ma4,
+    frames_ma5,
+    frames_ma6,
+    frames_mb1,
+    frames_mb2,
+    frames_mb3,
+    frames_mb4,
+    frames_mb5,
+    frames_mc1,
+    frames_mc2,
+    frames_mc3,
+    frames_mc4,
+    frames_n0,
+    frames_n1,
+    frames_n2,
+    frames_n3,
+    frames_n4,
+    frames_n5,
+    frames_n6,
+    frames_n7,
+    frames_n8,
+    frames_n9,
+    frames_p,
+    frames_p1,
+    frames_p2,
+    frames_p3,
+    frames_pc,
+    frames_ph,
+    frames_po1,
+    frames_po2,
+    frames_po3,
+    frames_ps,
+    frames_r1,
+    frames_r2,
+    frames_tgameover,
+    frames_tstart;
+
+        tp->GetToByPrefix(frames_b1       , "b1"       );
+        tp->GetToByPrefix(frames_b2       , "b2"       );
+        tp->GetToByPrefix(frames_b3       , "b3"       );
+        tp->GetToByPrefix(frames_b4       , "b4"       );
+        tp->GetToByPrefix(frames_b5       , "b5"       );
+        tp->GetToByPrefix(frames_b6       , "b6"       );
+        tp->GetToByPrefix(frames_b7       , "b7"       );
+        tp->GetToByPrefix(frames_b8       , "b8"       );
+        tp->GetToByPrefix(frames_b9       , "b9"       );
+        tp->GetToByPrefix(frames_bg1      , "bg1"      );
+        tp->GetToByPrefix(frames_e1       , "e1"       );
+        tp->GetToByPrefix(frames_e2       , "e2"       );
+        tp->GetToByPrefix(frames_e3       , "e3"       );
+        tp->GetToByPrefix(frames_e4       , "e4"       );
+        tp->GetToByPrefix(frames_e5       , "e5"       );
+        tp->GetToByPrefix(frames_eb1      , "eb1"      );
+        tp->GetToByPrefix(frames_eb2      , "eb2"      );
+        tp->GetToByPrefix(frames_eb3      , "eb3"      );
+        tp->GetToByPrefix(frames_eb4      , "eb4"      );
+        tp->GetToByPrefix(frames_ma1      , "ma1"      );
+        tp->GetToByPrefix(frames_ma2      , "ma2"      );
+        tp->GetToByPrefix(frames_ma3      , "ma3"      );
+        tp->GetToByPrefix(frames_ma4      , "ma4"      );
+        tp->GetToByPrefix(frames_ma5      , "ma5"      );
+        tp->GetToByPrefix(frames_ma6      , "ma6"      );
+        tp->GetToByPrefix(frames_mb1      , "mb1"      );
+        tp->GetToByPrefix(frames_mb2      , "mb2"      );
+        tp->GetToByPrefix(frames_mb3      , "mb3"      );
+        tp->GetToByPrefix(frames_mb4      , "mb4"      );
+        tp->GetToByPrefix(frames_mb5      , "mb5"      );
+        tp->GetToByPrefix(frames_mc1      , "mc1"      );
+        tp->GetToByPrefix(frames_mc2      , "mc2"      );
+        tp->GetToByPrefix(frames_mc3      , "mc3"      );
+        tp->GetToByPrefix(frames_mc4      , "mc4"      );
+        tp->GetToByPrefix(frames_n0       , "n0"       );
+        tp->GetToByPrefix(frames_n1       , "n1"       );
+        tp->GetToByPrefix(frames_n2       , "n2"       );
+        tp->GetToByPrefix(frames_n3       , "n3"       );
+        tp->GetToByPrefix(frames_n4       , "n4"       );
+        tp->GetToByPrefix(frames_n5       , "n5"       );
+        tp->GetToByPrefix(frames_n6       , "n6"       );
+        tp->GetToByPrefix(frames_n7       , "n7"       );
+        tp->GetToByPrefix(frames_n8       , "n8"       );
+        tp->GetToByPrefix(frames_n9       , "n9"       );
+        tp->GetToByPrefix(frames_p        , "p"        );
+        tp->GetToByPrefix(frames_p1       , "p1"       );
+        tp->GetToByPrefix(frames_p2       , "p2"       );
+        tp->GetToByPrefix(frames_p3       , "p3"       );
+        tp->GetToByPrefix(frames_pc       , "pc"       );
+        tp->GetToByPrefix(frames_ph       , "ph"       );
+        tp->GetToByPrefix(frames_po1      , "po1"      );
+        tp->GetToByPrefix(frames_po2      , "po2"      );
+        tp->GetToByPrefix(frames_po3      , "po3"      );
+        tp->GetToByPrefix(frames_ps       , "ps"       );
+        tp->GetToByPrefix(frames_r1       , "r1"       );
+        tp->GetToByPrefix(frames_r2       , "r2"       );
+        tp->GetToByPrefix(frames_tgameover, "tgameover");
+        tp->GetToByPrefix(frames_tstart   , "tstart"   );
