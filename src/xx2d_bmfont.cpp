@@ -137,7 +137,7 @@ namespace xx {
 
                 uint32_t first, second;
                 int16_t amount;
-                for (uint32_t count = blockSize / 20, i = 0; i < count; i++) {
+                for (uint32_t count = blockSize / 10, i = 0; i < count; i++) {
                     if (auto r = dr.ReadFixed(first)) throw std::logic_error(xx::ToString("BMFont read first error. r = ", r, ". fn = ", p));
                     if (auto r = dr.ReadFixed(second)) throw std::logic_error(xx::ToString("BMFont read second error. r = ", r, ". fn = ", p));
                     if (auto r = dr.ReadFixed(amount)) throw std::logic_error(xx::ToString("BMFont read amount error. r = ", r, ". fn = ", p));
